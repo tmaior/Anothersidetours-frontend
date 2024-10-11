@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: RDS Instance for storing tour information.
+
+Parameters:
+  DBSecretName:
+    Type: String
+    Default: as-tours-rds-secret
+  DBUsername:
+    Type: String
+    Default: 
+  DBName:
+    Type: String
+    Default: as_tours_db
+  ProjectName:
+    Type: String
+    Default: as-tours
+  VPCId:
+    Type: String
+    Default: 
+
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      SubnetIds: 
+        - Fn::ImportValue: !Sub '${ProjectName}-PrivateSubnet1'
+        - Fn::ImportValue: !Sub '${ProjectName}-PrivateSubnet2'
+      DBSubnetGroupDescription: Database Subnet Group
+
+  DBSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Ref DBSecretName
+      Description: "Database password"
+      GenerateSecretString:
+        SecretStringTemplate: !Sub '{"username": "${DBUsername}"}'
+        GenerateStringKey: "password"
+        PasswordLength: 16
+        ExcludeCharacters: '"@/\'
+
+  MySQLDB:
+    Type: AWS::RDS::DBInstance
+    DepensOn: DBSecret
+    Properties:
+      DBInstanceIdentifier: !Ref DBName
+      DBInstanceClass: db.t3.small
+      AllocatedStorage: 50
+      Engine: MySQL
+      EngineVersion: '8.0'
+      MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecretName, ':SecretString:username}}']]
+      MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecretName, ':SecretString:password}}']]
+      DBName: !Ref DBName
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - !GetAtt DBSecurityGroup.GroupId
+      PubliclyAccessible: false
+      BackupRetentionPeriod: 7
+
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable RDS access within the VPC.
+      VpcId: 
+        Fn::ImportValue: !Sub '${ProjectName}-VPC'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 
+            Fn::ImportValue: !Sub '${ProjectName}-VPCCidrBlock'
+
+  RDSParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /tours_db/rds/endpoint
+      Type: String
+      Value: !GetAtt MySQLDB.Endpoint.Address
+      Tier: Standard
+
+Outputs:
+  RDSHost:
+    Description: RDS Endpoint
+    Value: !GetAtt MySQLDB.Endpoint.Address

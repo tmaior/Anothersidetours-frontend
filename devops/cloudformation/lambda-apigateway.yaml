@@ -1,0 +1,155 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: API Gateway with Lambda for processing business logic.
+
+Parameters:
+  RDSDBName:
+    Type: String
+    Description: RDS database name
+    Default: as_tours_db
+  ProjectName:
+    Type: String
+    Default: as-tours
+  DBSecretName:
+    Type: String
+    Default: as-tours-rds-secret
+
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement: 
+          - Effect: Allow
+            Principal: 
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies: 
+        - PolicyName: LambdaPolicy
+          PolicyDocument: 
+            Version: '2012-10-17'
+            Statement: 
+              - Effect: Allow
+                Action: 
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - rds:DescribeDBInstances
+                  - rds-db:connect
+                Resource: arn:aws:rds:*:*:db:*
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DeleteNetworkInterface
+                  - ec2:AssignPrivateIpAddresses
+                  - ec2:UnassignPrivateIpAddresses
+                Resource: "*"
+
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Security group for Lambda function"
+      VpcId: 
+        Fn::ImportValue: !Sub '${ProjectName}-VPC'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306 
+          ToPort: 3306
+          CidrIp: 
+            Fn::ImportValue: !Sub '${ProjectName}-VPCCidrBlock' 
+      SecurityGroupEgress:
+        - IpProtocol: -1  
+          CidrIp: 0.0.0.0/0  
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          const mysql = require('mysql2/promise');
+          const rdsConfig = {
+              host: process.env.RDS_HOST,
+              user: process.env.RDS_USERNAME,
+              password: process.env.RDS_PASSWORD,
+              database: process.env.RDS_DB_NAME,
+          };
+
+          exports.handler = async (event) => {
+              const tourId = event.queryStringParameters.tourId;
+              let connection;
+              try {
+                  connection = await mysql.createConnection(rdsConfig);
+                  const [rows] = await connection.execute('SELECT * FROM tours WHERE id = ?', [tourId]);
+                  return {
+                      statusCode: 200,
+                      body: JSON.stringify(rows[0]),
+                  };
+              } catch (err) {
+                  console.error('Database query failed:', err);
+                  return {
+                      statusCode: 500,
+                      body: JSON.stringify({ error: 'Database query failed' }),
+                  };
+              } finally {
+                  if (connection) connection.end();
+              }
+          };
+      Runtime: nodejs20.x
+      Timeout: 60
+      Environment:
+        Variables:
+          RDS_HOST: !Sub "{{resolve:ssm:/tours_db/rds/endpoint}}"
+          RDS_USERNAME: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecretName, ':SecretString:username}}']]
+          RDS_PASSWORD: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecretName, ':SecretString:password}}']]
+          RDS_DB_NAME: !Ref RDSDBName
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+        SubnetIds:
+          - Fn::ImportValue: !Sub '${ProjectName}-PrivateSubnet1'
+          - Fn::ImportValue: !Sub '${ProjectName}-PrivateSubnet2'
+
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: TourAPI
+      Description: API Gateway to handle requests
+
+  ApiGatewayResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: "tours"
+      RestApiId: !Ref ApiGateway
+
+  ApiGatewayMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ApiGatewayResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: 
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}/invocations
+
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/GET/tours
+
+Outputs:
+  ApiGatewayURL:
+    Description: URL for API Gateway
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/prod/tours"

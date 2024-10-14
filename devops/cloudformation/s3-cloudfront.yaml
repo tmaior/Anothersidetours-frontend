@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: S3 bucket and CloudFront for static site serving the iframe content.
+
+Parameters:
+  WebsiteBucketName:
+    Type: String
+    Default: as-tours-website
+  CodeBuildServiceRole:
+    Type: String
+    Default: 
+
+Resources:
+  WebsiteS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref WebsiteBucketName
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+  
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebsiteS3Bucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: "s3:GetObject"
+            Resource: !Sub "arn:aws:s3:::${WebsiteS3Bucket}/*"
+          - Effect: Allow
+            Principal: 
+              AWS: !Ref CodeBuildServiceRole
+            Action: "s3:PutObject"
+            Resource: !Sub "arn:aws:s3:::${WebsiteS3Bucket}/*"
+
+  CloudFrontOriginAccessIdentity:
+    Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub 'Access identity for static content'
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt WebsiteS3Bucket.DomainName
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Join ['', ['origin-access-identity/cloudfront/', !Ref CloudFrontOriginAccessIdentity]]
+        Enabled: true
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          MinTTL: 0
+          DefaultTTL: 86400
+          MaxTTL: 31536000
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+          MinimumProtocolVersion: TLSv1.2_2019
+
+Outputs:
+  WebsiteS3BucketName:
+    Description: Name of the S3 bucket
+    Value: !Ref WebsiteS3Bucket
+  CloudFrontURL:
+    Description: URL of the CloudFront distribution
+    Value: !GetAtt CloudFrontDistribution.DomainName

@@ -1,0 +1,25 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "Installing dependencies..."
+      - npm install
+
+  build:
+    commands:
+      - echo "Building the project..."
+      - ls
+      - echo "Build complete."
+
+  post_build:
+    commands:
+      - echo "Uploading files to S3 bucket..."
+      - aws s3 cp . s3://$WEBSITE_BUCKET_NAME/ --recursive
+      - echo "Upload completed."
+
+artifacts:
+  files:
+    - '**/*'

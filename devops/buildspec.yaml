@@ -6,12 +6,14 @@ phases:
       nodejs: 20
     commands:
       - echo "Installing dependencies..."
-      - npm install
+      - cd frontend
+      - yarn install
 
   build:
     commands:
       - echo "Building the project..."
-      - ls
+      - cd frontend
+      - yarn build
       - echo "Build complete."
 
   post_build:
@@ -22,4 +24,4 @@ phases:
 
 artifacts:
   files:
-    - '**/*'
+    - frontend/dist/**/*

@@ -19,7 +19,7 @@ phases:
   post_build:
     commands:
       - echo "Uploading files to S3 bucket..."
-      - cd frontend/dist
+      - cd frontend
       - aws s3 cp . s3://$WEBSITE_BUCKET_NAME/ --recursive
       - echo "Upload completed."
 

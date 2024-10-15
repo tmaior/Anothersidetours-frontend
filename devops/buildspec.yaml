@@ -12,9 +12,6 @@ phases:
   build:
     commands:
       - echo "Building the project..."
-      - ls
-      - pwd
-      - cd frontend
       - yarn build
       - echo "Build complete."
 

@@ -15,14 +15,14 @@ phases:
       - cd frontend
       - yarn build
       - echo "Build complete."
-      - ls
 
   post_build:
     commands:
       - echo "Uploading files to S3 bucket..."
+      - cd frontend/dist
       - aws s3 cp . s3://$WEBSITE_BUCKET_NAME/ --recursive
       - echo "Upload completed."
 
 artifacts:
   files:
-    - frontend/dist/**/*
+    - '**/*'

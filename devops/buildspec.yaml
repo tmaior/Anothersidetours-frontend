@@ -12,6 +12,8 @@ phases:
   build:
     commands:
       - echo "Building the project..."
+      - ls
+      - pwd
       - cd frontend
       - yarn build
       - echo "Build complete."
@@ -19,8 +21,7 @@ phases:
   post_build:
     commands:
       - echo "Uploading files to S3 bucket..."
-      - cd frontend
-      - aws s3 cp . s3://$WEBSITE_BUCKET_NAME/ --recursive
+      - aws s3 cp frontend/ s3://$WEBSITE_BUCKET_NAME/ --recursive
       - echo "Upload completed."
 
 artifacts:

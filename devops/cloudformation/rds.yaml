@@ -4,19 +4,13 @@ Description: RDS Instance for storing tour information.
 Parameters:
   DBSecretName:
     Type: String
-    Default: as-tours-rds-secret
   DBUsername:
     Type: String
-    Default: 
   DBName:
     Type: String
-    Default: as_tours_db
   ProjectName:
     Type: String
     Default: as-tours
-  VPCId:
-    Type: String
-    Default: 
 
 Resources:
   DBSubnetGroup:
@@ -40,7 +34,7 @@ Resources:
 
   MySQLDB:
     Type: AWS::RDS::DBInstance
-    DepensOn: DBSecret
+    DependsOn: DBSecret
     Properties:
       DBInstanceIdentifier: !Ref DBName
       DBInstanceClass: db.t3.small
@@ -49,7 +43,6 @@ Resources:
       EngineVersion: '8.0'
       MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecretName, ':SecretString:username}}']]
       MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecretName, ':SecretString:password}}']]
-      DBName: !Ref DBName
       DBSubnetGroupName: !Ref DBSubnetGroup
       VPCSecurityGroups:
         - !GetAtt DBSecurityGroup.GroupId

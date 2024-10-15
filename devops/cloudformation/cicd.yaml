@@ -4,25 +4,18 @@ Description: CodePipeline for automated deployment of static site to S3.
 Parameters:
   RepositoryBranch:
     Type: String
-    Default: main
   GitHubv2ConnectionArn:
     Type: String
-    Default: 
   GitHubOwner:
     Type: String
-    Default: tmaior
   GitHubRepo:
     Type: String
-    Default: Anothersidetours-frontend
   BuildSpecPath:
     Type: String
-    Default: devops/buildspec.yaml
   WebsiteS3Bucket:
     Type: String
-    Default: as-tours-website
   ProjectName:
     Type: String
-    Default: as-tours
 
 Resources:
   CodeBuildRole:
@@ -175,7 +168,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     DependsOn: [CodeBuildProject, KMSEncryptionKey, BucketPolicy]
     Properties:
-      Name: !Sub ${ProjectName}-pipeline
+      Name: !Sub ${ProjectName}-codepipeline
       RoleArn: !GetAtt CodePipelineRole.Arn
       ArtifactStore:
         Type: S3
@@ -234,10 +227,10 @@ Outputs:
     Description: "ARN for the CodeBuild IAM Role"
     Value: !GetAtt CodeBuildRole.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-CodeBuildRoleArn"
+      Name: !Sub "${ProjectName}-CodeBuildRoleArn"
 
   CodePipelineRoleArn:
     Description: "ARN for the CodePipeline IAM Role"
     Value: !GetAtt CodePipelineRole.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-CodePipelineRoleArn"
+      Name: !Sub "${ProjectName}-CodePipelineRoleArn"

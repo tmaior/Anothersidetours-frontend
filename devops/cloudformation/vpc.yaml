@@ -4,7 +4,6 @@ Description: Sets up vpc.
 Parameters:    
   ProjectName:
     Type: String
-    Default: as-tours
 
   CidrIp:
     Description: Cidr Ip

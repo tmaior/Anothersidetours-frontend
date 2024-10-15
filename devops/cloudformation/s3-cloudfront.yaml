@@ -4,10 +4,8 @@ Description: S3 bucket and CloudFront for static site serving the iframe content
 Parameters:
   WebsiteBucketName:
     Type: String
-    Default: as-tours-website
   CodeBuildServiceRole:
     Type: String
-    Default: 
 
 Resources:
   WebsiteS3Bucket:

@@ -1,0 +1,83 @@
+Parameters:
+  ProjectName:
+    Type: String
+    Default: as-tours
+  WebsiteBucketName:
+    Type: String
+    Default: as-tours-website
+  RDSDBName:
+    Description: "RDS database name. Must start with a letter, contain only letters, numbers, and hyphens, and be no more than 63 characters."
+    Type: String
+    Default: anothersidetours-db  
+  DBSecretName:
+    Type: String
+    Default: as-tours-rds-secret
+  DBUsername:
+    Type: String
+    Default: 
+  RepositoryBranch:
+    Type: String
+    Default: main
+  GitHubv2ConnectionArn:
+    Type: String
+    Default: 
+  GitHubOwner:
+    Type: String
+    Default: tmaior
+  GitHubRepo:
+    Type: String
+    Default: Anothersidetours-frontend
+  BuildSpecPath:
+    Type: String
+    Default: devops/buildspec.yaml
+
+Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://anothersidetours-test-templates.s3.us-east-2.amazonaws.com/vpc.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName
+  
+  RDSStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: VPCStack
+    Properties:
+      TemplateURL: https://anothersidetours-test-templates.s3.us-east-2.amazonaws.com/rds.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        DBSecretName: !Ref DBSecretName
+        DBUsername: !Ref DBUsername
+        DBName: !Ref RDSDBName
+
+  CICDStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://anothersidetours-test-templates.s3.us-east-2.amazonaws.com/cicd.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        RepositoryBranch: !Ref RepositoryBranch
+        GitHubv2ConnectionArn: !Ref GitHubv2ConnectionArn
+        GitHubOwner: !Ref GitHubOwner
+        GitHubRepo: !Ref GitHubRepo
+        BuildSpecPath: !Ref BuildSpecPath
+        WebsiteS3Bucket: !Ref WebsiteBucketName
+
+  LambdaAPIGatewayStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: RDSStack
+    Properties:
+      TemplateURL: https://anothersidetours-test-templates.s3.us-east-2.amazonaws.com/lambda-apigateway.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        RDSDBName: !Ref RDSDBName
+        DBSecretName: !Ref DBSecretName
+
+  S3CloudFrontStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: CICDStack
+    Properties:
+      TemplateURL: https://anothersidetours-test-templates.s3.us-east-2.amazonaws.com/s3-cloudfront.yaml
+      Parameters:
+        WebsiteBucketName: !Ref WebsiteBucketName
+        CodeBuildServiceRole: !GetAtt CICDStack.Outputs.CodeBuildRoleArn

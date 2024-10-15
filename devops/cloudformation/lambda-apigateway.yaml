@@ -5,13 +5,10 @@ Parameters:
   RDSDBName:
     Type: String
     Description: RDS database name
-    Default: as_tours_db
   ProjectName:
     Type: String
-    Default: as-tours
   DBSecretName:
     Type: String
-    Default: as-tours-rds-secret
 
 Resources:
   LambdaExecutionRole:

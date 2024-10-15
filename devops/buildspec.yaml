@@ -15,6 +15,7 @@ phases:
       - cd frontend
       - yarn build
       - echo "Build complete."
+      - ls
 
   post_build:
     commands:

@@ -18,7 +18,7 @@ phases:
   post_build:
     commands:
       - echo "Uploading files to S3 bucket..."
-      - aws s3 cp . s3://$WEBSITE_BUCKET_NAME/ --recursive
+      - aws s3 cp dist/ s3://$WEBSITE_BUCKET_NAME/ --recursive
       - echo "Upload completed."
 
 artifacts:

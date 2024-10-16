@@ -1,6 +1,5 @@
 const ContactInfo = ({ contactInfo, onContactInfoChange }) => (
   <div className="contact-info">
-    <h3 className="title">Contact Info</h3>
     <div className="form-group">
       <label htmlFor="name">Name</label>
       <input

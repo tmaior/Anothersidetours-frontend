@@ -81,27 +81,25 @@ DatePicker.propTypes = {
 
 
 
-const BookingDatePicker = () => {
+const ArrivalDate = ({onChange}) => {
 
-    const [eventDate, setEventDate] = useState((new Date()).getTime());
-
-    const handleDateChange = (date) => {
-        setEventDate({ date });
+    const changeDate = (date)=>{
+      console.log(date)
+      if(typeof(onChange) === 'function'){
+        onChange(date);
+      }
     }
     return (
         <div className='arrival-date-inline '>
             <DatePicker
                 inline
                 className='col-12 '
-                onChange={handleDateChange}
-                renderDayContents={renderDayContents}
+                onChange={(e)=>changeDate(e)}
                 minDate={new Date()}
                 showDisabledMonthNavigation
             />
-            {/*  
-         /> */}
         </div>
     )
 }
 
-export default BookingDatePicker;
+export default ArrivalDate;

@@ -41,50 +41,50 @@ const BookingForm = () => {
   return (
     <div className="purchase-create-details  container p-4">
 
-    <form className="form-group p-4 ">
-      <div className="row">
-        {/* Left-hand side: Quantity and date selection */}
-        <div className="col ">
-          <div className="quantity">
-            <SectionTitle>Quantity</SectionTitle>
-            <PickupSpinner title="Guests" minValue="1" value={guestQuantity} onChange={setGuestQuantity} />
-          </div>
-          <div>
-            <SectionTitle>Contact Info</SectionTitle>
-            <ContactInfo
-              contactInfo={contactInfo}
-              onContactInfoChange={handleContactInfoChange}
-            />
+      <form className="form-group p-4 ">
+        <div className="row">
+          {/* Left-hand side: Quantity and date selection */}
+          <div className="col ">
+            <div className="quantity">
+              <SectionTitle>Quantity</SectionTitle>
+              <PickupSpinner title="Guests" minValue="1" value={guestQuantity} onChange={setGuestQuantity} />
+            </div>
+            <div>
+              <SectionTitle>Contact Info</SectionTitle>
+              <ContactInfo
+                contactInfo={contactInfo}
+                onContactInfoChange={handleContactInfoChange}
+              />
 
+            </div>
+            <div>
+              <SectionTitle>Add-ons</SectionTitle>
+              <PickupSpinner title="ADD A PICK-UP?" minValue="0" value={pickupQuantity} onChange={setPickupQuantity} description="Add Round-Trip Transportation from your point of origination. This option is $20 per guest. (5 miles max)" />
+
+              <CheckBox title="Tour Protection" description="Add Tour Protection for $10 per guest. This option allows you to cancel your tour up to 24 hours before the tour start time and receive a full refund." />
+            </div>
           </div>
-          <div>
-          <SectionTitle>Add-ons</SectionTitle>
-          <PickupSpinner title="ADD A PICK-UP?" minValue="0" value={pickupQuantity} onChange={setPickupQuantity} description="Add Round-Trip Transportation from your point of origination. This option is $20 per guest. (5 miles max)"/>
-          
-          <CheckBox title="Tour Protection" description="Add Tour Protection for $10 per guest. This option allows you to cancel your tour up to 24 hours before the tour start time and receive a full refund."/>
+          <div className="col">
+            <div className="row">
+
+              <ArrivalDate onChange={setArrivalDate} />
+
+              {arrivalDate && (
+                <ArrivalTime onChange={setArrivalTime} />
+              )}
+
+
+            </div>
           </div>
+
+
+
         </div>
-        <div className="col">
-          <div className="row">
-
-            <ArrivalDate onChange={setArrivalDate} />
-
-            {arrivalDate && (
-              <ArrivalTime onChange={setArrivalTime}/>
-            )}
-
-            
-          </div>
-        </div>
+        <Footer />
 
 
-
-      </div>
-      <Footer />
-
-
-    </form>
-              </div>
+      </form>
+    </div>
   );
 };
 

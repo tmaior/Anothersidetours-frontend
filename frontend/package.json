@@ -11,10 +11,11 @@
   },
   "dependencies": {
     "ajax": "^0.0.4",
-    "bootstrap": "4",
-    "datepicker": "^0.0.0",
+    "bootstrap": "5",
+    "moment": "^2.30.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-jqueryui-datepicker": "^1.0.3",
     "styled-components": "^6.1.13"
   },
   "devDependencies": {

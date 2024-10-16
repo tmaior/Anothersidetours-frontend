@@ -12,7 +12,7 @@
   align-self: center
 }
 
-.availability-timeline .datepicker,.invisible,.package-purchase-create-details .region-arrival .arrival-time .control-label,.package-purchase-create-details .region-arrival-inline .arrival-time .control-label,.purchase-create-details .region-arrival .arrival-time .control-label,.success .payment-cart .actions,body.invoice-payment .action-continue-shopping {
+.availability-timeline .datepicker,.invisible, .arrival-time .control-label,-inline .arrival-time .control-label, .arrival-time .control-label,.success .payment-cart .actions,body.invoice-payment .action-continue-shopping {
   visibility: hidden
 }
 
@@ -239,34 +239,34 @@ input.datepicker {
   text-align: center
 }
 
-.ui-datepicker .ui-datepicker-calendar {
+.ui-datepicker-calendar {
   margin: 0;
   table-layout: fixed;
   width: 100%;
   background: #fff
 }
 
-.ui-datepicker .ui-datepicker-calendar thead {
+.ui-datepicker-calendar thead {
   color: #777;
   font-size: 11px
 }
 
-.ui-datepicker .ui-datepicker-calendar thead th {
+.ui-datepicker-calendar thead th {
   border-bottom: 1px solid #ccc;
   padding: 0
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td {
+.ui-datepicker-calendar tbody td {
   border: 1px solid #efefef;
   border-width: 0 1px 1px 0;
   padding: 0
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td:last-child {
+.ui-datepicker-calendar tbody td:last-child {
   border-right-width: 0
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td .ui-state-default {
+.ui-datepicker-calendar tbody td .ui-state-default {
   background: 0 0;
   border-style: none;
   font-size: 9px;
@@ -278,7 +278,7 @@ input.datepicker {
   box-sizing: border-box
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td .ui-state-default .ui-datepicker-item {
+.ui-datepicker-calendar tbody td .ui-state-default .ui-datepicker-item {
   font-size: 13px;
   height: 100%;
   left: 0;
@@ -289,7 +289,7 @@ input.datepicker {
   width: 100%
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td .ui-state-default .ui-datepicker-item .value {
+.ui-datepicker-calendar tbody td .ui-state-default .ui-datepicker-item .value {
   font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
   font-size: 17px;
   margin-top: 2px;
@@ -299,7 +299,7 @@ input.datepicker {
 }
 
 @media (max-width: 767px) {
-  .ui-datepicker .ui-datepicker-calendar tbody td .ui-state-default .ui-datepicker-item .value {
+  .ui-datepicker-calendar tbody td .ui-state-default .ui-datepicker-item .value {
       font-size:14px;
       margin-top: 10px
   }
@@ -309,64 +309,64 @@ input.datepicker {
   margin: 0
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td .ui-state-default .ui-datepicker-item .info {
+.ui-datepicker-calendar tbody td .ui-state-default .ui-datepicker-item .info {
   font-size: 11px;
   position: absolute;
   left: 25%;
   bottom: -30%
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td .ui-state-default .ui-datepicker-item .info-unavailable-message {
+.ui-datepicker-calendar tbody td .ui-state-default .ui-datepicker-item .info-unavailable-message {
   font-size: 11px;
   color: #337ab7;
   cursor: not-allowed
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td.ui-datepicker-unselectable {
+.ui-datepicker-calendar tbody td.ui-datepicker-unselectable {
   cursor: not-allowed
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td.ui-datepicker-current-day a,button[disabled],html input[disabled] {
+.ui-datepicker-calendar tbody td.ui-datepicker-current-day a,button[disabled],html input[disabled] {
   cursor: default
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td.ui-datepicker-unselectable span {
+.ui-datepicker-calendar tbody td.ui-datepicker-unselectable span {
   opacity: .35
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td.ui-datepicker-unselectable .ui-datepicker-item {
+.ui-datepicker-calendar tbody td.ui-datepicker-unselectable .ui-datepicker-item {
   color: transparent
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-disabled a:hover {
+.ui-datepicker-calendar tbody td.ui-state-disabled a:hover {
   color: #337ab7
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-availability:not(.ui-datepicker-current-day) a,.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-availability:not(.ui-datepicker-waitlist) a,.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-waitlist:not(.ui-datepicker-current-day) a,.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-waitlist:not(.ui-datepicker-waitlist) a {
+.ui-datepicker-calendar tbody td.ui-state-availability:not(.ui-datepicker-current-day) a,.ui-datepicker-calendar tbody td.ui-state-availability:not(.ui-datepicker-waitlist) a,.ui-datepicker-calendar tbody td.ui-state-waitlist:not(.ui-datepicker-current-day) a,.ui-datepicker-calendar tbody td.ui-state-waitlist:not(.ui-datepicker-waitlist) a {
   background-color: #E9F7D4
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-availability:not(.ui-datepicker-current-day) a:hover,.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-availability:not(.ui-datepicker-waitlist) a:hover,.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-waitlist:not(.ui-datepicker-current-day) a:hover,.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-waitlist:not(.ui-datepicker-waitlist) a:hover {
+.ui-datepicker-calendar tbody td.ui-state-availability:not(.ui-datepicker-current-day) a:hover,.ui-datepicker-calendar tbody td.ui-state-availability:not(.ui-datepicker-waitlist) a:hover,.ui-datepicker-calendar tbody td.ui-state-waitlist:not(.ui-datepicker-current-day) a:hover,.ui-datepicker-calendar tbody td.ui-state-waitlist:not(.ui-datepicker-waitlist) a:hover {
   background-color: #337ab7;
   color: #fff
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-availability a.ui-state-waitlist,.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-waitlist a.ui-state-waitlist {
+.ui-datepicker-calendar tbody td.ui-state-availability a.ui-state-waitlist,.ui-datepicker-calendar tbody td.ui-state-waitlist a.ui-state-waitlist {
   background-color: #fef9db
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-availability.ui-datepicker-current-day a,.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-waitlist.ui-datepicker-current-day a {
+.ui-datepicker-calendar tbody td.ui-state-availability.ui-datepicker-current-day a,.ui-datepicker-calendar tbody td.ui-state-waitlist.ui-datepicker-current-day a {
   background-color: #337ab7;
   color: #fff;
   cursor: default
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td.ui-datepicker-current-day {
+.ui-datepicker-calendar tbody td.ui-datepicker-current-day {
   background-color: #337ab7;
   color: #fff
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td.unavailable-message .ui-datepicker-item span {
+.ui-datepicker-calendar tbody td.unavailable-message .ui-datepicker-item span {
   font-size: 10px;
   text-align: center;
   position: static;
@@ -376,7 +376,7 @@ input.datepicker {
   word-wrap: break-word
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody tr:last-child td {
+.ui-datepicker-calendar tbody tr:last-child td {
   border-bottom-width: 0
 }
 
@@ -1109,11 +1109,6 @@ pre code {
   .container {
       width:1170px
   }
-}
-
-.row {
-  margin-left: -15px;
-  margin-right: -15px
 }
 
 .col-lg-1,.col-lg-10,.col-lg-11,.col-lg-12,.col-lg-2,.col-lg-3,.col-lg-4,.col-lg-5,.col-lg-6,.col-lg-7,.col-lg-8,.col-lg-9,.col-md-1,.col-md-10,.col-md-11,.col-md-12,.col-md-2,.col-md-3,.col-md-4,.col-md-5,.col-md-6,.col-md-7,.col-md-8,.col-md-9,.col-sm-1,.col-sm-10,.col-sm-11,.col-sm-12,.col-sm-2,.col-sm-3,.col-sm-4,.col-sm-5,.col-sm-6,.col-sm-7,.col-sm-8,.col-sm-9,.col-xs-1,.col-xs-10,.col-xs-11,.col-xs-12,.col-xs-2,.col-xs-3,.col-xs-4,.col-xs-5,.col-xs-6,.col-xs-7,.col-xs-8,.col-xs-9 {
@@ -4240,15 +4235,6 @@ h1,h2,h3,h4 {
   border-left-color: #fff
 }
 
-.clearfix:after,.clearfix:before,.container-fluid:after,.container-fluid:before,.container:after,.container:before,.dl-horizontal dd:after,.dl-horizontal dd:before,.form-horizontal .form-group:after,.form-horizontal .form-group:before,.modal-footer:after,.modal-footer:before,.modal-header:after,.modal-header:before,.panel-body:after,.panel-body:before,.row:after,.row:before {
-  content: " ";
-  display: table
-}
-
-.clearfix:after,.container-fluid:after,.container:after,.dl-horizontal dd:after,.form-horizontal .form-group:after,.modal-footer:after,.modal-header:after,.panel-body:after,.row:after {
-  clear: both
-}
-
 .center-block {
   display: block;
   margin-left: auto;
@@ -4283,7 +4269,7 @@ h1,h2,h3,h4 {
   border: 0
 }
 
-.package-purchase-create-details var,.purchase-create-details var {
+var, var {
   font-style: normal
 }
 
@@ -5557,22 +5543,22 @@ ul.messenger-theme-air,ul.messenger-theme-flat,ul.messenger-theme-future {
   padding-left: 10px
 }
 
-.region-arrival .input-group,.region-arrival-inline .input-group {
+.input-group,.region-arrival-inline .input-group {
   width: 90%;
   max-width: 400px;
   margin: auto
 }
 
-.region-arrival .arrival-time-btns-wrapper,.region-arrival-inline .arrival-time-btns-wrapper {
+.arrival-time-btns-wrapper,.region-arrival-inline .arrival-time-btns-wrapper {
   display: flex;
   flex-wrap: wrap
 }
 
-.region-arrival .arrival-time-btn-wrapper,.region-arrival-inline .arrival-time-btn-wrapper {
+.arrival-time-btn-wrapper,.region-arrival-inline .arrival-time-btn-wrapper {
   margin: 2px
 }
 
-.region-arrival .ui-state-not-scheduled,.region-arrival-inline .ui-state-not-scheduled {
+.ui-state-not-scheduled,.region-arrival-inline .ui-state-not-scheduled {
   cursor: not-allowed
 }
 
@@ -5691,15 +5677,6 @@ ul.messenger-theme-air,ul.messenger-theme-flat,ul.messenger-theme-future {
   }
 }
 
-.apply-code .title {
-  text-align: left;
-  margin-left: 10px;
-  color: gray
-}
-
-.apply-code .modal-body .row {
-  padding: 15px 10px
-}
 
 .apply-code .modal-body label {
   text-align: right;
@@ -5731,9 +5708,7 @@ ul.messenger-theme-air,ul.messenger-theme-flat,ul.messenger-theme-future {
   margin: 0 0 10px 10px
 }
 
-.affiliate-voucher-modal .row {
-  padding: 5px
-}
+
 
 .affiliate-voucher-modal .has-feedback-left {
   margin: 0
@@ -5791,7 +5766,7 @@ ul.messenger-theme-air,ul.messenger-theme-flat,ul.messenger-theme-future {
   float: right
 }
 
-.ui-datepicker .ui-datepicker-calendar tbody td.ui-state-disabled .ui-state-default {
+.ui-datepicker-calendar tbody td.ui-state-disabled .ui-state-default {
   background-color: transparent
 }
 
@@ -5915,43 +5890,6 @@ label {
   box-shadow: none
 }
 
-#app.order #main-wrapper,#app.order>#root-layout {
-  table-layout: fixed
-}
-
-#app #main-wrapper,#app>#root-layout {
-  display: table;
-  width: 100%
-}
-
-#app #main,#app #sidebar {
-  display: table-cell
-}
-
-#app.payment #sidebar,.no-bg.with-iframe #footer>div.success-footer>div.row>div.col-sm-4>div>button.action-submit {
-  display: none
-}
-
-#app #main {
-  width: 100%
-}
-
-#app #close {
-  top: -45px;
-  left: 100%
-}
-
-#app #close .closelink {
-  padding: 5px;
-  font-weight: 700;
-  text-decoration: underline
-}
-
-#app #sidebar {
-  min-width: 200px;
-  max-width: 200px;
-  overflow: hidden
-}
 
 @media (max-width: 767px) {
   .form-field-group .error-text .error-text-item {
@@ -6233,71 +6171,71 @@ label {
   padding-right: 10px
 }
 
-.package-purchase-create-details .addons {
+.addons {
   padding-top: 15px
 }
 
-.package-purchase-create-details .error-msg-wrapper {
+.error-msg-wrapper {
   height: 42px
 }
 
-.package-purchase-create-details .error-msg-wrapper .quantity-error-msg-wrapper {
+.error-msg-wrapper .quantity-error-msg-wrapper {
   display: flex
 }
 
-.package-purchase-create-details .experience-photo-and-name-wrapper {
+.experience-photo-and-name-wrapper {
   display: inline-block;
   padding-bottom: 5px
 }
 
-.package-purchase-create-details .experience-photo-and-name-wrapper .experience-photo-and-name {
+.experience-photo-and-name-wrapper .experience-photo-and-name {
   margin: auto;
   display: flex
 }
 
-.package-purchase-create-details .experience-photo-and-name-wrapper .experience-photo-and-name .experience-photo-wrapper {
+.experience-photo-and-name-wrapper .experience-photo-and-name .experience-photo-wrapper {
   padding: 0 10px
 }
 
-.package-purchase-create-details .experience-photo-and-name-wrapper .experience-photo-and-name .experience-photo-wrapper .experience-photo {
+.experience-photo-and-name-wrapper .experience-photo-and-name .experience-photo-wrapper .experience-photo {
   width: 50px
 }
 
-.package-purchase-create-details .experience-photo-and-name-wrapper .experience-photo-and-name .experience-name {
+.experience-photo-and-name-wrapper .experience-photo-and-name .experience-name {
   font-size: 18px;
   font-family: MavenPro;
   padding: 0 10px
 }
 
-.package-purchase-create-details .experience-photo-and-name-wrapper .experience-photo-and-name .experience-name .experience-duration {
+.experience-photo-and-name-wrapper .experience-photo-and-name .experience-name .experience-duration {
   font-size: 14px
 }
 
-.package-purchase-create-details .experience-photo-and-name-wrapper .experience-photo-and-name .experience-name .experience-duration .xola-icon {
+.experience-photo-and-name-wrapper .experience-photo-and-name .experience-name .experience-duration .xola-icon {
   margin-right: 5px;
   font-size: 12px
 }
 
-.package-purchase-create-details .quantity-addon-wrapper {
+.quantity-addon-wrapper {
   min-height: 350px
 }
 
-.package-purchase-create-details .contact-info {
+.contact-info {
   padding-top: 10px
 }
 
-.package-purchase-create-details .region-addons .spinner .spinner-label {
+.region-addons .spinner .spinner-label {
   margin-top: -8px!important;
   text-align: left;
   font-size: 14px
 }
 
-.package-purchase-create-details .region-arrival label,.package-purchase-create-details .region-arrival-inline label {
+ label,-inline label {
   font-size: 18px;
   font-weight: 700
 }
 
-.package-purchase-create-details .region-arrival .arrival-time label,.package-purchase-create-details .region-arrival-inline .arrival-time label {
+ .arrival-time label,-inline .arrival-time label {
   display: none
 }
 
@@ -6400,9 +6338,7 @@ label {
   border: none
 }
 
-.payment-method-credit-card .row {
-  margin-right: 0
-}
+
 
 .payment-method-credit-card .cc-password.form-group.has-error .error-text {
   margin-left: 15px
@@ -6484,17 +6420,7 @@ label {
   margin-left: 0
 }
 
-.payment-method-emv .row .form-group {
-  display: inline-block;
-  margin-left: 1em
-}
 
-.payment-method-emv .row .form-group img {
-  display: inline-block;
-  float: right;
-  margin-top: -5em;
-  width: 30%
-}
 
 .stripe-element {
   padding: 8px 12px;
@@ -6696,19 +6622,22 @@ label {
   .purchase-create-banner .experience-excerpt {
       font-size: 12px
   }
-
-  .purchase-create-addons .form-horizontal,.purchase-create-details .form-horizontal {
+  .purchase-create-details {
+    position: relative;
+    padding: 10px 30px 0;
+}
+  .purchase-create-addons .form-horizontal, .form-horizontal {
       margin: 0 30px
   }
 
-  .purchase-create-addons .form-horizontal .control-label,.purchase-create-details .form-horizontal .control-label {
+  .purchase-create-addons .form-horizontal .control-label, .form-horizontal .control-label {
       padding-left: 0;
       font-size: 13px;
       font-weight: 700;
       margin-bottom: 0
   }
 
-  .purchase-create-addons .form-horizontal .input-group,.purchase-create-details .form-horizontal .input-group {
+  .purchase-create-addons .form-horizontal .input-group, .form-horizontal .input-group {
       width: 100%
   }
 }
@@ -6728,35 +6657,35 @@ label {
   margin-top: 3px
 }
 
-.package-purchase-create-details,.purchase-create-details {
+.package-purchase-create-details{
   position: relative;
   padding: 10px 30px 0
 }
 
-.package-purchase-create-details .addons,.purchase-create-details .addons {
+.addons, .addons {
   padding-top: 15px
 }
 
-.package-purchase-create-details h2,.purchase-create-details h2 {
+h2, h2 {
   border: none;
   margin-bottom: 0
 }
 
-.package-purchase-create-details .spin-down,.package-purchase-create-details .spin-up,.purchase-create-details .spin-down,.purchase-create-details .spin-up {
+.spin-down,.spin-up, .spin-down, .spin-up {
   font-weight: 700;
   color: #999;
   border-color: #eee
 }
 
-.package-purchase-create-details .error-msg-wrapper,.purchase-create-details .error-msg-wrapper {
+.error-msg-wrapper, .error-msg-wrapper {
   position: relative
 }
 
-.package-purchase-create-details .error-msg-wrapper .quantity-error-msg-wrapper,.purchase-create-details .error-msg-wrapper .quantity-error-msg-wrapper {
+.error-msg-wrapper .quantity-error-msg-wrapper, .error-msg-wrapper .quantity-error-msg-wrapper {
   display: flex
 }
 
-.package-purchase-create-details .error-msg-wrapper .quantity-error-msg,.purchase-create-details .error-msg-wrapper .quantity-error-msg {
+.error-msg-wrapper .quantity-error-msg, .error-msg-wrapper .quantity-error-msg {
   display: block;
   padding: 5px 50px;
   color: #d9534f;
@@ -6766,7 +6695,7 @@ label {
   text-align: center
 }
 
-.package-purchase-create-details .check-in-restriction-collection,.purchase-create-details .check-in-restriction-collection {
+.check-in-restriction-collection, .check-in-restriction-collection {
   background-color: #E1F1F8;
   border: 1px solid #26AAE3;
   padding: 32px;
@@ -6777,131 +6706,129 @@ label {
   color: #26AAE3
 }
 
-.package-purchase-create-details .check-in-restriction-collection span.check-in-restriction-item-title,.purchase-create-details .check-in-restriction-collection span.check-in-restriction-item-title {
+.check-in-restriction-collection span.check-in-restriction-item-title, .check-in-restriction-collection span.check-in-restriction-item-title {
   font-size: 14px;
   font-weight: 600
 }
 
-.package-purchase-create-details .check-in-restriction-collection p,.purchase-create-details .check-in-restriction-collection p {
+.check-in-restriction-collection p, .check-in-restriction-collection p {
   margin-bottom: 0
 }
 
-.package-purchase-create-details .region-arrival .arrival-date .upcoming-dates,.package-purchase-create-details .region-arrival .arrival-date-inline .upcoming-dates,.purchase-create-details .region-arrival .arrival-date .upcoming-dates,.purchase-create-details .region-arrival .arrival-date-inline .upcoming-dates {
+ .arrival-date .upcoming-dates, .arrival-date-inline .upcoming-dates, .arrival-date .upcoming-dates, .arrival-date-inline .upcoming-dates {
   width: 25%;
   box-shadow: none
 }
 
-.package-purchase-create-details .region-arrival .arrival-time label,.purchase-create-details .region-arrival .arrival-time label {
+.arrival-time label {
   display: none
 }
 
-.package-purchase-create-details .membership-quantity .row,.package-purchase-create-details .purchase-addon .row,.package-purchase-create-details .purchase-catalog-item .row,.package-purchase-create-details .purchase-demographic .row,.package-purchase-create-details .region-customer .form-group,.package-purchase-create-details .region-questionnaire .form-group,.purchase-create-details .membership-quantity .row,.purchase-create-details .purchase-addon .row,.purchase-create-details .purchase-catalog-item .row,.purchase-create-details .purchase-demographic .row,.purchase-create-details .region-customer .form-group,.purchase-create-details .region-questionnaire .form-group {
-  display: flex
-}
 
-.package-purchase-create-details .lhs-container,.purchase-create-details .lhs-container {
+
+.lhs-container, .lhs-container {
   min-height: 450px
 }
 
-.package-purchase-create-details .contact-info .customer-email-wrapper,.package-purchase-create-details .contact-info .customer-name-wrapper,.package-purchase-create-details .contact-info .customer-phone-wrapper,.package-purchase-create-details .contact-info .questionnaire-dob-wrapper,.purchase-create-details .contact-info .customer-email-wrapper,.purchase-create-details .contact-info .customer-name-wrapper,.purchase-create-details .contact-info .customer-phone-wrapper,.purchase-create-details .contact-info .questionnaire-dob-wrapper {
+.contact-info .customer-email-wrapper,.contact-info .customer-name-wrapper,.contact-info .customer-phone-wrapper,.contact-info .questionnaire-dob-wrapper, .contact-info .customer-email-wrapper, .contact-info .customer-name-wrapper, .contact-info .customer-phone-wrapper, .contact-info .questionnaire-dob-wrapper {
   padding-left: 15px
 }
 
-.package-purchase-create-details .contact-info .customer-email-wrapper input,.package-purchase-create-details .contact-info .customer-name-wrapper input,.package-purchase-create-details .contact-info .customer-phone-wrapper input,.package-purchase-create-details .contact-info .questionnaire-dob-wrapper input,.purchase-create-details .contact-info .customer-email-wrapper input,.purchase-create-details .contact-info .customer-name-wrapper input,.purchase-create-details .contact-info .customer-phone-wrapper input,.purchase-create-details .contact-info .questionnaire-dob-wrapper input {
+.contact-info .customer-email-wrapper input,.contact-info .customer-name-wrapper input,.contact-info .customer-phone-wrapper input,.contact-info .questionnaire-dob-wrapper input, .contact-info .customer-email-wrapper input, .contact-info .customer-name-wrapper input, .contact-info .customer-phone-wrapper input, .contact-info .questionnaire-dob-wrapper input {
   margin-left: 0
 }
 
-.package-purchase-create-details .contact-info .customer-email-wrapper .input-group,.package-purchase-create-details .contact-info .customer-name-wrapper .input-group,.package-purchase-create-details .contact-info .customer-phone-wrapper .input-group,.package-purchase-create-details .contact-info .questionnaire-dob-wrapper .input-group,.purchase-create-details .contact-info .customer-email-wrapper .input-group,.purchase-create-details .contact-info .customer-name-wrapper .input-group,.purchase-create-details .contact-info .customer-phone-wrapper .input-group,.purchase-create-details .contact-info .questionnaire-dob-wrapper .input-group {
+.contact-info .customer-email-wrapper .input-group,.contact-info .customer-name-wrapper .input-group,.contact-info .customer-phone-wrapper .input-group,.contact-info .questionnaire-dob-wrapper .input-group, .contact-info .customer-email-wrapper .input-group, .contact-info .customer-name-wrapper .input-group, .contact-info .customer-phone-wrapper .input-group, .contact-info .questionnaire-dob-wrapper .input-group {
   padding-right: 0
 }
 
-.package-purchase-create-details .contact-info .control-label,.purchase-create-details .contact-info .control-label {
+.contact-info .control-label, .contact-info .control-label {
   padding-top: 7px;
   padding-left: 0
 }
 
-.package-purchase-create-details .arrival-time-btn-wrapper button,.purchase-create-details .arrival-time-btn-wrapper button {
+.arrival-time-btn-wrapper button, .arrival-time-btn-wrapper button {
   background: #fff;
   padding-top: 5px;
   padding-bottom: 5px;
   height: inherit
 }
 
-.package-purchase-create-details .membership-quantity,.package-purchase-create-details .purchase-addon,.package-purchase-create-details .purchase-catalog-item,.package-purchase-create-details .purchase-demographic,.purchase-create-details .membership-quantity,.purchase-create-details .purchase-addon,.purchase-create-details .purchase-catalog-item,.purchase-create-details .purchase-demographic {
+.purchase-addon {
   margin-left: 20px;
   border-color: #eee
 }
 
-.package-purchase-create-details .membership-quantity .has-error,.package-purchase-create-details .purchase-addon .has-error,.package-purchase-create-details .purchase-catalog-item .has-error,.package-purchase-create-details .purchase-demographic .has-error,.purchase-create-details .membership-quantity .has-error,.purchase-create-details .purchase-addon .has-error,.purchase-create-details .purchase-catalog-item .has-error,.purchase-create-details .purchase-demographic .has-error {
+ .has-error,.purchase-addon .has-error, .has-error,.purchase-demographic .has-error,  .has-error, .purchase-addon .has-error,  .has-error, .purchase-demographic .has-error {
   color: #d9534f
 }
 
-.package-purchase-create-details .membership-quantity .has-error input,.package-purchase-create-details .membership-quantity .has-error label,.package-purchase-create-details .membership-quantity .has-error span,.package-purchase-create-details .purchase-addon .has-error input,.package-purchase-create-details .purchase-addon .has-error label,.package-purchase-create-details .purchase-addon .has-error span,.package-purchase-create-details .purchase-catalog-item .has-error input,.package-purchase-create-details .purchase-catalog-item .has-error label,.package-purchase-create-details .purchase-catalog-item .has-error span,.package-purchase-create-details .purchase-demographic .has-error input,.package-purchase-create-details .purchase-demographic .has-error label,.package-purchase-create-details .purchase-demographic .has-error span,.purchase-create-details .membership-quantity .has-error input,.purchase-create-details .membership-quantity .has-error label,.purchase-create-details .membership-quantity .has-error span,.purchase-create-details .purchase-addon .has-error input,.purchase-create-details .purchase-addon .has-error label,.purchase-create-details .purchase-addon .has-error span,.purchase-create-details .purchase-catalog-item .has-error input,.purchase-create-details .purchase-catalog-item .has-error label,.purchase-create-details .purchase-catalog-item .has-error span,.purchase-create-details .purchase-demographic .has-error input,.purchase-create-details .purchase-demographic .has-error label,.purchase-create-details .purchase-demographic .has-error span {
+ .has-error input, .has-error label, .has-error span,.purchase-addon .has-error input,.purchase-addon .has-error label,.purchase-addon .has-error span, .has-error input, .has-error label, .has-error span,.purchase-demographic .has-error input,.purchase-demographic .has-error label,.purchase-demographic .has-error span,  .has-error input,  .has-error label,  .has-error span, .purchase-addon .has-error input, .purchase-addon .has-error label, .purchase-addon .has-error span,  .has-error input,  .has-error label,  .has-error span, .purchase-demographic .has-error input, .purchase-demographic .has-error label, .purchase-demographic .has-error span {
   color: inherit
 }
 
-.package-purchase-create-details .membership-quantity .spinner-description-wrapper,.package-purchase-create-details .purchase-addon .spinner-description-wrapper,.package-purchase-create-details .purchase-catalog-item .spinner-description-wrapper,.package-purchase-create-details .purchase-demographic .spinner-description-wrapper,.purchase-create-details .membership-quantity .spinner-description-wrapper,.purchase-create-details .purchase-addon .spinner-description-wrapper,.purchase-create-details .purchase-catalog-item .spinner-description-wrapper,.purchase-create-details .purchase-demographic .spinner-description-wrapper {
+ .spinner-description-wrapper,.purchase-addon .spinner-description-wrapper, .spinner-description-wrapper,.purchase-demographic .spinner-description-wrapper,  .spinner-description-wrapper, .purchase-addon .spinner-description-wrapper,  .spinner-description-wrapper, .purchase-demographic .spinner-description-wrapper {
   padding: 9px 0 0
 }
 
-.package-purchase-create-details .membership-quantity .spinner-wrapper,.package-purchase-create-details .purchase-addon .spinner-wrapper,.package-purchase-create-details .purchase-catalog-item .spinner-wrapper,.package-purchase-create-details .purchase-demographic .spinner-wrapper,.package-purchase-create-details .spinner .spinner-label-wrapper,.purchase-create-details .membership-quantity .spinner-wrapper,.purchase-create-details .purchase-addon .spinner-wrapper,.purchase-create-details .purchase-catalog-item .spinner-wrapper,.purchase-create-details .purchase-demographic .spinner-wrapper,.purchase-create-details .spinner .spinner-label-wrapper {
+ .spinner-wrapper,.purchase-addon .spinner-wrapper, .spinner-wrapper,.purchase-demographic .spinner-wrapper,.spinner .spinner-label-wrapper,  .spinner-wrapper, .purchase-addon .spinner-wrapper,  .spinner-wrapper, .purchase-demographic .spinner-wrapper, .spinner .spinner-label-wrapper {
   padding-left: 0
 }
 
 @media (min-width: 480px) and (max-width:992px) {
-  .package-purchase-create-details .membership-quantity .spinner-description-wrapper,.package-purchase-create-details .purchase-addon .spinner-description-wrapper,.package-purchase-create-details .purchase-catalog-item .spinner-description-wrapper,.package-purchase-create-details .purchase-demographic .spinner-description-wrapper,.purchase-create-details .membership-quantity .spinner-description-wrapper,.purchase-create-details .purchase-addon .spinner-description-wrapper,.purchase-create-details .purchase-catalog-item .spinner-description-wrapper,.purchase-create-details .purchase-demographic .spinner-description-wrapper {
+   .spinner-description-wrapper,.purchase-addon .spinner-description-wrapper, .spinner-description-wrapper,.purchase-demographic .spinner-description-wrapper,  .spinner-description-wrapper, .purchase-addon .spinner-description-wrapper,  .spinner-description-wrapper, .purchase-demographic .spinner-description-wrapper {
       margin-left:15px
   }
 
-  .package-purchase-create-details .membership-quantity .spinner-description-wrapper .spinner-description,.package-purchase-create-details .purchase-addon .spinner-description-wrapper .spinner-description,.package-purchase-create-details .purchase-catalog-item .spinner-description-wrapper .spinner-description,.package-purchase-create-details .purchase-demographic .spinner-description-wrapper .spinner-description,.purchase-create-details .membership-quantity .spinner-description-wrapper .spinner-description,.purchase-create-details .purchase-addon .spinner-description-wrapper .spinner-description,.purchase-create-details .purchase-catalog-item .spinner-description-wrapper .spinner-description,.purchase-create-details .purchase-demographic .spinner-description-wrapper .spinner-description {
+   .spinner-description-wrapper .spinner-description,.purchase-addon .spinner-description-wrapper .spinner-description, .spinner-description-wrapper .spinner-description,.purchase-demographic .spinner-description-wrapper .spinner-description,  .spinner-description-wrapper .spinner-description, .purchase-addon .spinner-description-wrapper .spinner-description,  .spinner-description-wrapper .spinner-description, .purchase-demographic .spinner-description-wrapper .spinner-description {
       padding-right: 0;
       margin-right: 0
   }
 }
 
 @media (min-width: 992px) {
-  .package-purchase-create-details .membership-quantity .spinner-description-wrapper,.package-purchase-create-details .purchase-addon .spinner-description-wrapper,.package-purchase-create-details .purchase-catalog-item .spinner-description-wrapper,.package-purchase-create-details .purchase-demographic .spinner-description-wrapper,.purchase-create-details .membership-quantity .spinner-description-wrapper,.purchase-create-details .purchase-addon .spinner-description-wrapper,.purchase-create-details .purchase-catalog-item .spinner-description-wrapper,.purchase-create-details .purchase-demographic .spinner-description-wrapper {
+   .spinner-description-wrapper,.purchase-addon .spinner-description-wrapper, .spinner-description-wrapper,.purchase-demographic .spinner-description-wrapper,  .spinner-description-wrapper, .purchase-addon .spinner-description-wrapper,  .spinner-description-wrapper, .purchase-demographic .spinner-description-wrapper {
       margin-left:15px
   }
 
-  .package-purchase-create-details .membership-quantity .spinner-description-wrapper .spinner-description,.package-purchase-create-details .purchase-addon .spinner-description-wrapper .spinner-description,.package-purchase-create-details .purchase-catalog-item .spinner-description-wrapper .spinner-description,.package-purchase-create-details .purchase-demographic .spinner-description-wrapper .spinner-description,.purchase-create-details .membership-quantity .spinner-description-wrapper .spinner-description,.purchase-create-details .purchase-addon .spinner-description-wrapper .spinner-description,.purchase-create-details .purchase-catalog-item .spinner-description-wrapper .spinner-description,.purchase-create-details .purchase-demographic .spinner-description-wrapper .spinner-description {
+   .spinner-description-wrapper .spinner-description,.purchase-addon .spinner-description-wrapper .spinner-description, .spinner-description-wrapper .spinner-description,.purchase-demographic .spinner-description-wrapper .spinner-description,  .spinner-description-wrapper .spinner-description, .purchase-addon .spinner-description-wrapper .spinner-description,  .spinner-description-wrapper .spinner-description, .purchase-demographic .spinner-description-wrapper .spinner-description {
       padding-right: 0;
       margin-right: 0
   }
 
-  .package-purchase-create-details .membership-quantity .spinner-wrapper,.package-purchase-create-details .purchase-addon .spinner-wrapper,.package-purchase-create-details .purchase-catalog-item .spinner-wrapper,.package-purchase-create-details .purchase-demographic .spinner-wrapper,.purchase-create-details .membership-quantity .spinner-wrapper,.purchase-create-details .purchase-addon .spinner-wrapper,.purchase-create-details .purchase-catalog-item .spinner-wrapper,.purchase-create-details .purchase-demographic .spinner-wrapper {
+   .spinner-wrapper,.purchase-addon .spinner-wrapper, .spinner-wrapper,.purchase-demographic .spinner-wrapper,  .spinner-wrapper, .purchase-addon .spinner-wrapper,  .spinner-wrapper, .purchase-demographic .spinner-wrapper {
       padding: 0
   }
 }
 
-.package-purchase-create-details .membership-quantity .boolean-addon-wrapper,.package-purchase-create-details .purchase-addon .boolean-addon-wrapper,.package-purchase-create-details .purchase-catalog-item .boolean-addon-wrapper,.package-purchase-create-details .purchase-demographic .boolean-addon-wrapper,.purchase-create-details .membership-quantity .boolean-addon-wrapper,.purchase-create-details .purchase-addon .boolean-addon-wrapper,.purchase-create-details .purchase-catalog-item .boolean-addon-wrapper,.purchase-create-details .purchase-demographic .boolean-addon-wrapper {
+ .boolean-addon-wrapper,.purchase-addon .boolean-addon-wrapper, .boolean-addon-wrapper,.purchase-demographic .boolean-addon-wrapper,  .boolean-addon-wrapper, .purchase-addon .boolean-addon-wrapper,  .boolean-addon-wrapper, .purchase-demographic .boolean-addon-wrapper {
   margin-bottom: 15px
 }
 
-.package-purchase-create-details .membership-quantity .boolean-addon-wrapper .checkbox-addon-description,.package-purchase-create-details .purchase-addon .boolean-addon-wrapper .checkbox-addon-description,.package-purchase-create-details .purchase-catalog-item .boolean-addon-wrapper .checkbox-addon-description,.package-purchase-create-details .purchase-demographic .boolean-addon-wrapper .checkbox-addon-description,.purchase-create-details .membership-quantity .boolean-addon-wrapper .checkbox-addon-description,.purchase-create-details .purchase-addon .boolean-addon-wrapper .checkbox-addon-description,.purchase-create-details .purchase-catalog-item .boolean-addon-wrapper .checkbox-addon-description,.purchase-create-details .purchase-demographic .boolean-addon-wrapper .checkbox-addon-description {
+ .boolean-addon-wrapper .checkbox-addon-description,.purchase-addon .boolean-addon-wrapper .checkbox-addon-description, .boolean-addon-wrapper .checkbox-addon-description,.purchase-demographic .boolean-addon-wrapper .checkbox-addon-description,  .boolean-addon-wrapper .checkbox-addon-description, .purchase-addon .boolean-addon-wrapper .checkbox-addon-description,  .boolean-addon-wrapper .checkbox-addon-description, .purchase-demographic .boolean-addon-wrapper .checkbox-addon-description {
   min-height: 18px;
   color: #999
 }
 
-.package-purchase-create-details .membership-quantity .dropdown-addon-description,.package-purchase-create-details .purchase-addon .dropdown-addon-description,.package-purchase-create-details .purchase-catalog-item .dropdown-addon-description,.package-purchase-create-details .purchase-demographic .dropdown-addon-description,.purchase-create-details .membership-quantity .dropdown-addon-description,.purchase-create-details .purchase-addon .dropdown-addon-description,.purchase-create-details .purchase-catalog-item .dropdown-addon-description,.purchase-create-details .purchase-demographic .dropdown-addon-description {
+ .dropdown-addon-description,.purchase-addon .dropdown-addon-description, .dropdown-addon-description,.purchase-demographic .dropdown-addon-description,  .dropdown-addon-description, .purchase-addon .dropdown-addon-description,  .dropdown-addon-description, .purchase-demographic .dropdown-addon-description {
   color: #999
 }
 
-.package-purchase-create-details .membership-quantity .choices-addon-wrapper,.package-purchase-create-details .purchase-addon .choices-addon-wrapper,.package-purchase-create-details .purchase-catalog-item .choices-addon-wrapper,.package-purchase-create-details .purchase-demographic .choices-addon-wrapper,.purchase-create-details .membership-quantity .choices-addon-wrapper,.purchase-create-details .purchase-addon .choices-addon-wrapper,.purchase-create-details .purchase-catalog-item .choices-addon-wrapper,.purchase-create-details .purchase-demographic .choices-addon-wrapper {
+ .choices-addon-wrapper,.purchase-addon .choices-addon-wrapper, .choices-addon-wrapper,.purchase-demographic .choices-addon-wrapper,  .choices-addon-wrapper, .purchase-addon .choices-addon-wrapper,  .choices-addon-wrapper, .purchase-demographic .choices-addon-wrapper {
   margin-bottom: 15px;
   margin-left: -15px;
   max-width: 400px
 }
 
-.package-purchase-create-details .membership-quantity .checkbox-addon-wrapper,.package-purchase-create-details .purchase-addon .checkbox-addon-wrapper,.package-purchase-create-details .purchase-catalog-item .checkbox-addon-wrapper,.package-purchase-create-details .purchase-demographic .checkbox-addon-wrapper,.purchase-create-details .membership-quantity .checkbox-addon-wrapper,.purchase-create-details .purchase-addon .checkbox-addon-wrapper,.purchase-create-details .purchase-catalog-item .checkbox-addon-wrapper,.purchase-create-details .purchase-demographic .checkbox-addon-wrapper {
+ .checkbox-addon-wrapper,.purchase-addon .checkbox-addon-wrapper, .checkbox-addon-wrapper,.purchase-demographic .checkbox-addon-wrapper,  .checkbox-addon-wrapper, .purchase-addon .checkbox-addon-wrapper,  .checkbox-addon-wrapper, .purchase-demographic .checkbox-addon-wrapper {
   margin-left: -15px
 }
 
-.package-purchase-create-details .purchase-addon .control-label,.package-purchase-create-details .purchase-catalog-item .control-label,.purchase-create-details .purchase-addon .control-label,.purchase-create-details .purchase-catalog-item .control-label {
+.purchase-addon .control-label, .control-label, .purchase-addon .control-label,  .control-label {
   word-break: break-word
 }
 
-.package-purchase-create-details .purchase-addon .purchase-create-thumbnail-addon,.package-purchase-create-details .purchase-catalog-item .purchase-create-thumbnail-addon,.purchase-create-details .purchase-addon .purchase-create-thumbnail-addon,.purchase-create-details .purchase-catalog-item .purchase-create-thumbnail-addon {
+.purchase-addon .purchase-create-thumbnail-addon, .purchase-create-thumbnail-addon, .purchase-addon .purchase-create-thumbnail-addon,  .purchase-create-thumbnail-addon {
   margin-top: 9px;
   width: unset;
   max-width: 83px;
@@ -6909,90 +6836,88 @@ label {
 }
 
 @media (max-width: 992px) {
-  .package-purchase-create-details .purchase-addon .purchase-create-thumbnail-addon>img,.package-purchase-create-details .purchase-catalog-item .purchase-create-thumbnail-addon>img,.purchase-create-details .purchase-addon .purchase-create-thumbnail-addon>img,.purchase-create-details .purchase-catalog-item .purchase-create-thumbnail-addon>img {
+  .purchase-addon .purchase-create-thumbnail-addon>img, .purchase-create-thumbnail-addon>img, .purchase-addon .purchase-create-thumbnail-addon>img,  .purchase-create-thumbnail-addon>img {
       min-width:85%;
       margin-right: 20px;
       padding-right: unset
   }
 }
 
-.package-purchase-create-details .purchase-addon .purchase-addon-without-image,.package-purchase-create-details .purchase-catalog-item .purchase-addon-without-image,.purchase-create-details .purchase-addon .purchase-addon-without-image,.purchase-create-details .purchase-catalog-item .purchase-addon-without-image {
+.purchase-addon .purchase-addon-without-image, .purchase-addon-without-image, .purchase-addon .purchase-addon-without-image,  .purchase-addon-without-image {
   padding-right: 15px
 }
 
-.package-purchase-create-details .purchase-addon .purchase-addon-without-image>label,.package-purchase-create-details .purchase-catalog-item .purchase-addon-without-image>label,.purchase-create-details .purchase-addon .purchase-addon-without-image>label,.purchase-create-details .purchase-catalog-item .purchase-addon-without-image>label {
+.purchase-addon .purchase-addon-without-image>label, .purchase-addon-without-image>label, .purchase-addon .purchase-addon-without-image>label,  .purchase-addon-without-image>label {
   width: 49px;
   margin: unset
 }
 
 @media (max-width: 992px) {
-  .package-purchase-create-details .purchase-addon .purchase-addon-without-image>label,.package-purchase-create-details .purchase-catalog-item .purchase-addon-without-image>label,.purchase-create-details .purchase-addon .purchase-addon-without-image>label,.purchase-create-details .purchase-catalog-item .purchase-addon-without-image>label {
+  .purchase-addon .purchase-addon-without-image>label, .purchase-addon-without-image>label, .purchase-addon .purchase-addon-without-image>label,  .purchase-addon-without-image>label {
       margin-right:20px;
       padding-right: unset
   }
 
-  .package-purchase-create-details .purchase-addon .purchase-create-spinner-addon .spinner-label-wrapper,.package-purchase-create-details .purchase-catalog-item .purchase-create-spinner-addon .spinner-label-wrapper,.purchase-create-details .purchase-addon .purchase-create-spinner-addon .spinner-label-wrapper,.purchase-create-details .purchase-catalog-item .purchase-create-spinner-addon .spinner-label-wrapper {
+  .purchase-addon .purchase-create-spinner-addon .spinner-label-wrapper, .purchase-create-spinner-addon .spinner-label-wrapper, .purchase-addon .purchase-create-spinner-addon .spinner-label-wrapper,  .purchase-create-spinner-addon .spinner-label-wrapper {
       float: left
   }
 }
 
-.package-purchase-create-details .region-customer,.package-purchase-create-details .region-questionnaire,.purchase-create-details .region-customer,.purchase-create-details .region-questionnaire {
+.region-customer,.region-questionnaire, .region-customer, .region-questionnaire {
   margin-left: -15px
 }
 
-.package-purchase-create-details .region-addons,.package-purchase-create-details .region-demographics,.purchase-create-details .region-addons,.purchase-create-details .region-demographics {
+.region-addons  {
   margin-left: -5px
 }
 
-.package-purchase-create-details .region-arrival .arrival-date-inline,.purchase-create-details .region-arrival .arrival-date-inline {
+ .arrival-date-inline, .arrival-date-inline {
   display: none
 }
 
-.package-purchase-create-details .region-arrival .arrival-date-inline .datepicker .ui-datepicker-inline,.purchase-create-details .region-arrival .arrival-date-inline .datepicker .ui-datepicker-inline {
+ .arrival-date-inline .datepicker .ui-datepicker-inline, .arrival-date-inline .datepicker .ui-datepicker-inline {
   padding-bottom: 10px;
   border-bottom: 1px solid;
   margin-bottom: 10px
 }
 
-.package-purchase-create-details .region-arrival,.purchase-create-details .region-arrival {
-  display: block
-}
 
-.package-purchase-create-details .region-arrival .input-group,.purchase-create-details .region-arrival .input-group {
+
+ .input-group, .input-group {
   width: 100%;
   max-width: none
 }
 
-.package-purchase-create-details .region-arrival label,.purchase-create-details .region-arrival label {
+ label, label {
   float: none!important
 }
 
-.package-purchase-create-details .contact-info-container .organizer-alert,.purchase-create-details .contact-info-container .organizer-alert {
+.contact-info-container .organizer-alert, .contact-info-container .organizer-alert {
   padding-right: 15px
 }
 
-.package-purchase-create-details .membership-restrictions h4,.purchase-create-details .membership-restrictions h4 {
+.membership-restrictions h4, .membership-restrictions h4 {
   font-size: 16px
 }
 
 @media (min-width: 992px) {
-  .package-purchase-create-details .region-arrivals,.purchase-create-details .region-arrivals {
+  s, .region-arrivals {
       float:right
   }
 
-  .package-purchase-create-details .contact-info-container,.purchase-create-details .contact-info-container {
+  .contact-info-container, .contact-info-container {
       clear: left
   }
 
-  .package-purchase-create-details .region-arrival .arrival-date,.purchase-create-details .region-arrival .arrival-date {
+   .arrival-date, .arrival-date {
       display: none
   }
 
-  .package-purchase-create-details .region-arrival .arrival-date-inline,.purchase-create-details .region-arrival .arrival-date-inline {
+   .arrival-date-inline, .arrival-date-inline {
       display: block
   }
 
-  .package-purchase-create-details .spinner .spinner-input,.purchase-create-details .spinner .spinner-input {
+  .spinner .spinner-input, .spinner .spinner-input {
       padding-right: 15px
   }
 }
@@ -7001,17 +6926,17 @@ label {
   clear: both
 }
 
-.package-purchase-create-details .region-arrival .arrival-date label,.package-purchase-create-details .region-arrival .arrival-date-inline label,.purchase-create-details .region-arrival .arrival-date label,.purchase-create-details .region-arrival .arrival-date-inline label {
+ .arrival-date label, .arrival-date-inline label, .arrival-date label, .arrival-date-inline label {
   margin-left: -15px
 }
 
-.package-purchase-create-details .region-arrival .arrival-date .ui-datepicker-inline,.package-purchase-create-details .region-arrival .arrival-date-inline .ui-datepicker-inline,.purchase-create-details .region-arrival .arrival-date .ui-datepicker-inline,.purchase-create-details .region-arrival .arrival-date-inline .ui-datepicker-inline {
+ .arrival-date .ui-datepicker-inline, .arrival-date-inline .ui-datepicker-inline, .arrival-date .ui-datepicker-inline, .arrival-date-inline .ui-datepicker-inline {
   display: block;
   margin: 0 auto 5px;
   box-shadow: none
 }
 
-.package-purchase-create-details .region-arrival .arrival-date .ui-datepicker-inline .ui-datepicker-calendar thead th,.package-purchase-create-details .region-arrival .arrival-date-inline .ui-datepicker-inline .ui-datepicker-calendar thead th,.purchase-create-details .region-arrival .arrival-date .ui-datepicker-inline .ui-datepicker-calendar thead th,.purchase-create-details .region-arrival .arrival-date-inline .ui-datepicker-inline .ui-datepicker-calendar thead th {
+ .arrival-date .ui-datepicker-inline .ui-datepicker-calendar thead th, .arrival-date-inline .ui-datepicker-inline .ui-datepicker-calendar thead th, .arrival-date .ui-datepicker-inline .ui-datepicker-calendar thead th, .arrival-date-inline .ui-datepicker-inline .ui-datepicker-calendar thead th {
   border: none;
   font-size: 12px;
   font-weight: initial;
@@ -7019,11 +6944,11 @@ label {
   color: #999
 }
 
-.package-purchase-create-details .region-arrival .arrival-date .ui-datepicker-inline .ui-datepicker-calendar tbody td,.package-purchase-create-details .region-arrival .arrival-date-inline .ui-datepicker-inline .ui-datepicker-calendar tbody td,.purchase-create-details .region-arrival .arrival-date .ui-datepicker-inline .ui-datepicker-calendar tbody td,.purchase-create-details .region-arrival .arrival-date-inline .ui-datepicker-inline .ui-datepicker-calendar tbody td {
+ .arrival-date .ui-datepicker-inline .ui-datepicker-calendar tbody td, .arrival-date-inline .ui-datepicker-inline .ui-datepicker-calendar tbody td, .arrival-date .ui-datepicker-inline .ui-datepicker-calendar tbody td, .arrival-date-inline .ui-datepicker-inline .ui-datepicker-calendar tbody td {
   border: none
 }
 
-.package-purchase-create-details .arrival-error-msg,.package-purchase-create-details .arrival-time-error-msg,.package-purchase-create-details .restriction-error-container,.package-purchase-create-details .upsell-private-error-msg,.purchase-create-details .arrival-error-msg,.purchase-create-details .arrival-time-error-msg,.purchase-create-details .restriction-error-container,.purchase-create-details .upsell-private-error-msg {
+.arrival-error-msg,.arrival-time-error-msg,.restriction-error-container,.upsell-private-error-msg, .arrival-error-msg, .arrival-time-error-msg, .restriction-error-container, .upsell-private-error-msg {
   margin: auto;
   text-align: center;
   color: #d9534f;
@@ -7031,24 +6956,24 @@ label {
   border: 1px solid rgba(242,60,60,.5)
 }
 
-.package-purchase-create-details .arrival-error-msg,.package-purchase-create-details .arrival-time-error-msg,.purchase-create-details .arrival-error-msg,.purchase-create-details .arrival-time-error-msg {
+.arrival-error-msg,.arrival-time-error-msg, .arrival-error-msg, .arrival-time-error-msg {
   width: 60%
 }
 
-.package-purchase-create-details .restriction-error-container,.purchase-create-details .restriction-error-container {
+.restriction-error-container, .restriction-error-container {
   width: 75%
 }
 
-.package-purchase-create-details .quantity,.purchase-create-details .quantity {
+.quantity, .quantity {
   padding-bottom: 10px
 }
 
-.package-purchase-create-details .spinner .spinner-label,.purchase-create-details .spinner .spinner-label {
+.spinner .spinner-label, .spinner .spinner-label {
   font-weight: 400;
   font-size: 14px
 }
 
-.package-purchase-create-details .addons .title,.package-purchase-create-details .booking-privacy .title,.package-purchase-create-details .contact-info .title,.package-purchase-create-details .quantity .title,.package-purchase-create-details .restrictions .title,.purchase-create-details .addons .title,.purchase-create-details .booking-privacy .title,.purchase-create-details .contact-info .title,.purchase-create-details .quantity .title,.purchase-create-details .restrictions .title {
+.addons .title,.booking-privacy .title,.contact-info .title,.quantity .title,.restrictions .title, .addons .title, .booking-privacy .title, .contact-info .title, .quantity .title, .restrictions .title {
   font-size: 16px;
   color: #337ab7;
   font-weight: 300;
@@ -7057,11 +6982,11 @@ label {
   margin: 0
 }
 
-.package-purchase-create-details .ui-datepicker .ui-datepicker-title,.purchase-create-details .ui-datepicker .ui-datepicker-title {
+.ui-datepicker .ui-datepicker-title, .ui-datepicker .ui-datepicker-title {
   font-weight: 400
 }
 
-.package-purchase-create-details .schedule-selector-item,.purchase-create-details .schedule-selector-item {
+.schedule-selector-item, .schedule-selector-item {
   border: 1px solid #eee!important;
   background: linear-gradient(to bottom,#fefefe,#f6f6f6) repeat-x #fbfbfb;
   height: 30px;
@@ -7071,7 +6996,7 @@ label {
   border-radius: 3px
 }
 
-.package-purchase-create-details .schedule-selector-item.active,.purchase-create-details .schedule-selector-item.active {
+.schedule-selector-item.active, .schedule-selector-item.active {
   outline: 0;
   background-color: #337ab7;
   border: 1px solid #337ab7!important;
@@ -7079,68 +7004,68 @@ label {
   font-weight: 700
 }
 
-.package-purchase-create-details .schedule-selector-item.waitlist-slot-item,.purchase-create-details .schedule-selector-item.waitlist-slot-item {
+.schedule-selector-item.waitlist-slot-item, .schedule-selector-item.waitlist-slot-item {
   background: #fef9db
 }
 
-.package-purchase-create-details .schedule-selector-item.waitlist-slot-item.active,.purchase-create-details .schedule-selector-item.waitlist-slot-item.active {
+.schedule-selector-item.waitlist-slot-item.active, .schedule-selector-item.waitlist-slot-item.active {
   background-color: #ffc40d;
   border: 1px solid #ffc40d!important
 }
 
-.package-purchase-create-details .schedule-selector-item-with-count,.purchase-create-details .schedule-selector-item-with-count {
+.schedule-selector-item-with-count, .schedule-selector-item-with-count {
   height: 35px;
   font-size: 12.5px;
   line-height: 10px
 }
 
-.package-purchase-create-details .schedule-selector-item-with-count .slot-quantity,.purchase-create-details .schedule-selector-item-with-count .slot-quantity {
+.schedule-selector-item-with-count .slot-quantity, .schedule-selector-item-with-count .slot-quantity {
   font-size: 9px
 }
 
-.package-purchase-create-details .schedule-selector-item-with-count .hasUnlimitedQuantity var,.purchase-create-details .schedule-selector-item-with-count .hasUnlimitedQuantity var {
+.schedule-selector-item-with-count .hasUnlimitedQuantity var, .schedule-selector-item-with-count .hasUnlimitedQuantity var {
   font-size: x-large;
   vertical-align: bottom
 }
 
-.package-purchase-create-details .schedule-selector-item[disabled],.purchase-create-details .schedule-selector-item[disabled] {
+.schedule-selector-item[disabled], .schedule-selector-item[disabled] {
   background-color: #eee!important;
   color: #555;
   cursor: not-allowed
 }
 
-.package-purchase-create-details .private-booking,.purchase-create-details .private-booking {
+.private-booking, .private-booking {
   padding-bottom: 10px
 }
 
-.package-purchase-create-details .private-booking label,.purchase-create-details .private-booking label {
+.private-booking label, .private-booking label {
   margin-left: 22px;
   cursor: pointer
 }
 
-.package-purchase-create-details .private-booking label span,.purchase-create-details .private-booking label span {
+.private-booking label span, .private-booking label span {
   display: block
 }
 
-.package-purchase-create-details .private-booking i.xola-icon,.purchase-create-details .private-booking i.xola-icon {
+.private-booking i.xola-icon, .private-booking i.xola-icon {
   padding-top: 6px;
   margin-left: 8px
 }
 
-.package-purchase-create-details .private-booking-indicator,.purchase-create-details .private-booking-indicator {
+.private-booking-indicator, .private-booking-indicator {
   display: none
 }
 
 @media (max-width: 992px) {
-  .package-purchase-create-details .spinner .spinner-label-wrapper,.purchase-create-details .spinner .spinner-label-wrapper {
+  .spinner .spinner-label-wrapper, .spinner .spinner-label-wrapper {
       float:right
   }
 
-  .package-purchase-create-details .spinner .spinner-input,.purchase-create-details .spinner .spinner-input {
+  .spinner .spinner-input, .spinner .spinner-input {
       float: left
   }
 
-  .package-purchase-create-details .customer-email-wrapper,.package-purchase-create-details .customer-name-wrapper,.package-purchase-create-details .customer-phone-wrapper,.package-purchase-create-details .questionnaire-dob-wrapper,.purchase-create-details .customer-email-wrapper,.purchase-create-details .customer-name-wrapper,.purchase-create-details .customer-phone-wrapper,.purchase-create-details .questionnaire-dob-wrapper {
+  .customer-email-wrapper,.customer-name-wrapper,.customer-phone-wrapper,.questionnaire-dob-wrapper, .customer-email-wrapper, .customer-name-wrapper, .customer-phone-wrapper, .questionnaire-dob-wrapper {
       padding-right: 0
   }
 }
@@ -9252,11 +9177,6 @@ body {
   box-shadow: 0 0 10px #999
 }
 
-.container-fluid.embedded-checkout-container #footer .row {
-  margin-left: 0;
-  margin-right: 0
-}
-
 .container-fluid.embedded-checkout-container #footer .footer-body {
   padding-left: 20px;
   padding-right: 20px
@@ -9278,17 +9198,17 @@ body {
   right: 16px
 }
 
-.container-fluid.embedded-checkout-container .date-picker-ui-container.ui-datepicker .ui-datepicker-calendar tbody td {
+.container-fluid.embedded-checkout-container .date-picker-ui-container.ui-datepicker-calendar tbody td {
   border: none;
   vertical-align: middle
 }
 
 @media (min-width: 1200px) {
-  .container-fluid.embedded-checkout-container .date-picker-ui-container.ui-datepicker .ui-datepicker-calendar tbody td {
+  .container-fluid.embedded-checkout-container .date-picker-ui-container.ui-datepicker-calendar tbody td {
       line-height:30px
   }
 
-  .container-fluid.embedded-checkout-container .date-picker-ui-container.ui-datepicker .ui-datepicker-calendar tbody td .ui-state-default {
+  .container-fluid.embedded-checkout-container .date-picker-ui-container.ui-datepicker-calendar tbody td .ui-state-default {
       font-size: 15px;
       text-align: center
   }
@@ -9469,7 +9389,7 @@ h4 {
   display: none
 }
 
-.embedded-checkout-container .ui-datepicker-current-day .ui-state-active {
+.ui-datepicker-current-day .ui-state-active {
   color: #fff
 }
 
@@ -9882,12 +9802,12 @@ h4 {
 }
 
 @media all and (max-width: 360px) {
-  .embedded-checkout-container .package-purchase-create-details .spinner .spinner-label-wrapper,.embedded-checkout-container .purchase-create-details .spinner .spinner-label-wrapper {
+  .embedded-checkout-container .spinner .spinner-label-wrapper,.embedded-checkout-container  .spinner .spinner-label-wrapper {
       width:48%
   }
 }
 
-.embedded-checkout-container .package-purchase-create-details .order-addon .boolean-addon-wrapper,.embedded-checkout-container .package-purchase-create-details .order-addon .choices-addon-wrapper,.embedded-checkout-container .purchase-create-details .order-addon .boolean-addon-wrapper,.embedded-checkout-container .purchase-create-details .order-addon .choices-addon-wrapper {
+.embedded-checkout-container .order-addon .boolean-addon-wrapper,.embedded-checkout-container .order-addon .choices-addon-wrapper,.embedded-checkout-container  .order-addon .boolean-addon-wrapper,.embedded-checkout-container  .order-addon .choices-addon-wrapper {
   margin-left: -15px
 }
 
@@ -10441,23 +10361,6 @@ h4 {
   padding: 20px
 }
 
-.gratuity-success .row {
-  margin-top: 90px;
-  text-align: center;
-  padding: 0 12%
-}
-
-.gratuity-success .row .heading {
-  font-family: MavenPro;
-  text-transform: uppercase;
-  font-weight: 700;
-  font-size: 24px
-}
-
-.gratuity-success .row .message {
-  padding: 100px 60px 10px;
-  font-size: 16px
-}
 
 #header {
   display: table-row
@@ -10704,20 +10607,20 @@ h4 {
   display: flex
 }
 
-.split-payment .region-addons .spinner .spinner-label,.split-payment .region-demographics .spinner .spinner-label {
+.split-payment .region-addons .spinner .spinner-label,.split-payment  .spinner .spinner-label {
   font-weight: 400;
   font-size: 14px
 }
 
-.split-payment .region-addons .spinner .control-label,.split-payment .region-demographics .spinner .control-label {
+.split-payment .region-addons .spinner .control-label,.split-payment  .spinner .control-label {
   padding-right: 15px
 }
 
-.split-payment .region-addons .spinner .spinner-pricing,.split-payment .region-demographics .spinner .spinner-pricing {
+.split-payment .region-addons .spinner .spinner-pricing,.split-payment  .spinner .spinner-pricing {
   white-space: nowrap
 }
 
-.split-payment .region-addons .spinner .spinner-input,.split-payment .region-demographics .spinner .spinner-input {
+.split-payment .region-addons .spinner .spinner-input,.split-payment  .spinner .spinner-input {
   margin-left: 15px
 }
 
@@ -10831,19 +10734,19 @@ h4 {
   margin-bottom: 40px
 }
 
-.split-payment-calculator .modal-body .region-items .addons-wrapper,.split-payment-calculator .modal-body .region-items .region-addons,.split-payment-calculator .modal-body .region-items .region-demographics {
+.split-payment-calculator .modal-body .region-items .addons-wrapper,.split-payment-calculator .modal-body .region-items .region-addons,.split-payment-calculator .modal-body .region-items  {
   margin-top: 30px
 }
 
-.split-payment-calculator .modal-body .region-items .region-addons .purchase-addon .spinner .spinner-input,.split-payment-calculator .modal-body .region-items .region-addons .purchase-demographic .spinner .spinner-input,.split-payment-calculator .modal-body .region-items .region-demographics .purchase-addon .spinner .spinner-input,.split-payment-calculator .modal-body .region-items .region-demographics .purchase-demographic .spinner .spinner-input {
+.split-payment-calculator .modal-body .region-items .region-addons .purchase-addon .spinner .spinner-input,.split-payment-calculator .modal-body .region-items .region-addons .purchase-demographic .spinner .spinner-input,.split-payment-calculator .modal-body .region-items  .purchase-addon .spinner .spinner-input,.split-payment-calculator .modal-body .region-items  .purchase-demographic .spinner .spinner-input {
   float: left
 }
 
-.split-payment-calculator .modal-body .region-items .region-addons .purchase-addon .spinner .spinner-label,.split-payment-calculator .modal-body .region-items .region-addons .purchase-demographic .spinner .spinner-label,.split-payment-calculator .modal-body .region-items .region-demographics .purchase-addon .spinner .spinner-label,.split-payment-calculator .modal-body .region-items .region-demographics .purchase-demographic .spinner .spinner-label {
+.split-payment-calculator .modal-body .region-items .region-addons .purchase-addon .spinner .spinner-label,.split-payment-calculator .modal-body .region-items .region-addons .purchase-demographic .spinner .spinner-label,.split-payment-calculator .modal-body .region-items  .purchase-addon .spinner .spinner-label,.split-payment-calculator .modal-body .region-items  .purchase-demographic .spinner .spinner-label {
   padding-top: 0
 }
 
-.split-payment-calculator .modal-body .region-items .region-addons .purchase-addon .spinner .spinner-description,.split-payment-calculator .modal-body .region-items .region-addons .purchase-demographic .spinner .spinner-description,.split-payment-calculator .modal-body .region-items .region-demographics .purchase-addon .spinner .spinner-description,.split-payment-calculator .modal-body .region-items .region-demographics .purchase-demographic .spinner .spinner-description {
+.split-payment-calculator .modal-body .region-items .region-addons .purchase-addon .spinner .spinner-description,.split-payment-calculator .modal-body .region-items .region-addons .purchase-demographic .spinner .spinner-description,.split-payment-calculator .modal-body .region-items  .purchase-addon .spinner .spinner-description,.split-payment-calculator .modal-body .region-items  .purchase-demographic .spinner .spinner-description {
   display: block;
   width: 100%
 }
@@ -10929,12 +10832,12 @@ h4 {
 }
 
 @media (max-width: 767px) {
-  .split-payment .region-addons,.split-payment .region-demographics {
+  .split-payment{
       margin-left:15px;
       margin-right: 15px
   }
 
-  .split-payment .region-addons .spinner .control-label,.split-payment .region-demographics .spinner .control-label {
+  .split-payment .region-addons .spinner .control-label,.split-payment .spinner .control-label {
       max-width: 50%
   }
 
@@ -11090,9 +10993,6 @@ h4 {
   color: #f0ad4e
 }
 
-.availability-timeline .timeline-wrapper .timeline-container .availability-experience .row-display-flex {
-  display: flex
-}
 
 .availability-timeline .timeline-wrapper .timeline-container .availability-experience .availability-experience-time {
   margin: auto 12px;
@@ -11249,22 +11149,6 @@ h4 {
   height: 420px
 }
 
-.waitlist-success .row {
-  margin-top: 90px;
-  text-align: center;
-  padding: 0 12%
-}
-
-.waitlist-success .row .heading {
-  text-transform: uppercase;
-  color: #EDCD92;
-  font-size: 24px
-}
-
-.waitlist-success .row .message {
-  padding: 10px 60px;
-  font-size: 16px
-}
 
 .waitlist-message {
   max-width: 80%;
@@ -11301,60 +11185,6 @@ h4 {
 #sidebar,#sidebar>.cart {
   height: 100%
 }
-
-@media (min-width: 768px) {
-  #sidebar {
-      background-color:#C5E3BF
-  }
-
-  #sidebar .row:nth-child(3) {
-      position: absolute;
-      bottom: 0
-  }
-
-  #sidebar .cart-footer .checkout {
-      position: relative;
-      bottom: 0;
-      width: 200px;
-      line-height: normal;
-      padding: 19px 0;
-      white-space: normal
-  }
-
-  #sidebar>.cart {
-      overflow-y: auto;
-      overflow-x: hidden
-  }
-}
-
-#sidebar>.cart .header {
-  padding: 0 15px
-}
-
-.cart-header {
-  padding: 20px 15px
-}
-
-.cart-header:after,.cart-header:before {
-  content: " ";
-  display: table
-}
-
-.cart-header .cart-count,.cart-header h3 {
-  margin: 0;
-  padding: 0;
-  line-height: 26px
-}
-
-.cart-header .xola-icon {
-  margin-right: 4px;
-  font-size: 18px
-}
-
-.cart-purchases {
-  padding: 0 15px 40px
-}
-
 .cart-purchases .cart-membership-purchase,.cart-purchases .cart-package-purchase,.cart-purchases .cart-reservation {
   position: relative;
   margin-top: 6px;

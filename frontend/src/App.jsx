@@ -18,7 +18,7 @@ function App() {
       <main id="main-wrapper">
         <section id="main">
           <Banner />
-          <BookingForm />
+          <BookingForm  className='p-4'/>
         </section>
       </main>
     </RootLayout>

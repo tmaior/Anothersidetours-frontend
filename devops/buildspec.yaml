@@ -22,5 +22,6 @@ phases:
       - echo "Upload completed."
 
 artifacts:
+  base-directory: frontend/dist
   files:
     - '**/*'

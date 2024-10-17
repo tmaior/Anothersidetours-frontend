@@ -59,10 +59,14 @@ const DatePicker = ({ onChange, ...props }) => {
     // Initialize datepicker when the component mounts
     if (datepickerRef.current && !datepickerRef.current.classList.contains('hasDatePicker')) {
       $(datepickerRef.current).datepicker({
-        onSelect: (value) => onChange(value ? Moment(value, 'MM/DD/YYYY') : '')
+        onSelect: (value) => onChange(value ? Moment(value, 'MM/DD/YYYY') : ''),
+        minDate: new Date()
+        
       });
+
     }
   }, [onChange]);
+
 
   return (
     <div

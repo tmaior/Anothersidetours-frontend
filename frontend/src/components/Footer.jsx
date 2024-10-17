@@ -3,57 +3,53 @@ import styled from 'styled-components';
 
 // Styled components for each section
 const FooterBody = styled.div`
-  .row {
-    display: flex;
-    flex-wrap: wrap;
-  }
+      height: 60px;
+    line-height: 60px;
+    background-color: #eee;
+    width: 100%;
+
 `;
 
 const FooterCommon = styled.div`
-  background-color: #f8f9fa; /* Example background */
-  padding: 20px 0;
-  .row {
-    display: flex;
-    justify-content: space-between;
-  }
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #555;
+  
 `;
 
 const BackLink = styled.a`
-  text-decoration: none;
-  color: #000;
-  cursor: pointer;
-
-  &.hidden {
-    display: none;
-  }
+  flex-grow: 1;
 
 `
 const Verisign = styled.div`
+    margin-right: 20px;
+    text-align: right;
   img {
-    height: 40px; /* Adjust the size as needed */
+    height: 30px;
+    vertical-align: middle;
   }
 `;
 
 const ActionsWrapper = styled.div`
-  display: flex;
-  justify-content: space-between;
+
 `;
 
 const ActionButton = styled.button`
-  background-color: ${(props) => (props.success ? '#28a745' : '#6c757d')};
-  color: #fff;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
 
-  &.hidden {
-    display: none;
-  }
+    padding: 0 15px;
+    color: #fff;
+    background-color: #5cb85c;
+    float: left;
+    font-family: MavenPro;
+    font-size: 18px;
+    border: none;
+    border-radius: 0;
+    height: 61px;
+    line-height: 1em;
+    text-transform: uppercase;
+    white-space: normal;
 
-  .xola-icon {
-    margin-right: 5px;
-  }
 `;
 
 // Footer component
@@ -62,19 +58,15 @@ const Footer = () => {
     <FooterBody>
       <div className="row">
         <div className="col-sm-9">
-          <FooterCommon className="footer-common">
+          <FooterCommon>
             <div className="row">
-              <div className="col-md-1 col-sm-1">
-                <BackLink className="action-back hidden" tabIndex="0">
-                  Back
-                </BackLink>
-              </div>
+     
               <div className="col-md-8 col-sm-7">
                
               </div>
               <div className="col-md-3 col-sm-4">
                 <Verisign>
-                  <img alt="Secure SSL encryption" src="images/ssl-secure-encryption.svg" />
+                  <img alt="Secure SSL encryption" src="https://checkout.xola.app/images/ssl-secure-encryption.svg" />
                 </Verisign>
               </div>
             </div>

@@ -1,35 +1,31 @@
 {
   "name": "frontend",
+  "version": "0.1.0",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "ajax": "^0.0.4",
-    "bootstrap": "5",
-    "moment": "^2.30.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-jqueryui-datepicker": "^1.0.3",
-    "styled-components": "^6.1.13"
+    "@chakra-ui/icons": "^2.2.4",
+    "@chakra-ui/next-js": "^2.4.2",
+    "@chakra-ui/react": "^2.10.3",
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^11.11.9",
+    "next": "14.2.15",
+    "react": "^18",
+    "react-dom": "^18"
   },
   "devDependencies": {
-    "@eslint/js": "^9.11.1",
-    "@types/react": "^18.3.10",
-    "@types/react-dom": "^18.3.0",
-    "@types/styled-components": "^5.1.34",
-    "@vitejs/plugin-react": "^4.3.2",
-    "eslint": "^9.11.1",
-    "eslint-plugin-react": "^7.37.0",
-    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
-    "eslint-plugin-react-refresh": "^0.4.12",
-    "globals": "^15.9.0",
-    "vite": "^5.4.8"
-  },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.15",
+    "typescript": "^5"
+  }
 }

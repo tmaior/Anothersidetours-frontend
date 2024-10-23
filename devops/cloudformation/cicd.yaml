@@ -2,13 +2,17 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: CodePipeline for automated deployment of static site to S3.
 
 Parameters:
-  RepositoryBranch:
+  FrontendRepositoryBranch:
+    Type: String
+  BackendRepositoryBranch:
+    Type: String
+  FrontendGitHubRepo:
+    Type: String
+  BackendGitHubRepo:
     Type: String
   GitHubv2ConnectionArn:
     Type: String
   GitHubOwner:
-    Type: String
-  GitHubRepo:
     Type: String
   BuildSpecPath:
     Type: String
@@ -51,6 +55,32 @@ Resources:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
+                Resource: "*"
+        - PolicyName: CodeBuildECRPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:PutImage
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+                Resource: "*"
+        - PolicyName: CodeBuildECSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecs:ListTasks
+                  - ecs:DescribeTasks
+                  - ecs:StopTask
+                  - ecs:UpdateService
                 Resource: "*"
 
   CodePipelineRole:
@@ -145,10 +175,10 @@ Resources:
               - "kms:GenerateDataKey"
             Resource: "*"
           
-  CodeBuildProject:
+  CodeBuildProjectFrontend:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub ${ProjectName}-build-project
+      Name: !Sub ${ProjectName}-build-frontend
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -164,11 +194,34 @@ Resources:
         Type: CODEPIPELINE
         BuildSpec: !Ref BuildSpecPath
 
-  CodePipeline:
-    Type: AWS::CodePipeline::Pipeline
-    DependsOn: [CodeBuildProject, KMSEncryptionKey, BucketPolicy]
+  CodeBuildProjectBackend:
+    Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub ${ProjectName}-codepipeline
+      Name: !Sub ${ProjectName}-build-backend
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+        EncryptionDisabled: false
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+        EnvironmentVariables:
+        - Name: ECS_CLUSTER_NAME
+          Value: !Sub ${ProjectName}-ecs
+        - Name: SERVICE_NAME
+          Value: !Sub ${ProjectName}-application-backend
+        - Name: ECR_REPOSITORY_NAME
+          Value: !Sub ${ProjectName}-backend
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Ref BuildSpecPath
+
+  CodePipelineFrontend:
+    Type: AWS::CodePipeline::Pipeline
+    DependsOn: [CodeBuildProjectFrontend, KMSEncryptionKey, BucketPolicy]
+    Properties:
+      Name: !Sub ${ProjectName}-pipeline-frontend
       RoleArn: !GetAtt CodePipelineRole.Arn
       ArtifactStore:
         Type: S3
@@ -187,8 +240,8 @@ Resources:
                 Provider: CodeStarSourceConnection
               Configuration:
                 ConnectionArn: !Ref GitHubv2ConnectionArn
-                FullRepositoryId: !Sub ${GitHubOwner}/${GitHubRepo}
-                BranchName: !Ref RepositoryBranch
+                FullRepositoryId: !Sub ${GitHubOwner}/${FrontendGitHubRepo}
+                BranchName: !Ref FrontendRepositoryBranch
               OutputArtifacts:
                 - Name: SourceOutput
               RunOrder: 1
@@ -205,7 +258,7 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ProjectName: !Ref CodeBuildProject
+                ProjectName: !Ref CodeBuildProjectFrontend
               RunOrder: 2
         - Name: Deploy
           Actions:
@@ -221,6 +274,50 @@ Resources:
                 BucketName: !Ref WebsiteS3Bucket
                 Extract: true
               RunOrder: 3
+  
+  CodePipelineBackend:
+    Type: AWS::CodePipeline::Pipeline
+    DependsOn: [CodeBuildProjectBackend, KMSEncryptionKey, BucketPolicy]
+    Properties:
+      Name: !Sub ${ProjectName}-pipeline-backend
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref S3BucketForArtifacts
+        EncryptionKey:
+          Type: KMS
+          Id: !Ref KMSEncryptionKey
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeStarSourceConnection
+              Configuration:
+                ConnectionArn: !Ref GitHubv2ConnectionArn
+                FullRepositoryId: !Sub ${GitHubOwner}/${BackendGitHubRepo}
+                BranchName: !Ref BackendRepositoryBranch
+              OutputArtifacts:
+                - Name: SourceOutput
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              InputArtifacts:
+                - Name: SourceOutput
+              OutputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ProjectName: !Ref CodeBuildProjectBackend
+              RunOrder: 2
 
 Outputs:
   CodeBuildRoleArn:

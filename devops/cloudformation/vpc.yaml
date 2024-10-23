@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Sets up vpc.
+Description: Sets up vpc
 
 Parameters:    
   ProjectName:
@@ -57,7 +57,7 @@ Resources:
       CidrBlock: !Sub '${PublicSubnet1Ip}/24'
       AvailabilityZone:
         'Fn::Select':
-          - 1
+          - 0
           - 'Fn::GetAZs': !Ref 'AWS::Region'
       Tags:
         - Key: Name
@@ -70,7 +70,7 @@ Resources:
       CidrBlock: !Sub '${PublicSubnet2Ip}/24'
       AvailabilityZone:
         'Fn::Select':
-          - 2
+          - 1
           - 'Fn::GetAZs': !Ref 'AWS::Region'
       Tags:
         - Key: Name
@@ -110,7 +110,7 @@ Resources:
       CidrBlock: !Sub '${PrivateSubnet1Ip}/24'
       AvailabilityZone:
         'Fn::Select':
-          - 1
+          - 0
           - 'Fn::GetAZs': !Ref 'AWS::Region'
       Tags:
         - Key: Name
@@ -123,7 +123,7 @@ Resources:
       CidrBlock: !Sub '${PrivateSubnet2Ip}/24'
       AvailabilityZone:
         'Fn::Select':
-          - 2
+          - 1
           - 'Fn::GetAZs': !Ref 'AWS::Region'
       Tags:
         - Key: Name

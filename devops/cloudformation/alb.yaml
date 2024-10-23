@@ -1,0 +1,124 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Sets up elb
+
+Parameters:
+  ProjectName:
+    Type: String
+
+  ACMCertificateArn:
+    Type: String
+
+Resources:
+  InternalAccessSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId:
+        Fn::ImportValue: !Sub '${ProjectName}-VPC'
+      GroupName: !Sub '${ProjectName}AllowInternalAccess'
+      GroupDescription: Enables access to all VPC protocols and IPs
+      SecurityGroupIngress:
+        - IpProtocol: '-1'
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 
+            Fn::ImportValue: !Sub '${ProjectName}-VPCCidrBlock'
+
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Fn::ImportValue: !Sub '${ProjectName}-VPC'
+      GroupName: !Sub ${ProjectName}AllowWebServer
+      GroupDescription: Enables access to all IPs to port 80 and 443
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  Alb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub ${ProjectName}-alb
+      Type: application
+      Scheme: internet-facing
+      Subnets:
+        - Fn::ImportValue: !Sub '${ProjectName}-PublicSubnet1'
+        - Fn::ImportValue: !Sub '${ProjectName}-PublicSubnet2'
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+        - !Ref InternalAccessSecurityGroup
+
+  AlbDefaultTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub tg-${ProjectName}-default
+      VpcId:
+        Fn::ImportValue: !Sub '${ProjectName}-VPC'
+      Port: 80
+      Protocol: HTTP
+      Matcher:
+        HttpCode: '301,200'
+      HealthCheckIntervalSeconds: 300
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 120
+      HealthyThresholdCount: 2
+      
+  AlbListenerForHttp:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref Alb
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Host: "#{host}"
+            Path: "/#{path}"
+            Port: '443'
+            Protocol: HTTPS
+            Query: "#{query}"
+            StatusCode: HTTP_301
+
+  AlbListenerForHttps:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref Alb
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref ACMCertificateArn
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref AlbDefaultTargetGroup
+
+Outputs:
+  LoadBalancerSecurityGroup:
+    Value: !Ref LoadBalancerSecurityGroup
+    Export:
+      Name: !Sub ${ProjectName}LoadBalancerSecurityGroup
+
+  AlbDns:
+    Value: !GetAtt Alb.DNSName
+    Export:
+      Name: !Sub ${ProjectName}AlbDns
+
+  Alb:
+    Value: !Ref Alb
+    Export:
+      Name: !Sub ${ProjectName}Alb
+
+  InternalAccessSecurityGroup:
+    Value: !Ref InternalAccessSecurityGroup
+    Export:
+      Name: !Sub ${ProjectName}InternalAccessSecurityGroup
+  
+  BackendAlbDefaultTargetGroup:
+    Value: !Ref AlbDefaultTargetGroup
+    Export:
+      Name: !Sub ${ProjectName}BackendAlbDefaultTargetGroup

@@ -1,0 +1,174 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Sets up ecs cluster
+
+Parameters:
+  ProjectName:
+    Type: String
+  ECSInstanceType:
+    Type: String
+  BastionInstanceType:
+    Type: String
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+  AsgServiceMin:
+    Type: String
+  AsgServiceDesired:
+    Type: String
+  AsgServiceMax:
+    Type: String
+  EcsImage:
+    Type: AWS::EC2::Image::Id
+  EbsEncrypted:
+    Type: String
+    Default: 'yes'
+
+Conditions:
+  isEbsEncrypted: !Equals
+    - !Ref EbsEncrypted
+    - 'yes'
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Asg
+      Parameters:
+        - AsgServiceMin
+        - AsgServiceDesired
+        - AsgServiceMax
+
+Resources:
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::Region}-${ProjectName}_EC2Role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - 'ec2.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AdministratorAccess'
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref EC2Role
+      InstanceProfileName: !Sub ${AWS::Region}-${ProjectName}_EC2InstanceProfile
+
+  BastionSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Fn::ImportValue: !Sub '${ProjectName}-VPC'
+      GroupName: !Sub ${ProjectName}AllowSSH
+      GroupDescription: Enables access to all IPs to port 22
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+  BastionInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-bastion
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: '0'
+          GroupSet:
+            - !Ref BastionSecurityGroup
+            - 'Fn::ImportValue': !Sub ${ProjectName}InternalAccessSecurityGroup
+          SubnetId:
+            Fn::ImportValue: !Sub '${ProjectName}-PublicSubnet1'
+      ImageId: !Ref EcsImage
+      InstanceType: !Ref BastionInstanceType
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref EC2InstanceProfile
+
+  LaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      KeyName: !Ref KeyName
+      ImageId: !Ref EcsImage
+      SecurityGroups:
+        - 'Fn::ImportValue': !Sub ${ProjectName}InternalAccessSecurityGroup
+      InstanceType: !Ref ECSInstanceType
+      BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"
+          Ebs:
+            Encrypted: !If
+              - isEbsEncrypted
+              - true
+              - !Ref 'AWS::NoValue'
+            VolumeSize: 50
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          #====== Install SSM
+          yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+          start amazon-ssm-agent
+          chkconfig amazon-ssm-agent on
+
+          echo ECS_CLUSTER=${ProjectName}-ecs >> /etc/ecs/ecs.config
+          echo ECS_INSTANCE_ATTRIBUTES={\"cluster_type\":\"application\"} >> /etc/ecs/ecs.config
+          #====== Install Kernel Headers
+            yum install -y kernel-devel-$(uname -r)
+
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-application-backend
+          PropagateAtLaunch: true
+      LaunchConfigurationName: !Ref LaunchConfiguration
+      MinSize: !Ref AsgServiceMin
+      DesiredCapacity: !Ref AsgServiceDesired
+      MaxSize: !Ref AsgServiceMax
+      TargetGroupARNs:
+        - 'Fn::ImportValue': !Sub ${ProjectName}BackendAlbDefaultTargetGroup
+      VPCZoneIdentifier:
+        - Fn::ImportValue: !Sub '${ProjectName}-PrivateSubnet1'
+        - Fn::ImportValue: !Sub '${ProjectName}-PrivateSubnet2'
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: 1
+        MinInstancesInService: !Ref AsgServiceDesired
+        PauseTime: 'PT5M'
+
+  ScaleUpPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref AutoScalingGroup
+      Cooldown: '120'
+      ScalingAdjustment: 1
+
+  ScaleDownPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref AutoScalingGroup
+      Cooldown: '3600'
+      ScalingAdjustment: -1
+
+Outputs:
+  BastionSecurityGroup:
+    Value: !Ref BastionSecurityGroup
+    Export:
+      Name: !Sub ${ProjectName}BastionSecurityGroup
+
+  AutoScalingGroup:
+    Value: !Ref AutoScalingGroup
+    Export:
+      Name: !Sub ${ProjectName}AutoScalingGroup

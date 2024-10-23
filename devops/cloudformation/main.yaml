@@ -15,22 +15,40 @@ Parameters:
   DBUsername:
     Type: String
     Default: 
-  RepositoryBranch:
+  FrontendRepositoryBranch:
     Type: String
     Default: main
+  BackendRepositoryBranch:
+    Type: String
+    Default: master
   GitHubv2ConnectionArn:
     Type: String
     Default: 
   GitHubOwner:
     Type: String
     Default: tmaior
-  GitHubRepo:
+  FrontendGitHubRepo:
     Type: String
     Default: Anothersidetours-frontend
+  BackendGitHubRepo:
+    Type: String
+    Default: anothersidetours-backend
   BuildSpecPath:
     Type: String
     Default: devops/buildspec.yaml
-
+  ACMCertificateArn:
+    Type: String
+    Default: 
+    Description: ARN of the SSL/TLS certificate used to enable HTTPS on the ALB
+  KeyName:
+    Type: String
+    Default: 
+    Description: indicate the key pair name for your EC2 instances
+  EcsImage:
+    Type: String
+    Default: 
+    Description: run the command and use the ami id (change the AWS region) #aws ssm get-parameters --names /aws/service/ecs/optimized-ami/amazon-linux-2/recommended --region us-east-2
+  
 Resources:
   VPCStack:
     Type: AWS::CloudFormation::Stack
@@ -56,22 +74,14 @@ Resources:
       TemplateURL: https://anothersidetours-infrastructure-templates.s3.us-east-2.amazonaws.com/cicd.yaml
       Parameters:
         ProjectName: !Ref ProjectName
-        RepositoryBranch: !Ref RepositoryBranch
+        FrontendRepositoryBranch: !Ref FrontendRepositoryBranch
+        BackendRepositoryBranch: !Ref BackendRepositoryBranch
         GitHubv2ConnectionArn: !Ref GitHubv2ConnectionArn
         GitHubOwner: !Ref GitHubOwner
-        GitHubRepo: !Ref GitHubRepo
+        FrontendGitHubRepo: !Ref FrontendGitHubRepo
+        BackendGitHubRepo: !Ref BackendGitHubRepo
         BuildSpecPath: !Ref BuildSpecPath
         WebsiteS3Bucket: !Ref WebsiteBucketName
-
-  LambdaAPIGatewayStack:
-    Type: AWS::CloudFormation::Stack
-    DependsOn: RDSStack
-    Properties:
-      TemplateURL: https://anothersidetours-infrastructure-templates.s3.us-east-2.amazonaws.com/lambda-apigateway.yaml
-      Parameters:
-        ProjectName: !Ref ProjectName
-        RDSDBName: !Ref RDSDBName
-        DBSecretName: !Ref DBSecretName
 
   S3CloudFrontStack:
     Type: AWS::CloudFormation::Stack
@@ -81,3 +91,35 @@ Resources:
       Parameters:
         WebsiteBucketName: !Ref WebsiteBucketName
         CodeBuildServiceRole: !GetAtt CICDStack.Outputs.CodeBuildRoleArn
+  
+  ALBStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: VPCStack
+    Properties:
+      TemplateURL: https://anothersidetours-infrastructure-templates.s3.us-east-2.amazonaws.com/alb.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        ACMCertificateArn: !Ref ACMCertificateArn
+
+  ASGStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: ALBStack
+    Properties:
+      TemplateURL: https://anothersidetours-infrastructure-templates.s3.us-east-2.amazonaws.com/asg.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        EcsImage: !Ref EcsImage 
+        AsgServiceMax: 2
+        AsgServiceMin: 1
+        AsgServiceDesired: 1
+        KeyName: !Ref KeyName 
+        ECSInstanceType: t3.medium
+        BastionInstanceType: t3.micro
+
+  ECSStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: ASGStack
+    Properties:
+      TemplateURL: https://anothersidetours-infrastructure-templates.s3.us-east-2.amazonaws.com/ecs.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName

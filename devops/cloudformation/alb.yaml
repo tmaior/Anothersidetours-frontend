@@ -59,10 +59,10 @@ Resources:
       Name: !Sub tg-${ProjectName}-default
       VpcId:
         Fn::ImportValue: !Sub '${ProjectName}-VPC'
-      Port: 80
+      Port: 3000
       Protocol: HTTP
       Matcher:
-        HttpCode: '301,200'
+        HttpCode: '301,200,404'
       HealthCheckIntervalSeconds: 300
       HealthCheckPath: /
       HealthCheckProtocol: HTTP

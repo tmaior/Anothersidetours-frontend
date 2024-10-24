@@ -10,7 +10,6 @@ Parameters:
     Type: String
   ProjectName:
     Type: String
-    Default: as-tours
 
 Resources:
   DBSubnetGroup:
@@ -32,15 +31,15 @@ Resources:
         PasswordLength: 16
         ExcludeCharacters: '"@/\'
 
-  MySQLDB:
+  PostgreSQLDB:
     Type: AWS::RDS::DBInstance
     DependsOn: DBSecret
     Properties:
       DBInstanceIdentifier: !Ref DBName
       DBInstanceClass: db.t3.small
       AllocatedStorage: 50
-      Engine: MySQL
-      EngineVersion: '8.0'
+      Engine: postgres
+      EngineVersion: '16.3'
       MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecretName, ':SecretString:username}}']]
       MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecretName, ':SecretString:password}}']]
       DBSubnetGroupName: !Ref DBSubnetGroup
@@ -57,8 +56,8 @@ Resources:
         Fn::ImportValue: !Sub '${ProjectName}-VPC'
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
+          FromPort: 5432 
+          ToPort: 5432
           CidrIp: 
             Fn::ImportValue: !Sub '${ProjectName}-VPCCidrBlock'
 
@@ -67,10 +66,10 @@ Resources:
     Properties:
       Name: /tours_db/rds/endpoint
       Type: String
-      Value: !GetAtt MySQLDB.Endpoint.Address
+      Value: !GetAtt PostgreSQLDB.Endpoint.Address
       Tier: Standard
 
 Outputs:
   RDSHost:
     Description: RDS Endpoint
-    Value: !GetAtt MySQLDB.Endpoint.Address
+    Value: !GetAtt PostgreSQLDB.Endpoint.Address

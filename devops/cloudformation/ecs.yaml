@@ -34,6 +34,14 @@ Parameters:
   EcsFieldPlacementStrategy:
     Type: String
     Default: instanceId
+  DBUsername:
+    Type: String
+  DBName:
+    Type: String
+  DBEndpoint:
+    Type: String
+  DBSecretName:
+    Type: String
 
 Conditions:
   hasOnlyOneTask: !Equals [!Ref EcsTasksNumber, "1"]
@@ -188,6 +196,9 @@ Resources:
               HardLimit: 90000
               Name: nofile
               SoftLimit: 90000
+          Environment:
+          - Name: DATABASE_URL
+            Value: !Sub "postgresql://${DBUsername}:{{resolve:secretsmanager:${DBSecretName}:SecretString:password}}@${DBEndpoint}:5432/${DBName}?schema=public"
 
 Outputs:
   ECSRoleArn:

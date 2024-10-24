@@ -6,9 +6,9 @@ Parameters:
     Type: String
     Default: as-tours-website
   RDSDBName:
-    Description: "RDS database name. Must start with a letter, contain only letters, numbers, and hyphens, and be no more than 63 characters."
+    Description: "RDS database name. Must begin with a letter, contain only letters and numbers, no hyphens and/or underscores, and be no longer than 63 characters."
     Type: String
-    Default: anothersidetours-db  
+    Default: anothersidetoursdb
   DBSecretName:
     Type: String
     Default: as-tours-rds-secret
@@ -38,7 +38,7 @@ Parameters:
     Default: devops/buildspec.yaml
   ACMCertificateArn:
     Type: String
-    Default: 
+    Default:
     Description: ARN of the SSL/TLS certificate used to enable HTTPS on the ALB
   KeyName:
     Type: String
@@ -118,8 +118,12 @@ Resources:
 
   ECSStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: ASGStack
+    DependsOn: [RDSStack, ALBStack]
     Properties:
       TemplateURL: https://anothersidetours-infrastructure-templates.s3.us-east-2.amazonaws.com/ecs.yaml
       Parameters:
         ProjectName: !Ref ProjectName
+        DBEndpoint: !GetAtt RDSStack.Outputs.RDSHost
+        DBUsername: !Ref DBUsername
+        DBName: !Ref RDSDBName
+        DBSecretName: !Ref DBSecretName

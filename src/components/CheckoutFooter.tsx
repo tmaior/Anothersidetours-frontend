@@ -1,6 +1,15 @@
-import {Button, Flex, HStack, Image, Text} from "@chakra-ui/react";
+import {
+    Button,
+    Flex,
+    HStack,
+    Image,
+    Text
+} from "@chakra-ui/react";
+import {GiShoppingCart} from "react-icons/gi";
 
-export default function FooterBar() {
+
+export default function CheckoutFooter() {
+
     return (
         <Flex
             position="static"
@@ -45,8 +54,10 @@ export default function FooterBar() {
                     fontSize="lg"
                     fontWeight="normal"
                     borderRadius={0}
+                    // onClick={goToCheckout}
                 >
-                    CONTINUE
+                    <GiShoppingCart/>
+                    PAY:
                 </Button>
             </Flex>
         </Flex>

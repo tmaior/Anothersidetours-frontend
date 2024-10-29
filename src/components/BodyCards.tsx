@@ -44,6 +44,30 @@ export default function BodyCards() {
             duration: 6,
             image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
         },
+        {
+            title: "Miami Beach Experience",
+            description: "Relax on the sandy shores and enjoy the vibrant nightlife of Miami Beach...",
+            originalPrice: "$299.00",
+            discountedPrice: "$199.00",
+            duration: 6,
+            image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
+        },
+        {
+            title: "Miami Beach Experience",
+            description: "Relax on the sandy shores and enjoy the vibrant nightlife of Miami Beach...",
+            originalPrice: "$299.00",
+            discountedPrice: "$199.00",
+            duration: 6,
+            image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
+        },
+        {
+            title: "Miami Beach Experience",
+            description: "Relax on the sandy shores and enjoy the vibrant nightlife of Miami Beach...",
+            originalPrice: "$299.00",
+            discountedPrice: "$199.00",
+            duration: 6,
+            image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
+        }
     ];
 
     return (
@@ -56,7 +80,7 @@ export default function BodyCards() {
                     originalPrice={data.originalPrice}
                     discountedPrice={data.discountedPrice}
                     duration={data.duration}
-                    image={data.image} // Passando a imagem dinamicamente
+                    image={data.image}
                 />
             ))}
         </SimpleGrid>

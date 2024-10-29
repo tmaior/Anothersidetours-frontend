@@ -18,12 +18,10 @@ export default function PrincipalNavBar() {
                 justifyContent="space-between"
                 px={4}
             >
-                {/* Logo ou título do Navbar */}
                 <Flex fontSize="lg" fontWeight="bold">
                     MyApp
                 </Flex>
 
-                {/* Ícone do hambúrguer para dispositivos móveis */}
                 <IconButton
                     ref={btnRef}
                     icon={<HamburgerIcon />}
@@ -33,7 +31,6 @@ export default function PrincipalNavBar() {
                  aria-label={"Hamburguer-icon"}/>
             </Flex>
 
-            {/* Drawer para menu lateral */}
             <Drawer
                 size={'full'}
                 isOpen={isOpen}
@@ -47,7 +44,6 @@ export default function PrincipalNavBar() {
                     <DrawerHeader>Menu</DrawerHeader>
 
                     <DrawerBody>
-                        {/* Adicione os links do menu aqui */}
                         <Input placeholder="Type here..." />
                     </DrawerBody>
 

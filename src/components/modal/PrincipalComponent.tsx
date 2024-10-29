@@ -4,14 +4,13 @@ import AddOns from "../Add-Ons";
 import FooterBar from "../Footer";
 
 
-export default function PrincipalComponent() {
-
+export default function PrincipalComponent({onContinue}) {
     return (
         <>
             <Navbar/>
             <Grid/>
             <AddOns/>
-            <FooterBar/>
+            <FooterBar onContinue={onContinue}/>
         </>
     )
 }

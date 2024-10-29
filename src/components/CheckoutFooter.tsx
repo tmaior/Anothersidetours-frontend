@@ -5,11 +5,9 @@ import {
     Image,
     Text
 } from "@chakra-ui/react";
-import {GiShoppingCart} from "react-icons/gi";
+import { GiShoppingCart } from "react-icons/gi";
 
-
-export default function CheckoutFooter() {
-
+export default function CheckoutFooter({ totalAmount, onCheckout }) {
     return (
         <Flex
             position="static"
@@ -47,17 +45,17 @@ export default function CheckoutFooter() {
                 <Button
                     bg="#5CB85C"
                     color="white"
-                    _hover={{bg: "#4cae4c"}}
+                    _hover={{ bg: "#4cae4c" }}
                     h={["auto", "60px"]}
                     w={["100%", "auto"]}
                     px={8}
                     fontSize="lg"
                     fontWeight="normal"
                     borderRadius={0}
-                    // onClick={goToCheckout}
+                    onClick={onCheckout}
                 >
-                    <GiShoppingCart/>
-                    PAY:
+                    <GiShoppingCart />
+                    PAY: ${totalAmount}
                 </Button>
             </Flex>
         </Flex>

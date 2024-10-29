@@ -1,5 +1,6 @@
 import {Box, Flex, HStack, IconButton, Text, VStack} from "@chakra-ui/react";
 import {AddIcon, MinusIcon} from "@chakra-ui/icons";
+import React from "react";
 
 interface PickupSpinnerProps {
     title: string;

@@ -1,15 +1,15 @@
+import FooterBar from "./Footer";
 import Navbar from "./Navbar";
 import Grid from "./Grid";
 import AddOns from "./Add-Ons";
-import FooterBar from "./Footer";
 
-export default function BookingDetails() {
+export default function BookingDetails({ onContinue }) {
     return (
         <>
-            <Navbar/>
-            <Grid/>
-            <AddOns/>
-            <FooterBar/>
+            <Navbar />
+            <Grid />
+            <AddOns />
+            <FooterBar onContinue={onContinue} />
         </>
     );
 }

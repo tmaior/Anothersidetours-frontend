@@ -14,12 +14,19 @@ import {
     useDisclosure,
     VStack
 } from "@chakra-ui/react";
-import {FaTag} from "react-icons/fa";
-import {MdOutlineAccessTimeFilled} from "react-icons/md";
+import { FaTag } from "react-icons/fa";
+import { MdOutlineAccessTimeFilled } from "react-icons/md";
 import BookingDetails from "./BookingDetails";
+import CheckoutModal from "./CheckoutModal";
 
-export default function CardHome({title, description, originalPrice, discountedPrice, duration, image}) {
-    const {isOpen, onOpen, onClose} = useDisclosure();
+export default function CardHome({ title, description, originalPrice, discountedPrice, duration, image }) {
+    const { isOpen: isBookingOpen, onOpen: openBooking, onClose: closeBooking } = useDisclosure();
+    const { isOpen: isCheckoutOpen, onOpen: openCheckout, onClose: closeCheckout } = useDisclosure();
+
+    const handleContinueToCheckout = () => {
+        closeBooking();
+        openCheckout();
+    };
 
     return (
         <Flex
@@ -49,12 +56,12 @@ export default function CardHome({title, description, originalPrice, discountedP
                     {description}
                 </Text>
 
-                <Spacer/>
+                <Spacer />
 
                 <HStack w={"100%"} spacing={"0px"} justifyContent="space-around" mt={4}>
                     <VStack spacing={1} align="start">
                         <Flex align="center">
-                            <FaTag size={"20px"} color={"#3D77E3"}/>
+                            <FaTag size={"20px"} color={"#3D77E3"} />
                             <Text fontWeight="bold" ml={2}>PRICE:</Text>
                         </Flex>
                         <Flex>
@@ -68,7 +75,7 @@ export default function CardHome({title, description, originalPrice, discountedP
                     </VStack>
                     <VStack spacing={1} align="start">
                         <Flex align="center">
-                            <MdOutlineAccessTimeFilled size={"20px"} color={"#3D77E3"}/>
+                            <MdOutlineAccessTimeFilled size={"20px"} color={"#3D77E3"} />
                             <Text fontWeight="bold" ml={2}>DURATION:</Text>
                         </Flex>
                         <Text fontSize="md" color="gray.600">
@@ -82,23 +89,30 @@ export default function CardHome({title, description, originalPrice, discountedP
                         <Button w={"full"} h={"100%"}>Learn More</Button>
                     </Flex>
                     <Flex h={"85px"} w={"full"}>
-                        <Button w={"full"} h={"100%"} onClick={onOpen}>
+                        <Button w={"full"} h={"100%"} onClick={openBooking}>
                             Book Now
                         </Button>
                     </Flex>
                 </HStack>
             </VStack>
 
-            <Modal isOpen={isOpen} onClose={onClose} isCentered size="6xl">
-                <ModalOverlay/>
+            <Modal isOpen={isBookingOpen} onClose={closeBooking} isCentered size="6xl">
+                <ModalOverlay />
                 <ModalContent>
                     <ModalHeader>Booking Details</ModalHeader>
-                    <ModalCloseButton/>
+                    <ModalCloseButton />
                     <ModalBody>
-                        <BookingDetails/>
+                        <BookingDetails onContinue={handleContinueToCheckout} />
                     </ModalBody>
                 </ModalContent>
             </Modal>
+
+            <CheckoutModal
+                isOpen={isCheckoutOpen}
+                onClose={closeCheckout}
+                totalDue={235.90}
+                title="Finalizar Compra"
+            />
         </Flex>
     );
 }

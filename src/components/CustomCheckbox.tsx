@@ -1,4 +1,5 @@
 import {Checkbox, Flex, Text, VStack} from "@chakra-ui/react";
+import React from "react";
 
 interface CustomCheckboxProps {
     title: string;

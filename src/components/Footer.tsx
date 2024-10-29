@@ -3,31 +3,20 @@ import {
     Flex,
     HStack,
     Image,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalHeader,
-    ModalOverlay,
-    Text,
-    useDisclosure
+    Text
 } from "@chakra-ui/react";
-import {useState} from "react";
-import CheckoutFooter from "./CheckoutFooter";
+import { useState } from "react";
+import CheckoutModal from "./CheckoutModal";
 
-export default function FooterBar() {
+interface FooterBarProps {
+    onContinue: () => void;
+}
 
-    const {onOpen, onClose} = useDisclosure();
+export default function FooterBar({ onContinue }: FooterBarProps) {
     const [isCheckout, setIsCheckout] = useState(false);
-
-    const goToCheckout = () => {
-        setIsCheckout(true);
-        onOpen();
-    };
 
     const handleClose = () => {
         setIsCheckout(false);
-        onClose();
     };
 
     return (
@@ -67,32 +56,24 @@ export default function FooterBar() {
                 <Button
                     bg="#5CB85C"
                     color="white"
-                    _hover={{bg: "#4cae4c"}}
+                    _hover={{ bg: "#4cae4c" }}
                     h={["auto", "60px"]}
                     w={["100%", "auto"]}
                     px={8}
                     fontSize="lg"
                     fontWeight="normal"
                     borderRadius={0}
-                    onClick={goToCheckout}
+                    onClick={onContinue}
                 >
                     CONTINUE
                 </Button>
 
-                <Modal isOpen={isCheckout} onClose={handleClose} isCentered size="4xl">
-                    <ModalOverlay/>
-                    <ModalContent>
-                        <ModalHeader>Checkout</ModalHeader>
-                        <ModalCloseButton/>
-                        <ModalBody>
-                            <Flex flexDirection="column" alignItems="center">
-                                <Text fontSize="lg" fontWeight="bold"></Text>
-                                {/*<Text mt={2}>Total Due Now: $235.90</Text>*/}
-                                <CheckoutFooter/>
-                            </Flex>
-                        </ModalBody>
-                    </ModalContent>
-                </Modal>
+                <CheckoutModal
+                    isOpen={isCheckout}
+                    onClose={handleClose}
+                    totalDue={235.90}
+                    title="Finalizar Compra"
+                />
             </Flex>
         </Flex>
     );

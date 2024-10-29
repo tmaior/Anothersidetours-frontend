@@ -1,5 +1,5 @@
 import { SimpleGrid, VStack } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Quantity from "./Quantity";
 import FormInfo from "./FormInfo";
 import DatePicker from "./Datepicker";

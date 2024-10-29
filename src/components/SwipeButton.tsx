@@ -1,5 +1,5 @@
 import {Button, Text} from "@chakra-ui/react";
-import {useRef} from "react";
+import React, {useRef} from "react";
 
 interface SwipeButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     firstText: string;
@@ -33,7 +33,6 @@ export default function SwipeButton({
             _hover={{bg: "transparent"}}
             className="group"
         >
-            {/* Texto inicial */}
             <Text
                 className={`absolute inset-0 flex items-center justify-center duration-300 ease-in-out ${firstClass}`}
                 transform="translateY(0)"
@@ -43,7 +42,6 @@ export default function SwipeButton({
                 {firstText}
             </Text>
 
-            {/* Texto ao hover */}
             <Text
                 className={`absolute inset-0 flex items-center justify-center duration-300 ease-in-out ${secondClass}`}
                 transform="translateY(100%)"

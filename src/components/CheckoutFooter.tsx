@@ -7,7 +7,7 @@ import {
 } from "@chakra-ui/react";
 import { GiShoppingCart } from "react-icons/gi";
 
-export default function CheckoutFooter({ totalAmount, onCheckout }) {
+export default function CheckoutFooter({ totalAmount, onCheckout, onClose }) {
     return (
         <Flex
             position="static"
@@ -22,7 +22,22 @@ export default function CheckoutFooter({ totalAmount, onCheckout }) {
             flexDirection={["column", "row"]}
             mt={4}
         >
+            <Button
+                bg="gray.500"
+                color="white"
+                _hover={{ bg: "gray.400" }}
+                h={["auto", "60px"]}
+                w={["100%", "auto"]}
+                px={8}
+                fontSize="lg"
+                fontWeight="normal"
+                borderRadius={0}
+                onClick={onCheckout}
+            >
+                Voltar
+            </Button>
             <HStack spacing={4} pl={8} py={[4, 0]}>
+
                 <Text fontSize="sm" color="gray.500">
                     POWERED BY
                 </Text>
@@ -41,7 +56,6 @@ export default function CheckoutFooter({ totalAmount, onCheckout }) {
                         h="30px"
                     />
                 </HStack>
-
                 <Button
                     bg="#5CB85C"
                     color="white"
@@ -52,7 +66,6 @@ export default function CheckoutFooter({ totalAmount, onCheckout }) {
                     fontSize="lg"
                     fontWeight="normal"
                     borderRadius={0}
-                    onClick={onCheckout}
                 >
                     <GiShoppingCart />
                     PAY: ${totalAmount}

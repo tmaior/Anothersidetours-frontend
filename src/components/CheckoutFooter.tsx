@@ -7,7 +7,7 @@ import {
 } from "@chakra-ui/react";
 import { GiShoppingCart } from "react-icons/gi";
 
-export default function CheckoutFooter({ totalAmount, onCheckout, onClose }) {
+export default function CheckoutFooter({ totalAmount, onCheckout }) {
     return (
         <Flex
             position="static"

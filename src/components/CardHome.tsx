@@ -28,6 +28,11 @@ export default function CardHome({ title, description, originalPrice, discounted
         openCheckout();
     };
 
+    const handleCloseCheckout = () => {
+        closeCheckout();
+        openBooking();
+    };
+
     return (
         <Flex
             w="100%"
@@ -99,7 +104,7 @@ export default function CardHome({ title, description, originalPrice, discounted
             <Modal isOpen={isBookingOpen} onClose={closeBooking} isCentered size="6xl">
                 <ModalOverlay />
                 <ModalContent>
-                    <ModalHeader>Booking Details</ModalHeader>
+                    <ModalHeader></ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
                         <BookingDetails onContinue={handleContinueToCheckout} />
@@ -109,7 +114,7 @@ export default function CardHome({ title, description, originalPrice, discounted
 
             <CheckoutModal
                 isOpen={isCheckoutOpen}
-                onClose={closeCheckout}
+                onClose={handleCloseCheckout}
                 totalDue={235.90}
                 title="Finalizar Compra"
             />

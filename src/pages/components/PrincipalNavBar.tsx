@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Flex, IconButton, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerHeader, DrawerBody, DrawerFooter, Button, Input, useDisclosure } from '@chakra-ui/react';
 import { HamburgerIcon } from '@chakra-ui/icons';
-import Adsense from '@/pages/components/Adsense';
+import Adsense from "./Adsense";
 
 export default function PrincipalNavBar() {
     const { isOpen, onOpen, onClose } = useDisclosure();

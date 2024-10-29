@@ -124,7 +124,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                 onClick={() => {
                                     if (!isPast) {
                                         onChange(cloneDay);
-                                        handleDateSelection(cloneDay);
+                                        handleDateSelection();
                                     }
                                 }}
                                 bg={isSelected ? '#337AB7' : isPast ? 'gray.100' : '#E9F7D4'}
@@ -164,7 +164,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
         return <Box>{rows}</Box>;
     };
 
-    const handleDateSelection = (date: Date) => {
+    const handleDateSelection = () => {
         const times = [];
         for (let hour = 8; hour <= 18; hour++) {
             times.push(`${hour}:00 (${price}.00)`);

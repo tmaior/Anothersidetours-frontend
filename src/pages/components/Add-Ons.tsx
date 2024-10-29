@@ -1,7 +1,7 @@
-import {useState} from "react";
-import PickupSpinner from "@/pages/components/PickupSpinner";
 import {Box, Flex} from "@chakra-ui/react";
-import CustomCheckbox from "@/pages/components/CustomCheckbox";
+import {useState} from "react";
+import PickupSpinner from "./PickupSpinner";
+import CustomCheckbox from "./CustomCheckbox";
 
 export default function AddOns() {
 

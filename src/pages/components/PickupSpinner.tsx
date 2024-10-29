@@ -18,7 +18,6 @@ const PickupSpinner: React.FC<PickupSpinnerProps> = ({
                                                          onChange,
                                                          minValue,
                                                          note,
-                                                         pl = 0,
                                                      }) => {
     const handleAdd = () => {
         onChange(value + 1);

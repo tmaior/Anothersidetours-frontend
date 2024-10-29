@@ -47,7 +47,7 @@ export default function Navbar() {
                     <Text mt={4}>
                         Enjoy our most popular private tour of Hollywood, Beverly Hills, & The Sunset Strip.
                         <br/>
-                        This tour includes a close up of The Hollywood Sign, The Walk Of Fame, Grauman's Chinese
+                        This tour includes a close up of The Hollywood Sign, The Walk Of Fame, Grauman&apos;s Chinese
                         Theatre, the Celebrity Mansions of Beverly Hills, & Rodeo Drive too.
                         <br/>
                         This tour is 4 hours, includes transportation, & all details will be emailed in your formal

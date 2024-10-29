@@ -1,7 +1,8 @@
-import Navbar from "@/pages/components/Navbar";
-import Grid from "@/pages/components/Grid";
-import AddOns from "@/pages/components/Add-Ons";
-import FooterBar from "@/pages/components/Footer";
+import Navbar from "../Navbar";
+import Grid from "../Grid";
+import AddOns from "../Add-Ons";
+import FooterBar from "../Footer";
+
 
 export default function PrincipalComponent() {
 

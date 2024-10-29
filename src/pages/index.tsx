@@ -1,6 +1,6 @@
-import PrincipalNavBar from "@/pages/components/PrincipalNavBar";
-import BodyCards from "@/pages/components/BodyCards";
 import {Flex} from "@chakra-ui/react";
+import PrincipalNavBar from "./components/PrincipalNavBar";
+import BodyCards from "./components/BodyCards";
 
 
 export default function Home() {

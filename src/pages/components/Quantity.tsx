@@ -1,5 +1,5 @@
 import {useState} from "react";
-import PickupSpinner from "@/pages/components/PickupSpinner";
+import PickupSpinner from "./PickupSpinner";
 
 export default function Quantity() {
 

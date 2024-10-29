@@ -1,5 +1,5 @@
 import { SimpleGrid } from "@chakra-ui/react";
-import CardHome from "@/pages/components/CardHome";
+import CardHome from "./CardHome";
 
 export default function BodyCards() {
     const cardData = [

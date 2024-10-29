@@ -6,7 +6,7 @@ RUN yarn install --frozen-lockfile
 
 FROM node:20.18-alpine AS builder
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 WORKDIR /app
 

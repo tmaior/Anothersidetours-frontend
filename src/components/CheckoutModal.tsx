@@ -1,31 +1,37 @@
 import {
-    Flex,
+    Divider, Flex,
     Modal,
     ModalBody,
     ModalCloseButton,
     ModalContent,
     ModalHeader,
-    ModalOverlay,
-    Text
+    ModalOverlay
 } from "@chakra-ui/react";
 import CheckoutFooter from "./CheckoutFooter";
 
-export default function CheckoutModal({ isOpen, onClose, totalDue, title, onBack }) {
+interface CheckoutModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    totalDue: number;
+    title?: string;
+    onBack?: () => void;
+}
+
+export default function CheckoutModal({ isOpen, onClose, totalDue, onBack }:CheckoutModalProps) {
     return (
-        <Modal isOpen={isOpen} onClose={onClose} isCentered size="4xl">
+        <Modal isOpen={isOpen} onClose={onClose} isCentered size="6xl">
             <ModalOverlay />
-            <ModalContent>
-                <ModalHeader>{title || "Checkout"}</ModalHeader>
+            <ModalContent justifyContent={"center"} alignItems={"center"} height={"60vh"}>
+                <ModalHeader>{"CHECKOUT"}</ModalHeader>
+                <Divider/>
                 <ModalCloseButton onClick={onClose} />
                 <ModalBody>
-                    <Flex flexDirection="column" alignItems="center">
-                        <Text fontSize="lg" fontWeight="bold">
-                            {title}
-                        </Text>
-                        <Text mt={2}>Total Due Now: ${totalDue}</Text>
-                        <CheckoutFooter onCheckout={onBack} totalAmount={totalDue} />
+                    <Flex>
+                        {/*<CheckoutBody title={title} totalDue={totalDue} />*/}
                     </Flex>
+                    <Divider/>
                 </ModalBody>
+                <CheckoutFooter totalAmount={totalDue} onCheckout={onBack} onBack={onBack} />
             </ModalContent>
         </Modal>
     );

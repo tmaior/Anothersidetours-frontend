@@ -5,19 +5,13 @@ import {
     Image,
     Text
 } from "@chakra-ui/react";
-import { useState } from "react";
-import CheckoutModal from "./CheckoutModal";
 
 interface FooterBarProps {
     onContinue: () => void;
 }
 
 export default function FooterBar({ onContinue }: FooterBarProps) {
-    const [isCheckout, setIsCheckout] = useState(false);
 
-    const handleClose = () => {
-        setIsCheckout(false);
-    };
 
     return (
         <Flex
@@ -67,13 +61,6 @@ export default function FooterBar({ onContinue }: FooterBarProps) {
                 >
                     CONTINUE
                 </Button>
-
-                <CheckoutModal
-                    isOpen={isCheckout}
-                    onClose={handleClose}
-                    totalDue={235.90}
-                    title="Finalizar Compra"
-                />
             </Flex>
         </Flex>
     );

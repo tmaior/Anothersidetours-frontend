@@ -1,13 +1,7 @@
-import {
-    Button,
-    Flex,
-    HStack,
-    Image,
-    Text
-} from "@chakra-ui/react";
+import { Button, Flex, HStack, Image, Text } from "@chakra-ui/react";
 import { GiShoppingCart } from "react-icons/gi";
 
-export default function CheckoutFooter({ totalAmount, onCheckout }) {
+export default function CheckoutFooter({ totalAmount, onCheckout, onBack }) {
     return (
         <Flex
             position="static"
@@ -32,12 +26,11 @@ export default function CheckoutFooter({ totalAmount, onCheckout }) {
                 fontSize="lg"
                 fontWeight="normal"
                 borderRadius={0}
-                onClick={onCheckout}
+                onClick={onBack}
             >
                 Voltar
             </Button>
             <HStack spacing={4} pl={8} py={[4, 0]}>
-
                 <Text fontSize="sm" color="gray.500">
                     POWERED BY
                 </Text>
@@ -49,7 +42,7 @@ export default function CheckoutFooter({ totalAmount, onCheckout }) {
             </HStack>
 
             <Flex align="center" justify="flex-end" flex={1}>
-                <HStack spacing={4} pr={4}>
+                <HStack spacing={4} pr={10}>
                     <Image
                         src="https://checkout.xola.app/images/ssl-secure-encryption.svg"
                         alt="SSL Secure Encryption"
@@ -61,11 +54,12 @@ export default function CheckoutFooter({ totalAmount, onCheckout }) {
                     color="white"
                     _hover={{ bg: "#4cae4c" }}
                     h={["auto", "60px"]}
-                    w={["100%", "auto"]}
+                    w={"300px"}
                     px={8}
                     fontSize="lg"
                     fontWeight="normal"
                     borderRadius={0}
+                    onClick={onCheckout}
                 >
                     <GiShoppingCart />
                     PAY: ${totalAmount}

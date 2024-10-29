@@ -120,7 +120,6 @@ export default function CardHome({ title, description, originalPrice, discounted
                 isOpen={isCheckoutOpen}
                 onClose={handleCloseCheckout}
                 totalDue={235.90}
-                title="Finalizar Compra"
                 onBack={handleBackToBooking}
             />
         </Flex>

@@ -23,14 +23,18 @@ export default function CardHome({ title, description, originalPrice, discounted
     const { isOpen: isBookingOpen, onOpen: openBooking, onClose: closeBooking } = useDisclosure();
     const { isOpen: isCheckoutOpen, onOpen: openCheckout, onClose: closeCheckout } = useDisclosure();
 
+    const handleCloseCheckout = () => {
+        closeCheckout();
+    };
+
+    const handleBackToBooking = () => {
+        closeCheckout();
+        openBooking();
+    };
+
     const handleContinueToCheckout = () => {
         closeBooking();
         openCheckout();
-    };
-
-    const handleCloseCheckout = () => {
-        closeCheckout();
-        openBooking();
     };
 
     return (
@@ -117,6 +121,7 @@ export default function CardHome({ title, description, originalPrice, discounted
                 onClose={handleCloseCheckout}
                 totalDue={235.90}
                 title="Finalizar Compra"
+                onBack={handleBackToBooking}
             />
         </Flex>
     );

@@ -1,8 +1,26 @@
-import { Button, Flex, HStack, Image, Text, VStack, Spacer } from "@chakra-ui/react";
-import { FaTag } from "react-icons/fa";
-import { MdOutlineAccessTimeFilled } from "react-icons/md";
+import {
+    Button,
+    Flex,
+    HStack,
+    Image,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalHeader,
+    ModalOverlay,
+    Spacer,
+    Text,
+    useDisclosure,
+    VStack
+} from "@chakra-ui/react";
+import {FaTag} from "react-icons/fa";
+import {MdOutlineAccessTimeFilled} from "react-icons/md";
+import BookingDetails from "./BookingDetails";
 
-export default function CardHome({ title, description, originalPrice, discountedPrice, duration, image }) {
+export default function CardHome({title, description, originalPrice, discountedPrice, duration, image}) {
+    const {isOpen, onOpen, onClose} = useDisclosure();
+
     return (
         <Flex
             w="100%"
@@ -27,21 +45,17 @@ export default function CardHome({ title, description, originalPrice, discounted
                 <Text fontWeight="bold" fontSize="25px" mt={4} w={"full"}>
                     {title}
                 </Text>
-                <Text mt={2} color="gray.600" >
+                <Text mt={2} color="gray.600">
                     {description}
                 </Text>
 
-                <Spacer /> {/* Empurra o próximo elemento para o final do card */}
+                <Spacer/>
 
-                {/* Seção de Preço e Duração */}
                 <HStack w={"100%"} spacing={"0px"} justifyContent="space-around" mt={4}>
-                    {/* Preço */}
                     <VStack spacing={1} align="start">
                         <Flex align="center">
-                            <FaTag size={"20px"} color={"#3D77E3"} />
-                            <Text fontWeight="bold" ml={2}>
-                                PRICE:
-                            </Text>
+                            <FaTag size={"20px"} color={"#3D77E3"}/>
+                            <Text fontWeight="bold" ml={2}>PRICE:</Text>
                         </Flex>
                         <Flex>
                             <Text fontSize="2xl" fontWeight="bold" color="black">
@@ -52,14 +66,10 @@ export default function CardHome({ title, description, originalPrice, discounted
                             </Text>
                         </Flex>
                     </VStack>
-
-                    {/* Duração */}
                     <VStack spacing={1} align="start">
                         <Flex align="center">
-                            <MdOutlineAccessTimeFilled size={"20px"} color={"#3D77E3"} />
-                            <Text fontWeight="bold" ml={2}>
-                                DURATION:
-                            </Text>
+                            <MdOutlineAccessTimeFilled size={"20px"} color={"#3D77E3"}/>
+                            <Text fontWeight="bold" ml={2}>DURATION:</Text>
                         </Flex>
                         <Text fontSize="md" color="gray.600">
                             Approx. {duration} Hours.
@@ -67,20 +77,28 @@ export default function CardHome({ title, description, originalPrice, discounted
                     </VStack>
                 </HStack>
 
-                {/* Botões */}
                 <HStack w={"100%"} spacing={"20px"} mt={4}>
                     <Flex h={"85px"} w={"full"}>
-                        <Button w={"full"} h={"100%"}>
-                            Learn More
-                        </Button>
+                        <Button w={"full"} h={"100%"}>Learn More</Button>
                     </Flex>
                     <Flex h={"85px"} w={"full"}>
-                        <Button w={"full"} h={"100%"}>
+                        <Button w={"full"} h={"100%"} onClick={onOpen}>
                             Book Now
                         </Button>
                     </Flex>
                 </HStack>
             </VStack>
+
+            <Modal isOpen={isOpen} onClose={onClose} isCentered size="6xl">
+                <ModalOverlay/>
+                <ModalContent>
+                    <ModalHeader>Booking Details</ModalHeader>
+                    <ModalCloseButton/>
+                    <ModalBody>
+                        <BookingDetails/>
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
         </Flex>
     );
 }

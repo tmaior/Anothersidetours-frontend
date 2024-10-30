@@ -1,13 +1,34 @@
-import {Button, Checkbox, Flex, HStack, Image, Text} from "@chakra-ui/react";
+import {
+    Button,
+    Checkbox,
+    Flex,
+    HStack,
+    Image,
+    Link,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+    Text,
+    useDisclosure
+} from "@chakra-ui/react";
 import {GiShoppingCart} from "react-icons/gi";
 import {useState} from "react";
 
 export default function CheckoutFooter({totalAmount, onCheckout}) {
-
+    const {isOpen, onOpen, onClose} = useDisclosure();
     const [isChecked, setIsChecked] = useState(false);
 
     const handleCheckboxChange = () => {
         setIsChecked(!isChecked);
+    };
+
+    const handleAcceptTerms = () => {
+        setIsChecked(true);
+        onClose();
     };
 
     return (
@@ -34,11 +55,11 @@ export default function CheckoutFooter({totalAmount, onCheckout}) {
                 fontSize="lg"
                 fontWeight="normal"
                 borderRadius={0}
-                // onClick={onBack}
                 onClick={onCheckout}
             >
                 Back
             </Button>
+
             <HStack spacing={4} pl={8} py={[4, 0]}>
                 <Text fontSize="sm" color="gray.500">
                     POWERED BY
@@ -49,7 +70,8 @@ export default function CheckoutFooter({totalAmount, onCheckout}) {
                     h="30px"
                 />
             </HStack>
-            <Flex align="flex-end" flex={5} justify="flex-end">
+
+            <Flex align="center" justify="flex-end" flex={5} position="relative">
                 <Checkbox
                     position="absolute"
                     bottom="70px"
@@ -57,8 +79,15 @@ export default function CheckoutFooter({totalAmount, onCheckout}) {
                     onChange={handleCheckboxChange}
                     w="300px"
                 >
-                    I agree to the Terms and Conditions
+                    I agree to the{" "}
+                    <Link color="teal.500" onClick={(e) => {
+                        e.preventDefault();
+                        onOpen();
+                    }} cursor="pointer">
+                        terms and conditions
+                    </Link>
                 </Checkbox>
+
                 <HStack spacing={7}>
                     <Image
                         src="https://checkout.xola.app/images/ssl-secure-encryption.svg"
@@ -69,9 +98,8 @@ export default function CheckoutFooter({totalAmount, onCheckout}) {
                         bg="#5CB85C"
                         color="white"
                         _hover={{bg: "#4cae4c"}}
-                        h={"60px"}
-                        w={"400px"}
-                        // px={8}
+                        h="60px"
+                        w="400px"
                         fontSize="lg"
                         fontWeight="normal"
                         borderRadius={0}
@@ -82,6 +110,24 @@ export default function CheckoutFooter({totalAmount, onCheckout}) {
                     </Button>
                 </HStack>
             </Flex>
+
+            <Modal isOpen={isOpen} onClose={onClose} isCentered>
+                <ModalOverlay/>
+                <ModalContent>
+                    <ModalHeader>Terms and Conditions</ModalHeader>
+                    <ModalCloseButton/>
+                    <ModalBody>
+                        <Text>
+                            Here are the terms and conditions...
+                        </Text>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button colorScheme="teal" onClick={handleAcceptTerms}>
+                            Accept
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </Flex>
     );
 }

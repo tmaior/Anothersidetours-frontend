@@ -5,12 +5,12 @@ import FormInfo from "./FormInfo";
 import DatePicker from "./Datepicker";
 
 interface GridProps {
-    formInfoRef: React.RefObject<any>;
-    selectedDate: Date | null;
-    setSelectedDate: React.Dispatch<React.SetStateAction<Date | null>>;
-    selectedTime: string | null;
-    setSelectedTime: React.Dispatch<React.SetStateAction<string | null>>;
-    errorMessage: string | null;
+    formInfoRef?: React.RefObject<any>;
+    selectedDate?: Date | null;
+    setSelectedDate?: React.Dispatch<React.SetStateAction<Date | null>>;
+    selectedTime?: string | null;
+    setSelectedTime?: React.Dispatch<React.SetStateAction<string | null>>;
+    errorMessage?: string | null;
 }
 
 const Grid: React.FC<GridProps> = ({

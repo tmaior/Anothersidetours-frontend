@@ -1,6 +1,6 @@
-import { Flex, Text } from "@chakra-ui/react";
+import {Flex, Text} from "@chakra-ui/react";
 
-export default function CheckoutBody({ title, totalDue }) {
+export default function CheckoutBody({title, totalDue}) {
     return (
         <Flex flexDirection="column" alignItems="center" w="full">
             <Text fontSize="lg" fontWeight="bold">

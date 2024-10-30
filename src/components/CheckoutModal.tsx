@@ -1,5 +1,6 @@
 import {
-    Divider, Flex,
+    Divider,
+    Flex,
     Modal,
     ModalBody,
     ModalCloseButton,
@@ -17,21 +18,21 @@ interface CheckoutModalProps {
     onBack?: () => void;
 }
 
-export default function CheckoutModal({ isOpen, onClose, totalDue, onBack }:CheckoutModalProps) {
+export default function CheckoutModal({isOpen, onClose, totalDue, onBack}: CheckoutModalProps) {
     return (
         <Modal isOpen={isOpen} onClose={onClose} isCentered size="6xl">
-            <ModalOverlay />
+            <ModalOverlay/>
             <ModalContent justifyContent={"center"} alignItems={"center"} height={"60vh"}>
                 <ModalHeader>{"CHECKOUT"}</ModalHeader>
                 <Divider/>
-                <ModalCloseButton onClick={onClose} />
+                <ModalCloseButton onClick={onClose}/>
                 <ModalBody>
                     <Flex>
                         {/*<CheckoutBody title={title} totalDue={totalDue} />*/}
                     </Flex>
                     <Divider/>
                 </ModalBody>
-                <CheckoutFooter totalAmount={totalDue} onCheckout={onBack} onBack={onBack} />
+                <CheckoutFooter totalAmount={totalDue} onCheckout={onBack}/>
             </ModalContent>
         </Modal>
     );

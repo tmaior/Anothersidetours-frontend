@@ -1,7 +1,15 @@
-import { Button, Flex, HStack, Image, Text } from "@chakra-ui/react";
-import { GiShoppingCart } from "react-icons/gi";
+import {Button, Checkbox, Flex, HStack, Image, Text} from "@chakra-ui/react";
+import {GiShoppingCart} from "react-icons/gi";
+import {useState} from "react";
 
-export default function CheckoutFooter({ totalAmount, onCheckout, onBack }) {
+export default function CheckoutFooter({totalAmount, onCheckout}) {
+
+    const [isChecked, setIsChecked] = useState(false);
+
+    const handleCheckboxChange = () => {
+        setIsChecked(!isChecked);
+    };
+
     return (
         <Flex
             position="static"
@@ -19,16 +27,17 @@ export default function CheckoutFooter({ totalAmount, onCheckout, onBack }) {
             <Button
                 bg="gray.500"
                 color="white"
-                _hover={{ bg: "gray.400" }}
+                _hover={{bg: "gray.400"}}
                 h={["auto", "60px"]}
                 w={["100%", "auto"]}
                 px={8}
                 fontSize="lg"
                 fontWeight="normal"
                 borderRadius={0}
-                onClick={onBack}
+                // onClick={onBack}
+                onClick={onCheckout}
             >
-                Voltar
+                Back
             </Button>
             <HStack spacing={4} pl={8} py={[4, 0]}>
                 <Text fontSize="sm" color="gray.500">
@@ -40,30 +49,38 @@ export default function CheckoutFooter({ totalAmount, onCheckout, onBack }) {
                     h="30px"
                 />
             </HStack>
-
-            <Flex align="center" justify="flex-end" flex={1}>
-                <HStack spacing={4} pr={10}>
+            <Flex align="flex-end" flex={5} justify="flex-end">
+                <Checkbox
+                    position="absolute"
+                    bottom="70px"
+                    isChecked={isChecked}
+                    onChange={handleCheckboxChange}
+                    w="300px"
+                >
+                    I agree to the Terms and Conditions
+                </Checkbox>
+                <HStack spacing={7}>
                     <Image
                         src="https://checkout.xola.app/images/ssl-secure-encryption.svg"
                         alt="SSL Secure Encryption"
                         h="30px"
                     />
+                    <Button
+                        bg="#5CB85C"
+                        color="white"
+                        _hover={{bg: "#4cae4c"}}
+                        h={"60px"}
+                        w={"400px"}
+                        // px={8}
+                        fontSize="lg"
+                        fontWeight="normal"
+                        borderRadius={0}
+                        isDisabled={!isChecked}
+                    >
+                        <GiShoppingCart/>
+                        PAY: ${totalAmount}
+                    </Button>
                 </HStack>
-                <Button
-                    bg="#5CB85C"
-                    color="white"
-                    _hover={{ bg: "#4cae4c" }}
-                    h={["auto", "60px"]}
-                    w={"300px"}
-                    px={8}
-                    fontSize="lg"
-                    fontWeight="normal"
-                    borderRadius={0}
-                    // onClick={onCheckout}
-                >
-                    <GiShoppingCart />
-                    PAY: ${totalAmount}
-                </Button>
             </Flex>
         </Flex>
     );

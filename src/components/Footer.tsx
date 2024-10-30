@@ -1,16 +1,10 @@
-import {
-    Button,
-    Flex,
-    HStack,
-    Image,
-    Text
-} from "@chakra-ui/react";
+import {Button, Flex, HStack, Image, Text} from "@chakra-ui/react";
 
 interface FooterBarProps {
     onContinue: () => void;
 }
 
-export default function FooterBar({ onContinue }: FooterBarProps) {
+export default function FooterBar({onContinue}: FooterBarProps) {
 
 
     return (
@@ -50,7 +44,7 @@ export default function FooterBar({ onContinue }: FooterBarProps) {
                 <Button
                     bg="#5CB85C"
                     color="white"
-                    _hover={{ bg: "#4cae4c" }}
+                    _hover={{bg: "#4cae4c"}}
                     h={["auto", "60px"]}
                     w={["100%", "auto"]}
                     px={8}

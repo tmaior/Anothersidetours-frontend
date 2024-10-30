@@ -59,7 +59,7 @@ export default function CheckoutFooter({ totalAmount, onCheckout, onBack }) {
                     fontSize="lg"
                     fontWeight="normal"
                     borderRadius={0}
-                    onClick={onCheckout}
+                    // onClick={onCheckout}
                 >
                     <GiShoppingCart />
                     PAY: ${totalAmount}

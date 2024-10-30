@@ -19,6 +19,16 @@ export default function BookingDetails({onContinue}: BookingDetailsProps) {
         const isDateSelected = selectedDate !== null;
         const isTimeSelected = selectedTime !== null;
 
+        if (isFormValid) {
+            setErrorMessage(null);
+        }
+        if (isDateSelected) {
+            setErrorMessage(null);
+        }
+        if (isTimeSelected) {
+            setErrorMessage(null);
+        }
+
         if (isFormValid && isDateSelected && isTimeSelected) {
             setErrorMessage(null);
             onContinue?.();

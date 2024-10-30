@@ -1,12 +1,26 @@
-import { SimpleGrid, VStack } from "@chakra-ui/react";
+import { SimpleGrid, VStack, Text } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import Quantity from "./Quantity";
 import FormInfo from "./FormInfo";
 import DatePicker from "./Datepicker";
 
-const Grid: React.FC = () => {
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface GridProps {
+    formInfoRef: React.RefObject<any>;
+    selectedDate: Date | null;
+    setSelectedDate: React.Dispatch<React.SetStateAction<Date | null>>;
+    selectedTime: string | null;
+    setSelectedTime: React.Dispatch<React.SetStateAction<string | null>>;
+    errorMessage: string | null;
+}
+
+const Grid: React.FC<GridProps> = ({
+                                       formInfoRef,
+                                       selectedDate,
+                                       setSelectedDate,
+                                       selectedTime,
+                                       setSelectedTime,
+                                       errorMessage,
+}) => {
     const [dayData, setDayData] = useState<{ [key: string]: string }>({});
 
     useEffect(() => {
@@ -36,9 +50,22 @@ const Grid: React.FC = () => {
         <SimpleGrid columns={{ base: 1, md: 2, lg: 2 }} spacing={150} p={"25px"}>
             <VStack align="start" spacing={6}>
                 <Quantity />
-                <FormInfo />
+                <FormInfo ref={formInfoRef} />
             </VStack>
-            <DatePicker selectedDate={selectedDate} onChange={setSelectedDate} />
+
+            <VStack align="start" spacing={4}>
+                <DatePicker
+                    selectedDate={selectedDate}
+                    onChange={setSelectedDate}
+                    selectedTime={selectedTime}
+                    onTimeChange={setSelectedTime}
+                />
+                {errorMessage && (
+                    <Text color="red.500" fontSize="sm">
+                        {errorMessage}
+                    </Text>
+                )}
+            </VStack>
         </SimpleGrid>
     );
 };

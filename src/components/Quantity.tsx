@@ -9,7 +9,7 @@ export default function Quantity() {
         <PickupSpinner
             title="QUANTITY"
             description="Guests"
-            minValue={1}
+            minValue={2}
             value={guestQuantity}
             onChange={setGuestQuantity}
         />

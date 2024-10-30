@@ -6,7 +6,6 @@ interface FooterBarProps {
 
 export default function FooterBar({onContinue}: FooterBarProps) {
 
-
     return (
         <Flex
             position="static"

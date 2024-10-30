@@ -26,11 +26,14 @@ import {
 interface DatePickerProps {
     selectedDate: Date | null;
     onChange: (date: Date) => void;
+    onTimeChange: (time: string) => void;
+    selectedTime: string | null;
 }
 
 const DatePicker: React.FC<DatePickerProps> = ({
                                                    selectedDate,
                                                    onChange,
+                                                   onTimeChange, // Usado para atualizar selectedTime
                                                }) => {
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
     const [monthDayData, setMonthDayData] = useState<{ [key: string]: string }>({});
@@ -173,7 +176,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
     };
 
     const handleTimeSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedTime(event.target.value);
+        const selected = event.target.value;
+        setSelectedTime(selected);
+        onTimeChange(selected);
     };
 
     return (
@@ -185,7 +190,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
             </Box>
 
             {availableTimes.length > 0 && (
-                <Select width="400px" placeholder="Pick a time" onChange={handleTimeSelection} value={selectedTime ?? undefined}>
+                <Select
+                    width="400px"
+                    placeholder="Pick a time"
+                    onChange={handleTimeSelection}
+                    value={selectedTime ?? undefined}
+                >
                     {availableTimes.map((time, index) => (
                         <option key={index} value={time}>
                             {time}

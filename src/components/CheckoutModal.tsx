@@ -36,7 +36,7 @@ interface CheckoutModalProps {
 
 export default function CheckoutModal({ isOpen, onClose, onBack }: CheckoutModalProps) {
     const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
-    const { guestQuantity, email, selectedDate, selectedTime } = useGuest();
+    const { guestQuantity, name, email, selectedDate, selectedTime } = useGuest();
 
     const handleClose = () => {
         onClose();
@@ -76,7 +76,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack }: CheckoutModal
                                     </Flex>
 
                                     <VStack align="flex-start" spacing={0} h={"80px"} marginLeft={1}>
-                                        <Text>TESTE</Text>
+                                        <Text>{name}</Text>
                                         <HStack spacing={6}>
                                             <HStack spacing={2}>
                                                 <ImUsers />

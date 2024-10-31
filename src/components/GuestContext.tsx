@@ -3,6 +3,8 @@ import React, { createContext, useState, useContext, ReactNode } from "react";
 interface GuestContextType {
     guestQuantity: number;
     setGuestQuantity: React.Dispatch<React.SetStateAction<number>>;
+    name: string;
+    setName: React.Dispatch<React.SetStateAction<string>>;
     email: string;
     setEmail: React.Dispatch<React.SetStateAction<string>>;
     selectedDate: Date | null;
@@ -24,6 +26,7 @@ export const useGuest = (): GuestContextType => {
 
 export function GuestProvider({ children }: { children: ReactNode }) {
     const [guestQuantity, setGuestQuantity] = useState(2);
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -37,6 +40,8 @@ export function GuestProvider({ children }: { children: ReactNode }) {
             value={{
                 guestQuantity,
                 setGuestQuantity,
+                name,
+                setName,
                 email,
                 setEmail,
                 selectedDate,

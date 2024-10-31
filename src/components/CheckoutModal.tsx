@@ -1,3 +1,5 @@
+import React, { useEffect, useState } from "react";
+import { useGuest } from "./GuestContext";
 import {
     Box,
     Button,
@@ -23,29 +25,41 @@ import CheckoutFooter from "./CheckoutFooter";
 import { ImUsers } from "react-icons/im";
 import { SlCalender } from "react-icons/sl";
 import { MdEmail, MdOutlineAccessTime } from "react-icons/md";
-import {useGuest} from "./GuestContext";
 
 interface CheckoutModalProps {
     isOpen: boolean;
     onClose: () => void;
-    totalDue: number;
     title?: string;
     onBack?: () => void;
 }
 
-export default function CheckoutModal({ isOpen, onClose, totalDue, onBack }: CheckoutModalProps) {
+export default function CheckoutModal({ isOpen, onClose, onBack }: CheckoutModalProps) {
     const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
-    const { guestQuantity } = useGuest();
+    const { guestQuantity, setGuestQuantity } = useGuest();
+    const [shouldResetGuestQuantity, setShouldResetGuestQuantity] = useState(false);
+
+    const handleClose = () => {
+        setShouldResetGuestQuantity(true);
+        onClose();
+    };
+
+    useEffect(() => {
+        if (!isOpen && shouldResetGuestQuantity) {
+            setGuestQuantity(2);
+            setShouldResetGuestQuantity(false);
+        }
+    }, [isOpen, shouldResetGuestQuantity, setGuestQuantity]);
+
     const pricePerGuest = 249.00;
     const totalAmount = guestQuantity * pricePerGuest;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} isCentered size="6xl">
+        <Modal isOpen={isOpen} onClose={handleClose} isCentered size="6xl">
             <ModalOverlay />
             <ModalContent height={"60vh"}>
                 <ModalHeader marginLeft={"500"} alignContent={"center"}>{"CHECKOUT"}</ModalHeader>
                 <Divider color={"gray.400"} />
-                <ModalCloseButton onClick={onClose} />
+                <ModalCloseButton onClick={handleClose} />
                 <ModalBody>
                     <HStack>
                         <HStack w="500px">
@@ -95,7 +109,7 @@ export default function CheckoutModal({ isOpen, onClose, totalDue, onBack }: Che
                                     </VStack>
 
                                     <Flex w="full" mt={4} p={1} justify="flex-end">
-                                        <Link color="blue.500"  textAlign="right" marginRight={5} fontSize="smaller">
+                                        <Link color="blue.500" textAlign="right" marginRight={5} fontSize="smaller">
                                             Modify
                                         </Link>
                                     </Flex>
@@ -126,7 +140,7 @@ export default function CheckoutModal({ isOpen, onClose, totalDue, onBack }: Che
                     </HStack>
                 </ModalBody>
                 <Divider orientation="horizontal" />
-                <CheckoutFooter totalAmount={totalDue} onCheckout={onBack} />
+                <CheckoutFooter totalAmount={totalAmount} onCheckout={onBack} />
             </ModalContent>
 
             <Modal isOpen={isCodeModalOpen} onClose={closeCodeModal} isCentered>

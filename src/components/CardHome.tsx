@@ -14,14 +14,16 @@ import {
     useDisclosure,
     VStack
 } from "@chakra-ui/react";
-import {FaTag} from "react-icons/fa";
-import {MdOutlineAccessTimeFilled} from "react-icons/md";
+import { FaTag } from "react-icons/fa";
+import { MdOutlineAccessTimeFilled } from "react-icons/md";
 import BookingDetails from "./BookingDetails";
 import CheckoutModal from "./CheckoutModal";
+import { useGuest } from "./GuestContext";
 
-export default function CardHome({title, description, originalPrice, discountedPrice, duration, image}) {
-    const {isOpen: isBookingOpen, onOpen: openBooking, onClose: closeBooking} = useDisclosure();
-    const {isOpen: isCheckoutOpen, onOpen: openCheckout, onClose: closeCheckout} = useDisclosure();
+export default function CardHome({ title, description, originalPrice, discountedPrice, duration, image }) {
+    const { isOpen: isBookingOpen, onOpen: openBooking, onClose: closeBooking } = useDisclosure();
+    const { isOpen: isCheckoutOpen, onOpen: openCheckout, onClose: closeCheckout } = useDisclosure();
+    const { resetGuestQuantity } = useGuest();
 
     const handleCloseCheckout = () => {
         closeCheckout();
@@ -35,6 +37,11 @@ export default function CardHome({title, description, originalPrice, discountedP
     const handleContinueToCheckout = () => {
         closeBooking();
         openCheckout();
+    };
+
+    const handleBookNow = () => {
+        resetGuestQuantity();
+        openBooking();
     };
 
     return (
@@ -98,7 +105,7 @@ export default function CardHome({title, description, originalPrice, discountedP
                         <Button w={"full"} h={"100%"}>Learn More</Button>
                     </Flex>
                     <Flex h={"85px"} w={"full"}>
-                        <Button w={"full"} h={"100%"} onClick={openBooking}>
+                        <Button w={"full"} h={"100%"} onClick={handleBookNow}>
                             Book Now
                         </Button>
                     </Flex>
@@ -119,7 +126,6 @@ export default function CardHome({title, description, originalPrice, discountedP
             <CheckoutModal
                 isOpen={isCheckoutOpen}
                 onClose={handleCloseCheckout}
-                totalDue={235.90}
                 onBack={handleBackToBooking}
             />
         </Flex>

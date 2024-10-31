@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useGuest } from "./GuestContext";
 import {
     Box,
@@ -35,20 +35,11 @@ interface CheckoutModalProps {
 
 export default function CheckoutModal({ isOpen, onClose, onBack }: CheckoutModalProps) {
     const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
-    const { guestQuantity, setGuestQuantity } = useGuest();
-    const [shouldResetGuestQuantity, setShouldResetGuestQuantity] = useState(false);
+    const { guestQuantity } = useGuest();
 
     const handleClose = () => {
-        setShouldResetGuestQuantity(true);
         onClose();
     };
-
-    useEffect(() => {
-        if (!isOpen && shouldResetGuestQuantity) {
-            setGuestQuantity(2);
-            setShouldResetGuestQuantity(false);
-        }
-    }, [isOpen, shouldResetGuestQuantity, setGuestQuantity]);
 
     const pricePerGuest = 249.00;
     const totalAmount = guestQuantity * pricePerGuest;

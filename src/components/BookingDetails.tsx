@@ -9,7 +9,7 @@ interface BookingDetailsProps {
 }
 
 export default function BookingDetails({onContinue}: BookingDetailsProps) {
-    const formInfoRef = useRef(null);
+    const formInfoRef = useRef<HTMLFormElement>(null);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);

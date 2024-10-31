@@ -5,7 +5,7 @@ import FormInfo from "./FormInfo";
 import DatePicker from "./Datepicker";
 
 interface GridProps {
-    formInfoRef?: React.RefObject<any>;
+    formInfoRef?: React.RefObject<HTMLFormElement>;
     selectedDate?: Date | null;
     setSelectedDate?: React.Dispatch<React.SetStateAction<Date | null>>;
     selectedTime?: string | null;
@@ -21,6 +21,7 @@ const Grid: React.FC<GridProps> = ({
                                        setSelectedTime,
                                        errorMessage,
 }) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [dayData, setDayData] = useState<{ [key: string]: string }>({});
 
     useEffect(() => {

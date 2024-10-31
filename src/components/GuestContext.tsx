@@ -3,6 +3,12 @@ import React, { createContext, useState, useContext, ReactNode } from "react";
 interface GuestContextType {
     guestQuantity: number;
     setGuestQuantity: React.Dispatch<React.SetStateAction<number>>;
+    email: string;
+    setEmail: React.Dispatch<React.SetStateAction<string>>;
+    selectedDate: Date | null;
+    setSelectedDate: React.Dispatch<React.SetStateAction<Date | null>>;
+    selectedTime: string | null;
+    setSelectedTime: React.Dispatch<React.SetStateAction<string | null>>;
     resetGuestQuantity: () => void;
 }
 
@@ -18,13 +24,28 @@ export const useGuest = (): GuestContextType => {
 
 export function GuestProvider({ children }: { children: ReactNode }) {
     const [guestQuantity, setGuestQuantity] = useState(2);
+    const [email, setEmail] = useState("");
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
     const resetGuestQuantity = () => {
         setGuestQuantity(2);
     };
 
     return (
-        <GuestContext.Provider value={{ guestQuantity, setGuestQuantity, resetGuestQuantity }}>
+        <GuestContext.Provider
+            value={{
+                guestQuantity,
+                setGuestQuantity,
+                email,
+                setEmail,
+                selectedDate,
+                setSelectedDate,
+                selectedTime,
+                setSelectedTime,
+                resetGuestQuantity,
+            }}
+        >
             {children}
         </GuestContext.Provider>
     );

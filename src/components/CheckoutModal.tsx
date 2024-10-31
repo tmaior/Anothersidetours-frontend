@@ -25,6 +25,7 @@ import CheckoutFooter from "./CheckoutFooter";
 import { ImUsers } from "react-icons/im";
 import { SlCalender } from "react-icons/sl";
 import { MdEmail, MdOutlineAccessTime } from "react-icons/md";
+import {format} from "date-fns";
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -35,7 +36,7 @@ interface CheckoutModalProps {
 
 export default function CheckoutModal({ isOpen, onClose, onBack }: CheckoutModalProps) {
     const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
-    const { guestQuantity } = useGuest();
+    const { guestQuantity, email, selectedDate, selectedTime } = useGuest();
 
     const handleClose = () => {
         onClose();
@@ -84,18 +85,18 @@ export default function CheckoutModal({ isOpen, onClose, onBack }: CheckoutModal
                                             <Spacer />
                                             <HStack spacing={2}>
                                                 <MdEmail />
-                                                <Text>teste@gmail.com</Text>
+                                                <Text>{email}</Text>
                                             </HStack>
                                         </HStack>
 
                                         <HStack>
                                             <SlCalender />
-                                            <Text>31 de Out de 2024</Text>
+                                            <Text>{selectedDate ? format(selectedDate, 'dd MMM yyyy') : "No Date Selected"}</Text>
                                         </HStack>
 
                                         <HStack>
                                             <MdOutlineAccessTime />
-                                            <Text>06:00 PDT</Text>
+                                            <Text>{selectedTime || "No Time Selected"}</Text>
                                         </HStack>
                                     </VStack>
 

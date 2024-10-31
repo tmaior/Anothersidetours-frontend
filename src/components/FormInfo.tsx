@@ -1,9 +1,10 @@
 import { Input, Text, VStack } from "@chakra-ui/react";
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { useGuest } from "./GuestContext";
 
 const FormInfo = forwardRef((props, ref) => {
     const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
+    const { email, setEmail } = useGuest();
     const [errors, setErrors] = useState({ name: "", email: "" });
 
     const validateForm = () => {

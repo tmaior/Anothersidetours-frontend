@@ -23,6 +23,7 @@ import CheckoutFooter from "./CheckoutFooter";
 import { ImUsers } from "react-icons/im";
 import { SlCalender } from "react-icons/sl";
 import { MdEmail, MdOutlineAccessTime } from "react-icons/md";
+import {useGuest} from "./GuestContext";
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -34,6 +35,9 @@ interface CheckoutModalProps {
 
 export default function CheckoutModal({ isOpen, onClose, totalDue, onBack }: CheckoutModalProps) {
     const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
+    const { guestQuantity } = useGuest();
+    const pricePerGuest = 249.00;
+    const totalAmount = guestQuantity * pricePerGuest;
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} isCentered size="6xl">
@@ -70,7 +74,7 @@ export default function CheckoutModal({ isOpen, onClose, totalDue, onBack }: Che
                                         <HStack spacing={6}>
                                             <HStack spacing={2}>
                                                 <ImUsers />
-                                                <Text>2 Reserved</Text>
+                                                <Text>{guestQuantity} Reserved</Text>
                                             </HStack>
                                             <Spacer />
                                             <HStack spacing={2}>
@@ -105,9 +109,9 @@ export default function CheckoutModal({ isOpen, onClose, totalDue, onBack }: Che
                         <VStack w="full" p={4} spacing={4} align="stretch">
 
                             <HStack w="full">
-                                <Text>Guests (2 × $249.00)</Text>
+                                <Text>{`Guests (${guestQuantity} × $${pricePerGuest.toFixed(2)})`}</Text>
                                 <Spacer />
-                                <Text>$498.00</Text>
+                                <Text>${totalAmount.toFixed(2)}</Text>
                             </HStack>
 
                             <Link color="blue.500" onClick={openCodeModal} textAlign="left" fontSize="md">
@@ -116,7 +120,7 @@ export default function CheckoutModal({ isOpen, onClose, totalDue, onBack }: Che
                             <HStack w="full" marginTop={"-4"}>
                                 <Text>Total</Text>
                                 <Spacer />
-                                <Text>$498.00</Text>
+                                <Text>${totalAmount.toFixed(2)}</Text>
                             </HStack>
                         </VStack>
                     </HStack>

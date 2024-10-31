@@ -1,9 +1,8 @@
-import {useState} from "react";
 import PickupSpinner from "./PickupSpinner";
+import {useGuest} from "./GuestContext";
 
 export default function Quantity() {
-
-    const [guestQuantity, setGuestQuantity] = useState(2);
+    const { guestQuantity, setGuestQuantity } = useGuest();
 
     return (
         <PickupSpinner

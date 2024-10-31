@@ -5,21 +5,24 @@ import {
     Divider,
     Flex,
     HStack,
+    Input,
+    Link,
     Modal,
     ModalBody,
     ModalCloseButton,
     ModalContent,
+    ModalFooter,
     ModalHeader,
     ModalOverlay,
     Spacer,
     Text,
-    VStack
+    VStack,
+    useDisclosure
 } from "@chakra-ui/react";
 import CheckoutFooter from "./CheckoutFooter";
-import {useRouter} from "next/router";
-import {ImUsers} from "react-icons/im";
-import {SlCalender} from "react-icons/sl";
-import {MdEmail, MdOutlineAccessTime} from "react-icons/md";
+import { ImUsers } from "react-icons/im";
+import { SlCalender } from "react-icons/sl";
+import { MdEmail, MdOutlineAccessTime } from "react-icons/md";
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -29,25 +32,19 @@ interface CheckoutModalProps {
     onBack?: () => void;
 }
 
-export default function CheckoutModal({isOpen, onClose, totalDue, onBack}: CheckoutModalProps) {
-
-    const router = useRouter();
-
-    const handleEdit = () => {
-        router.back();
-    };
+export default function CheckoutModal({ isOpen, onClose, totalDue, onBack }: CheckoutModalProps) {
+    const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} isCentered size="6xl">
-            <ModalOverlay/>
+            <ModalOverlay />
             <ModalContent height={"60vh"}>
                 <ModalHeader marginLeft={"500"} alignContent={"center"}>{"CHECKOUT"}</ModalHeader>
-                <Divider color={"gray.400"}/>
-                <ModalCloseButton onClick={onClose}/>
+                <Divider color={"gray.400"} />
+                <ModalCloseButton onClick={onClose} />
                 <ModalBody>
-
                     <HStack>
-                        <HStack w="500px" bg={"blue"}>
+                        <HStack w="500px">
                             <HStack>
                                 <Flex w="40%" h="40%">
                                     <Box
@@ -61,9 +58,8 @@ export default function CheckoutModal({isOpen, onClose, totalDue, onBack}: Check
                                         boxSize="150px"
                                     />
                                 </Flex>
-                                <Flex direction="column" align="flex-start" w="400px" bg="tomato" ml="-10">
-
-                                    <Flex bg="blue.300" w="100%" h="30%" mb={2} p={0}>
+                                <Flex direction="column" align="flex-start" w="400px" ml="-10">
+                                    <Flex w="100%" h="30%" mb={2} p={0}>
                                         <Text fontSize="lg" fontWeight="bold">
                                             The Ultimate Hollywood Tour
                                         </Text>
@@ -72,54 +68,87 @@ export default function CheckoutModal({isOpen, onClose, totalDue, onBack}: Check
                                     <VStack align="flex-start" spacing={0} h={"80px"} marginLeft={1}>
                                         <Text>TESTE</Text>
                                         <HStack spacing={6}>
-
                                             <HStack spacing={2}>
-                                                <ImUsers/>
+                                                <ImUsers />
                                                 <Text>2 Reserved</Text>
                                             </HStack>
-                                            <Spacer/>
-                                            <Spacer/>
-
+                                            <Spacer />
                                             <HStack spacing={2}>
-                                                <MdEmail/>
+                                                <MdEmail />
                                                 <Text>teste@gmail.com</Text>
                                             </HStack>
                                         </HStack>
 
                                         <HStack>
-                                            <SlCalender/>
+                                            <SlCalender />
                                             <Text>31 de Out de 2024</Text>
                                         </HStack>
 
                                         <HStack>
-                                            <MdOutlineAccessTime/>
+                                            <MdOutlineAccessTime />
                                             <Text>06:00 PDT</Text>
                                         </HStack>
                                     </VStack>
 
-                                    <Flex w="full" bg="blue.300" mt={4} p={1} justify="flex-end">
-                                        <Button size="sm" onClick={handleEdit}>
-                                            Edit
-                                        </Button>
+                                    <Flex w="full" mt={4} p={1} justify="flex-end">
+                                        <Link color="blue.500"  textAlign="right" marginRight={5} fontSize="smaller">
+                                            Modify
+                                        </Link>
                                     </Flex>
                                 </Flex>
                             </HStack>
                         </HStack>
-                        <Spacer/>
-                        <Spacer/>
-                        <Center height='100px'>
-                            <Divider orientation='vertical'/>
+                        <Spacer />
+                        <Center height="100px">
+                            <Divider orientation="vertical" />
                         </Center>
-                        <HStack w={"700px"} h={"150px"} bg={"tomato"}>
-                            <Flex bg="yellow" w="100%" h="full">
-                                <Text>teste2</Text>
-                            </Flex>
-                        </HStack>
+                        <VStack w="full" p={4} spacing={4} align="stretch">
+
+                            <HStack w="full">
+                                <Text>Guests (2 × $249.00)</Text>
+                                <Spacer />
+                                <Text>$498.00</Text>
+                            </HStack>
+
+                            <Link color="blue.500" onClick={openCodeModal} textAlign="left" fontSize="md">
+                                Have a code?
+                            </Link>
+                            <HStack w="full" marginTop={"-4"}>
+                                <Text>Total</Text>
+                                <Spacer />
+                                <Text>$498.00</Text>
+                            </HStack>
+                        </VStack>
                     </HStack>
                 </ModalBody>
-                <Divider orientation='horizontal'/>
-                <CheckoutFooter totalAmount={totalDue} onCheckout={onBack}/>
+                <Divider orientation="horizontal" />
+                <CheckoutFooter totalAmount={totalDue} onCheckout={onBack} />
             </ModalContent>
+
+            <Modal isOpen={isCodeModalOpen} onClose={closeCodeModal} isCentered>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Add a code to this booking</ModalHeader>
+                    <ModalCloseButton />
+                    <Divider />
+
+                    <ModalBody>
+                        <HStack>
+                            <Text>Enter code</Text>
+                            <Input placeholder="Enter code" />
+                        </HStack>
+                    </ModalBody>
+
+                    <ModalFooter>
+                        <Button variant="ghost" onClick={closeCodeModal}>
+                            Cancel
+                        </Button>
+                        <Button colorScheme="green" ml={3}>
+                            Apply Code
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </Modal>
     );
 }

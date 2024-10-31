@@ -33,6 +33,8 @@ export function GuestProvider({ children }: { children: ReactNode }) {
 
     const resetGuestQuantity = () => {
         setGuestQuantity(2);
+        setName("")
+        setEmail("");
     };
 
     return (

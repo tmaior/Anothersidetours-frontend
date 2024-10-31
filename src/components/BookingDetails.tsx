@@ -3,6 +3,7 @@ import FooterBar from "./Footer";
 import Navbar from "./Navbar";
 import Grid from "./Grid";
 import AddOns from "./Add-Ons";
+import {useGuest} from "./GuestContext";
 
 interface BookingDetailsProps {
     onContinue?: () => void;
@@ -10,27 +11,19 @@ interface BookingDetailsProps {
 
 export default function BookingDetails({onContinue}: BookingDetailsProps) {
     const formInfoRef = useRef<HTMLFormElement>(null);
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const [selectedTime, setSelectedTime] = useState<string | null>(null);
+    const [localSelectedDate, setLocalSelectedDate] = useState<Date | null>(null);
+    const [localSelectedTime, setLocalSelectedTime] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
+    const {setSelectedDate, setSelectedTime} = useGuest();
     const handleValidation = () => {
         const isFormValid = formInfoRef.current?.validateForm();
-        const isDateSelected = selectedDate !== null;
-        const isTimeSelected = selectedTime !== null;
-
-        if (isFormValid) {
-            setErrorMessage(null);
-        }
-        if (isDateSelected) {
-            setErrorMessage(null);
-        }
-        if (isTimeSelected) {
-            setErrorMessage(null);
-        }
+        const isDateSelected = localSelectedDate !== null;
+        const isTimeSelected = localSelectedTime !== null;
 
         if (isFormValid && isDateSelected && isTimeSelected) {
             setErrorMessage(null);
+            setSelectedDate(localSelectedDate);
+            setSelectedTime(localSelectedTime);
             onContinue?.();
         } else {
             if (!isDateSelected) {
@@ -46,10 +39,10 @@ export default function BookingDetails({onContinue}: BookingDetailsProps) {
             <Navbar/>
             <Grid
                 formInfoRef={formInfoRef}
-                selectedDate={selectedDate}
-                setSelectedDate={setSelectedDate}
-                selectedTime={selectedTime}
-                setSelectedTime={setSelectedTime}
+                selectedDate={localSelectedDate}
+                setSelectedDate={setLocalSelectedDate}
+                selectedTime={localSelectedTime}
+                setSelectedTime={setLocalSelectedTime}
                 errorMessage={errorMessage}
             />
             <AddOns/>

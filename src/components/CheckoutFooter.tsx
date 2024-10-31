@@ -1,9 +1,16 @@
 import {
     Button,
     Checkbox,
-    Flex, FormControl, FormErrorMessage,
-    HStack, Icon,
-    Image, Input, InputGroup, InputLeftElement, InputRightElement,
+    Flex,
+    FormControl,
+    FormErrorMessage,
+    HStack,
+    Icon,
+    Image,
+    Input,
+    InputGroup,
+    InputLeftElement,
+    InputRightElement,
     Link,
     Modal,
     ModalBody,
@@ -115,7 +122,8 @@ export default function CheckoutFooter({totalAmount, onCheckout}) {
                     </Flex>
                 </Flex>
                 <Flex justify={"flex-end"} align={"end"}>
-                    <HStack align={"self-end"} w={"full"} justify={"flex-end"} marginRight={"-50"} marginBottom={"-110"}>
+                    <HStack align={"self-end"} w={"full"} justify={"flex-end"} marginRight={"-50"}
+                            marginBottom={"-110"}>
                         <RadioGroup onChange={setPaymentMethod} value={paymentMethod} mb={4}>
                             <HStack w={"500px"} spacing={4}>
                                 <Radio value="manual">Manually enter card details</Radio>

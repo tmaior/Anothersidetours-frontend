@@ -33,7 +33,7 @@ interface DatePickerProps {
 const DatePicker: React.FC<DatePickerProps> = ({
                                                    selectedDate,
                                                    onChange,
-                                                   onTimeChange, // Usado para atualizar selectedTime
+                                                   onTimeChange,
                                                }) => {
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
     const [monthDayData, setMonthDayData] = useState<{ [key: string]: string }>({});

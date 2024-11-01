@@ -145,7 +145,6 @@ export default function CheckoutModal({ isOpen, onClose, onBack,title,valuePrice
 
                     <ModalBody>
                         <HStack>
-                            <Text>Enter code</Text>
                             <Input placeholder="Enter code" />
                         </HStack>
                     </ModalBody>

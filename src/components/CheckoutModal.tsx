@@ -32,10 +32,10 @@ interface CheckoutModalProps {
     onClose: () => void;
     title?: string;
     onBack?: () => void;
-    originalPrice: string;
+    valuePrice: number
 }
 
-export default function CheckoutModal({ isOpen, onClose, onBack,title ,originalPrice}: CheckoutModalProps) {
+export default function CheckoutModal({ isOpen, onClose, onBack,title,valuePrice }: CheckoutModalProps) {
     const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
     const { guestQuantity, name, email, selectedDate, selectedTime } = useGuest();
 
@@ -43,7 +43,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack,title ,originalP
         onClose();
     };
 
-    const pricePerGuest = 249.00;
+    const pricePerGuest = valuePrice;
     const totalAmount = guestQuantity * pricePerGuest;
 
     return (

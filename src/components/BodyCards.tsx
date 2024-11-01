@@ -3,6 +3,17 @@ import { useState, useEffect } from "react";
 import CardHome from "./CardHome";
 import {api} from "../services/api";
 
+interface CardData {
+    id: number;
+    title: string;
+    description: string;
+    valuePrice: number;
+    originalPrice: string;
+    discountedPrice: string;
+    duration: string;
+    image: string;
+}
+
 export default function BodyCards() {
     const [cardData, setCardData] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -16,10 +27,11 @@ export default function BodyCards() {
                 setLoading(true);
                 const response = await api.get(`/tours/allBytenant/a2464722-da26-4013-a824-0ba44ad8fd44`);
 
-                const mappedData = response.data.map(item => ({
+                const mappedData: CardData[] = response.data.map((item): CardData => ({
                     id: item.id,
                     title: item.name,
                     description: item.description,
+                    valuePrice: item.price,
                     originalPrice: `$${item.price.toFixed(2)}`,
                     discountedPrice: `$${(item.price * 0.8).toFixed(2)}`,
                     duration: (item.duration / 60).toFixed(0),
@@ -70,6 +82,7 @@ export default function BodyCards() {
                         discountedPrice={data.discountedPrice}
                         duration={`${data.duration}`}
                         image={data.image}
+                        valuePrice={data.valuePrice}
                     />
                 ))}
             </SimpleGrid>

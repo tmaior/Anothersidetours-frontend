@@ -7,7 +7,7 @@ export default function Home() {
     return (
         <Flex w={"100%"} flexDir={"column"} justify={"center"} align={"center"}>
             <PrincipalNavBar/>
-            <Flex w={"100%"} maxW={"1300px"}>
+            <Flex w={"100%"} maxW={"1300px"} justify={"center"} align={"center"}>
                 <BodyCards/>
             </Flex>
         </Flex>

@@ -1,88 +1,97 @@
-import { SimpleGrid } from "@chakra-ui/react";
+import { SimpleGrid, Button, Box, Spinner, Text } from "@chakra-ui/react";
+import { useState, useEffect } from "react";
 import CardHome from "./CardHome";
+import {api} from "../services/api";
 
 export default function BodyCards() {
-    const cardData = [
-        {
-            title: "The Los Angeles Tour",
-            description: "Step into the dazzling world of Hollywood and Beverly Hills on our expertly guided tour. " +
-                "Experience movie magic as you visit iconic sites like the legendary Hollywood Sign, " +
-                "the Dolby Theatre, home to the Oscars, and the historic Grauman’s Chinese Theatre, where " +
-                "countless premieres and the famous Walk of Fame reside. Cruise in style along the Sunset Strip, " +
-                "passing landmarks such as the Chateau Marmont, The Viper Room, and The Whiskey a-go-go, birthplaces " +
-                "of music legends. Venture into luxurious Beverly Hills, where you might spot celebrities and admire " +
-                "opulent hotels like the Beverly Hilton and the timeless Beverly Hills Hotel. Stroll down the renowned " +
-                "Rodeo Drive, soaking in the ambiance of this world-famous shopping destination. With advanced " +
-                "reservations required, our tour includes smalll snacks, water, and a polished Los Angeles guide " +
-                "ensuring an unforgettable journey. Book now and be dazzled by the magic of Tinseltown!",
-            originalPrice: "$149.00",
-            discountedPrice: "$99.00",
-            duration: 3,
-            image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
-        },
-        {
-            title: "San Francisco Adventure",
-            description: "Discover the Golden Gate Bridge, Alcatraz, and the vibrant streets of San Francisco...",
-            originalPrice: "$199.00",
-            discountedPrice: "$129.00",
-            duration: 4,
-            image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
-        },
-        {
-            title: "New York City Highlights",
-            description: "Explore Central Park, Times Square, and the Empire State Building in the heart of NYC...",
-            originalPrice: "$249.00",
-            discountedPrice: "$149.00",
-            duration: 5,
-            image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
-        },
-        {
-            title: "Miami Beach Experience",
-            description: "Relax on the sandy shores and enjoy the vibrant nightlife of Miami Beach...",
-            originalPrice: "$299.00",
-            discountedPrice: "$199.00",
-            duration: 6,
-            image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
-        },
-        {
-            title: "Miami Beach Experience",
-            description: "Relax on the sandy shores and enjoy the vibrant nightlife of Miami Beach...",
-            originalPrice: "$299.00",
-            discountedPrice: "$199.00",
-            duration: 6,
-            image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
-        },
-        {
-            title: "Miami Beach Experience",
-            description: "Relax on the sandy shores and enjoy the vibrant nightlife of Miami Beach...",
-            originalPrice: "$299.00",
-            discountedPrice: "$199.00",
-            duration: 6,
-            image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
-        },
-        {
-            title: "Miami Beach Experience",
-            description: "Relax on the sandy shores and enjoy the vibrant nightlife of Miami Beach...",
-            originalPrice: "$299.00",
-            discountedPrice: "$199.00",
-            duration: 6,
-            image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
-        }
-    ];
+    const [cardData, setCardData] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const itemsPerPage = 6;
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const response = await api.get(`/tours/allBytenant/a2464722-da26-4013-a824-0ba44ad8fd44`);
+
+                const mappedData = response.data.map(item => ({
+                    title: item.name,
+                    description: item.description,
+                    originalPrice: `$${item.price.toFixed(2)}`,
+                    discountedPrice: `$${(item.price * 0.8).toFixed(2)}`,
+                    duration: (item.duration / 60).toFixed(0),
+                    image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
+                }));
+
+                setCardData(mappedData);
+            } catch (err) {
+                setError("Erro ao carregar os dados.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = cardData.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(cardData.length / itemsPerPage);
+
+    const goToNextPage = () => {
+        setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
+    };
+
+    const goToPreviousPage = () => {
+        setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
+    };
+
+    if (loading) {
+        return <Spinner size="xl" />;
+    }
+
+    if (error) {
+        return <Text color="red.500">{error}</Text>;
+    }
 
     return (
-        <SimpleGrid columns={[1, 2, 2]} spacing="40px" padding={"20px"}>
-            {cardData.map((data, index) => (
-                <CardHome
-                    key={index}
-                    title={data.title}
-                    description={data.description}
-                    originalPrice={data.originalPrice}
-                    discountedPrice={data.discountedPrice}
-                    duration={data.duration}
-                    image={data.image}
-                />
-            ))}
-        </SimpleGrid>
+        <Box paddingBottom="80px">
+            <SimpleGrid columns={[1, 2, 2]} spacing="40px" padding="20px">
+                {currentItems.map((data, index) => (
+                    <CardHome
+                        key={data.id || index}
+                        title={data.title}
+                        description={data.description}
+                        originalPrice={data.originalPrice}
+                        discountedPrice={data.discountedPrice}
+                        duration={`${data.duration}`}
+                        image={data.image}
+                    />
+                ))}
+            </SimpleGrid>
+
+            <Box
+                position="fixed"
+                bottom="0"
+                left="0"
+                width="100%"
+                bg="white"
+                py="10px"
+                borderTop="1px solid #e2e8f0"
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+            >
+                <Button onClick={goToPreviousPage} disabled={currentPage === 1} mr="4">
+                    Anterior
+                </Button>
+                <Button onClick={goToNextPage} disabled={currentPage === totalPages}>
+                    Próximo
+                </Button>
+            </Box>
+        </Box>
     );
 }

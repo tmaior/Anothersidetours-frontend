@@ -32,9 +32,10 @@ interface CheckoutModalProps {
     onClose: () => void;
     title?: string;
     onBack?: () => void;
+    originalPrice: string;
 }
 
-export default function CheckoutModal({ isOpen, onClose, onBack }: CheckoutModalProps) {
+export default function CheckoutModal({ isOpen, onClose, onBack,title ,originalPrice}: CheckoutModalProps) {
     const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
     const { guestQuantity, name, email, selectedDate, selectedTime } = useGuest();
 
@@ -71,7 +72,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack }: CheckoutModal
                                 <Flex direction="column" align="flex-start" w="400px" ml="-10">
                                     <Flex w="100%" h="30%" mb={2} p={0}>
                                         <Text fontSize="lg" fontWeight="bold">
-                                            The Ultimate Hollywood Tour
+                                            {title}
                                         </Text>
                                     </Flex>
 
@@ -96,7 +97,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack }: CheckoutModal
 
                                         <HStack>
                                             <MdOutlineAccessTime />
-                                            <Text>{selectedTime || "No Time Selected"}</Text>
+                                            <Text> {selectedTime} PST</Text>
                                         </HStack>
                                     </VStack>
 

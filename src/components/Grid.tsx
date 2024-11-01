@@ -11,6 +11,8 @@ interface GridProps {
     selectedTime?: string | null;
     setSelectedTime?: React.Dispatch<React.SetStateAction<string | null>>;
     errorMessage?: string | null;
+    originalPrice: string;
+    title: string;
 }
 
 const Grid: React.FC<GridProps> = ({
@@ -20,6 +22,8 @@ const Grid: React.FC<GridProps> = ({
                                        selectedTime,
                                        setSelectedTime,
                                        errorMessage,
+                                       originalPrice,
+                                       title
 }) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [dayData, setDayData] = useState<{ [key: string]: string }>({});
@@ -28,7 +32,7 @@ const Grid: React.FC<GridProps> = ({
         const today = new Date();
         const updatedDayData = {};
 
-        const fixedValue = '$100';
+        const fixedValue = originalPrice;
 
         const formatDate = (date: Date) => {
             const year = date.getFullYear();
@@ -56,6 +60,8 @@ const Grid: React.FC<GridProps> = ({
 
             <VStack align="start" spacing={4}>
                 <DatePicker
+                    title={title}
+                    originalPrice={originalPrice}
                     selectedDate={selectedDate}
                     onChange={setSelectedDate}
                     selectedTime={selectedTime}

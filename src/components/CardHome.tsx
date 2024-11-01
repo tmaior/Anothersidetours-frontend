@@ -118,12 +118,20 @@ export default function CardHome({ title, description, originalPrice, discounted
                     <ModalHeader></ModalHeader>
                     <ModalCloseButton/>
                     <ModalBody>
-                        <BookingDetails onContinue={handleContinueToCheckout}/>
+                        <BookingDetails
+                            title={title}
+                            description={description}
+                            originalPrice={originalPrice}
+                            discountedPrice={discountedPrice}
+                            duration={duration}
+                            onContinue={handleContinueToCheckout}/>
                     </ModalBody>
                 </ModalContent>
             </Modal>
 
             <CheckoutModal
+                title={title}
+                originalPrice={originalPrice}
                 isOpen={isCheckoutOpen}
                 onClose={handleCloseCheckout}
                 onBack={handleBackToBooking}

@@ -17,6 +17,7 @@ export default function BodyCards() {
                 const response = await api.get(`/tours/allBytenant/a2464722-da26-4013-a824-0ba44ad8fd44`);
 
                 const mappedData = response.data.map(item => ({
+                    id: item.id,
                     title: item.name,
                     description: item.description,
                     originalPrice: `$${item.price.toFixed(2)}`,

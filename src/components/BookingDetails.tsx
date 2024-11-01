@@ -7,9 +7,21 @@ import {useGuest} from "./GuestContext";
 
 interface BookingDetailsProps {
     onContinue?: () => void;
+    title: string;
+    description: string;
+    originalPrice: string;
+    discountedPrice: string;
+    duration: string;
 }
 
-export default function BookingDetails({onContinue}: BookingDetailsProps) {
+export default function BookingDetails({
+                                           onContinue,
+                                           title,
+                                           description,
+                                           originalPrice,
+                                           discountedPrice,
+                                           duration,
+                                       }: BookingDetailsProps) {
     const formInfoRef = useRef<HTMLFormElement>(null);
     const [localSelectedDate, setLocalSelectedDate] = useState<Date | null>(null);
     const [localSelectedTime, setLocalSelectedTime] = useState<string | null>(null);
@@ -36,15 +48,18 @@ export default function BookingDetails({onContinue}: BookingDetailsProps) {
 
     return (
         <>
-            <Navbar/>
+            <Navbar
+                title={title}
+                description={description}/>
             <Grid
+                originalPrice={originalPrice}
                 formInfoRef={formInfoRef}
                 selectedDate={localSelectedDate}
                 setSelectedDate={setLocalSelectedDate}
                 selectedTime={localSelectedTime}
                 setSelectedTime={setLocalSelectedTime}
                 errorMessage={errorMessage}
-            />
+                title={title}/>
             <AddOns/>
             <FooterBar onContinue={handleValidation}/>
         </>

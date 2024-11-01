@@ -28,18 +28,21 @@ interface DatePickerProps {
     onChange: (date: Date) => void;
     onTimeChange: (time: string) => void;
     selectedTime: string | null;
+    title: string;
+    originalPrice: string;
 }
 
 const DatePicker: React.FC<DatePickerProps> = ({
                                                    selectedDate,
                                                    onChange,
                                                    onTimeChange,
+                                                   originalPrice
                                                }) => {
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
     const [monthDayData, setMonthDayData] = useState<{ [key: string]: string }>({});
     const [availableTimes, setAvailableTimes] = useState<string[]>([]);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
-    const price = '$100';
+    const price = originalPrice;
 
     useEffect(() => {
         const monthStart = startOfMonth(currentMonth);
@@ -170,7 +173,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
     const handleDateSelection = () => {
         const times = [];
         for (let hour = 8; hour <= 18; hour++) {
-            times.push(`${hour}:00 (${price}.00)`);
+            times.push(`${hour}:00`);
         }
         setAvailableTimes(times);
     };

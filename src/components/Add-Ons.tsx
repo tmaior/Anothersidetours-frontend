@@ -1,34 +1,49 @@
-import {Box, Flex} from "@chakra-ui/react";
-import {useState} from "react";
+import { Box, Flex, Text } from "@chakra-ui/react";
+import { useState } from "react";
 import PickupSpinner from "./PickupSpinner";
 import CustomCheckbox from "./CustomCheckbox";
 
-export default function AddOns() {
+interface AddOnProps {
+    addons: Array<{ id: string; label: string; type: string }>;
+}
 
-    const [quantity, setQuantity] = useState(0);
-    const [isTourProtectionChecked, setIsTourProtectionChecked] = useState(false);
+export default function AddOns({ addons }: AddOnProps) {
+    const [quantities, setQuantities] = useState<{ [id: string]: number }>({});
+    const [checkedAddons, setCheckedAddons] = useState<{ [id: string]: boolean }>({});
+
+    const handleQuantityChange = (id: string, value: number) => {
+        setQuantities((prev) => ({ ...prev, [id]: value }));
+    };
+
+    const handleCheckboxChange = (id: string, isChecked: boolean) => {
+        setCheckedAddons((prev) => ({ ...prev, [id]: isChecked }));
+    };
 
     return (
-
         <Flex direction="column" width="100%" p={4}>
-            <PickupSpinner
-                title="ADD ONS"
-                description="Add Additional Tour Time Per Hour"
-                minValue={0}
-                value={quantity}
-                onChange={setQuantity}
-                note="If you would like to add additional time to your tour, please select how many hours you would like to add here. The charge is $150 per additional hour"
-                pl={95}
-            />
-
-            <Box mt={4} pl={95}>
-                <CustomCheckbox
-                    title="Tour Protection"
-                    description="Tour Protection allows you to cancel or reschedule any time up to 3 hours prior. You will be reimbursed in full, less this fee."
-                    isChecked={isTourProtectionChecked}
-                    onChange={setIsTourProtectionChecked}
-                />
-            </Box>
+            <Text w={"full"} color={"blue.300"}>ADD ONS</Text>
+            {addons.map((addon) => (
+                addon.type === "CHECKBOX" ? (
+                    <Box key={addon.id} mt={4} pl={95}>
+                        <CustomCheckbox
+                            title={addon.label}
+                            description="Description for checkbox addon"
+                            isChecked={checkedAddons[addon.id] || false}
+                            onChange={(isChecked) => handleCheckboxChange(addon.id, isChecked)}
+                        />
+                    </Box>
+                ) : addon.type === "SELECT" ? (
+                    <PickupSpinner
+                        key={addon.id}
+                        title={addon.label}
+                        minValue={0}
+                        value={quantities[addon.id] || 0}
+                        onChange={(value) => handleQuantityChange(addon.id, value)}
+                        description="Description for select addon"
+                        pl={95}
+                    />
+                ) : null
+            ))}
         </Flex>
     );
 }

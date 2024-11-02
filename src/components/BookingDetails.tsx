@@ -10,8 +10,7 @@ interface BookingDetailsProps {
     title: string;
     description: string;
     originalPrice: string;
-    discountedPrice: string;
-    duration: string;
+    addons: Array<{ id: string; label: string; type: string }>;
 }
 
 export default function BookingDetails({
@@ -19,8 +18,7 @@ export default function BookingDetails({
                                            title,
                                            description,
                                            originalPrice,
-                                           discountedPrice,
-                                           duration,
+                                           addons
                                        }: BookingDetailsProps) {
     const formInfoRef = useRef<HTMLFormElement>(null);
     const [localSelectedDate, setLocalSelectedDate] = useState<Date | null>(null);
@@ -60,7 +58,7 @@ export default function BookingDetails({
                 setSelectedTime={setLocalSelectedTime}
                 errorMessage={errorMessage}
                 title={title}/>
-            <AddOns/>
+            <AddOns addons={addons} />
             <FooterBar onContinue={handleValidation}/>
         </>
     );

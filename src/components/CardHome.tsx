@@ -20,7 +20,7 @@ import BookingDetails from "./BookingDetails";
 import CheckoutModal from "./CheckoutModal";
 import { useGuest } from "./GuestContext";
 
-export default function CardHome({ title, description, originalPrice, discountedPrice, duration, image,valuePrice }) {
+export default function CardHome({ title, description, originalPrice, discountedPrice, duration, image,valuePrice,addons }) {
     const { isOpen: isBookingOpen, onOpen: openBooking, onClose: closeBooking } = useDisclosure();
     const { isOpen: isCheckoutOpen, onOpen: openCheckout, onClose: closeCheckout } = useDisclosure();
     const { resetGuestQuantity } = useGuest();
@@ -122,8 +122,7 @@ export default function CardHome({ title, description, originalPrice, discounted
                             title={title}
                             description={description}
                             originalPrice={originalPrice}
-                            discountedPrice={discountedPrice}
-                            duration={duration}
+                            addons={addons}
                             onContinue={handleContinueToCheckout}/>
                     </ModalBody>
                 </ModalContent>

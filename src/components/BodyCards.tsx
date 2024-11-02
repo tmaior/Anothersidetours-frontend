@@ -12,6 +12,7 @@ interface CardData {
     discountedPrice: string;
     duration: string;
     image: string;
+    addons: [];
 }
 
 export default function BodyCards() {
@@ -36,6 +37,11 @@ export default function BodyCards() {
                     discountedPrice: `$${(item.price * 0.8).toFixed(2)}`,
                     duration: (item.duration / 60).toFixed(0),
                     image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
+                    addons: item.addons.map((addon: any) => ({
+                        id: addon.id,
+                        label: addon.label,
+                        type: addon.type
+                    }))
                 }));
 
                 setCardData(mappedData);
@@ -83,6 +89,7 @@ export default function BodyCards() {
                         duration={`${data.duration}`}
                         image={data.image}
                         valuePrice={data.valuePrice}
+                        addons={data.addons}
                     />
                 ))}
             </SimpleGrid>

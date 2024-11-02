@@ -1,8 +1,8 @@
 import {Box, Flex, Text} from "@chakra-ui/react";
 
 interface NavbarProps {
-    title: string;
-    description: string;
+    title?: string;
+    description?: string;
 }
 
 export default function Navbar({title, description}:NavbarProps) {

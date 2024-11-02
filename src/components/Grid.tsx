@@ -11,8 +11,8 @@ interface GridProps {
     selectedTime?: string | null;
     setSelectedTime?: React.Dispatch<React.SetStateAction<string | null>>;
     errorMessage?: string | null;
-    originalPrice: string;
-    title: string;
+    originalPrice?: string;
+    title?: string;
 }
 
 const Grid: React.FC<GridProps> = ({

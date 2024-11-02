@@ -19,30 +19,34 @@ export default function AddOns({ addons }: AddOnProps) {
         setCheckedAddons((prev) => ({ ...prev, [id]: isChecked }));
     };
 
+    const selectAddons = addons.filter((addon) => addon.type === "SELECT");
+    const checkboxAddons = addons.filter((addon) => addon.type === "CHECKBOX");
+
     return (
         <Flex direction="column" width="100%" p={4}>
             <Text w={"full"} color={"blue.300"}>ADD ONS</Text>
-            {addons.map((addon) => (
-                addon.type === "CHECKBOX" ? (
-                    <Box key={addon.id} mt={4} pl={95}>
-                        <CustomCheckbox
-                            title={addon.label}
-                            description="Description for checkbox addon"
-                            isChecked={checkedAddons[addon.id] || false}
-                            onChange={(isChecked) => handleCheckboxChange(addon.id, isChecked)}
-                        />
-                    </Box>
-                ) : addon.type === "SELECT" ? (
-                    <PickupSpinner
-                        key={addon.id}
+
+            {selectAddons.map((addon) => (
+                <PickupSpinner
+                    key={addon.id}
+                    title={addon.label}
+                    minValue={0}
+                    value={quantities[addon.id] || 0}
+                    onChange={(value) => handleQuantityChange(addon.id, value)}
+                    description="Description for select addon"
+                    pl={95}
+                />
+            ))}
+
+            {checkboxAddons.map((addon) => (
+                <Box key={addon.id} mt={4} pl={95}>
+                    <CustomCheckbox
                         title={addon.label}
-                        minValue={0}
-                        value={quantities[addon.id] || 0}
-                        onChange={(value) => handleQuantityChange(addon.id, value)}
-                        description="Description for select addon"
-                        pl={95}
+                        description="Description for checkbox addon"
+                        isChecked={checkedAddons[addon.id] || false}
+                        onChange={(isChecked) => handleCheckboxChange(addon.id, isChecked)}
                     />
-                ) : null
+                </Box>
             ))}
         </Flex>
     );

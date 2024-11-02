@@ -100,11 +100,11 @@ export default function CardHome({ title, description, originalPrice, discounted
                     </VStack>
                 </HStack>
 
-                <HStack w={"100%"} spacing={"20px"} mt={4}>
-                    <Flex h={"85px"} w={"full"}>
+                <HStack w={"full"} spacing={"20px"} mt={4}>
+                    <Flex h={"40px"} w={"full"}>
                         <Button w={"full"} h={"100%"}>Learn More</Button>
                     </Flex>
-                    <Flex h={"85px"} w={"full"}>
+                    <Flex h={"40px"} w={"full"}>
                         <Button w={"full"} h={"100%"} onClick={handleBookNow}>
                             Book Now
                         </Button>

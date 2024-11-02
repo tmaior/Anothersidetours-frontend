@@ -33,7 +33,7 @@ export default function AddOns({ addons }: AddOnProps) {
                     minValue={0}
                     value={quantities[addon.id] || 0}
                     onChange={(value) => handleQuantityChange(addon.id, value)}
-                    description="Description for select addon"
+                    note="Description for select addon"
                     pl={95}
                 />
             ))}

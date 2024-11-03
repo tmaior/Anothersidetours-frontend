@@ -31,7 +31,7 @@ import {MdErrorOutline} from "react-icons/md";
 import InputMask from "react-input-mask";
 import FooterBar from "./Footer";
 
-export default function CheckoutFooter({totalAmount, onCheckout}) {
+export default function CheckoutFooter({totalAmount, onCheckout,onPayment}) {
     const {isOpen, onOpen, onClose} = useDisclosure();
     const {
         isOpen: isAdditionalOpen,
@@ -70,8 +70,9 @@ export default function CheckoutFooter({totalAmount, onCheckout}) {
         //     },
         //     body: JSON.stringify({ cardNumber, expiryDate, cvc, amount: totalAmount }),
         // });
-        onClose();
-        onAdditionalOpen();
+        if (isChecked && onPayment) { // Check if onPayment is defined
+            onPayment(); // Call onPayment
+        }
     };
 
     return (

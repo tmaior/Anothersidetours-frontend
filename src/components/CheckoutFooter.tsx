@@ -25,13 +25,19 @@ import {
     useDisclosure,
 } from "@chakra-ui/react";
 import {GiShoppingCart} from "react-icons/gi";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {FaRegCreditCard} from "react-icons/fa";
 import {MdErrorOutline} from "react-icons/md";
 import InputMask from "react-input-mask";
+import FooterBar from "./Footer";
 
 export default function CheckoutFooter({totalAmount, onCheckout}) {
     const {isOpen, onOpen, onClose} = useDisclosure();
+    const {
+        isOpen: isAdditionalOpen,
+        onOpen: onAdditionalOpen,
+        onClose: onAdditionalClose
+    } = useDisclosure();
     const [isChecked, setIsChecked] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState("manual");
     const [cardNumber, setCardNumber] = useState("");
@@ -54,6 +60,18 @@ export default function CheckoutFooter({totalAmount, onCheckout}) {
 
         const isValidCardNumber = /^\d{4} \d{4} \d{4} \d{4}$/.test(value);
         setIsError(!isValidCardNumber && value.length > 0);
+    };
+
+    const handlePayClick = async () => {
+        // await fetch('https://localhost:9000/payment', {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //     },
+        //     body: JSON.stringify({ cardNumber, expiryDate, cvc, amount: totalAmount }),
+        // });
+        onClose();
+        onAdditionalOpen();
     };
 
     return (
@@ -207,6 +225,7 @@ export default function CheckoutFooter({totalAmount, onCheckout}) {
                                 fontWeight="normal"
                                 borderRadius={0}
                                 isDisabled={!isChecked}
+                                onClick={handlePayClick}
                             >
                                 <GiShoppingCart/>
                                 PAY: ${totalAmount}
@@ -253,6 +272,20 @@ export default function CheckoutFooter({totalAmount, onCheckout}) {
                     </Modal>
                 </Flex>
             </Flex>
+            
+            <Modal isOpen={isAdditionalOpen} onClose={onAdditionalClose} isCentered size="6xl">
+                <ModalOverlay />
+                <ModalContent height={"60vh"}>
+                    <ModalHeader>Informações Adicionais</ModalHeader>
+                    <ModalBody>
+                        <Text>Por favor, forneça informações adicionais para completar o pagamento.</Text>
+                        <Input placeholder="Additional Info" mt={4} />
+                        <Input placeholder="Additional Info" mt={4} />
+                        <Input placeholder="Additional Info" mt={4} />
+                    </ModalBody>
+                    <FooterBar  onContinue={onAdditionalClose} continueText={"FINISH"}/>
+                </ModalContent>
+            </Modal>
         </>
     );
 }

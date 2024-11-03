@@ -59,7 +59,7 @@ export default function BookingDetails({
                 errorMessage={errorMessage}
                 title={title}/>
             <AddOns addons={addons} />
-            <FooterBar onContinue={handleValidation}/>
+            <FooterBar onContinue={handleValidation} continueText={"CONTINUE"}/>
         </>
     );
 }

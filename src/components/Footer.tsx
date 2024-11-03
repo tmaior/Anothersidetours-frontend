@@ -2,9 +2,10 @@ import {Button, Flex, HStack, Image, Text} from "@chakra-ui/react";
 
 interface FooterBarProps {
     onContinue: () => void;
+    continueText: string;
 }
 
-export default function FooterBar({onContinue}: FooterBarProps) {
+export default function FooterBar({onContinue,continueText}: FooterBarProps) {
 
     return (
         <Flex
@@ -52,7 +53,7 @@ export default function FooterBar({onContinue}: FooterBarProps) {
                     borderRadius={0}
                     onClick={onContinue}
                 >
-                    CONTINUE
+                    {continueText}
                 </Button>
             </Flex>
         </Flex>

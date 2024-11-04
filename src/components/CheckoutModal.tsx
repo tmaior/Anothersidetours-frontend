@@ -52,13 +52,12 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
     // };
 
     const handlePayAndOpenAdditional = () => {
-        onClose(); // Close CheckoutModal
-        openAdditionalModal(); // Open InformationAdditionalModal
+        onClose();
+        openAdditionalModal();
     };
 
     return (
         <>
-            {/* Checkout Modal */}
             <Modal isOpen={isOpen} onClose={onClose} isCentered size="6xl">
                 <ModalOverlay />
                 <ModalContent height={"60vh"}>
@@ -67,7 +66,6 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                     <ModalCloseButton onClick={onClose} />
                     <ModalBody>
                         <HStack>
-                            {/* Left Section with Image and Information */}
                             <HStack w="500px">
                                 <HStack>
                                     <Flex w="40%" h="40%">
@@ -110,8 +108,6 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                             </HStack>
 
                             <Spacer />
-
-                            {/* Right Section with Payment Details */}
                             <VStack w="full" p={4} spacing={4} align="stretch">
                                 <HStack w="full">
                                     <Text>{`Guests (${guestQuantity} × $${pricePerGuest.toFixed(2)})`}</Text>
@@ -131,11 +127,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                     <CheckoutFooter totalAmount={totalAmount} onCheckout={onBack} onPayment={handlePayAndOpenAdditional} />
                 </ModalContent>
             </Modal>
-
-            {/* InformationAdditional Modal */}
             <InformationAdditionalModal isOpen={isAdditionalOpen} onClose={closeAdditionalModal} />
-
-            {/* Code Modal */}
             <Modal isOpen={isCodeModalOpen} onClose={closeCodeModal} isCentered>
                 <ModalOverlay />
                 <ModalContent>

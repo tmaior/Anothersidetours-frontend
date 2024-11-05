@@ -1,11 +1,11 @@
-import {Button, Flex, HStack, Image, Text} from "@chakra-ui/react";
+import {Button, Flex, HStack, Image} from "@chakra-ui/react";
 
 interface FooterBarProps {
     onContinue: () => void;
     continueText: string;
 }
 
-export default function FooterBar({onContinue,continueText}: FooterBarProps) {
+export default function FooterBar({onContinue, continueText}: FooterBarProps) {
 
     return (
         <Flex
@@ -21,16 +21,6 @@ export default function FooterBar({onContinue,continueText}: FooterBarProps) {
             flexDirection={["column", "row"]}
             mt={4}
         >
-            <HStack spacing={4} pl={8} py={[4, 0]}>
-                <Text fontSize="sm" color="gray.500">
-                    POWERED BY
-                </Text>
-                <Image
-                    src="https://checkout.xola.app/images/xola-logo.png"
-                    alt="Xola logo"
-                    h="30px"
-                />
-            </HStack>
 
             <Flex align="center" justify="flex-end" flex={1}>
                 <HStack spacing={4} pr={4}>

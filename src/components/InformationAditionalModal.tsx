@@ -30,7 +30,6 @@ export default function InformationAdditionalModal({isOpen, onClose, onContinue}
     const {isOpen: isFinalOpen, onOpen: onFinalOpen, onClose: onFinalClose} = useDisclosure();
 
     const handleFinishClick = () => {
-
         onClose();
         onFinalOpen();
     };

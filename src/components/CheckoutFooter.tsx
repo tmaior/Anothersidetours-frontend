@@ -25,7 +25,7 @@ import {
     useDisclosure,
 } from "@chakra-ui/react";
 import {GiShoppingCart} from "react-icons/gi";
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {FaRegCreditCard} from "react-icons/fa";
 import {MdErrorOutline} from "react-icons/md";
 import InputMask from "react-input-mask";
@@ -35,7 +35,6 @@ export default function CheckoutFooter({totalAmount, onCheckout,onPayment}) {
     const {isOpen, onOpen, onClose} = useDisclosure();
     const {
         isOpen: isAdditionalOpen,
-        onOpen: onAdditionalOpen,
         onClose: onAdditionalClose
     } = useDisclosure();
     const [isChecked, setIsChecked] = useState(false);
@@ -181,17 +180,6 @@ export default function CheckoutFooter({totalAmount, onCheckout,onPayment}) {
                     >
                         Back
                     </Button>
-
-                    <HStack spacing={4} pl={8} py={[4, 0]}>
-                        <Text fontSize="sm" color="gray.500">
-                            POWERED BY
-                        </Text>
-                        <Image
-                            src="https://checkout.xola.app/images/xola-logo.png"
-                            alt="Xola logo"
-                            h="30px"
-                        />
-                    </HStack>
 
                     <Flex align="center" justify="flex-end" flex={5} position="relative">
                         <Checkbox

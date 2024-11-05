@@ -1,4 +1,4 @@
-import React, {useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import FooterBar from "./Footer";
 import Navbar from "./Navbar";
 import Grid from "./Grid";
@@ -24,7 +24,12 @@ export default function BookingDetails({
     const [localSelectedDate, setLocalSelectedDate] = useState<Date | null>(null);
     const [localSelectedTime, setLocalSelectedTime] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const {setSelectedDate, setSelectedTime} = useGuest();
+    const {setSelectedDate, setSelectedTime , setTitle} = useGuest();
+
+    useEffect(() => {
+        setTitle(title);
+    }, [title, setTitle]);
+
     const handleValidation = () => {
         const isFormValid = formInfoRef.current?.validateForm();
         const isDateSelected = localSelectedDate !== null;

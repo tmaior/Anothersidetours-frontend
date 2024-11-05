@@ -128,6 +128,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                 </ModalContent>
             </Modal>
             <InformationAdditionalModal isOpen={isAdditionalOpen} onClose={closeAdditionalModal} />
+
             <Modal isOpen={isCodeModalOpen} onClose={closeCodeModal} isCentered>
                 <ModalOverlay />
                 <ModalContent>

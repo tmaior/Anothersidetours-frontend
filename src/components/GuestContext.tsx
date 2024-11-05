@@ -5,6 +5,8 @@ interface GuestContextType {
     setGuestQuantity: React.Dispatch<React.SetStateAction<number>>;
     name: string;
     setName: React.Dispatch<React.SetStateAction<string>>;
+    title: string;
+    setTitle: React.Dispatch<React.SetStateAction<string>>;
     email: string;
     setEmail: React.Dispatch<React.SetStateAction<string>>;
     selectedDate: Date | null;
@@ -27,6 +29,7 @@ export const useGuest = (): GuestContextType => {
 export function GuestProvider({ children }: { children: ReactNode }) {
     const [guestQuantity, setGuestQuantity] = useState(2);
     const [name, setName] = useState("");
+    const [title, setTitle] = useState("");
     const [email, setEmail] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -34,7 +37,8 @@ export function GuestProvider({ children }: { children: ReactNode }) {
     const resetGuestQuantity = () => {
         setGuestQuantity(2);
         setName("")
-        setEmail("");
+        setEmail("")
+        setTitle("")
     };
 
     return (
@@ -44,6 +48,8 @@ export function GuestProvider({ children }: { children: ReactNode }) {
                 setGuestQuantity,
                 name,
                 setName,
+                title,
+                setTitle,
                 email,
                 setEmail,
                 selectedDate,

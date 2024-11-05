@@ -152,7 +152,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                                     </HStack>
                                                     <HStack spacing={2}>
                                                         <FaPhoneAlt />
-                                                        <Text>{phone}</Text>
+                                                        <Text>{phone|| "None informed"}</Text>
                                                     </HStack>
                                                 </VStack>
                                             </HStack>

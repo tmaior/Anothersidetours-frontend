@@ -3,7 +3,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { useGuest } from "./GuestContext";
 
 const FormInfo = forwardRef((props, ref) => {
-    const { name, setName, email, setEmail } = useGuest();
+    const { name, setName, email, setEmail, phone,setPhone } = useGuest();
     const [errors, setErrors] = useState({ name: "", email: "" });
 
     const validateForm = () => {
@@ -64,6 +64,8 @@ const FormInfo = forwardRef((props, ref) => {
                     borderRadius={"0px"}
                     placeholder={"Phone Number"}
                     maxWidth="600px"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                 />
             </VStack>
         </VStack>

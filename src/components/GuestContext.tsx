@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode } from "react";
+import React, {createContext, ReactNode, useContext, useState} from "react";
 
 interface GuestContextType {
     guestQuantity: number;
@@ -9,13 +9,22 @@ interface GuestContextType {
     setTitle: React.Dispatch<React.SetStateAction<string>>;
     email: string;
     setEmail: React.Dispatch<React.SetStateAction<string>>;
+    phone: string;
+    setPhone: React.Dispatch<React.SetStateAction<string>>;
     selectedDate: Date | null;
     setSelectedDate: React.Dispatch<React.SetStateAction<Date | null>>;
     selectedTime: string | null;
     setSelectedTime: React.Dispatch<React.SetStateAction<string | null>>;
     resetGuestQuantity: () => void;
     detailedAddons: Array<{ id: string; label: string; type: string; quantity: number; price: number; total: number }>;
-    setDetailedAddons: React.Dispatch<React.SetStateAction<Array<{ id: string; label: string; type: string; quantity: number; price: number; total: number }>>>;
+    setDetailedAddons: React.Dispatch<React.SetStateAction<Array<{
+        id: string;
+        label: string;
+        type: string;
+        quantity: number;
+        price: number;
+        total: number
+    }>>>;
     tenantId: string;
     setTenantId: React.Dispatch<React.SetStateAction<string>>;
     tourId: string;
@@ -34,11 +43,12 @@ export const useGuest = (): GuestContextType => {
     return context;
 }
 
-export function GuestProvider({ children }: { children: ReactNode }) {
+export function GuestProvider({children}: { children: ReactNode }) {
     const [guestQuantity, setGuestQuantity] = useState(2);
     const [name, setName] = useState("");
     const [title, setTitle] = useState("");
     const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [tenantId, setTenantId] = useState("");
@@ -54,6 +64,7 @@ export function GuestProvider({ children }: { children: ReactNode }) {
         setTenantId("");
         setTourId("");
         setUserId("");
+        setPhone("");
     };
 
     return (
@@ -80,6 +91,8 @@ export function GuestProvider({ children }: { children: ReactNode }) {
                 setTourId,
                 userId,
                 setUserId,
+                phone,
+                setPhone,
             }}
         >
             {children}

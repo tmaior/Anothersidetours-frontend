@@ -37,7 +37,7 @@ interface CheckoutModalProps {
 
 export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePrice }: CheckoutModalProps) {
     const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
-    const { tenantId, tourId, guestQuantity, name, email, selectedDate, selectedTime, detailedAddons, setUserId } = useGuest();
+    const { tenantId, tourId, guestQuantity, name, email, phone , selectedDate, selectedTime, detailedAddons, setUserId } = useGuest();
 
     const { isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal } = useDisclosure();
 
@@ -152,7 +152,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                                     </HStack>
                                                     <HStack spacing={2}>
                                                         <FaPhoneAlt />
-                                                        <Text>Telefone</Text>
+                                                        <Text>{phone}</Text>
                                                     </HStack>
                                                 </VStack>
                                             </HStack>

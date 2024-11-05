@@ -1,7 +1,8 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
-import { useState } from "react";
 import PickupSpinner from "./PickupSpinner";
 import CustomCheckbox from "./CustomCheckbox";
+import {useGuest} from "./GuestContext";
+import {useEffect, useState} from "react";
 
 interface AddOnProps {
     addons: Array<{ id: string; label: string; type: string; description: string ; price: number}>;
@@ -10,6 +11,7 @@ interface AddOnProps {
 export default function AddOns({ addons }: AddOnProps) {
     const [quantities, setQuantities] = useState<{ [id: string]: number }>({});
     const [checkedAddons, setCheckedAddons] = useState<{ [id: string]: boolean }>({});
+    const { setDetailedAddons } = useGuest();
 
     const handleQuantityChange = (id: string, value: number) => {
         setQuantities((prev) => ({ ...prev, [id]: value }));
@@ -18,6 +20,34 @@ export default function AddOns({ addons }: AddOnProps) {
     const handleCheckboxChange = (id: string, isChecked: boolean) => {
         setCheckedAddons((prev) => ({ ...prev, [id]: isChecked }));
     };
+
+    useEffect(() => {
+        console.log("Addons data:", addons);
+        const detailedAddons = addons.map((addon) => {
+            if (addon.type === "SELECT" && (quantities[addon.id] || 0) > 0) {
+                return {
+                    id: addon.id,
+                    label: addon.label,
+                    type: addon.type,
+                    quantity: quantities[addon.id],
+                    price: addon.price,
+                    total: quantities[addon.id] * (addon.price ?? 0),
+                };
+            } else if (addon.type === "CHECKBOX" && checkedAddons[addon.id]) {
+                return {
+                    id: addon.id,
+                    label: addon.label,
+                    type: addon.type,
+                    quantity: 1,
+                    price: addon.price,
+                    total: addon.price ?? 0,
+                };
+            }
+            return null;
+        }).filter(Boolean);
+
+        setDetailedAddons(detailedAddons);
+    }, [addons, quantities, checkedAddons, setDetailedAddons]);
 
     const selectAddons = addons.filter((addon) => addon.type === "SELECT");
     const checkboxAddons = addons.filter((addon) => addon.type === "CHECKBOX");

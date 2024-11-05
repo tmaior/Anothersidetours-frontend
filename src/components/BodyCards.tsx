@@ -41,7 +41,8 @@ export default function BodyCards() {
                         id: addon.id,
                         label: addon.label,
                         type: addon.type,
-                        description: addon.description
+                        description: addon.description,
+                        price: addon.price
                     }))
                 }));
 

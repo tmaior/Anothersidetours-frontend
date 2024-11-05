@@ -37,19 +37,14 @@ interface CheckoutModalProps {
 
 export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePrice }: CheckoutModalProps) {
     const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
-    const { guestQuantity, name, email, selectedDate, selectedTime } = useGuest();
+    const { guestQuantity, name, email, selectedDate, selectedTime,detailedAddons } = useGuest();
 
     const { isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal } = useDisclosure();
 
     const pricePerGuest = valuePrice;
-    const totalAmount = guestQuantity * pricePerGuest;
-
-    // const handlePayAndOpenAdditional = () => {
-    //     onClose();
-    //     setTimeout(() => {
-    //         openAdditionalModal();
-    //     }, 300);
-    // };
+    const guestTotal = guestQuantity * pricePerGuest;
+    const addonsTotal = detailedAddons.reduce((acc, addon) => acc + addon.total, 0);
+    const totalAmount = guestTotal + addonsTotal;
 
     const handlePayAndOpenAdditional = () => {
         onClose();
@@ -112,8 +107,15 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                 <HStack w="full">
                                     <Text>{`Guests (${guestQuantity} × $${pricePerGuest.toFixed(2)})`}</Text>
                                     <Spacer />
-                                    <Text>${totalAmount.toFixed(2)}</Text>
+                                    <Text>${guestTotal.toFixed(2)}</Text>
                                 </HStack>
+                                {detailedAddons.map((addon) => (
+                                    <HStack w="full" key={addon.id}>
+                                        <Text>{`${addon.label} (${addon.quantity} × $${addon.price.toFixed(2)})`}</Text>
+                                        <Spacer />
+                                        <Text>${addon.total.toFixed(2)}</Text>
+                                    </HStack>
+                                ))}
                                 <Link color="blue.500" onClick={openCodeModal} textAlign="left" fontSize="md">Have a code?</Link>
                                 <HStack w="full" marginTop={"-4"}>
                                     <Text>Total</Text>

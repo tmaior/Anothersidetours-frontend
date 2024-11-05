@@ -14,6 +14,8 @@ interface GuestContextType {
     selectedTime: string | null;
     setSelectedTime: React.Dispatch<React.SetStateAction<string | null>>;
     resetGuestQuantity: () => void;
+    detailedAddons: Array<{ id: string; label: string; type: string; quantity: number; price: number; total: number }>;
+    setDetailedAddons: React.Dispatch<React.SetStateAction<Array<{ id: string; label: string; type: string; quantity: number; price: number; total: number }>>>;
 }
 
 const GuestContext = createContext<GuestContextType | undefined>(undefined);
@@ -41,6 +43,8 @@ export function GuestProvider({ children }: { children: ReactNode }) {
         setTitle("")
     };
 
+    const [detailedAddons, setDetailedAddons] = useState([]);
+
     return (
         <GuestContext.Provider
             value={{
@@ -57,6 +61,8 @@ export function GuestProvider({ children }: { children: ReactNode }) {
                 selectedTime,
                 setSelectedTime,
                 resetGuestQuantity,
+                detailedAddons,
+                setDetailedAddons,
             }}
         >
             {children}

@@ -69,8 +69,8 @@ export default function CheckoutFooter({totalAmount, onCheckout,onPayment}) {
         //     },
         //     body: JSON.stringify({ cardNumber, expiryDate, cvc, amount: totalAmount }),
         // });
-        if (isChecked && onPayment) { // Check if onPayment is defined
-            onPayment(); // Call onPayment
+        if (isChecked && onPayment) {
+            onPayment();
         }
     };
 

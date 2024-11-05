@@ -26,7 +26,7 @@ export default function BodyCards() {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const response = await api.get(`/tours/allBytenant/a2464722-da26-4013-a824-0ba44ad8fd44`);
+                const response = await api.get(`/tours/allBytenant/61cc17e9-7e9a-4461-84cf-4c85e9da5c4a`);
 
                 const mappedData: CardData[] = response.data.map((item): CardData => ({
                     id: item.id,
@@ -40,7 +40,8 @@ export default function BodyCards() {
                     addons: item.addons.map((addon: any) => ({
                         id: addon.id,
                         label: addon.label,
-                        type: addon.type
+                        type: addon.type,
+                        description: addon.description
                     }))
                 }));
 

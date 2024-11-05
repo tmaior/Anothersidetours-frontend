@@ -10,7 +10,7 @@ interface BookingDetailsProps {
     title: string;
     description: string;
     originalPrice: string;
-    addons: Array<{ id: string; label: string; type: string }>;
+    addons: Array<{ id: string; label: string; type: string; description: string ; price: number }>;
 }
 
 export default function BookingDetails({

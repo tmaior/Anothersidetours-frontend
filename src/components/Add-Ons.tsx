@@ -4,7 +4,7 @@ import PickupSpinner from "./PickupSpinner";
 import CustomCheckbox from "./CustomCheckbox";
 
 interface AddOnProps {
-    addons: Array<{ id: string; label: string; type: string }>;
+    addons: Array<{ id: string; label: string; type: string; description: string ; price: number}>;
 }
 
 export default function AddOns({ addons }: AddOnProps) {
@@ -33,7 +33,7 @@ export default function AddOns({ addons }: AddOnProps) {
                     minValue={0}
                     value={quantities[addon.id] || 0}
                     onChange={(value) => handleQuantityChange(addon.id, value)}
-                    note="Description for select addon"
+                    note={addon.description}
                     pl={95}
                 />
             ))}
@@ -42,7 +42,7 @@ export default function AddOns({ addons }: AddOnProps) {
                 <Box key={addon.id} mt={4} pl={95}>
                     <CustomCheckbox
                         title={addon.label}
-                        description="Description for checkbox addon"
+                        description={addon.description}
                         isChecked={checkedAddons[addon.id] || false}
                         onChange={(isChecked) => handleCheckboxChange(addon.id, isChecked)}
                     />

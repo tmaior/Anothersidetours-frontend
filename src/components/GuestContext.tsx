@@ -16,6 +16,12 @@ interface GuestContextType {
     resetGuestQuantity: () => void;
     detailedAddons: Array<{ id: string; label: string; type: string; quantity: number; price: number; total: number }>;
     setDetailedAddons: React.Dispatch<React.SetStateAction<Array<{ id: string; label: string; type: string; quantity: number; price: number; total: number }>>>;
+    tenantId: string;
+    setTenantId: React.Dispatch<React.SetStateAction<string>>;
+    tourId: string;
+    setTourId: React.Dispatch<React.SetStateAction<string>>;
+    userId: string;
+    setUserId: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const GuestContext = createContext<GuestContextType | undefined>(undefined);
@@ -35,15 +41,20 @@ export function GuestProvider({ children }: { children: ReactNode }) {
     const [email, setEmail] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
+    const [tenantId, setTenantId] = useState("");
+    const [tourId, setTourId] = useState("");
+    const [userId, setUserId] = useState("");
+    const [detailedAddons, setDetailedAddons] = useState([]);
 
     const resetGuestQuantity = () => {
         setGuestQuantity(2);
-        setName("")
-        setEmail("")
-        setTitle("")
+        setName("");
+        setEmail("");
+        setTitle("");
+        setTenantId("");
+        setTourId("");
+        setUserId("");
     };
-
-    const [detailedAddons, setDetailedAddons] = useState([]);
 
     return (
         <GuestContext.Provider
@@ -63,6 +74,12 @@ export function GuestProvider({ children }: { children: ReactNode }) {
                 resetGuestQuantity,
                 detailedAddons,
                 setDetailedAddons,
+                tenantId,
+                setTenantId,
+                tourId,
+                setTourId,
+                userId,
+                setUserId,
             }}
         >
             {children}

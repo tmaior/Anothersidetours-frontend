@@ -37,7 +37,7 @@ interface CheckoutModalProps {
 
 export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePrice }: CheckoutModalProps) {
     const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
-    const { guestQuantity, name, email, selectedDate, selectedTime,detailedAddons } = useGuest();
+    const { tenantId, tourId, guestQuantity, name, email, selectedDate, selectedTime, detailedAddons, setUserId } = useGuest();
 
     const { isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal } = useDisclosure();
 
@@ -46,7 +46,71 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
     const addonsTotal = detailedAddons.reduce((acc, addon) => acc + addon.total, 0);
     const totalAmount = guestTotal + addonsTotal;
 
-    const handlePayAndOpenAdditional = () => {
+    const handlePayAndOpenAdditional = async () => {
+
+        try {
+            const userResponse = await fetch('http://localhost:9000/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, email }),
+            });
+
+            if (!userResponse.ok) {
+                console.error('Erro ao criar o usuário');
+                return;
+            }
+
+            const userData = await userResponse.json();
+            const userId = userData.id;
+
+            setUserId(userId);
+
+            const combineDateAndTime = (date, time) => {
+                const datePart = date.toISOString().split('T')[0];
+                const [hour, minute] = time.split(':');
+                const formattedTime = `${hour.padStart(2, '0')}:${minute}`;
+                return `${datePart}T${formattedTime}:00.000Z`;
+            };
+
+            const reservationDateTime = selectedDate && selectedTime
+                ? combineDateAndTime(selectedDate, selectedTime)
+                : new Date().toISOString();
+
+            const reservationData = {
+                tenantId:"50596aa1-0ff2-4973-9c84-1586cdd70d2a",
+                tourId:"76677a92-67a0-4283-a160-cf6b6b5702c5",
+                userId,
+                reservation_date: reservationDateTime,
+                addons: detailedAddons.map(addon => ({
+                    addonId: addon.id,
+                    quantity: addon.quantity
+                })),
+                total_price: totalAmount,
+                guestQuantity,
+                status: "PENDING",
+            };
+
+            // const { name, email, ...reservationDataToSend } = reservationData;
+
+            const reservationResponse = await fetch('http://localhost:9000/reservations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(reservationData),
+            });
+
+            if (reservationResponse.ok) {
+                console.log('Reserva criada com sucesso');
+            } else {
+                console.error('Falha ao criar a reserva');
+            }
+        } catch (error) {
+            console.error('Erro no processo de checkout:', error);
+        }
+
         onClose();
         openAdditionalModal();
     };

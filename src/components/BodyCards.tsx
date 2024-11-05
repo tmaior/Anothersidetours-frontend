@@ -2,6 +2,7 @@ import { SimpleGrid, Button, Box, Spinner, Text } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import CardHome from "./CardHome";
 import {api} from "../services/api";
+import {useGuest} from "./GuestContext";
 
 interface CardData {
     id: number;
@@ -20,13 +21,14 @@ export default function BodyCards() {
     const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { setTourId } = useGuest();
     const itemsPerPage = 6;
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const response = await api.get(`/tours/allBytenant/61cc17e9-7e9a-4461-84cf-4c85e9da5c4a`);
+                const response = await api.get(`/tours/allBytenant/50596aa1-0ff2-4973-9c84-1586cdd70d2a`);
 
                 const mappedData: CardData[] = response.data.map((item): CardData => ({
                     id: item.id,
@@ -92,6 +94,7 @@ export default function BodyCards() {
                         image={data.image}
                         valuePrice={data.valuePrice}
                         addons={data.addons}
+                        onSelect={() => setTourId(data.id)}
                     />
                 ))}
             </SimpleGrid>

@@ -20,7 +20,7 @@ import BookingDetails from "./BookingDetails";
 import CheckoutModal from "./CheckoutModal";
 import { useGuest } from "./GuestContext";
 
-export default function CardHome({ title, description, originalPrice, discountedPrice, duration, image,valuePrice,addons }) {
+export default function CardHome({ title, description, originalPrice, discountedPrice, duration, image,valuePrice,addons,onSelect,}) {
     const { isOpen: isBookingOpen, onOpen: openBooking, onClose: closeBooking } = useDisclosure();
     const { isOpen: isCheckoutOpen, onOpen: openCheckout, onClose: closeCheckout } = useDisclosure();
     const { resetGuestQuantity } = useGuest();
@@ -40,6 +40,7 @@ export default function CardHome({ title, description, originalPrice, discounted
     };
 
     const handleBookNow = () => {
+        if (onSelect) onSelect();
         resetGuestQuantity();
         openBooking();
     };

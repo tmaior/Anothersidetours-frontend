@@ -141,7 +141,7 @@ export default function CheckoutFooter({totalAmount, onCheckout,onPayment}) {
                 </Flex>
                 <Flex justify={"flex-end"} align={"end"}>
                     <HStack align={"self-end"} w={"full"} justify={"flex-end"} marginRight={"-50"}
-                            marginBottom={"-110"}>
+                            marginBottom={"-85"}>
                         <RadioGroup onChange={setPaymentMethod} value={paymentMethod} mb={4}>
                             <HStack w={"500px"} spacing={4}>
                                 <Radio value="manual">Manually enter card details</Radio>

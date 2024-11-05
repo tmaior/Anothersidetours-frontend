@@ -79,8 +79,8 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                 : new Date().toISOString();
 
             const reservationData = {
-                tenantId:"50596aa1-0ff2-4973-9c84-1586cdd70d2a",
-                tourId:"76677a92-67a0-4283-a160-cf6b6b5702c5",
+                tenantId:"acc4fa81-ca83-4146-abb7-4d5ee6575d43",
+                tourId:"af331b54-bb2a-49e3-b421-f44916aa6a25",
                 userId,
                 reservation_date: reservationDateTime,
                 addons: detailedAddons.map(addon => ({
@@ -123,7 +123,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                     <ModalHeader marginLeft={"500"} alignContent={"center"}>{"CHECKOUT"}</ModalHeader>
                     <Divider color={"gray.400"} />
                     <ModalCloseButton onClick={onClose} />
-                    <ModalBody>
+                    <ModalBody h={"10px"}>
                         <HStack>
                             <HStack w="500px">
                                 <HStack>
@@ -180,7 +180,14 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                         <Text>${addon.total.toFixed(2)}</Text>
                                     </HStack>
                                 ))}
-                                <Link color="blue.500" onClick={openCodeModal} textAlign="left" fontSize="md">Have a code?</Link>
+                                    <Link color="blue.500"
+                                          onClick={openCodeModal}
+                                          textAlign="left"
+                                          fontSize="md"
+                                    >
+                                        Have a code?
+                                    </Link>
+
                                 <HStack w="full" marginTop={"-4"}>
                                     <Text>Total</Text>
                                     <Spacer />
@@ -188,8 +195,8 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                 </HStack>
                             </VStack>
                         </HStack>
+                        <Divider color={"gray.400"} marginTop={"10px"}/>
                     </ModalBody>
-                    <Divider orientation="horizontal" />
                     <CheckoutFooter totalAmount={totalAmount} onCheckout={onBack} onPayment={handlePayAndOpenAdditional} />
                 </ModalContent>
             </Modal>

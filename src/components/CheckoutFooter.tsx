@@ -82,7 +82,7 @@ export default function CheckoutFooter({totalAmount, onCheckout,onPayment}) {
                     <Flex w={"full"}>
                         {paymentMethod === "manual" && (
                             <FormControl isInvalid={isError} mb={4} alignContent={"center"} marginLeft={"20px"}>
-                                <HStack w={"400px"} marginLeft={"15px"} justify={"left"}>
+                                <HStack w={"400px"} marginLeft={"15px"} justify={"left"} marginTop={"200px"}>
                                     <InputGroup>
                                         <InputLeftElement pointerEvents="none" color="gray.400">
                                             <Icon as={FaRegCreditCard}/>
@@ -140,12 +140,12 @@ export default function CheckoutFooter({totalAmount, onCheckout,onPayment}) {
                     </Flex>
                 </Flex>
                 <Flex justify={"flex-end"} align={"end"}>
-                    <HStack align={"self-end"} w={"full"} justify={"flex-end"} marginRight={"-50"}
-                            marginBottom={"-85"}>
+                    <HStack align={"self-end"} w={"full"} justify={"flex-end"} marginRight={"-200"}
+                            marginBottom={"-170"}>
                         <RadioGroup onChange={setPaymentMethod} value={paymentMethod} mb={4}>
-                            <HStack w={"500px"} spacing={4}>
+                            <HStack w={"500px"} spacing={4} >
                                 <Radio value="manual">Manually enter card details</Radio>
-                                <Radio value="saved">Saved card from browser</Radio>
+                                {/*<Radio value="saved">Saved card from browser</Radio>*/}
                             </HStack>
                         </RadioGroup>
                     </HStack>

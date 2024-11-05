@@ -28,7 +28,7 @@ export default function BodyCards() {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const response = await api.get(`/tours/allBytenant/50596aa1-0ff2-4973-9c84-1586cdd70d2a`);
+                const response = await api.get(`/tours/allBytenant/acc4fa81-ca83-4146-abb7-4d5ee6575d43`);
 
                 const mappedData: CardData[] = response.data.map((item): CardData => ({
                     id: item.id,

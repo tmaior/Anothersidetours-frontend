@@ -1,4 +1,3 @@
-
 import { useGuest } from "./GuestContext";
 import {
     Box,
@@ -26,6 +25,7 @@ import { SlCalender } from "react-icons/sl";
 import { MdEmail, MdOutlineAccessTime } from "react-icons/md";
 import { format } from "date-fns";
 import InformationAdditionalModal from "./InformationAditionalModal";
+import { FaPhoneAlt } from "react-icons/fa";
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -139,18 +139,24 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                         <Text fontSize="lg" fontWeight="bold">{title}</Text>
                                         <VStack align="flex-start" spacing={0} h={"80px"} marginLeft={1}>
                                             <Text>{name}</Text>
-                                            <HStack spacing={6}>
+                                            <HStack spacing={6} marginTop={"-3"}>
                                                 <HStack spacing={2}>
                                                     <ImUsers />
                                                     <Text>{guestQuantity} Reserved</Text>
                                                 </HStack>
                                                 <Spacer />
-                                                <HStack spacing={2}>
-                                                    <MdEmail />
-                                                    <Text>{email}</Text>
-                                                </HStack>
+                                                <VStack align="flex-start" spacing={1}>
+                                                    <HStack spacing={2}>
+                                                        <MdEmail />
+                                                        <Text>{email}</Text>
+                                                    </HStack>
+                                                    <HStack spacing={2}>
+                                                        <FaPhoneAlt />
+                                                        <Text>Telefone</Text>
+                                                    </HStack>
+                                                </VStack>
                                             </HStack>
-                                            <HStack>
+                                            <HStack marginTop={"-3"}>
                                                 <SlCalender />
                                                 <Text>{selectedDate ? format(selectedDate, 'dd MMM yyyy') : "No Date Selected"}</Text>
                                             </HStack>
@@ -180,14 +186,9 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                         <Text>${addon.total.toFixed(2)}</Text>
                                     </HStack>
                                 ))}
-                                    <Link color="blue.500"
-                                          onClick={openCodeModal}
-                                          textAlign="left"
-                                          fontSize="md"
-                                    >
-                                        Have a code?
-                                    </Link>
-
+                                <Link color="blue.500" onClick={openCodeModal} fontSize="sm">
+                                    Have a code?
+                                </Link>
                                 <HStack w="full" marginTop={"-4"}>
                                     <Text>Total</Text>
                                     <Spacer />

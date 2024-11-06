@@ -36,12 +36,13 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                                    selectedDate,
                                                    onChange,
                                                    onTimeChange,
-                                                   originalPrice
+                                                   originalPrice,
                                                }) => {
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
     const [monthDayData, setMonthDayData] = useState<{ [key: string]: string }>({});
     const [availableTimes, setAvailableTimes] = useState<string[]>([]);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
+    const [blockedDates, setBlockedDates] = useState<string[]>([]);
     const price = originalPrice;
 
     useEffect(() => {
@@ -58,31 +59,45 @@ const DatePicker: React.FC<DatePickerProps> = ({
         setMonthDayData(newMonthDayData);
     }, [currentMonth]);
 
-    const renderHeader = () => {
-        return (
-            <Box display="flex" justifyContent="space-between" alignItems="center" p={2} bg="gray.100">
-                <Text
-                    cursor="pointer"
-                    onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                    fontSize="lg"
-                    fontWeight="bold"
-                >
-                    {'<'}
-                </Text>
-                <Text fontSize="lg" fontWeight="bold">
-                    {format(currentMonth, 'MMMM yyyy')}
-                </Text>
-                <Text
-                    cursor="pointer"
-                    onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                    fontSize="lg"
-                    fontWeight="bold"
-                >
-                    {'>'}
-                </Text>
-            </Box>
-        );
-    };
+    useEffect(() => {
+        const fetchBlockedDates = async () => {
+            try {
+                const response = await fetch('http://localhost:9000/blackout-dates/acc4fa81-ca83-4146-abb7-4d5ee6575d43');
+                if (!response.ok) throw new Error('Failed to fetch blocked dates');
+
+                const data = await response.json();
+                setBlockedDates(data);
+            } catch (error) {
+                console.error("Erro ao buscar datas bloqueadas:", error);
+            }
+        };
+
+        fetchBlockedDates();
+    }, []);
+
+    const renderHeader = () => (
+        <Box display="flex" justifyContent="space-between" alignItems="center" p={2} bg="gray.100">
+            <Text
+                cursor="pointer"
+                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                fontSize="lg"
+                fontWeight="bold"
+            >
+                {'<'}
+            </Text>
+            <Text fontSize="lg" fontWeight="bold">
+                {format(currentMonth, 'MMMM yyyy')}
+            </Text>
+            <Text
+                cursor="pointer"
+                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                fontSize="lg"
+                fontWeight="bold"
+            >
+                {'>'}
+            </Text>
+        </Box>
+    );
 
     const renderDays = () => {
         const days = [];
@@ -118,6 +133,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 const isSelected = selectedDate && isSameDay(day, selectedDate);
                 const isCurrentMonthDay = isSameMonth(day, monthStart);
                 const isPast = isBefore(day, today);
+                const isBlocked = blockedDates.includes(dayKey);
 
                 if (isCurrentMonthDay) {
                     days.push(
@@ -128,16 +144,20 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                 p="2px"
                                 position="relative"
                                 onClick={() => {
-                                    if (!isPast) {
+                                    if (!isPast && !isBlocked) {
                                         onChange(cloneDay);
                                         handleDateSelection();
                                     }
                                 }}
-                                bg={isSelected ? '#337AB7' : isPast ? 'gray.100' : '#E9F7D4'}
-                                color={isSelected ? 'white' : isPast ? 'gray.500' : '#337AB7'}
-                                cursor={isPast ? 'not-allowed' : 'pointer'}
-                                _hover={isPast ? {} : { bg: '#337AB7', color: 'white' }}
-                                pointerEvents={isPast ? 'none' : 'auto'}
+                                bg={
+                                    isSelected ? '#337AB7'
+                                        : isPast || isBlocked ? 'gray.300'
+                                            : '#E9F7D4'
+                                }
+                                color={isSelected ? 'white' : isPast || isBlocked ? 'gray.500' : '#337AB7'}
+                                cursor={isBlocked ? 'not-allowed' : isPast ? 'not-allowed' : 'pointer'}
+                                _hover={isBlocked ? {} : { bg: '#337AB7', color: 'white' }}
+                                pointerEvents={isBlocked ? 'none' : isPast ? 'none' : 'auto'}
                             >
                                 <Text w="full" textAlign="end" fontSize="10px">
                                     {formattedDate}
@@ -149,8 +169,15 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                     transform="translate(-50%, -50%)"
                                     fontSize="13px"
                                     fontWeight="medium"
+                                    color={isBlocked ? 'red.500' : 'inherit'}
+                                    textAlign="center"
                                 >
-                                    {!isPast ? monthDayData[dayKey] || '' : ''}
+                                    {!isPast ? (isBlocked ?
+                                        <Text fontSize="9px" color="blue.500" lineHeight="normal" textAlign="center">
+                                            call for
+                                            <br />
+                                            Info
+                                        </Text> : monthDayData[dayKey] || '') : ''}
                                 </Text>
                             </Flex>
                         </Box>

@@ -26,6 +26,8 @@ import { MdEmail, MdOutlineAccessTime } from "react-icons/md";
 import { format } from "date-fns";
 import InformationAdditionalModal from "./InformationAditionalModal";
 import { FaPhoneAlt } from "react-icons/fa";
+import InputMask from "react-input-mask";
+import { Input as ChakraInput } from "@chakra-ui/react";
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -152,7 +154,20 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                                     </HStack>
                                                     <HStack spacing={2}>
                                                         <FaPhoneAlt />
-                                                        <Text>{phone|| "None informed"}</Text>
+                                                        <Text>
+                                                            {phone ? (
+                                                                <InputMask
+                                                                    mask="(999) 999-9999"
+                                                                    value={phone}
+                                                                    disabled
+                                                                    render={(inputProps) => (
+                                                                        <ChakraInput {...inputProps} isDisabled variant="unstyled" border="none" width="auto" />
+                                                                    )}
+                                                                />
+                                                            ) : (
+                                                                "None informed"
+                                                            )}
+                                                        </Text>
                                                     </HStack>
                                                 </VStack>
                                             </HStack>

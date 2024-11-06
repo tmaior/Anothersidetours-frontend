@@ -1,6 +1,7 @@
 import { Input, Text, VStack } from "@chakra-ui/react";
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { useGuest } from "./GuestContext";
+import InputMask from "react-input-mask";
 
 const FormInfo = forwardRef((props, ref) => {
     const { name, setName, email, setEmail, phone,setPhone } = useGuest();
@@ -60,13 +61,20 @@ const FormInfo = forwardRef((props, ref) => {
             </VStack>
             <VStack w={"full"} alignItems="flex-start">
                 <Text w={"full"}>Phone</Text>
-                <Input
-                    borderRadius={"0px"}
-                    placeholder={"Phone Number"}
-                    maxWidth="600px"
+                <InputMask
+                    mask="(999) 999-9999"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                />
+                >
+                    {(inputProps) => (
+                        <Input
+                            {...inputProps}
+                            borderRadius={"0px"}
+                            placeholder={"Phone Number"}
+                            maxWidth="600px"
+                        />
+                    )}
+                </InputMask>
             </VStack>
         </VStack>
     );

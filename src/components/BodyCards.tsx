@@ -1,5 +1,5 @@
-import { SimpleGrid, Button, Box, Spinner, Text } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
+import {Box, Button, SimpleGrid, Spinner, Text} from "@chakra-ui/react";
+import {useEffect, useState} from "react";
 import CardHome from "./CardHome";
 import {api} from "../services/api";
 import {useGuest} from "./GuestContext";
@@ -21,14 +21,15 @@ export default function BodyCards() {
     const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { setTourId } = useGuest();
+    const {setTourId } = useGuest();
     const itemsPerPage = 6;
+    const { tenantId } = useGuest();
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const response = await api.get(`/tours/allBytenant/acc4fa81-ca83-4146-abb7-4d5ee6575d43`);
+                const response = await api.get(`/tours/allBytenant/${tenantId}`);
 
                 const mappedData: CardData[] = response.data.map((item): CardData => ({
                     id: item.id,
@@ -73,7 +74,7 @@ export default function BodyCards() {
     };
 
     if (loading) {
-        return <Spinner size="xl" />;
+        return <Spinner size="xl"/>;
     }
 
     if (error) {

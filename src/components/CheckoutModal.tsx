@@ -39,7 +39,7 @@ interface CheckoutModalProps {
 
 export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePrice }: CheckoutModalProps) {
     const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
-    const { tenantId, tourId, guestQuantity, name, email, phone , selectedDate, selectedTime, detailedAddons, setUserId } = useGuest();
+    const { tenantId,tourId,guestQuantity, userId , name, email, phone , selectedDate, selectedTime, detailedAddons } = useGuest();
 
     const { isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal } = useDisclosure();
 
@@ -51,23 +51,20 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
     const handlePayAndOpenAdditional = async () => {
 
         try {
-            const userResponse = await fetch('http://localhost:9000/users', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name, email }),
-            });
-
-            if (!userResponse.ok) {
-                console.error('Erro ao criar o usuário');
+            if (!userId) {
+                console.error("User ID is not available.");
                 return;
             }
 
-            const userData = await userResponse.json();
-            const userId = userData.id;
+            const response = await fetch(`http://localhost:9000/users/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ statusCheckout: "COMPLETED" }),
+            });
 
-            setUserId(userId);
+            if (!response.ok) throw new Error("Failed to update user status");
 
             const combineDateAndTime = (date, time) => {
                 const datePart = date.toISOString().split('T')[0];
@@ -81,8 +78,8 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                 : new Date().toISOString();
 
             const reservationData = {
-                tenantId:"acc4fa81-ca83-4146-abb7-4d5ee6575d43",
-                tourId:"af331b54-bb2a-49e3-b421-f44916aa6a25",
+                tenantId,
+                tourId,
                 userId,
                 reservation_date: reservationDateTime,
                 addons: detailedAddons.map(addon => ({
@@ -105,12 +102,12 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
             });
 
             if (reservationResponse.ok) {
-                console.log('Reserva criada com sucesso');
+                console.log('Reservation created successfully');
             } else {
-                console.error('Falha ao criar a reserva');
+                console.error('Failed to create reservation');
             }
         } catch (error) {
-            console.error('Erro no processo de checkout:', error);
+            console.error('Error in the checkout process:', error);
         }
 
         onClose();

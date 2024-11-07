@@ -24,13 +24,13 @@ export default function BookingDetails({
     const [localSelectedDate, setLocalSelectedDate] = useState<Date | null>(null);
     const [localSelectedTime, setLocalSelectedTime] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const {setSelectedDate, setSelectedTime , setTitle} = useGuest();
+    const { setSelectedDate, setSelectedTime, setTitle, name, email, phone, guestQuantity, setUserId , setTourId } = useGuest();
 
     useEffect(() => {
         setTitle(title);
     }, [title, setTitle]);
 
-    const handleValidation = () => {
+    const handleValidation = async () => {
         const isFormValid = formInfoRef.current?.validateForm();
         const isDateSelected = localSelectedDate !== null;
         const isTimeSelected = localSelectedTime !== null;
@@ -39,6 +39,24 @@ export default function BookingDetails({
             setErrorMessage(null);
             setSelectedDate(localSelectedDate);
             setSelectedTime(localSelectedTime);
+
+            const response = await fetch("http://localhost:9000/users", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    name,
+                    email,
+                    phone,
+                    selectedDate: localSelectedDate,
+                    selectedTime: localSelectedTime,
+                    guestQuantity,
+                    statusCheckout: "PENDING",
+                }),
+            });
+            if (!response.ok) throw new Error("Failed to create user");
+
+            const data = await response.json();
+            setUserId(data.id);
             onContinue?.();
         } else {
             if (!isDateSelected) {

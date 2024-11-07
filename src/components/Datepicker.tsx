@@ -22,6 +22,7 @@ import {
     startOfDay,
     eachDayOfInterval,
 } from 'date-fns';
+import {useGuest} from "./GuestContext";
 
 interface DatePickerProps {
     selectedDate: Date | null;
@@ -44,6 +45,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [blockedDates, setBlockedDates] = useState<string[]>([]);
     const price = originalPrice;
+    const { tenantId } = useGuest();
 
     useEffect(() => {
         const monthStart = startOfMonth(currentMonth);
@@ -62,7 +64,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
     useEffect(() => {
         const fetchBlockedDates = async () => {
             try {
-                const response = await fetch('http://localhost:9000/blackout-dates/acc4fa81-ca83-4146-abb7-4d5ee6575d43');
+                const response = await fetch(`http://localhost:9000/blackout-dates/${tenantId}`);
                 if (!response.ok) throw new Error('Failed to fetch blocked dates');
 
                 const data = await response.json();

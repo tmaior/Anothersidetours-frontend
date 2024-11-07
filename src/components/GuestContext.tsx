@@ -51,7 +51,7 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [phone, setPhone] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
-    const [tenantId, setTenantId] = useState("");
+    const [tenantId, setTenantId] = useState("429dd7a6-6b0c-4808-b210-01f500228360");
     const [tourId, setTourId] = useState("");
     const [userId, setUserId] = useState("");
     const [detailedAddons, setDetailedAddons] = useState([]);
@@ -61,8 +61,8 @@ export function GuestProvider({children}: { children: ReactNode }) {
         setName("");
         setEmail("");
         setTitle("");
-        setTenantId("");
-        setTourId("");
+        // setTenantId("");
+        // setTourId("");
         setUserId("");
         setPhone("");
     };

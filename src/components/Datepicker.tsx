@@ -70,7 +70,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 const data = await response.json();
                 setBlockedDates(data);
             } catch (error) {
-                console.error("Erro ao buscar datas bloqueadas:", error);
+                console.error("Error when searching for blocked dates:", error);
             }
         };
 

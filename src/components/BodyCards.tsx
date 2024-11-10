@@ -51,7 +51,7 @@ export default function BodyCards() {
 
                 setCardData(mappedData);
             } catch (err) {
-                setError("Erro ao carregar os dados.");
+                setError("Error loading data.");
             } finally {
                 setLoading(false);
             }

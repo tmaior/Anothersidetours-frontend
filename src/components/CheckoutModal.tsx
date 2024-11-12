@@ -39,7 +39,7 @@ interface CheckoutModalProps {
 
 export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePrice }: CheckoutModalProps) {
     const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
-    const { tenantId,tourId,guestQuantity, userId , name, email, phone , selectedDate, selectedTime, detailedAddons } = useGuest();
+    const { tenantId,tourId,guestQuantity, userId , name, email, phone , selectedDate, selectedTime, detailedAddons,setReservationId,reservationId } = useGuest();
 
     const { isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal } = useDisclosure();
 
@@ -102,6 +102,9 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
             });
 
             if (reservationResponse.ok) {
+                const reservationResult = await reservationResponse.json();
+                setReservationId(reservationResult.id);
+                console.log(reservationId)
                 console.log('Reservation created successfully');
             } else {
                 console.error('Failed to create reservation');

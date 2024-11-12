@@ -31,6 +31,8 @@ interface GuestContextType {
     setTourId: React.Dispatch<React.SetStateAction<string>>;
     userId: string;
     setUserId: React.Dispatch<React.SetStateAction<string>>;
+    reservationId: string;
+    setReservationId: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const GuestContext = createContext<GuestContextType | undefined>(undefined);
@@ -51,10 +53,11 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [phone, setPhone] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
-    const [tenantId, setTenantId] = useState("429dd7a6-6b0c-4808-b210-01f500228360");
+    const [tenantId, setTenantId] = useState("bf72281b-663e-4232-8d36-399c0c42deb1");
     const [tourId, setTourId] = useState("");
     const [userId, setUserId] = useState("");
     const [detailedAddons, setDetailedAddons] = useState([]);
+    const [reservationId, setReservationId] = useState("");
 
     const resetGuestQuantity = () => {
         setGuestQuantity(2);
@@ -93,6 +96,8 @@ export function GuestProvider({children}: { children: ReactNode }) {
                 setUserId,
                 phone,
                 setPhone,
+                reservationId,
+                setReservationId,
             }}
         >
             {children}

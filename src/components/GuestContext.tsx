@@ -33,6 +33,12 @@ interface GuestContextType {
     setUserId: React.Dispatch<React.SetStateAction<string>>;
     reservationId: string;
     setReservationId: React.Dispatch<React.SetStateAction<string>>;
+    // cardNumber: string;
+    // setCardNumber: React.Dispatch<React.SetStateAction<string>>;
+    // expiryDate: string;
+    // setExpiryDate: React.Dispatch<React.SetStateAction<string>>;
+    // cvc: string;
+    // setCvc: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const GuestContext = createContext<GuestContextType | undefined>(undefined);
@@ -68,6 +74,7 @@ export function GuestProvider({children}: { children: ReactNode }) {
         // setTourId("");
         setUserId("");
         setPhone("");
+        setReservationId("");
     };
 
     return (

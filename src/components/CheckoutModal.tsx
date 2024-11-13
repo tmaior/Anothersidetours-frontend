@@ -28,6 +28,8 @@ import InformationAdditionalModal from "./InformationAditionalModal";
 import { FaPhoneAlt } from "react-icons/fa";
 import InputMask from "react-input-mask";
 import { Input as ChakraInput } from "@chakra-ui/react";
+import {CardElement, useElements, useStripe} from "@stripe/react-stripe-js";
+import React from "react";
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -39,14 +41,27 @@ interface CheckoutModalProps {
 
 export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePrice }: CheckoutModalProps) {
     const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
-    const { tenantId,tourId,guestQuantity, userId , name, email, phone , selectedDate, selectedTime, detailedAddons,setReservationId,reservationId } = useGuest();
-
+    const {
+        tenantId,
+        tourId,
+        guestQuantity,
+        userId ,
+        name,
+        email,
+        phone ,
+        selectedDate,
+        selectedTime,
+        detailedAddons,
+        setReservationId,
+        reservationId,} = useGuest();
     const { isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal } = useDisclosure();
 
     const pricePerGuest = valuePrice;
     const guestTotal = guestQuantity * pricePerGuest;
     const addonsTotal = detailedAddons.reduce((acc, addon) => acc + addon.total, 0);
     const totalAmount = guestTotal + addonsTotal;
+    const stripe = useStripe();
+    const elements = useElements();
 
     const handlePayAndOpenAdditional = async () => {
 
@@ -91,8 +106,6 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                 status: "PENDING",
             };
 
-            // const { name, email, ...reservationDataToSend } = reservationData;
-
             const reservationResponse = await fetch('http://localhost:9000/reservations', {
                 method: 'POST',
                 headers: {
@@ -104,13 +117,65 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
             if (reservationResponse.ok) {
                 const reservationResult = await reservationResponse.json();
                 setReservationId(reservationResult.id);
-                console.log(reservationId)
                 console.log('Reservation created successfully');
             } else {
                 console.error('Failed to create reservation');
             }
         } catch (error) {
             console.error('Error in the checkout process:', error);
+        }
+
+        try {
+            const setupIntentResponse = await fetch('http://localhost:9000/payments/create-setup-intent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ reservationId: reservationId }),
+            });
+
+            if (!setupIntentResponse.ok) {
+                throw new Error("Failed to create setup intent");
+            }
+
+            const { clientSecret } = await setupIntentResponse.json();
+            console.log('Setup Intent created with clientSecret:', clientSecret);
+
+            const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
+                payment_method: {
+                    card: elements.getElement(CardElement),
+                    billing_details: {
+                        name: name,
+                        email: email,
+                    },
+                },
+            });
+
+            if (paymentMethodResponse.error) {
+                throw new Error(paymentMethodResponse.error.message);
+            }
+
+            const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
+
+            const savePaymentMethodResponse = await fetch('http://localhost:9000/payments/save-payment-method', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    paymentMethodId,
+                    reservationId: reservationId,
+                }),
+            });
+
+            if (!savePaymentMethodResponse.ok) {
+                throw new Error("Failed to save payment method");
+            }
+
+            console.log('Payment method saved successfully');
+
+        } catch (error) {
+            console.error('Error setting up payment:', error);
         }
 
         onClose();
@@ -211,21 +276,56 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                 </HStack>
                             </VStack>
                         </HStack>
-                        <Divider color={"gray.400"} marginTop={"10px"}/>
+                        <Divider color={"gray.400"} marginTop={"10px"} marginBottom={"150px"}/>
+                        <div style={{
+                            borderBottom: '1px solid #9E9E9E',
+                            borderTop: '1px solid #9E9E9E',
+                            borderLeft: '1px solid #9E9E9E',
+                            borderRight: '1px solid #9E9E9E',
+                            paddingBottom: '8px',
+                            marginBottom: '16px',
+                            // borderRadius:'10px',
+                            padding: '4px 8px',
+                            width: '400px'
+                        }}>
+                            <CardElement
+                                options={{
+                                    hidePostalCode: true,
+                                    style: {
+                                        base: {
+                                            iconColor: '#0c0e0e',
+                                            color: '#000',
+                                            fontWeight: '500',
+                                            fontFamily: 'Arial, sans-serif',
+                                            fontSize: '16px',
+                                            fontSmoothing: 'antialiased',
+                                            '::placeholder': {
+                                                color: '#aab7c4',
+                                            },
+                                        },
+                                        invalid: {
+                                            color: '#9e2146',
+                                            iconColor: '#fa755a',
+                                        },
+                                    },
+                                }}
+                            />
+                        </div>
                     </ModalBody>
-                    <CheckoutFooter totalAmount={totalAmount} onCheckout={onBack} onPayment={handlePayAndOpenAdditional} />
+                    <CheckoutFooter totalAmount={totalAmount} onCheckout={onBack}
+                                    onPayment={handlePayAndOpenAdditional}/>
                 </ModalContent>
             </Modal>
-            <InformationAdditionalModal isOpen={isAdditionalOpen} onClose={closeAdditionalModal} />
+            <InformationAdditionalModal isOpen={isAdditionalOpen} onClose={closeAdditionalModal}/>
 
             <Modal isOpen={isCodeModalOpen} onClose={closeCodeModal} isCentered>
-                <ModalOverlay />
+                <ModalOverlay/>
                 <ModalContent>
                     <ModalHeader>Add a code to this booking</ModalHeader>
-                    <ModalCloseButton />
-                    <Divider />
+                    <ModalCloseButton/>
+                    <Divider/>
                     <ModalBody>
-                        <HStack><Input placeholder="Enter code" /></HStack>
+                        <HStack><Input placeholder="Enter code"/></HStack>
                     </ModalBody>
                     <ModalFooter>
                         <Button variant="ghost" onClick={closeCodeModal}>Cancel</Button>

@@ -2,15 +2,9 @@ import {
     Button,
     Checkbox,
     Flex,
-    FormControl,
-    FormErrorMessage,
     HStack,
-    Icon,
     Image,
     Input,
-    InputGroup,
-    InputLeftElement,
-    InputRightElement,
     Link,
     Modal,
     ModalBody,
@@ -19,30 +13,20 @@ import {
     ModalFooter,
     ModalHeader,
     ModalOverlay,
-    Radio,
-    RadioGroup,
     Text,
     useDisclosure,
 } from "@chakra-ui/react";
 import {GiShoppingCart} from "react-icons/gi";
 import React, {useState} from "react";
-import {FaRegCreditCard} from "react-icons/fa";
-import {MdErrorOutline} from "react-icons/md";
-import InputMask from "react-input-mask";
 import FooterBar from "./Footer";
 
-export default function CheckoutFooter({totalAmount, onCheckout,onPayment}) {
+export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
     const {isOpen, onOpen, onClose} = useDisclosure();
     const {
         isOpen: isAdditionalOpen,
         onClose: onAdditionalClose
     } = useDisclosure();
     const [isChecked, setIsChecked] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState("manual");
-    const [cardNumber, setCardNumber] = useState("");
-    const [expiryDate, setExpiryDate] = useState("");
-    const [cvc, setCvc] = useState("");
-    const [isError, setIsError] = useState(false);
 
     const handleCheckboxChange = () => {
         setIsChecked(!isChecked);
@@ -53,22 +37,7 @@ export default function CheckoutFooter({totalAmount, onCheckout,onPayment}) {
         onClose();
     };
 
-    const handleCardNumberChange = (e) => {
-        const value = e.target.value;
-        setCardNumber(value);
-
-        const isValidCardNumber = /^\d{4} \d{4} \d{4} \d{4}$/.test(value);
-        setIsError(!isValidCardNumber && value.length > 0);
-    };
-
     const handlePayClick = async () => {
-        // await fetch('https://localhost:9000/payment', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //     },
-        //     body: JSON.stringify({ cardNumber, expiryDate, cvc, amount: totalAmount }),
-        // });
         if (isChecked && onPayment) {
             onPayment();
         }
@@ -77,81 +46,6 @@ export default function CheckoutFooter({totalAmount, onCheckout,onPayment}) {
     return (
 
         <>
-            <HStack w={"full"} h={"full"}>
-                <Flex w={"full"} h={"full"}>
-                    <Flex w={"full"}>
-                        {paymentMethod === "manual" && (
-                            <FormControl isInvalid={isError} mb={4} alignContent={"center"} marginLeft={"20px"}>
-                                <HStack w={"400px"} marginLeft={"15px"} justify={"left"} marginTop={"200px"}>
-                                    <InputGroup>
-                                        <InputLeftElement pointerEvents="none" color="gray.400">
-                                            <Icon as={FaRegCreditCard}/>
-                                        </InputLeftElement>
-                                        <Input
-                                            type="text"
-                                            placeholder="1111 1111 1111 1111"
-                                            value={cardNumber}
-                                            onChange={handleCardNumberChange}
-                                            maxLength={19}
-                                            _placeholder={{color: "gray.400"}}
-                                            borderColor={isError ? "red.500" : "gray.300"}
-                                            focusBorderColor={isError ? "red.500" : "blue.500"}
-                                            w="260px"
-                                        />
-                                        {isError && (
-                                            <InputRightElement color="red.500">
-                                                <Icon as={MdErrorOutline}/>
-                                            </InputRightElement>
-                                        )}
-                                    </InputGroup>
-
-                                    <InputGroup justifyContent={"center"}>
-                                        <InputMask
-                                            mask="99/99"
-                                            value={expiryDate}
-                                            onChange={(e) => setExpiryDate(e.target.value)}
-                                        >
-                                            {(inputProps) => (
-                                                <Input
-                                                    {...inputProps}
-                                                    placeholder="MM/YY"
-                                                    w="100px"
-                                                    _placeholder={{color: "gray.400"}}
-                                                />
-                                            )}
-                                        </InputMask>
-                                    </InputGroup>
-
-                                    <InputGroup>
-                                        <Input
-                                            type="text"
-                                            placeholder="CVC"
-                                            value={cvc}
-                                            onChange={(e) => setCvc(e.target.value)}
-                                            maxLength={3}
-                                            w="80px"
-                                            _placeholder={{color: "gray.400"}}
-                                        />
-                                    </InputGroup>
-                                </HStack>
-                                {isError && <FormErrorMessage>Invalid card number</FormErrorMessage>}
-                            </FormControl>
-                        )}
-                    </Flex>
-                </Flex>
-                <Flex justify={"flex-end"} align={"end"}>
-                    <HStack align={"self-end"} w={"full"} justify={"flex-end"} marginRight={"-200"}
-                            marginBottom={"-170"}>
-                        <RadioGroup onChange={setPaymentMethod} value={paymentMethod} mb={4}>
-                            <HStack w={"500px"} spacing={4} >
-                                <Radio value="manual">Manually enter card details</Radio>
-                                {/*<Radio value="saved">Saved card from browser</Radio>*/}
-                            </HStack>
-                        </RadioGroup>
-                    </HStack>
-                </Flex>
-
-            </HStack>
             <Flex w={"full"}>
                 <Flex
                     position="static"
@@ -223,10 +117,10 @@ export default function CheckoutFooter({totalAmount, onCheckout,onPayment}) {
                     </Flex>
 
                     <Modal isOpen={isOpen} onClose={onClose} isCentered>
-                        <ModalOverlay />
+                        <ModalOverlay/>
                         <ModalContent maxW="600px" maxH="400px">
                             <ModalHeader>Terms and Conditions</ModalHeader>
-                            <ModalCloseButton />
+                            <ModalCloseButton/>
                             <ModalBody overflowY="auto" padding="20px">
                                 <Text whiteSpace="pre-line">
                                     I acknowledge and assume the risks which are inherent in
@@ -261,18 +155,18 @@ export default function CheckoutFooter({totalAmount, onCheckout,onPayment}) {
                     </Modal>
                 </Flex>
             </Flex>
-            
+
             <Modal isOpen={isAdditionalOpen} onClose={onAdditionalClose} isCentered size="6xl">
-                <ModalOverlay />
+                <ModalOverlay/>
                 <ModalContent height={"60vh"}>
                     <ModalHeader>Informações Adicionais</ModalHeader>
                     <ModalBody>
                         <Text>Por favor, forneça informações adicionais para completar o pagamento.</Text>
-                        <Input placeholder="Additional Info" mt={4} />
-                        <Input placeholder="Additional Info" mt={4} />
-                        <Input placeholder="Additional Info" mt={4} />
+                        <Input placeholder="Additional Info" mt={4}/>
+                        <Input placeholder="Additional Info" mt={4}/>
+                        <Input placeholder="Additional Info" mt={4}/>
                     </ModalBody>
-                    <FooterBar  onContinue={onAdditionalClose} continueText={"FINISH"}/>
+                    <FooterBar onContinue={onAdditionalClose} continueText={"FINISH"}/>
                 </ModalContent>
             </Modal>
         </>

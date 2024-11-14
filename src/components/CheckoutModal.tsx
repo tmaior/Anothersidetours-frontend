@@ -30,6 +30,7 @@ import InputMask from "react-input-mask";
 import { Input as ChakraInput } from "@chakra-ui/react";
 import {CardElement, useElements, useStripe} from "@stripe/react-stripe-js";
 import React from "react";
+import {string} from "prop-types";
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -51,9 +52,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
         phone ,
         selectedDate,
         selectedTime,
-        detailedAddons,
-        setReservationId,
-        reservationId,} = useGuest();
+        detailedAddons} = useGuest();
     const { isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal } = useDisclosure();
 
     const pricePerGuest = valuePrice;
@@ -62,6 +61,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
     const totalAmount = guestTotal + addonsTotal;
     const stripe = useStripe();
     const elements = useElements();
+    let reservationId= string;
 
     const handlePayAndOpenAdditional = async () => {
 
@@ -116,8 +116,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
 
             if (reservationResponse.ok) {
                 const reservationResult = await reservationResponse.json();
-                setReservationId(reservationResult.id);
-                console.log('Reservation created successfully');
+                reservationId = reservationResult.id;
             } else {
                 console.error('Failed to create reservation');
             }
@@ -134,12 +133,11 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                 body: JSON.stringify({ reservationId: reservationId }),
             });
 
+            const { clientSecret } = await setupIntentResponse.json();
+
             if (!setupIntentResponse.ok) {
                 throw new Error("Failed to create setup intent");
             }
-
-            const { clientSecret } = await setupIntentResponse.json();
-            console.log('Setup Intent created with clientSecret:', clientSecret);
 
             const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
                 payment_method: {
@@ -155,6 +153,9 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                 throw new Error(paymentMethodResponse.error.message);
             }
 
+            if (paymentMethodResponse.error) {
+                console.error('Erro ao confirmar o SetupIntent:', paymentMethodResponse.error.message);
+            }
             const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
 
             const savePaymentMethodResponse = await fetch('http://localhost:9000/payments/save-payment-method', {
@@ -171,13 +172,9 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
             if (!savePaymentMethodResponse.ok) {
                 throw new Error("Failed to save payment method");
             }
-
-            console.log('Payment method saved successfully');
-
         } catch (error) {
             console.error('Error setting up payment:', error);
         }
-
         onClose();
         openAdditionalModal();
     };

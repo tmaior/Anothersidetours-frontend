@@ -22,7 +22,6 @@ export default function AddOns({ addons }: AddOnProps) {
     };
 
     useEffect(() => {
-        console.log("Addons data:", addons);
         const detailedAddons = addons.map((addon) => {
             if (addon.type === "SELECT" && (quantities[addon.id] || 0) > 0) {
                 return {

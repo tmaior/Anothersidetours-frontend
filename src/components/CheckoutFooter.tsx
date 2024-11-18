@@ -4,7 +4,7 @@ import {
     Flex,
     HStack,
     Image,
-    Input,
+    // Input,
     Link,
     Modal,
     ModalBody,
@@ -18,14 +18,14 @@ import {
 } from "@chakra-ui/react";
 import {GiShoppingCart} from "react-icons/gi";
 import React, {useState} from "react";
-import FooterBar from "./Footer";
+// import FooterBar from "./Footer";
 
 export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
     const {isOpen, onOpen, onClose} = useDisclosure();
-    const {
-        isOpen: isAdditionalOpen,
-        onClose: onAdditionalClose
-    } = useDisclosure();
+    // const {
+    //     isOpen: isAdditionalOpen,
+    //     onClose: onAdditionalClose
+    // } = useDisclosure();
     const [isChecked, setIsChecked] = useState(false);
 
     const handleCheckboxChange = () => {
@@ -156,19 +156,19 @@ export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
                 </Flex>
             </Flex>
 
-            <Modal isOpen={isAdditionalOpen} onClose={onAdditionalClose} isCentered size="6xl">
-                <ModalOverlay/>
-                <ModalContent height={"60vh"}>
-                    <ModalHeader>Informações Adicionais</ModalHeader>
-                    <ModalBody>
-                        <Text>Por favor, forneça informações adicionais para completar o pagamento.</Text>
-                        <Input placeholder="Additional Info" mt={4}/>
-                        <Input placeholder="Additional Info" mt={4}/>
-                        <Input placeholder="Additional Info" mt={4}/>
-                    </ModalBody>
-                    <FooterBar onContinue={onAdditionalClose} continueText={"FINISH"}/>
-                </ModalContent>
-            </Modal>
+            {/*<Modal isOpen={isAdditionalOpen} onClose={onAdditionalClose} isCentered size="6xl">*/}
+            {/*    <ModalOverlay/>*/}
+            {/*    <ModalContent height={"60vh"}>*/}
+            {/*        <ModalHeader>Informações Adicionais</ModalHeader>*/}
+            {/*        <ModalBody>*/}
+            {/*            <Text>Por favor, forneça informações adicionais para completar o pagamento.</Text>*/}
+            {/*            <Input placeholder="Additional Info" mt={4}/>*/}
+            {/*            <Input placeholder="Additional Info" mt={4}/>*/}
+            {/*            <Input placeholder="Additional Info" mt={4}/>*/}
+            {/*        </ModalBody>*/}
+            {/*        <FooterBar onContinue={onAdditionalClose} continueText={"FINISH"}/>*/}
+            {/*    </ModalContent>*/}
+            {/*</Modal>*/}
         </>
     );
 }

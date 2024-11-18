@@ -59,7 +59,7 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [phone, setPhone] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
-    const [tenantId, setTenantId] = useState("bf72281b-663e-4232-8d36-399c0c42deb1");
+    const [tenantId, setTenantId] = useState("95957cd4-4fd6-499b-b021-b5bd7c7a37a2");
     const [tourId, setTourId] = useState("");
     const [userId, setUserId] = useState("");
     const [detailedAddons, setDetailedAddons] = useState([]);

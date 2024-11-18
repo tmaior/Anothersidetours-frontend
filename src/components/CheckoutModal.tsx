@@ -313,7 +313,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                     onPayment={handlePayAndOpenAdditional}/>
                 </ModalContent>
             </Modal>
-            <InformationAdditionalModal isOpen={isAdditionalOpen} onClose={closeAdditionalModal}/>
+            <InformationAdditionalModal isOpen={isAdditionalOpen} onClose={closeAdditionalModal} tourId={""}/>
 
             <Modal isOpen={isCodeModalOpen} onClose={closeCodeModal} isCentered>
                 <ModalOverlay/>

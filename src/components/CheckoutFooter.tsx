@@ -12,7 +12,7 @@ import {
     ModalContent,
     ModalFooter,
     ModalHeader,
-    ModalOverlay,
+    ModalOverlay, Spinner,
     Text,
     useDisclosure,
 } from "@chakra-ui/react";
@@ -27,6 +27,7 @@ export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
     //     onClose: onAdditionalClose
     // } = useDisclosure();
     const [isChecked, setIsChecked] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleCheckboxChange = () => {
         setIsChecked(!isChecked);
@@ -39,7 +40,9 @@ export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
 
     const handlePayClick = async () => {
         if (isChecked && onPayment) {
-            onPayment();
+            setIsLoading(true);
+            await onPayment();
+            setIsLoading(false);
         }
     };
 
@@ -110,8 +113,12 @@ export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
                                 isDisabled={!isChecked}
                                 onClick={handlePayClick}
                             >
-                                <GiShoppingCart/>
-                                PAY: ${totalAmount}
+                                {isLoading ? (
+                                    <Spinner size="sm" color="white" mr={2} />
+                                ) : (
+                                    <GiShoppingCart />
+                                )}
+                                {isLoading ? "Processing payment..." : `PAY: $${totalAmount}`}
                             </Button>
                         </HStack>
                     </Flex>

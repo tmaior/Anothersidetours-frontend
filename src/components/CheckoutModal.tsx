@@ -29,7 +29,6 @@ import { FaPhoneAlt } from "react-icons/fa";
 import InputMask from "react-input-mask";
 import { Input as ChakraInput } from "@chakra-ui/react";
 import {CardElement, useElements, useStripe} from "@stripe/react-stripe-js";
-import React from "react";
 import {string} from "prop-types";
 
 interface CheckoutModalProps {

@@ -64,7 +64,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
     useEffect(() => {
         const fetchBlockedDates = async () => {
             try {
-                const response = await fetch(`http://localhost:9000/blackout-dates/${tenantId}`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/${tenantId}`);
                 if (!response.ok) throw new Error('Failed to fetch blocked dates');
 
                 const data = await response.json();

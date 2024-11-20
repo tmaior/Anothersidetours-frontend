@@ -70,7 +70,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                 return;
             }
 
-            const response = await fetch(`http://localhost:9000/users/${userId}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -105,7 +105,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                 status: "PENDING",
             };
 
-            const reservationResponse = await fetch('http://localhost:9000/reservations', {
+            const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -124,7 +124,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
         }
 
         try {
-            const setupIntentResponse = await fetch('http://localhost:9000/payments/create-setup-intent', {
+            const setupIntentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -157,7 +157,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
             }
             const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
 
-            const savePaymentMethodResponse = await fetch('http://localhost:9000/payments/save-payment-method', {
+            const savePaymentMethodResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -272,7 +272,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                 </HStack>
                             </VStack>
                         </HStack>
-                        <Divider color={"gray.400"} marginTop={"10px"} marginBottom={"150px"}/>
+                        <Divider color={"gray.400"} marginTop={"10px"} marginBottom={"150px"} />
                         <div style={{
                             borderBottom: '1px solid #9E9E9E',
                             borderTop: '1px solid #9E9E9E',
@@ -280,7 +280,6 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                             borderRight: '1px solid #9E9E9E',
                             paddingBottom: '8px',
                             marginBottom: '16px',
-                            // borderRadius:'10px',
                             padding: '4px 8px',
                             width: '400px'
                         }}>

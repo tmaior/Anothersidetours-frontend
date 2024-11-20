@@ -45,7 +45,7 @@ export default function InformationAdditionalModal({
 
     useEffect(() => {
         if (true) {
-            fetch(`http://localhost:9000/additional-information/c9821623-7baf-4298-9bb0-4b611e9097bb`)
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/c9821623-7baf-4298-9bb0-4b611e9097bb`)
                 .then((response) => response.json())
                 .then((data) => {
                     setInputs(data);
@@ -65,7 +65,7 @@ export default function InformationAdditionalModal({
     const handleFinishClick = async () => {
         await Promise.all(
             Object.entries(updatedValues).map(([additionalInformationId, value]) =>
-                fetch("http://localhost:9000/customer-additional-information", {
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/customer-additional-information`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

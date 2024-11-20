@@ -40,7 +40,7 @@ export default function BookingDetails({
             setSelectedDate(localSelectedDate);
             setSelectedTime(localSelectedTime);
 
-            const response = await fetch("http://localhost:9000/users", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({

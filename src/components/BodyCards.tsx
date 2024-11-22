@@ -63,16 +63,7 @@ export default function BodyCards() {
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = cardData.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(cardData.length / itemsPerPage);
-
-    const goToNextPage = () => {
-        setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
-    };
-
-    const goToPreviousPage = () => {
-        setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
-    };
-
+    
     if (loading) {
         return <Spinner size="xl"/>;
     }
@@ -112,12 +103,6 @@ export default function BodyCards() {
                 justifyContent="center"
                 alignItems="center"
             >
-                <Button onClick={goToPreviousPage} disabled={currentPage === 1} mr="4">
-                    Anterior
-                </Button>
-                <Button onClick={goToNextPage} disabled={currentPage === totalPages}>
-                    Próximo
-                </Button>
             </Box>
         </Box>
     );

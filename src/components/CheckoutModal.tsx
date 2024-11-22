@@ -1,4 +1,4 @@
-import { useGuest } from "./GuestContext";
+import {useGuest} from "./GuestContext";
 import {
     Box,
     Button,
@@ -6,6 +6,7 @@ import {
     Flex,
     HStack,
     Input,
+    Input as ChakraInput,
     Link,
     Modal,
     ModalBody,
@@ -16,18 +17,17 @@ import {
     ModalOverlay,
     Spacer,
     Text,
-    VStack,
-    useDisclosure
+    useDisclosure,
+    VStack
 } from "@chakra-ui/react";
 import CheckoutFooter from "./CheckoutFooter";
-import { ImUsers } from "react-icons/im";
-import { SlCalender } from "react-icons/sl";
-import { MdEmail, MdOutlineAccessTime } from "react-icons/md";
-import { format } from "date-fns";
+import {ImUsers} from "react-icons/im";
+import {SlCalender} from "react-icons/sl";
+import {MdEmail, MdOutlineAccessTime} from "react-icons/md";
+import {format} from "date-fns";
 import InformationAdditionalModal from "./InformationAditionalModal";
-import { FaPhoneAlt } from "react-icons/fa";
+import {FaPhoneAlt} from "react-icons/fa";
 import InputMask from "react-input-mask";
-import { Input as ChakraInput } from "@chakra-ui/react";
 import {CardElement, useElements, useStripe} from "@stripe/react-stripe-js";
 import {string} from "prop-types";
 
@@ -39,20 +39,21 @@ interface CheckoutModalProps {
     valuePrice: number;
 }
 
-export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePrice }: CheckoutModalProps) {
-    const { isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal } = useDisclosure();
+export default function CheckoutModal({isOpen, onClose, onBack, title, valuePrice}: CheckoutModalProps) {
+    const {isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal} = useDisclosure();
     const {
         tenantId,
         tourId,
         guestQuantity,
-        userId ,
+        userId,
         name,
         email,
-        phone ,
+        phone,
         selectedDate,
         selectedTime,
-        detailedAddons} = useGuest();
-    const { isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal } = useDisclosure();
+        detailedAddons
+    } = useGuest();
+    const {isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal} = useDisclosure();
 
     const pricePerGuest = valuePrice;
     const guestTotal = guestQuantity * pricePerGuest;
@@ -60,7 +61,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
     const totalAmount = guestTotal + addonsTotal;
     const stripe = useStripe();
     const elements = useElements();
-    let reservationId= string;
+    let reservationId = string;
 
     const handlePayAndOpenAdditional = async () => {
 
@@ -75,7 +76,7 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ statusCheckout: "COMPLETED" }),
+                body: JSON.stringify({statusCheckout: "COMPLETED"}),
             });
 
             if (!response.ok) throw new Error("Failed to update user status");
@@ -129,10 +130,10 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ reservationId: reservationId }),
+                body: JSON.stringify({reservationId: reservationId}),
             });
 
-            const { clientSecret } = await setupIntentResponse.json();
+            const {clientSecret} = await setupIntentResponse.json();
 
             if (!setupIntentResponse.ok) {
                 throw new Error("Failed to create setup intent");
@@ -180,13 +181,27 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
 
     return (
         <>
-            <Modal isOpen={isOpen} onClose={onClose} isCentered size="6xl">
-                <ModalOverlay />
-                <ModalContent height={"60vh"}>
+        <Modal isOpen={isOpen} onClose={onClose} isCentered size="6xl">
+            <ModalOverlay/>
+            <Flex
+                justifyContent="center"
+                alignItems="center"
+                maxH="100vh"
+                overflowY="auto"
+            >
+                <ModalContent
+                    w="full"
+                    maxW="1200px"
+                    minH="auto"
+                    bg="white"
+                >
                     <ModalHeader marginLeft={"500"} alignContent={"center"}>{"CHECKOUT"}</ModalHeader>
-                    <Divider color={"gray.400"} />
-                    <ModalCloseButton onClick={onClose} />
-                    <ModalBody h={"10px"}>
+                    <Divider color={"gray.400"}/>
+                    <ModalCloseButton onClick={onClose}/>
+                    <ModalBody
+                        minH="auto"
+                        maxH="95vh"
+                    >
                         <HStack>
                             <HStack w="500px">
                                 <HStack>
@@ -204,17 +219,17 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                             <Text>{name}</Text>
                                             <HStack spacing={6} marginTop={"-3"}>
                                                 <HStack spacing={2}>
-                                                    <ImUsers />
+                                                    <ImUsers/>
                                                     <Text>{guestQuantity} Reserved</Text>
                                                 </HStack>
-                                                <Spacer />
+                                                <Spacer/>
                                                 <VStack align="flex-start" spacing={1}>
                                                     <HStack spacing={2}>
-                                                        <MdEmail />
+                                                        <MdEmail/>
                                                         <Text>{email}</Text>
                                                     </HStack>
                                                     <HStack spacing={2}>
-                                                        <FaPhoneAlt />
+                                                        <FaPhoneAlt/>
                                                         <Text>
                                                             {phone ? (
                                                                 <InputMask
@@ -222,7 +237,10 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                                                     value={phone}
                                                                     disabled
                                                                     render={(inputProps) => (
-                                                                        <ChakraInput {...inputProps} isDisabled variant="unstyled" border="none" width="auto" />
+                                                                        <ChakraInput {...inputProps} isDisabled
+                                                                                     variant="unstyled"
+                                                                                     border="none"
+                                                                                     width="auto"/>
                                                                     )}
                                                                 />
                                                             ) : (
@@ -233,32 +251,33 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                                 </VStack>
                                             </HStack>
                                             <HStack marginTop={"-3"}>
-                                                <SlCalender />
+                                                <SlCalender/>
                                                 <Text>{selectedDate ? format(selectedDate, 'dd MMM yyyy') : "No Date Selected"}</Text>
                                             </HStack>
                                             <HStack>
-                                                <MdOutlineAccessTime />
+                                                <MdOutlineAccessTime/>
                                                 <Text> {selectedTime} PST</Text>
                                             </HStack>
                                         </VStack>
                                         <Flex w="full" mt={4} p={1} justify="flex-end">
-                                            <Link color="blue.500" textAlign="right" marginRight={5} fontSize="smaller">Modify</Link>
+                                            <Link color="blue.500" textAlign="right" marginRight={5}
+                                                  fontSize="smaller">Modify</Link>
                                         </Flex>
                                     </Flex>
                                 </HStack>
                             </HStack>
 
-                            <Spacer />
+                            <Spacer/>
                             <VStack w="full" p={4} spacing={4} align="stretch">
                                 <HStack w="full">
                                     <Text>{`Guests (${guestQuantity} × $${pricePerGuest.toFixed(2)})`}</Text>
-                                    <Spacer />
+                                    <Spacer/>
                                     <Text>${guestTotal.toFixed(2)}</Text>
                                 </HStack>
                                 {detailedAddons.map((addon) => (
                                     <HStack w="full" key={addon.id}>
                                         <Text>{`${addon.label} (${addon.quantity} × $${addon.price.toFixed(2)})`}</Text>
-                                        <Spacer />
+                                        <Spacer/>
                                         <Text>${addon.total.toFixed(2)}</Text>
                                     </HStack>
                                 ))}
@@ -267,12 +286,12 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                                 </Link>
                                 <HStack w="full" marginTop={"-4"}>
                                     <Text>Total</Text>
-                                    <Spacer />
+                                    <Spacer/>
                                     <Text>${totalAmount.toFixed(2)}</Text>
                                 </HStack>
                             </VStack>
                         </HStack>
-                        <Divider color={"gray.400"} marginTop={"10px"} marginBottom={"150px"} />
+                        <Divider color={"gray.400"} marginTop={"10px"} marginBottom={"150px"}/>
                         <div style={{
                             borderBottom: '1px solid #9E9E9E',
                             borderTop: '1px solid #9E9E9E',
@@ -310,24 +329,29 @@ export default function CheckoutModal({ isOpen, onClose, onBack, title, valuePri
                     <CheckoutFooter totalAmount={totalAmount} onCheckout={onBack}
                                     onPayment={handlePayAndOpenAdditional}/>
                 </ModalContent>
-            </Modal>
-            <InformationAdditionalModal isOpen={isAdditionalOpen} onClose={closeAdditionalModal} tourId={""}/>
 
-            <Modal isOpen={isCodeModalOpen} onClose={closeCodeModal} isCentered>
-                <ModalOverlay/>
-                <ModalContent>
-                    <ModalHeader>Add a code to this booking</ModalHeader>
-                    <ModalCloseButton/>
-                    <Divider/>
-                    <ModalBody>
-                        <HStack><Input placeholder="Enter code"/></HStack>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button variant="ghost" onClick={closeCodeModal}>Cancel</Button>
-                        <Button colorScheme="green" ml={3}>Apply Code</Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
-        </>
-    );
+            </Flex>
+        </Modal>
+        <InformationAdditionalModal isOpen={isAdditionalOpen} onClose={closeAdditionalModal} tourId={""}/>
+
+        <Modal isOpen={isCodeModalOpen} onClose={closeCodeModal} isCentered>
+            <ModalOverlay/>
+            <ModalContent>
+                <ModalHeader>Add a code to this booking</ModalHeader>
+                <ModalCloseButton/>
+                <Divider/>
+                <ModalBody>
+                    <HStack><Input placeholder="Enter code"/></HStack>
+                </ModalBody>
+                <ModalFooter>
+                    <Button variant="ghost" onClick={closeCodeModal}>Cancel</Button>
+                    <Button colorScheme="green" ml={3}>Apply Code</Button>
+                </ModalFooter>
+            </ModalContent>
+
+
+        </Modal>
+</>
+)
+    ;
 }

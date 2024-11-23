@@ -25,7 +25,6 @@ interface InformationAdditionalModalProps {
     isOpen: boolean,
     onClose: () => void,
     onContinue?: () => void
-    tourId: string;
 }
 
 function TimeIcon() {
@@ -35,17 +34,15 @@ function TimeIcon() {
 export default function InformationAdditionalModal({
                                                        isOpen,
                                                        onClose,
-                                                       onContinue,
-                                                       tourId
+                                                       onContinue
                                                    }: InformationAdditionalModalProps) {
     const {isOpen: isFinalOpen, onOpen: onFinalOpen, onClose: onFinalClose} = useDisclosure();
     const [inputs, setInputs] = useState([]);
     const [updatedValues, setUpdatedValues] = useState({});
-    const {reservationId} = useGuest();
-
+    const {reservationId,tourId} = useGuest();
     useEffect(() => {
-        if (true) {
-            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/c9821623-7baf-4298-9bb0-4b611e9097bb`)
+        if (isOpen) {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${tourId}`)
                 .then((response) => response.json())
                 .then((data) => {
                     setInputs(data);
@@ -54,9 +51,13 @@ export default function InformationAdditionalModal({
                         {}
                     );
                     setUpdatedValues(initialValues);
+                    if (data.length === 0) {
+                        onClose();
+                        onFinalOpen();
+                    }
                 });
         }
-    }, [tourId]);
+    },[tourId, isOpen, onClose, onFinalOpen]);
 
     const handleInputChange = (id: string, value: string) => {
         setUpdatedValues((prev) => ({...prev, [id]: value}));

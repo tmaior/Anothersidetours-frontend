@@ -361,7 +361,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
 
                 </Flex>
             </Modal>
-            <InformationAdditionalModal isOpen={isAdditionalOpen} onClose={closeAdditionalModal} tourId={""}/>
+            <InformationAdditionalModal isOpen={isAdditionalOpen} onClose={closeAdditionalModal}/>
 
             <Modal isOpen={isCodeModalOpen} onClose={closeCodeModal} isCentered>
                 <ModalOverlay/>

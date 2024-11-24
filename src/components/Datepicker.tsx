@@ -1,26 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
+import {Box, Flex, Select, SimpleGrid, Text, VStack,} from '@chakra-ui/react';
 import {
-    Box,
-    SimpleGrid,
-    Text,
-    Flex,
-    Select,
-    VStack,
-} from '@chakra-ui/react';
-import {
-    format,
-    addMonths,
-    subMonths,
-    startOfMonth,
-    endOfMonth,
-    startOfWeek,
-    endOfWeek,
     addDays,
-    isSameMonth,
-    isSameDay,
-    isBefore,
-    startOfDay,
+    addMonths,
     eachDayOfInterval,
+    endOfMonth,
+    endOfWeek,
+    format,
+    isBefore,
+    isSameDay,
+    isSameMonth,
+    startOfDay,
+    startOfMonth,
+    startOfWeek,
+    subMonths,
 } from 'date-fns';
 import {useGuest} from "./GuestContext";
 
@@ -45,12 +38,15 @@ const DatePicker: React.FC<DatePickerProps> = ({
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [blockedDates, setBlockedDates] = useState<string[]>([]);
     const price = originalPrice;
-    const { tenantId } = useGuest();
+    const {tourId} = useGuest();
+    const [blockedTimes, setBlockedTimes] = useState<
+        { date: string; startTime: string; endTime: string }[]
+    >([]);
 
     useEffect(() => {
         const monthStart = startOfMonth(currentMonth);
         const monthEnd = endOfMonth(monthStart);
-        const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+        const daysInMonth = eachDayOfInterval({start: monthStart, end: monthEnd});
 
         const newMonthDayData: { [key: string]: string } = {};
         daysInMonth.forEach(day => {
@@ -62,20 +58,47 @@ const DatePicker: React.FC<DatePickerProps> = ({
     }, [currentMonth]);
 
     useEffect(() => {
-        const fetchBlockedDates = async () => {
+        const fetchBlockedDatesForTour = async () => {
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/${tenantId}`);
-                if (!response.ok) throw new Error('Failed to fetch blocked dates');
+                const tourResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`);
+                if (!tourResponse.ok) throw new Error('Failed to fetch tour details');
 
-                const data = await response.json();
-                setBlockedDates(data);
+                const tourData = await tourResponse.json();
+                const categoryId = tourData.categoryId;
+
+                if (!categoryId) {
+                    console.warn(`Tour with ID ${tourId} does not have an associated category`);
+                    setBlockedDates([]);
+                    setBlockedTimes([]);
+                    return;
+                }
+
+                const categoryResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates?categoryId=${categoryId}`
+                );
+                if (!categoryResponse.ok) throw new Error('Failed to fetch category-specific blackout dates');
+
+                const categoryData = await categoryResponse.json();
+
+                const formattedBlockedDates = categoryData.map((b: any) =>
+                    format(new Date(b.date), 'yyyy-MM-dd')
+                );
+                setBlockedDates(formattedBlockedDates);
+
+                const blockedTimes = categoryData
+                    .filter((b: any) => b.startTime && b.endTime)
+                    .map((b: any) => ({
+                        date: format(new Date(b.date), 'yyyy-MM-dd'),
+                        startTime: b.startTime,
+                        endTime: b.endTime,
+                    }));
+                setBlockedTimes(blockedTimes);
             } catch (error) {
-                console.error("Error when searching for blocked dates:", error);
+                console.error('Error fetching blocked dates for the tour:', error);
             }
         };
-
-        fetchBlockedDates();
-    }, []);
+        fetchBlockedDatesForTour();
+    }, [tourId]);
 
     const renderHeader = () => (
         <Box display="flex" justifyContent="space-between" alignItems="center" p={2} bg="gray.100">
@@ -104,7 +127,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
     const renderDays = () => {
         const days = [];
         const dateFormat = 'EEE';
-        const startDate = startOfWeek(currentMonth, { weekStartsOn: 1 });
+        const startDate = startOfWeek(currentMonth, {weekStartsOn: 1});
 
         for (let i = 0; i < 7; i++) {
             days.push(
@@ -119,8 +142,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
     const renderCells = () => {
         const monthStart = startOfMonth(currentMonth);
         const monthEnd = endOfMonth(monthStart);
-        const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
-        const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+        const startDate = startOfWeek(monthStart, {weekStartsOn: 1});
+        const endDate = endOfWeek(monthEnd, {weekStartsOn: 1});
 
         const rows = [];
         let days: JSX.Element[] = [];
@@ -137,6 +160,11 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 const isPast = isBefore(day, today);
                 const isBlocked = blockedDates.includes(dayKey);
 
+                const blockedTime = blockedTimes.find(bt => bt.date === dayKey);
+                const isBlockedTime =
+                    blockedTime &&
+                    (selectedTime >= blockedTime.startTime && selectedTime <= blockedTime.endTime);
+
                 if (isCurrentMonthDay) {
                     days.push(
                         <Box key={day.toISOString() + i}>
@@ -146,20 +174,44 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                 p="2px"
                                 position="relative"
                                 onClick={() => {
-                                    if (!isPast && !isBlocked) {
+                                    if (!isPast && !isBlocked && !isBlockedTime) {
                                         onChange(cloneDay);
                                         handleDateSelection();
                                     }
                                 }}
                                 bg={
-                                    isSelected ? '#337AB7'
-                                        : isPast || isBlocked ? 'gray.300'
+                                    isSelected
+                                        ? '#337AB7'
+                                        : isPast || isBlocked || isBlockedTime
+                                            ? 'gray.300'
                                             : '#E9F7D4'
                                 }
-                                color={isSelected ? 'white' : isPast || isBlocked ? 'gray.500' : '#337AB7'}
-                                cursor={isBlocked ? 'not-allowed' : isPast ? 'not-allowed' : 'pointer'}
-                                _hover={isBlocked ? {} : { bg: '#337AB7', color: 'white' }}
-                                pointerEvents={isBlocked ? 'none' : isPast ? 'none' : 'auto'}
+                                color={
+                                    isSelected
+                                        ? 'white'
+                                        : isPast || isBlocked || isBlockedTime
+                                            ? 'gray.500'
+                                            : '#337AB7'
+                                }
+                                cursor={
+                                    isBlocked || isBlockedTime
+                                        ? 'not-allowed'
+                                        : isPast
+                                            ? 'not-allowed'
+                                            : 'pointer'
+                                }
+                                _hover={
+                                    isBlocked || isBlockedTime
+                                        ? {}
+                                        : {bg: '#337AB7', color: 'white'}
+                                }
+                                pointerEvents={
+                                    isBlocked || isBlockedTime
+                                        ? 'none'
+                                        : isPast
+                                            ? 'none'
+                                            : 'auto'
+                                }
                             >
                                 <Text w="full" textAlign="end" fontSize="10px">
                                     {formattedDate}
@@ -171,21 +223,31 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                     transform="translate(-50%, -50%)"
                                     fontSize="13px"
                                     fontWeight="medium"
-                                    color={isBlocked ? 'red.500' : 'inherit'}
+                                    color={isBlocked || isBlockedTime ? 'red.500' : 'inherit'}
                                     textAlign="center"
                                 >
-                                    {!isPast ? (isBlocked ?
-                                        <Text fontSize="9px" color="blue.500" lineHeight="normal" textAlign="center">
-                                            call for
-                                            <br />
-                                            Info
-                                        </Text> : monthDayData[dayKey] || '') : ''}
+                                    {!isPast
+                                        ? isBlocked || isBlockedTime
+                                            ? (
+                                                <Text
+                                                    fontSize="9px"
+                                                    color="blue.500"
+                                                    lineHeight="normal"
+                                                    textAlign="center"
+                                                >
+                                                    call for
+                                                    <br/>
+                                                    Info
+                                                </Text>
+                                            )
+                                            : monthDayData[dayKey] || ''
+                                        : ''}
                                 </Text>
                             </Flex>
                         </Box>
                     );
                 } else {
-                    days.push(<Box key={day.toISOString() + i} />);
+                    days.push(<Box key={day.toISOString() + i}/>);
                 }
                 day = addDays(day, 1);
             }

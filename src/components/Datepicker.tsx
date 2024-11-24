@@ -60,39 +60,62 @@ const DatePicker: React.FC<DatePickerProps> = ({
     useEffect(() => {
         const fetchBlockedDatesForTour = async () => {
             try {
+                let categoryBlockedDates: string[] = [];
+                let globalBlockedDates: string[] = [];
+                let combinedBlockedDates: string[] = [];
+                let categoryBlockedTimes: { date: string; startTime: string; endTime: string }[] = [];
+
                 const tourResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`);
                 if (!tourResponse.ok) throw new Error('Failed to fetch tour details');
 
                 const tourData = await tourResponse.json();
                 const categoryId = tourData.categoryId;
 
-                if (!categoryId) {
-                    console.warn(`Tour with ID ${tourId} does not have an associated category`);
-                    setBlockedDates([]);
-                    setBlockedTimes([]);
-                    return;
+                if (categoryId) {
+                    const categoryResponse = await fetch(
+                        `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates?categoryId=${categoryId}`
+                    );
+                    if (!categoryResponse.ok) throw new Error('Failed to fetch category-specific blackout dates');
+
+                    const categoryData = await categoryResponse.json();
+
+                    categoryBlockedDates = categoryData.map((b: any) =>
+                        format(new Date(b.date), 'yyyy-MM-dd')
+                    );
+
+                    categoryBlockedTimes = categoryData
+                        .filter((b: any) => b.startTime && b.endTime)
+                        .map((b: any) => ({
+                            date: format(new Date(b.date), 'yyyy-MM-dd'),
+                            startTime: b.startTime,
+                            endTime: b.endTime,
+                        }));
                 }
 
-                const categoryResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates?categoryId=${categoryId}`
-                );
-                if (!categoryResponse.ok) throw new Error('Failed to fetch category-specific blackout dates');
+                const globalResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/global`);
+                if (!globalResponse.ok) throw new Error('Failed to fetch global blackout dates');
 
-                const categoryData = await categoryResponse.json();
+                const globalData = await globalResponse.json();
+                globalBlockedDates = globalData.map((b: any) => {
+                    if (!b.date) {
+                        console.warn('Blackout date is missing the "date" field:', b);
+                        return null;
+                    }
 
-                const formattedBlockedDates = categoryData.map((b: any) =>
-                    format(new Date(b.date), 'yyyy-MM-dd')
-                );
-                setBlockedDates(formattedBlockedDates);
+                    try {
+                        const utcDate = new Date(b.date).toISOString().split('T')[0];
+                        console.log(`Processed UTC date: ${b.date} -> ${utcDate}`);
+                        return utcDate;
+                    } catch (error) {
+                        console.error(`Error processing date: ${b.date}`, error);
+                        return null;
+                    }
+                }).filter((d: string | null) => d !== null);
 
-                const blockedTimes = categoryData
-                    .filter((b: any) => b.startTime && b.endTime)
-                    .map((b: any) => ({
-                        date: format(new Date(b.date), 'yyyy-MM-dd'),
-                        startTime: b.startTime,
-                        endTime: b.endTime,
-                    }));
-                setBlockedTimes(blockedTimes);
+                combinedBlockedDates = Array.from(new Set([...categoryBlockedDates, ...globalBlockedDates]));
+
+                setBlockedDates(combinedBlockedDates);
+                setBlockedTimes(categoryBlockedTimes);
             } catch (error) {
                 console.error('Error fetching blocked dates for the tour:', error);
             }

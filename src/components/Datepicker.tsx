@@ -26,6 +26,12 @@ interface DatePickerProps {
     originalPrice: string;
 }
 
+interface BlackoutDate {
+    date: string;
+    startTime?: string;
+    endTime?: string;
+}
+
 const DatePicker: React.FC<DatePickerProps> = ({
                                                    selectedDate,
                                                    onChange,
@@ -55,7 +61,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
         });
 
         setMonthDayData(newMonthDayData);
-    }, [currentMonth]);
+    }, [currentMonth, price]);
 
     useEffect(() => {
         const fetchBlockedDatesForTour = async () => {
@@ -79,13 +85,13 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
                     const categoryData = await categoryResponse.json();
 
-                    categoryBlockedDates = categoryData.map((b: any) =>
+                    categoryBlockedDates = categoryData.map((b: BlackoutDate) =>
                         format(new Date(b.date), 'yyyy-MM-dd')
                     );
 
                     categoryBlockedTimes = categoryData
-                        .filter((b: any) => b.startTime && b.endTime)
-                        .map((b: any) => ({
+                        .filter((b: BlackoutDate) => b.startTime && b.endTime)
+                        .map((b: BlackoutDate) => ({
                             date: format(new Date(b.date), 'yyyy-MM-dd'),
                             startTime: b.startTime,
                             endTime: b.endTime,
@@ -96,7 +102,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 if (!globalResponse.ok) throw new Error('Failed to fetch global blackout dates');
 
                 const globalData = await globalResponse.json();
-                globalBlockedDates = globalData.map((b: any) => {
+                globalBlockedDates = globalData.map((b: BlackoutDate) => {
                     if (!b.date) {
                         console.warn('Blackout date is missing the "date" field:', b);
                         return null;

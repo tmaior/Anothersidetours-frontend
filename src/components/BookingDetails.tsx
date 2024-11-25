@@ -24,7 +24,7 @@ export default function BookingDetails({
     const [localSelectedDate, setLocalSelectedDate] = useState<Date | null>(null);
     const [localSelectedTime, setLocalSelectedTime] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const { setSelectedDate, setSelectedTime, setTitle, name, email, phone, guestQuantity, setUserId , setTourId } = useGuest();
+    const { setSelectedDate, setSelectedTime, setTitle, name, email, phone, guestQuantity, setUserId } = useGuest();
 
     useEffect(() => {
         setTitle(title);

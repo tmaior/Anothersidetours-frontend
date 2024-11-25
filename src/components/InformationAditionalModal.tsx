@@ -34,7 +34,6 @@ function TimeIcon() {
 export default function InformationAdditionalModal({
                                                        isOpen,
                                                        onClose,
-                                                       onContinue
                                                    }: InformationAdditionalModalProps) {
     const {isOpen: isFinalOpen, onOpen: onFinalOpen, onClose: onFinalClose} = useDisclosure();
     const [inputs, setInputs] = useState([]);
@@ -131,6 +130,7 @@ export default function InformationAdditionalModal({
                                         height="100px"
                                         objectFit="cover"
                                         mb={4}
+                                        alt="Tour preview image"
                                     />
                                     <VStack align="start" spacing={2}>
                                         <Text fontWeight="bold" fontSize="lg">

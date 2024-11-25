@@ -52,6 +52,7 @@ export default function FinalModal({isOpen, onClose}: FinalModalProps) {
                             objectFit="cover"
                             mb={4}
                             marginTop={"20px"}
+                            alt="Tour preview image"
                         />
                         <VStack marginTop={"20px"} align="start" spacing={1}>
                             <Text fontWeight="bold" fontSize="lg">

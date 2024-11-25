@@ -1,4 +1,4 @@
-import {Box, Button, SimpleGrid, Spinner, Text} from "@chakra-ui/react";
+import {Box, SimpleGrid, Spinner, Text} from "@chakra-ui/react";
 import {useEffect, useState} from "react";
 import CardHome from "./CardHome";
 import {api} from "../services/api";
@@ -28,8 +28,7 @@ export default function BodyCards() {
     const [cardData, setCardData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const {setTourId } = useGuest();
-    const { tenantId } = useGuest();
+    const {setTourId ,tenantId } = useGuest();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -66,7 +65,7 @@ export default function BodyCards() {
         };
 
         fetchData();
-    }, []);
+    }, [tenantId]);
     
     if (loading) {
         return <Spinner size="xl"/>;

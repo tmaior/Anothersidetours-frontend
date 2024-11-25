@@ -49,7 +49,7 @@ const Grid: React.FC<GridProps> = ({
         }
 
         setDayData(updatedDayData);
-    }, []);
+    }, [originalPrice]);
 
     return (
         <SimpleGrid columns={{ base: 1, md: 2, lg: 2 }} spacing={150} p={"25px"}>

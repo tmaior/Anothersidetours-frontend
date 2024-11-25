@@ -1,6 +1,7 @@
 import {useGuest} from "./GuestContext";
 import {
-    Alert, AlertIcon,
+    Alert,
+    AlertIcon,
     Box,
     Button,
     Divider,
@@ -155,7 +156,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                 throw new Error("Failed to create setup intent");
             }
 
-            const { clientSecret } = await setupIntentResponse.json();
+            const {clientSecret} = await setupIntentResponse.json();
 
             const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
                 payment_method: {
@@ -349,7 +350,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                             {errorMessage && (
                                 <Box mt={4} w={"470px"}>
                                     <Alert status="error">
-                                        <AlertIcon />
+                                        <AlertIcon/>
                                         <Text>{errorMessage}</Text>
                                     </Alert>
                                 </Box>

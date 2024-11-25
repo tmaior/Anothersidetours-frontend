@@ -16,13 +16,19 @@ interface CardData {
     addons: [];
 }
 
+interface Addon {
+    id: string;
+    label: string;
+    type: string;
+    description: string;
+    price: number;
+}
+
 export default function BodyCards() {
     const [cardData, setCardData] = useState([]);
-    const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const {setTourId } = useGuest();
-    const itemsPerPage = 6;
     const { tenantId } = useGuest();
 
     useEffect(() => {
@@ -40,18 +46,20 @@ export default function BodyCards() {
                     discountedPrice: `$${(item.price * 0.8).toFixed(2)}`,
                     duration: (item.duration / 60).toFixed(0),
                     image: "https://anothersideoflosangelestours.com/wp-content/uploads/2024/01/IMG_4688-1.jpeg",
-                    addons: item.addons.map((addon: any) => ({
+                    addons: item.addons.map((addon: Addon) => ({
                         id: addon.id,
                         label: addon.label,
                         type: addon.type,
                         description: addon.description,
-                        price: addon.price
-                    }))
+                        price: addon.price,
+                    })),
                 }));
 
                 setCardData(mappedData);
-            } catch (err) {
+            } catch {
                 setError("Error loading data.");
+
+
             } finally {
                 setLoading(false);
             }
@@ -59,10 +67,6 @@ export default function BodyCards() {
 
         fetchData();
     }, []);
-
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = cardData.slice(indexOfFirstItem, indexOfLastItem);
     
     if (loading) {
         return <Spinner size="xl"/>;
@@ -75,7 +79,7 @@ export default function BodyCards() {
     return (
         <Box paddingBottom="80px">
             <SimpleGrid columns={[1, 2, 2]} spacing="40px" padding="20px">
-                {currentItems.map((data, index) => (
+                {cardData.map((data, index) => (
                     <CardHome
                         key={data.id || index}
                         title={data.title}
@@ -86,7 +90,7 @@ export default function BodyCards() {
                         image={data.image}
                         valuePrice={data.valuePrice}
                         addons={data.addons}
-                        onSelect={() => setTourId(data.id)}
+                        onSelect={() => setTourId(data.id.toString())}
                     />
                 ))}
             </SimpleGrid>

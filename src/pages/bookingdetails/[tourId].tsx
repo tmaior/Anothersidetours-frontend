@@ -1,17 +1,12 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import {
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalHeader,
-    ModalOverlay,
     useDisclosure,
 } from "@chakra-ui/react";
 import BookingDetails from "../../components/BookingDetails";
 import CheckoutModal from "../../components/CheckoutModal";
 import {useGuest} from "../../components/GuestContext";
+import ModalPageLayout from "../../components/ModalPageLayout";
 
 export default function BookingDetailsPage() {
     const router = useRouter();
@@ -35,7 +30,7 @@ export default function BookingDetailsPage() {
         if (router.isReady && tourId) {
             const id = Array.isArray(tourId) ? tourId[0] : tourId;
             openBooking();
-            fetch(`http://localhost:9000/tours/${id}`)
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`)
                 .then((res) => res.json())
                 .then((data) => {
                     setTourData(data);
@@ -65,27 +60,15 @@ export default function BookingDetailsPage() {
 
     return (
         <>
-            <Modal
-                isOpen={isBookingOpen}
-                onClose={() => router.push("/")}
-                isCentered
-                size="6xl"
-            >
-                <ModalOverlay />
-                <ModalContent>
-                    <ModalHeader>{tourData.name}</ModalHeader>
-                    <ModalCloseButton />
-                    <ModalBody>
-                        <BookingDetails
-                            title={tourData.name}
-                            description={tourData.description}
-                            originalPrice={tourData.price}
-                            addons={tourData.addons}
-                            onContinue={handleContinueToCheckout}
-                        />
-                    </ModalBody>
-                </ModalContent>
-            </Modal>
+            <ModalPageLayout isOpen={isBookingOpen}>
+                <BookingDetails
+                    title={tourData.name}
+                    description={tourData.description}
+                    originalPrice={tourData.price}
+                    addons={tourData.addons}
+                    onContinue={handleContinueToCheckout}
+                />
+            </ModalPageLayout>
 
             <CheckoutModal
                 isOpen={isCheckoutOpen}

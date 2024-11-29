@@ -9,7 +9,7 @@ import {
 import { useState } from "react";
 import CreateTour from "./dashboard/create-tours";
 import Home from "./dashboard/home/home";
-
+import ListTours from "./dashboard/list-tours";
 
 export default function Dashboard() {
     const sidebarColor = useColorModeValue("black", "#2c2b2b");
@@ -20,6 +20,8 @@ export default function Dashboard() {
         switch (activeScreen) {
             case "createTour":
                 return <CreateTour />;
+            case "listTours":
+                return <ListTours />;
             case "home":
             default:
                 return <Home />;
@@ -70,10 +72,18 @@ export default function Dashboard() {
                     >
                         Cadastrar
                     </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => setActiveScreen("listTours")}
+                        _hover={{ cursor: "pointer", color: "gray.200" }}
+                    >
+                        Listar
+                    </Text>
                 </VStack>
             </Box>
 
-            {/* Conteúdo Central */}
             <Box
                 ml="250px"
                 p={8}

@@ -44,6 +44,7 @@ export default function CreateTour() {
     const [guides, setGuides] = useState([]);
     const [isLoadingCategories, setIsLoadingCategories] = useState(true);
     const [isLoadingGuides, setIsLoadingGuides] = useState(true);
+    const [errors, setErrors] = useState<string[]>([]);
 
     useEffect(() => {
         async function fetchTenants() {
@@ -148,7 +149,7 @@ export default function CreateTour() {
                     category: formData.category,
                     guide: formData.guide,
                     addons: formData.addons,
-                    schedule: timeSlots,
+                    schedule: timeSlots.map((time) => new Date(`1970-01-01T${time}:00`).toISOString()),
                     imageUrl,
                 })
             );
@@ -168,6 +169,10 @@ export default function CreateTour() {
             const savedTour = await response.json();
 
             if (timeSlots.length > 0) {
+                const formattedTimeSlots = timeSlots.map(
+                    (time) => new Date(`1970-01-01T${time}:00`).toISOString()
+                );
+
                 const scheduleResponse = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/${savedTour.id}`,
                     {
@@ -175,7 +180,7 @@ export default function CreateTour() {
                         headers: {
                             "Content-Type": "application/json",
                         },
-                        body: JSON.stringify({ timeSlots }),
+                        body: JSON.stringify({ timeSlots: formattedTimeSlots }),
                     }
                 );
 

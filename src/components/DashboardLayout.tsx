@@ -36,6 +36,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     >
                         Cities
                     </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/tenant")}
+                        _hover={{ cursor: "pointer", color: "gray.200" }}
+                    >
+                        Register Cities
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/list-cities")}
+                        _hover={{ cursor: "pointer", color: "gray.200" }}
+                    >
+                        List Cities
+                    </Text>
                     <Divider borderColor="gray.600" />
                     <Text
                         fontSize="xl"
@@ -69,6 +87,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         fontWeight="bold"
                         color="white"
                         _hover={{ cursor: "pointer" }}
+                    >
+                        Reservations
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/reservations")}
+                        _hover={{ cursor: "pointer", color: "gray.200" }}
                     >
                         Reservations
                     </Text>
@@ -107,15 +134,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         _hover={{ cursor: "pointer" }}
                     >
                         Additional Information
-                    </Text>
-                    <Divider borderColor="gray.600" />
-                    <Text
-                        fontSize="xl"
-                        fontWeight="bold"
-                        color="white"
-                        _hover={{ cursor: "pointer" }}
-                    >
-                        Notes
                     </Text>
                     <Divider borderColor="gray.600" />
                     <Text

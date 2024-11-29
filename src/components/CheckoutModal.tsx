@@ -45,7 +45,6 @@ interface CheckoutModalProps {
 export default function CheckoutModal({isOpen, onClose, onBack, title, valuePrice}: CheckoutModalProps) {
     const {isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal} = useDisclosure();
     const {
-        tenantId,
         tourId,
         guestQuantity,
         userId,
@@ -105,7 +104,6 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                 : new Date().toISOString();
 
             const reservationData = {
-                tenantId,
                 tourId,
                 userId,
                 reservation_date: reservationDateTime,

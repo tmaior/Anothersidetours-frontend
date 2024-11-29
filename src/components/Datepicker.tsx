@@ -39,7 +39,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                                    originalPrice,
                                                }) => {
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
-    const [monthDayData, setMonthDayData] = useState<{ [key: string]: string }>({});
+    const [monthDayData, setMonthDayData] = useState<{ [key: string]: React.ReactElement }>({});
     const [availableTimes, setAvailableTimes] = useState<string[]>([]);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [blockedDates, setBlockedDates] = useState<string[]>([]);
@@ -54,10 +54,15 @@ const DatePicker: React.FC<DatePickerProps> = ({
         const monthEnd = endOfMonth(monthStart);
         const daysInMonth = eachDayOfInterval({start: monthStart, end: monthEnd});
 
-        const newMonthDayData: { [key: string]: string } = {};
+        const newMonthDayData: { [key: string]: React.ReactElement } = {};
+
         daysInMonth.forEach(day => {
             const dayKey = format(day, 'yyyy-MM-dd');
-            newMonthDayData[dayKey] = price;
+            newMonthDayData[dayKey] = (
+                <span>
+            <sup>$</sup>{100 + price}
+        </span>
+            );
         });
 
         setMonthDayData(newMonthDayData);

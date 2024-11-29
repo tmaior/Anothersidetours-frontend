@@ -34,6 +34,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         color="white"
                         _hover={{ cursor: "pointer" }}
                     >
+                        Cities
+                    </Text>
+                    <Divider borderColor="gray.600" />
+                    <Text
+                        fontSize="xl"
+                        fontWeight="bold"
+                        color="white"
+                        _hover={{ cursor: "pointer" }}
+                    >
                         Tour
                     </Text>
                     <Text
@@ -53,6 +62,69 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         _hover={{ cursor: "pointer", color: "gray.200" }}
                     >
                         List Tours
+                    </Text>
+                    <Divider borderColor="gray.600" />
+                    <Text
+                        fontSize="xl"
+                        fontWeight="bold"
+                        color="white"
+                        _hover={{ cursor: "pointer" }}
+                    >
+                        Reservations
+                    </Text>
+                    <Divider borderColor="gray.600" />
+                    <Text
+                        fontSize="xl"
+                        fontWeight="bold"
+                        color="white"
+                        _hover={{ cursor: "pointer" }}
+                    >
+                        Guides
+                    </Text>
+                    <Divider borderColor="gray.600" />
+                    <Text
+                        fontSize="xl"
+                        fontWeight="bold"
+                        color="white"
+                        _hover={{ cursor: "pointer" }}
+                    >
+                        Categories
+                    </Text>
+                    <Divider borderColor="gray.600" />
+                    <Text
+                        fontSize="xl"
+                        fontWeight="bold"
+                        color="white"
+                        _hover={{ cursor: "pointer" }}
+                    >
+                        Blackouts
+                    </Text>
+                    <Divider borderColor="gray.600" />
+                    <Text
+                        fontSize="xl"
+                        fontWeight="bold"
+                        color="white"
+                        _hover={{ cursor: "pointer" }}
+                    >
+                        Additional Information
+                    </Text>
+                    <Divider borderColor="gray.600" />
+                    <Text
+                        fontSize="xl"
+                        fontWeight="bold"
+                        color="white"
+                        _hover={{ cursor: "pointer" }}
+                    >
+                        Notes
+                    </Text>
+                    <Divider borderColor="gray.600" />
+                    <Text
+                        fontSize="xl"
+                        fontWeight="bold"
+                        color="white"
+                        _hover={{ cursor: "pointer" }}
+                    >
+                        Employees
                     </Text>
                 </VStack>
             </Box>

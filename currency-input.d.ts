@@ -11,7 +11,6 @@ declare module "react-currency-input-field" {
         className?: string;
         bg: string;
         color: string;
-        borderColor: string;
         customInput: ComponentWithAs<"input", InputProps>;
         onValueChange?: (value?: string, name?: string) => void;
     }

@@ -174,8 +174,8 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
 
     return (
         <DashboardLayout>
-            <Box ml="250px" p={8} display="-moz-initial" justifyContent="center" alignItems="center">
-                <Box p={8} bg={bgColor} color="white" borderRadius="md" boxShadow="md" maxW="800px" w="100%" >
+            <Box ml="250px" p={8} display="flex" justifyContent="center" alignItems="center">
+                <Box p={8} bg={bgColor} color="white" borderRadius="md" boxShadow="md" maxW="800px" w="100%">
                     <Heading color={"black"} mb={4}>{isEditing ? "Editing Tour" : "Register Tour"}</Heading>
                     <form>
                         <VStack spacing={4} align="stretch">
@@ -203,7 +203,7 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                 bg={inputBgColor}
                                 color={inputTextColor}
                                 onValueChange={(value) => handleFormChange("price", parseFloat(value || "0"))}
-                                borderColor={""}                            />
+                            />
                             <Input
                                 type="number"
                                 placeholder="Duration (in hours)"
@@ -259,10 +259,10 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                 color={inputTextColor}
                                 onChange={handleImageChange}
                             />
-                            {formData.imageUrl && (
+                            {selectedImage && (
                                 <Box>
                                     <Image
-                                        src={selectedImage ? URL.createObjectURL(selectedImage) : formData.imageUrl}
+                                        src={URL.createObjectURL(selectedImage)}
                                         alt="Preview"
                                         boxSize="150px"
                                         objectFit="cover"

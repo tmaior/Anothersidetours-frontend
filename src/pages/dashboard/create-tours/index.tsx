@@ -12,8 +12,9 @@ import {
     Flex,
     useColorModeValue,
 } from "@chakra-ui/react";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import TimePicker from "react-time-picker";
+import CurrencyInput from "react-currency-input-field";
 
 export default function CreateTour() {
     const bgColor = useColorModeValue("white", "gray.800");
@@ -21,13 +22,13 @@ export default function CreateTour() {
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
     const inputTextColor = useColorModeValue("black", "white");
 
-    const fileInputRef = useRef(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const [formData, setFormData] = useState({
         name: "",
         description: "",
-        price: "",
-        duration: "",
+        price: 0,
+        duration: 0,
         tenant: "",
         category: "",
         guide: "",
@@ -35,8 +36,8 @@ export default function CreateTour() {
         schedule: [],
     });
 
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [timeSlots, setTimeSlots] = useState([]);
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [timeSlots, setTimeSlots] = useState<string[]>([]);
     const [tenants, setTenants] = useState([]);
     const [isLoadingTenants, setIsLoadingTenants] = useState(true);
     const [categories, setCategories] = useState([]);
@@ -51,7 +52,7 @@ export default function CreateTour() {
                 const data = await response.json();
                 setTenants(data);
             } catch (error) {
-                console.error("Erro ao buscar tenants:", error);
+                console.error("Error when searching for tenants:", error);
             } finally {
                 setIsLoadingTenants(false);
             }
@@ -62,7 +63,7 @@ export default function CreateTour() {
                 const data = await response.json();
                 setCategories(data);
             } catch (error) {
-                console.error("Erro ao buscar categories:", error);
+                console.error("Error when searching for categories:", error);
             } finally {
                 setIsLoadingCategories(false);
             }
@@ -74,7 +75,7 @@ export default function CreateTour() {
                 const data = await response.json();
                 setGuides(data);
             } catch (error) {
-                console.error("Erro ao buscar guides:", error);
+                console.error("Error when searching for guides:", error);
             } finally {
                 setIsLoadingGuides(false);
             }
@@ -85,19 +86,19 @@ export default function CreateTour() {
         fetchGuides();
     }, []);
 
-    const handleTimeAdd = (time) => {
+    const handleTimeAdd = (time: string | null) => {
         if (time && !timeSlots.includes(time)) {
             setTimeSlots([...timeSlots, time]);
         }
     };
 
-    const handleTimeRemove = (time) => {
+    const handleTimeRemove = (time: string) => {
         setTimeSlots(timeSlots.filter((t) => t !== time));
     };
 
-    const handleImageChange = (event) => {
-        const file = event.target.files[0];
-        setSelectedImage(file);
+    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        setSelectedImage(file || null);
     };
 
     const handleRemoveImage = () => {
@@ -107,27 +108,88 @@ export default function CreateTour() {
         }
     };
 
-    const handleFormChange = (field, value) => {
-        setFormData({ ...formData, [field]: value });
+    const handleFormChange = (field: keyof typeof formData, value: string | number | File | string[]) => {
+        setFormData({
+            ...formData,
+            [field]: value,
+        });
     };
 
     const handleSubmit = async () => {
-        const data = new FormData();
-        data.append("image", selectedImage);
-        data.append("name", formData.name);
-        data.append("description", formData.description);
-        data.append("price", formData.price);
-        data.append("duration", formData.duration);
-        data.append("tenant", formData.tenant);
-        data.append("category", formData.category);
-        data.append("guide", formData.guide);
-        data.append("addons", JSON.stringify(formData.addons));
-        data.append("schedule", JSON.stringify(timeSlots));
+        try {
+            let imageUrl = "";
 
-        await fetch("/api/tours", {
-            method: "POST",
-            body: data,
-        });
+            if (selectedImage) {
+                const imageData = new FormData();
+                imageData.append("file", selectedImage);
+
+                const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload`, {
+                    method: "POST",
+                    body: imageData,
+                });
+
+                if (uploadResponse.ok) {
+                    const uploadData = await uploadResponse.json();
+                    imageUrl = uploadData.url;
+                } else {
+                    throw new Error("Error uploading image");
+                }
+            }
+
+            const durationInMinutes = formData.duration * 60;
+
+            const tourData = Object.fromEntries(
+                Object.entries({
+                    name: formData.name,
+                    description: formData.description,
+                    price: formData.price,
+                    duration: durationInMinutes,
+                    tenantId: formData.tenant,
+                    category: formData.category,
+                    guide: formData.guide,
+                    addons: formData.addons,
+                    schedule: timeSlots,
+                    imageUrl,
+                })
+            );
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(tourData),
+            });
+
+            if (!response.ok) {
+                throw new Error("Error saving tour");
+            }
+
+            const savedTour = await response.json();
+
+            if (timeSlots.length > 0) {
+                const scheduleResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/${savedTour.id}`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ timeSlots }),
+                    }
+                );
+
+                if (!scheduleResponse.ok) {
+                    throw new Error("Error saving time slots");
+                }
+            }
+
+
+
+        } catch (error) {
+            console.error(error);
+            alert("Error processing the request");
+        }
     };
 
     return (
@@ -147,19 +209,24 @@ export default function CreateTour() {
                         color={inputTextColor}
                         onChange={(e) => handleFormChange("description", e.target.value)}
                     />
-                    <Input
-                        type="number"
+                    <CurrencyInput
                         placeholder="Price"
+                        value={formData.price}
+                        decimalsLimit={2}
+                        prefix="$"
+                        allowNegative={false}
+                        customInput={Input}
                         bg={inputBgColor}
                         color={inputTextColor}
-                        onChange={(e) => handleFormChange("price", e.target.value)}
+                        borderColor={useColorModeValue("gray.300", "gray.600")}
+                        onValueChange={(value) => handleFormChange("price", parseFloat(value || "0"))}
                     />
                     <Input
                         type="number"
                         placeholder="Duration (in hours)"
                         bg={inputBgColor}
                         color={inputTextColor}
-                        onChange={(e) => handleFormChange("duration", e.target.value)}
+                        onChange={(e) => handleFormChange("duration", Number(e.target.value))}
                     />
                     {isLoadingTenants ? (
                         <Text>Loading cities...</Text>
@@ -239,11 +306,11 @@ export default function CreateTour() {
                     <HStack>
                         <Text>Add Schedules:</Text>
                         <TimePicker
-                            onChange={(value) => handleTimeAdd(value)}
+                            onChange={handleTimeAdd}
                             format="hh:mm a"
                             clearIcon={null}
                             clockIcon={null}
-                            className="time-picker"
+                            className="chakra-input"
                         />
                     </HStack>
                     <Box>
@@ -269,7 +336,7 @@ export default function CreateTour() {
                         ))}
                     </Box>
                     <Button colorScheme="teal" onClick={handleSubmit}>
-                        Salvar
+                        Save
                     </Button>
                 </VStack>
             </form>

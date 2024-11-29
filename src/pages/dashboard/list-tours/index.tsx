@@ -14,6 +14,8 @@ import {
     useToast,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import {useRouter} from "next/router";
+import DashboardLayout from "../../../components/DashboardLayout";
 
 export default function ListTours() {
     const bgColor = useColorModeValue("white", "gray.800");
@@ -103,9 +105,11 @@ export default function ListTours() {
         }
     };
 
+    const router = useRouter();
+
     const handleEdit = () => {
         if (selectedTour) {
-            alert(`Edit functionality for tour ID: ${selectedTour} is pending.`);
+            router.push(`/dashboard/edit-tour/${selectedTour}`);
         }
     };
 
@@ -120,80 +124,82 @@ export default function ListTours() {
     };
 
     return (
-        <Box bg={bgColor} p={8} borderRadius="md" color="black">
-            <HStack mb={4} spacing={4}>
-                <Select
-                    placeholder="Select City"
-                    bg={inputBgColor}
-                    onChange={(e) => setFilterTenant(e.target.value)}
-                >
-                    {tenants.map((tenant) => (
-                        <option key={tenant.id} value={tenant.id}>
-                            {tenant.name}
-                        </option>
-                    ))}
-                </Select>
-                <Input
-                    placeholder="Search by name"
-                    bg={inputBgColor}
-                    value={searchName}
-                    onChange={(e) => setSearchName(e.target.value)}
-                />
-            </HStack>
-            <VStack spacing={6} align="stretch">
-                {filteredTours.map((tour) => (
-                    <Flex
-                        key={tour.id}
-                        p={4}
-                        bg="gray.700"
-                        borderRadius="md"
-                        boxShadow="md"
-                        align="center"
+        <DashboardLayout>
+            <Box bg={bgColor} p={8} borderRadius="md" color="black">
+                <HStack mb={4} spacing={4}>
+                    <Select
+                        placeholder="Select City"
+                        bg={inputBgColor}
+                        onChange={(e) => setFilterTenant(e.target.value)}
                     >
-                        <Checkbox
-                            isChecked={selectedTour === tour.id}
-                            onChange={() => handleSelectTour(tour.id)}
-                            colorScheme="teal"
-                            mr={4}
-                        />
-                        <Image
-                            src={tour.imageUrl || "https://via.placeholder.com/300x200"}
-                            alt={tour.name}
-                            boxSize="150px"
+                        {tenants.map((tenant) => (
+                            <option key={tenant.id} value={tenant.id}>
+                                {tenant.name}
+                            </option>
+                        ))}
+                    </Select>
+                    <Input
+                        placeholder="Search by name"
+                        bg={inputBgColor}
+                        value={searchName}
+                        onChange={(e) => setSearchName(e.target.value)}
+                    />
+                </HStack>
+                <VStack spacing={6} align="stretch">
+                    {filteredTours.map((tour) => (
+                        <Flex
+                            key={tour.id}
+                            p={4}
+                            bg="gray.700"
                             borderRadius="md"
-                            mr={4}
-                        />
-                        <Box>
-                            <Heading fontSize="lg" color="white">
-                                {tour.name}
-                            </Heading>
-                            <Text color="gray.300">{tour.description}</Text>
-                            <Text color="gray.400">
-                                Price: ${tour.price.toFixed(2)}
-                            </Text>
-                            <Text color="gray.400">
-                                Duration: {formatDuration(tour.duration)}
-                            </Text>
-                        </Box>
-                    </Flex>
-                ))}
-            </VStack>
-            <HStack mt={4} spacing={4}>
-                <Button
-                    colorScheme="blue"
-                    onClick={handleEdit}
-                    isDisabled={!selectedTour}
-                >
-                    Edit
-                </Button>
-                <Button
-                    colorScheme="red"
-                    onClick={handleDelete}
-                    isDisabled={!selectedTour}
-                >
-                    Delete
-                </Button>
-            </HStack>
-        </Box>
+                            boxShadow="md"
+                            align="center"
+                        >
+                            <Checkbox
+                                isChecked={selectedTour === tour.id}
+                                onChange={() => handleSelectTour(tour.id)}
+                                colorScheme="teal"
+                                mr={4}
+                            />
+                            <Image
+                                src={tour.imageUrl || "https://via.placeholder.com/300x200"}
+                                alt={tour.name}
+                                boxSize="150px"
+                                borderRadius="md"
+                                mr={4}
+                            />
+                            <Box>
+                                <Heading fontSize="lg" color="white">
+                                    {tour.name}
+                                </Heading>
+                                <Text color="gray.300">{tour.description}</Text>
+                                <Text color="gray.400">
+                                    Price: ${tour.price.toFixed(2)}
+                                </Text>
+                                <Text color="gray.400">
+                                    Duration: {formatDuration(tour.duration)}
+                                </Text>
+                            </Box>
+                        </Flex>
+                    ))}
+                </VStack>
+                <HStack mt={4} spacing={4}>
+                    <Button
+                        colorScheme="blue"
+                        onClick={handleEdit}
+                        isDisabled={!selectedTour}
+                    >
+                        Edit
+                    </Button>
+                    <Button
+                        colorScheme="red"
+                        onClick={handleDelete}
+                        isDisabled={!selectedTour}
+                    >
+                        Delete
+                    </Button>
+                </HStack>
+            </Box>
+        </DashboardLayout>
     );
 }

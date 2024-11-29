@@ -219,7 +219,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                     >
                         <ModalHeader marginLeft={"500"} alignContent={"center"}>{"CHECKOUT"}</ModalHeader>
                         <Divider color={"gray.400"}/>
-                        <ModalCloseButton onClick={onClose}/>
+                        {/*<ModalCloseButton onClick={onClose}/>*/}
                         <ModalBody
                             minH="auto"
                             maxH="95vh"
@@ -378,8 +378,6 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                         <Button colorScheme="green" ml={3}>Apply Code</Button>
                     </ModalFooter>
                 </ModalContent>
-
-
             </Modal>
         </>
     )

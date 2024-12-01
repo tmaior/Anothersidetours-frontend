@@ -8,6 +8,8 @@ import {
     Text,
     Heading,
     Flex,
+    Image,
+    Textarea,
     useColorModeValue,
     useToast,
 } from "@chakra-ui/react";
@@ -20,6 +22,9 @@ export default function ListReservations() {
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
     const [reservations, setReservations] = useState([]);
     const [selectedReservation, setSelectedReservation] = useState(null);
+    const [expandedReservation, setExpandedReservation] = useState(null);
+    const [notes, setNotes] = useState({});
+    const [newNote, setNewNote] = useState("");
     const [filterTenant] = useState("");
     const [searchName, setSearchName] = useState("");
     const [filteredReservations, setFilteredReservations] = useState([]);
@@ -65,6 +70,23 @@ export default function ListReservations() {
 
     const handleSelectReservation = (id) => {
         setSelectedReservation(selectedReservation === id ? null : id);
+    };
+
+    const handleAddNote = (id) => {
+        if (newNote.trim()) {
+            setNotes((prevNotes) => ({
+                ...prevNotes,
+                [id]: [...(prevNotes[id] || []), newNote],
+            }));
+            setNewNote("");
+        }
+    };
+
+    const handleRemoveNote = (id, index) => {
+        setNotes((prevNotes) => ({
+            ...prevNotes,
+            [id]: prevNotes[id].filter((_, i) => i !== index),
+        }));
     };
 
     const handleAccept = async () => {
@@ -137,10 +159,8 @@ export default function ListReservations() {
         }
     };
 
-    const handleAddAddons = () => {
-        if (selectedReservation) {
-            router.push(`/dashboard/add-addons/${selectedReservation}`);
-        }
+    const toggleExpandReservation = (id) => {
+        setExpandedReservation(expandedReservation === id ? null : id);
     };
 
     return (
@@ -163,26 +183,92 @@ export default function ListReservations() {
                             borderRadius="md"
                             boxShadow="md"
                             align="center"
+                            direction="column"
                         >
-                            <Checkbox
-                                isChecked={selectedReservation === reservation.id}
-                                onChange={() => handleSelectReservation(reservation.id)}
-                                colorScheme="teal"
-                                mr={4}
-                            />
-                            <Box>
-                                <Heading fontSize="lg" color="white">
-                                    {reservation.tour.name}
-                                </Heading>
-                                <Text color="gray.300">Date: {new Date(reservation.reservation_date).toLocaleString()}</Text>
-                                <Text color="gray.300">Guests: {reservation.guestQuantity}</Text>
-                                <Text color="gray.300">Total Price: ${reservation.total_price.toFixed(2)}</Text>
-                                <Text color="gray.300">Status: {reservation.status}</Text>
-                                <Text color="gray.300">
-                                    Add-ons:{" "}
-                                    {reservation.reservationAddons.map((addon) => addon.name).join(", ") || "None"}
-                                </Text>
-                            </Box>
+                            <HStack w="100%" align="center">
+                                <Checkbox
+                                    isChecked={selectedReservation === reservation.id}
+                                    onChange={() => handleSelectReservation(reservation.id)}
+                                    colorScheme="teal"
+                                    mr={4}
+                                />
+                                <Image
+                                    src={reservation.tour.image}
+                                    alt={reservation.tour.name}
+                                    boxSize="80px"
+                                    borderRadius="md"
+                                    mr={4}
+                                />
+                                <Box flex="1">
+                                    <Heading fontSize="lg" color="white">
+                                        {reservation.tour.name}
+                                    </Heading>
+                                    <Text color="gray.300">
+                                        Date: {new Date(reservation.reservation_date).toLocaleString()}
+                                    </Text>
+                                    <Text color="gray.300">Guests: {reservation.guestQuantity}</Text>
+                                    <Text color="gray.300">Total Price: ${reservation.total_price.toFixed(2)}</Text>
+                                    <Text color="gray.300">Status: {reservation.status}</Text>
+                                    <Text color="gray.300">
+                                        Add-ons:{" "}
+                                        {reservation.reservationAddons.map((addon) => addon.name).join(", ") || "None"}
+                                    </Text>
+                                </Box>
+                                <Button
+                                    size="sm"
+                                    colorScheme="teal"
+                                    onClick={() => toggleExpandReservation(reservation.id)}
+                                >
+                                    {expandedReservation === reservation.id ? "Hide Details" : "View Details"}
+                                </Button>
+                            </HStack>
+                            {expandedReservation === reservation.id && (
+                                <Box mt={4} bg="gray.600" p={4} borderRadius="md" w="100%">
+                                    <Text fontWeight="bold" color="white">
+                                        Additional Details
+                                    </Text>
+                                    <Text color="gray.300">{reservation.additionalInformation || "N/A"}</Text>
+
+                                    <Text fontWeight="bold" mt={4} color="white">
+                                        Customer Information
+                                    </Text>
+                                    <Text color="gray.300">Name: {reservation.user?.name || "N/A"}</Text>
+                                    <Text color="gray.300">Email: {reservation.user?.email || "N/A"}</Text>
+                                    <Text color="gray.300">Phone: {reservation.user?.phone || "N/A"}</Text>
+
+                                    <Text fontWeight="bold" mt={4} color="white">
+                                        Notes
+                                    </Text>
+                                    {notes[reservation.id]?.map((note, index) => (
+                                        <HStack key={index} mt={2} justify="space-between">
+                                            <Text color="gray.300">{note}</Text>
+                                            <Button
+                                                size="xs"
+                                                colorScheme="red"
+                                                onClick={() => handleRemoveNote(reservation.id, index)}
+                                            >
+                                                Remove
+                                            </Button>
+                                        </HStack>
+                                    ))}
+                                    <HStack mt={4}>
+                                        <Textarea
+                                            placeholder="Add a note..."
+                                            bg="gray.700"
+                                            value={newNote}
+                                            onChange={(e) => setNewNote(e.target.value)}
+                                        />
+                                        <Button
+                                            size="sm"
+                                            colorScheme="blue"
+                                            onClick={() => handleAddNote(reservation.id)}
+                                            isDisabled={!newNote.trim()}
+                                        >
+                                            Add Note
+                                        </Button>
+                                    </HStack>
+                                </Box>
+                            )}
                         </Flex>
                     ))}
                 </VStack>
@@ -200,13 +286,6 @@ export default function ListReservations() {
                         isDisabled={!selectedReservation}
                     >
                         Reject
-                    </Button>
-                    <Button
-                        colorScheme="blue"
-                        onClick={handleAddAddons}
-                        isDisabled={!selectedReservation}
-                    >
-                        Add Add-ons
                     </Button>
                 </HStack>
             </Box>

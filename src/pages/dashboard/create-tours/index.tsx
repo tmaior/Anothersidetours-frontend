@@ -234,13 +234,16 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                 color={inputTextColor}
                                 onValueChange={(value) => handleFormChange("price", parseFloat(value || "0"))}
                             />
+                            <Text color="gray.500" fontSize="sm">
+                                Enter the duration of the tour in hours.
+                            </Text>
                             <Input
                                 type="number"
                                 placeholder="Duration (in hours)"
                                 bg={inputBgColor}
                                 color={inputTextColor}
                                 value={formData.duration}
-                                onChange={(e) => handleFormChange("duration", Number(e.target.value))}
+                                onChange={(e) => handleFormChange("duration", e.target.value)}
                             />
                             <Select
                                 placeholder="Select the City"

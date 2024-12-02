@@ -342,7 +342,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             >
                 {availableTimes.map((time, index) => (
                     <option key={index} value={time}>
-                        {format(new Date(time), 'hh:mm a')}
+                        {`${format(new Date(time), 'hh:mm a')} ($${originalPrice})`}
                     </option>
                 ))}
             </Select>

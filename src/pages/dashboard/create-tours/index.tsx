@@ -10,13 +10,13 @@ import {
     Image,
     Button,
     Flex,
-    useColorModeValue
+    useColorModeValue,
 } from "@chakra-ui/react";
 import React, { useState, useEffect, useRef } from "react";
-import TimePicker from "react-time-picker";
 import CurrencyInput from "react-currency-input-field";
 import { useRouter } from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
+import TimePicker from "react-time-picker";
 
 export default function TourForm({ isEditing = false, tourId = null, initialData = null }) {
     const bgColor = useColorModeValue("white", "gray.800");
@@ -98,7 +98,7 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
         });
     };
 
-    const handleTimeAdd = (time: string | null) => {
+    const handleTimeAdd = (time: string) => {
         if (time && !timeSlots.includes(time)) {
             setTimeSlots([...timeSlots, time]);
         }

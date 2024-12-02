@@ -11,12 +11,23 @@ import {
     Button,
     Flex,
     useColorModeValue,
+    NumberInput,
+    NumberInputField,
+    NumberInputStepper,
+    NumberIncrementStepper,
+    NumberDecrementStepper,
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
+    PopoverArrow,
+    PopoverCloseButton,
+    PopoverHeader,
+    PopoverBody,
 } from "@chakra-ui/react";
 import React, { useState, useEffect, useRef } from "react";
 import CurrencyInput from "react-currency-input-field";
 import { useRouter } from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
-import TimePicker from "react-time-picker";
 
 export default function TourForm({ isEditing = false, tourId = null, initialData = null }) {
     const bgColor = useColorModeValue("white", "gray.800");
@@ -115,6 +126,25 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
         setAdditionalInfos(additionalInfos.filter((_, i) => i !== index));
     };
 
+    const parseTimeStringToISO = (timeStr) => {
+        const [time, modifier] = timeStr.split(' ');
+        // eslint-disable-next-line prefer-const
+        let [hours, minutes] = time.split(':').map(Number);
+
+        if (modifier === 'PM' && hours < 12) {
+            hours += 12;
+        }
+        if (modifier === 'AM' && hours === 12) {
+            hours = 0;
+        }
+
+        const date = new Date('1970-01-01T00:00:00Z');
+        date.setUTCHours(hours);
+        date.setUTCMinutes(minutes);
+
+        return date.toISOString();
+    };
+
     const handleSubmit = async () => {
         try {
             let imageUrl = formData.imageUrl;
@@ -140,7 +170,7 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
             const tourData = {
                 ...formData,
                 duration: durationInMinutes,
-                schedule: timeSlots.map((time) => new Date(`1970-01-01T${time}:00`).toISOString()),
+                schedule: timeSlots.map((time) => parseTimeStringToISO(time)),
                 imageUrl,
                 additionalInfos,
             };
@@ -283,16 +313,8 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                     </Button>
                                 </Box>
                             )}
-                            <HStack>
-                                <Text>Add Schedules:</Text>
-                                <TimePicker
-                                    onChange={handleTimeAdd}
-                                    value={null}
-                                    format="hh:mm a"
-                                    clearIcon={null}
-                                    clockIcon={null}
-                                    className="chakra-input"
-                                />
+                            <HStack align={"flex-start"}>
+                                <TimeSelector onTimeAdd={handleTimeAdd} inputTextColor={inputTextColor} />
                             </HStack>
                             <Box>
                                 {timeSlots.map((time, index) => (
@@ -305,7 +327,7 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                         borderRadius="md"
                                         mb={2}
                                     >
-                                        <Text>{time}</Text>
+                                        <Text color="black">{time}</Text>
                                         <Button
                                             size="sm"
                                             colorScheme="red"
@@ -349,5 +371,93 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                 </Box>
             </Box>
         </DashboardLayout>
+    );
+}
+
+function TimeSelector({ onTimeAdd, inputTextColor }) {
+    const [hour, setHour] = useState(12);
+    const [minute, setMinute] = useState(0);
+    const [ampm, setAmPm] = useState('AM');
+    const [isOpen, setIsOpen] = useState(false);
+    const inputBgColor = useColorModeValue("gray.100", "gray.700");
+
+    const openPopover = () => setIsOpen(true);
+    const closePopover = () => setIsOpen(false);
+
+    const handleAddTime = () => {
+        const formattedHour = hour.toString().padStart(2, '0');
+        const formattedMinute = minute.toString().padStart(2, '0');
+        const timeString = `${formattedHour}:${formattedMinute} ${ampm}`;
+        onTimeAdd(timeString);
+        closePopover();
+    };
+
+    return (
+        <Popover isOpen={isOpen} onClose={closePopover}>
+            <PopoverTrigger>
+                <Button onClick={openPopover}>Add Schedule</Button>
+            </PopoverTrigger>
+            <PopoverContent w={"290px"}>
+                <PopoverArrow />
+                <PopoverCloseButton />
+                <PopoverHeader color={"black"}>Select Time</PopoverHeader>
+                <PopoverBody>
+                    <VStack spacing={4} align="flex-start">
+                        <HStack spacing={2}>
+                            <NumberInput
+                                max={12}
+                                min={1}
+                                value={hour}
+                                onChange={(valueString) => {
+                                    const valueNumber = parseInt(valueString, 10);
+                                    if (!isNaN(valueNumber)) {
+                                        setHour(valueNumber);
+                                    }
+                                }}
+                                clampValueOnBlur={false}
+                            >
+                                <NumberInputField w={"80px"} color={inputTextColor} bg={inputBgColor} />
+                                <NumberInputStepper>
+                                    <NumberIncrementStepper />
+                                    <NumberDecrementStepper />
+                                </NumberInputStepper>
+                            </NumberInput>
+                            <Text>:</Text>
+                            <NumberInput
+                                max={59}
+                                min={0}
+                                value={minute}
+                                onChange={(valueString) => {
+                                    const valueNumber = parseInt(valueString, 10);
+                                    if (!isNaN(valueNumber)) {
+                                        setMinute(valueNumber);
+                                    }
+                                }}
+                                clampValueOnBlur={false}
+                            >
+                                <NumberInputField w={"80px"} maxLength={2} color={inputTextColor} bg={inputBgColor} />
+                                <NumberInputStepper>
+                                    <NumberIncrementStepper />
+                                    <NumberDecrementStepper />
+                                </NumberInputStepper>
+                            </NumberInput>
+                            <Select
+                                value={ampm}
+                                onChange={(e) => setAmPm(e.target.value)}
+                                width="80px"
+                                color={inputTextColor}
+                                bg={inputBgColor}
+                            >
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </Select>
+                        </HStack>
+                        <Button colorScheme="blue" onClick={handleAddTime} alignSelf="flex-start">
+                            OK
+                        </Button>
+                    </VStack>
+                </PopoverBody>
+            </PopoverContent>
+        </Popover>
     );
 }

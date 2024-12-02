@@ -272,7 +272,12 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                         colorScheme="red"
                                         mt={2}
                                         size="sm"
-                                        onClick={() => setSelectedImage(null)}
+                                        onClick={() => {
+                                            setSelectedImage(null);
+                                            if (fileInputRef.current) {
+                                                fileInputRef.current.value = "";
+                                            }
+                                        }}
                                     >
                                         Remove Image
                                     </Button>

@@ -16,6 +16,7 @@ import {
     subMonths,
 } from 'date-fns';
 import {useGuest} from "./GuestContext";
+import axios from "axios";
 
 interface DatePickerProps {
     selectedDate: Date | null;
@@ -48,6 +49,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
     const [blockedTimes, setBlockedTimes] = useState<
         { date: string; startTime: string; endTime: string }[]
     >([]);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const monthStart = startOfMonth(currentMonth);
@@ -60,7 +62,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             const dayKey = format(day, 'yyyy-MM-dd');
             newMonthDayData[dayKey] = (
                 <span>
-            <sup>$</sup>{100 + price}
+            <sup>$ </sup>{100 + price}
         </span>
             );
         });
@@ -210,7 +212,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                 onClick={() => {
                                     if (!isPast && !isBlocked && !isBlockedTime) {
                                         onChange(cloneDay);
-                                        handleDateSelection();
+                                        fetchAvailableTimes();
                                     }
                                 }}
                                 bg={
@@ -295,13 +297,28 @@ const DatePicker: React.FC<DatePickerProps> = ({
         return <Box>{rows}</Box>;
     };
 
-    const handleDateSelection = () => {
-        const times = [];
-        for (let hour = 8; hour <= 18; hour++) {
-            times.push(`${hour}:00`);
+    const fetchAvailableTimes = async () => {
+        try {
+            const response = await axios.get<string[]>(
+                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${tourId}`
+            );
+
+            if (Array.isArray(response.data)) {
+                setAvailableTimes(response.data);
+            } else {
+                throw new Error('Invalid response format');
+            }
+
+            setError(null);
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Failed to fetch available times');
+            setAvailableTimes([]);
         }
-        setAvailableTimes(times);
     };
+
+    useEffect(() => {
+        fetchAvailableTimes();
+    }, [tourId]);
 
     const handleTimeSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const selected = event.target.value;
@@ -317,20 +334,18 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 {renderCells()}
             </Box>
 
-            {availableTimes.length > 0 && (
-                <Select
-                    width="400px"
-                    placeholder="Pick a time"
-                    onChange={handleTimeSelection}
-                    value={selectedTime ?? undefined}
-                >
-                    {availableTimes.map((time, index) => (
-                        <option key={index} value={time}>
-                            {time}
-                        </option>
-                    ))}
-                </Select>
-            )}
+            <Select
+                width="400px"
+                placeholder="Pick a time"
+                onChange={handleTimeSelection}
+                value={selectedTime ?? undefined}
+            >
+                {availableTimes.map((time, index) => (
+                    <option key={index} value={time}>
+                        {new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </option>
+                ))}
+            </Select>
         </VStack>
     );
 };

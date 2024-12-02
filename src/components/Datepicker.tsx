@@ -342,7 +342,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             >
                 {availableTimes.map((time, index) => (
                     <option key={index} value={time}>
-                        {new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {format(new Date(time), 'hh:mm a')}
                     </option>
                 ))}
             </Select>

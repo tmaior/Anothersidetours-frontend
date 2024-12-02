@@ -10,7 +10,7 @@ import {
     Image,
     Button,
     Flex,
-    useColorModeValue,
+    useColorModeValue
 } from "@chakra-ui/react";
 import React, { useState, useEffect, useRef } from "react";
 import TimePicker from "react-time-picker";
@@ -39,6 +39,8 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
         imageUrl: "",
     });
 
+    const [additionalInfos, setAdditionalInfos] = useState([]);
+    const [newAdditionalInfo, setNewAdditionalInfo] = useState("");
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [timeSlots, setTimeSlots] = useState<string[]>([]);
     const [tenants, setTenants] = useState([]);
@@ -102,20 +104,15 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
         }
     };
 
-    const handleTimeRemove = (time: string) => {
-        setTimeSlots(timeSlots.filter((t) => t !== time));
-    };
-
-    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        setSelectedImage(file || null);
-    };
-
-    const handleRemoveImage = () => {
-        setSelectedImage(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
+    const handleAddAdditionalInfo = () => {
+        if (newAdditionalInfo.trim()) {
+            setAdditionalInfos([...additionalInfos, newAdditionalInfo.trim()]);
+            setNewAdditionalInfo("");
         }
+    };
+
+    const handleRemoveAdditionalInfo = (index) => {
+        setAdditionalInfos(additionalInfos.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async () => {
@@ -145,6 +142,7 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                 duration: durationInMinutes,
                 schedule: timeSlots.map((time) => new Date(`1970-01-01T${time}:00`).toISOString()),
                 imageUrl,
+                additionalInfos,
             };
 
             const endpoint = isEditing
@@ -176,7 +174,9 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
         <DashboardLayout>
             <Box ml="250px" p={8} display="flex" justifyContent="center" alignItems="center">
                 <Box p={8} bg={bgColor} color="white" borderRadius="md" boxShadow="md" maxW="800px" w="100%">
-                    <Heading color={"black"} mb={4}>{isEditing ? "Editing Tour" : "Register Tour"}</Heading>
+                    <Heading color={"black"} mb={4}>
+                        {isEditing ? "Editing Tour" : "Register Tour"}
+                    </Heading>
                     <form>
                         <VStack spacing={4} align="stretch">
                             <Input
@@ -257,7 +257,7 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                 accept="image/*"
                                 bg={inputBgColor}
                                 color={inputTextColor}
-                                onChange={handleImageChange}
+                                onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
                             />
                             {selectedImage && (
                                 <Box>
@@ -272,7 +272,7 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                         colorScheme="red"
                                         mt={2}
                                         size="sm"
-                                        onClick={handleRemoveImage}
+                                        onClick={() => setSelectedImage(null)}
                                     >
                                         Remove Image
                                     </Button>
@@ -304,13 +304,38 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                         <Button
                                             size="sm"
                                             colorScheme="red"
-                                            onClick={() => handleTimeRemove(time)}
+                                            onClick={() => setTimeSlots(timeSlots.filter((_, i) => i !== index))}
                                         >
                                             Remove
                                         </Button>
                                     </Flex>
                                 ))}
                             </Box>
+
+                            <Textarea
+                                placeholder="New Additional Information"
+                                bg={inputBgColor}
+                                color={inputTextColor}
+                                value={newAdditionalInfo}
+                                onChange={(e) => setNewAdditionalInfo(e.target.value)}
+                            />
+                            <Button colorScheme="blue" onClick={handleAddAdditionalInfo}>
+                                Add Additional Information
+                            </Button>
+                            <VStack align="start" spacing={2}>
+                                {additionalInfos.map((info, index) => (
+                                    <Flex key={index} justify="space-between" w="100%">
+                                        <Text color="black">{info}</Text>
+                                        <Button
+                                            size="sm"
+                                            colorScheme="red"
+                                            onClick={() => handleRemoveAdditionalInfo(index)}
+                                        >
+                                            Remove
+                                        </Button>
+                                    </Flex>
+                                ))}
+                            </VStack>
                             <Button colorScheme="teal" onClick={handleSubmit}>
                                 Save
                             </Button>

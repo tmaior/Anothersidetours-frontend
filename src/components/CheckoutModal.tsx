@@ -87,21 +87,36 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({statusCheckout: "COMPLETED"}),
+                body: JSON.stringify({ statusCheckout: "COMPLETED" }),
             });
 
             if (!response.ok) throw new Error("Failed to update user status");
 
-            const combineDateAndTime = (date, time) => {
+            const combineDateAndTime = (date: Date, time: string): string => {
                 const datePart = date.toISOString().split('T')[0];
-                const [hour, minute] = time.split(':');
-                const formattedTime = `${hour.padStart(2, '0')}:${minute}`;
-                return `${datePart}T${formattedTime}:00.000Z`;
+                const timeParts = time.match(/(\d{1,2}):(\d{2})\s?([AP]M)?/);
+
+                if (!timeParts) throw new Error(`Invalid time format: ${time}`);
+
+                const hoursMatch = timeParts[1];
+                const minutesMatch = timeParts[2];
+                const meridianMatch = timeParts[3];
+
+                const hours = meridianMatch === "PM" && parseInt(hoursMatch) !== 12
+                    ? (parseInt(hoursMatch) + 12).toString()
+                    : meridianMatch === "AM" && parseInt(hoursMatch) === 12
+                        ? "00"
+                        : hoursMatch;
+
+                const formattedTime = `${hours.padStart(2, '0')}:${minutesMatch.padStart(2, '0')}:00`;
+                const combinedDateTime = `${datePart}T${formattedTime}.000Z`;
+
+                return new Date(combinedDateTime).toISOString();
             };
 
             const reservationDateTime = selectedDate && selectedTime
                 ? combineDateAndTime(selectedDate, selectedTime)
-                : new Date().toISOString();
+                : new Date().toISOString().replace('T', ' ').split('.')[0] + '.000';
 
             const reservationData = {
                 tourId,

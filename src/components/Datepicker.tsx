@@ -49,6 +49,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
     const [blockedTimes, setBlockedTimes] = useState<
         { date: string; startTime: string; endTime: string }[]
     >([]);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -116,9 +117,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                     }
 
                     try {
-                        const utcDate = new Date(b.date).toISOString().split('T')[0];
-                        console.log(`Processed UTC date: ${b.date} -> ${utcDate}`);
-                        return utcDate;
+                        return new Date(b.date).toISOString().split('T')[0];
                     } catch (error) {
                         console.error(`Error processing date: ${b.date}`, error);
                         return null;
@@ -182,7 +181,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
         const endDate = endOfWeek(monthEnd, {weekStartsOn: 1});
 
         const rows = [];
-        let days: JSX.Element[] = [];
+        let days: React.ReactNode[] = [];
         let day = startDate;
         const today = startOfDay(new Date());
 
@@ -310,15 +309,15 @@ const DatePicker: React.FC<DatePickerProps> = ({
             }
 
             setError(null);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to fetch available times');
+        } catch (error) {
+            setError(error.response?.data?.message || 'Failed to fetch available times');
             setAvailableTimes([]);
         }
     };
 
     useEffect(() => {
         fetchAvailableTimes();
-    }, [tourId]);
+    }, [fetchAvailableTimes, tourId]);
 
     const handleTimeSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const selected = event.target.value;
@@ -340,11 +339,35 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 onChange={handleTimeSelection}
                 value={selectedTime ?? undefined}
             >
-                {availableTimes.map((time, index) => (
-                    <option key={index} value={time}>
-                        {`${format(new Date(time), 'hh:mm a')} ($${originalPrice})`}
-                    </option>
-                ))}
+                {availableTimes.map((time, index) => {
+                    let formattedTime = "";
+                    try {
+                        if (time.includes(":")) {
+                            const today = new Date().toISOString().split("T")[0];
+                            const combinedDateTime = new Date(`${today} ${time}`);
+                            if (isNaN(combinedDateTime.getTime())) {
+                                throw new Error(`Invalid time value: ${time}`);
+                            }
+                            formattedTime = format(combinedDateTime, "hh:mm a");
+                        } else {
+                            const date = new Date(time);
+                            if (isNaN(date.getTime())) {
+                                throw new Error(`Invalid ISO time value: ${time}`);
+                            }
+                            formattedTime = format(date, "hh:mm a");
+                        }
+                    } catch (error) {
+                        console.error(error.message);
+                        formattedTime = "Invalid time";
+                    }
+
+                    return (
+                        <option key={index} value={time}>
+                            {`${formattedTime} ($${originalPrice})`}
+                        </option>
+                    );
+                })}
+
             </Select>
         </VStack>
     );

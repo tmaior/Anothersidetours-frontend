@@ -191,9 +191,9 @@ export default function ListReservations() {
                                     mr={4}
                                 />
                                 <Image
-                                    src={reservation.tour.image}
+                                    src={reservation.tour.imageUrl}
                                     alt={reservation.tour.name}
-                                    boxSize="80px"
+                                    boxSize="150px"
                                     borderRadius="md"
                                     mr={4}
                                 />
@@ -202,15 +202,20 @@ export default function ListReservations() {
                                         {reservation.tour.name}
                                     </Heading>
                                     <Text color="gray.300">
-                                        Date: {new Date(reservation.reservation_date).toLocaleString()}
+                                        Date:{" "}
+                                        {new Date(reservation.reservation_date).toLocaleString("en-US", {
+                                            month: "2-digit",
+                                            day: "2-digit",
+                                            year: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            hour12: true,
+                                            timeZone: "UTC",
+                                        })}
                                     </Text>
                                     <Text color="gray.300">Guests: {reservation.guestQuantity}</Text>
                                     <Text color="gray.300">Total Price: ${reservation.total_price.toFixed(2)}</Text>
                                     <Text color="gray.300">Status: {reservation.status}</Text>
-                                    <Text color="gray.300">
-                                        Add-ons:{" "}
-                                        {reservation.reservationAddons.map((addon) => addon.name).join(", ") || "None"}
-                                    </Text>
                                 </Box>
                                 <Button
                                     size="sm"
@@ -222,6 +227,10 @@ export default function ListReservations() {
                             </HStack>
                             {expandedReservation === reservation.id && (
                                 <Box mt={4} bg="gray.600" p={4} borderRadius="md" w="100%">
+                                    <Text color="gray.300">
+                                        Add-ons:{" "}
+                                        {reservation.reservationAddons.map((addon) => addon.name).join(", ") || "None"}
+                                    </Text>
                                     <Text fontWeight="bold" color="white">
                                         Additional Details
                                     </Text>

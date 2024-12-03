@@ -209,6 +209,9 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                     </Heading>
                     <form>
                         <VStack spacing={4} align="stretch">
+                            <Text color="gray.500" fontSize="sm">
+                                Enter the Title of the tour.
+                            </Text>
                             <Input
                                 placeholder="Tour Name"
                                 bg={inputBgColor}
@@ -216,6 +219,9 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                 value={formData.name}
                                 onChange={(e) => handleFormChange("name", e.target.value)}
                             />
+                            <Text color="gray.500" fontSize="sm">
+                                Enter the description of the tour.
+                            </Text>
                             <Textarea
                                 placeholder="Description"
                                 bg={inputBgColor}
@@ -223,6 +229,9 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                 value={formData.description}
                                 onChange={(e) => handleFormChange("description", e.target.value)}
                             />
+                            <Text color="gray.500" fontSize="sm">
+                                Enter the value per hour.
+                            </Text>
                             <CurrencyInput
                                 placeholder="Price"
                                 value={formData.price}
@@ -245,6 +254,9 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                 value={formData.duration}
                                 onChange={(e) => handleFormChange("duration", e.target.value)}
                             />
+                            <Text color="gray.500" fontSize="sm">
+                                Select the city where the tour is.
+                            </Text>
                             <Select
                                 placeholder="Select the City"
                                 bg={inputBgColor}
@@ -258,6 +270,9 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                     </option>
                                 ))}
                             </Select>
+                            <Text color="gray.500" fontSize="sm">
+                                Add a category for the tour
+                            </Text>
                             <Select
                                 placeholder="Category"
                                 bg={inputBgColor}
@@ -271,6 +286,9 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                     </option>
                                 ))}
                             </Select>
+                            <Text color="gray.500" fontSize="sm">
+                                Add a guide for the tour.
+                            </Text>
                             <Select
                                 placeholder="Guide"
                                 bg={inputBgColor}
@@ -341,7 +359,9 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                     </Flex>
                                 ))}
                             </Box>
-
+                            <Text color="gray.500" fontSize="sm">
+                                Enter the additional information necessary for the tour
+                            </Text>
                             <Textarea
                                 placeholder="New Additional Information"
                                 bg={inputBgColor}

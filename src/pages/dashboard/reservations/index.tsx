@@ -14,7 +14,6 @@ import {
     useToast,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
 
 export default function ListReservations() {
@@ -29,7 +28,6 @@ export default function ListReservations() {
     const [searchName, setSearchName] = useState("");
     const [filteredReservations, setFilteredReservations] = useState([]);
     const toast = useToast();
-    const router = useRouter();
 
     useEffect(() => {
         async function fetchReservations() {
@@ -50,7 +48,7 @@ export default function ListReservations() {
             }
         }
         fetchReservations();
-    }, []);
+    }, [toast]);
 
     useEffect(() => {
         let filtered = reservations;

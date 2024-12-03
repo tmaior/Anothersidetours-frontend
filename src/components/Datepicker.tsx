@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Box, Flex, Select, SimpleGrid, Text, VStack,} from '@chakra-ui/react';
 import {
     addDays,
@@ -296,7 +296,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
         return <Box>{rows}</Box>;
     };
 
-    const fetchAvailableTimes = async () => {
+    const fetchAvailableTimes = useCallback(async () => {
         try {
             const response = await axios.get<string[]>(
                 `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${tourId}`
@@ -313,11 +313,11 @@ const DatePicker: React.FC<DatePickerProps> = ({
             setError(error.response?.data?.message || 'Failed to fetch available times');
             setAvailableTimes([]);
         }
-    };
+    }, [tourId]);
 
     useEffect(() => {
         fetchAvailableTimes();
-    }, [fetchAvailableTimes, tourId]);
+    }, [fetchAvailableTimes]);
 
     const handleTimeSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const selected = event.target.value;

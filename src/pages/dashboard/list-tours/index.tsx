@@ -55,7 +55,7 @@ export default function ListTours() {
             }
         }
         fetchData();
-    }, []);
+    }, [toast]);
 
     useEffect(() => {
         let filtered = tours;

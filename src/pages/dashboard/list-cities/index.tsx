@@ -43,7 +43,7 @@ export default function ListCities() {
             }
         }
         fetchCities();
-    }, []);
+    }, [toast]);
 
     useEffect(() => {
         let filtered = cities;

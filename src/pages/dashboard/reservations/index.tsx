@@ -1,19 +1,19 @@
 import {
     Box,
-    VStack,
-    HStack,
-    Input,
-    Checkbox,
     Button,
-    Text,
-    Heading,
+    Checkbox,
     Flex,
+    Heading,
+    HStack,
     Image,
+    Input,
+    Text,
     Textarea,
     useColorModeValue,
     useToast,
+    VStack,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 
 export default function ListReservations() {
@@ -28,6 +28,7 @@ export default function ListReservations() {
     const [searchName, setSearchName] = useState("");
     const [filteredReservations, setFilteredReservations] = useState([]);
     const toast = useToast();
+    const [reservationAddons, setReservationAddons] = useState({});
 
     useEffect(() => {
         async function fetchReservations() {
@@ -49,6 +50,39 @@ export default function ListReservations() {
         }
         fetchReservations();
     }, [toast]);
+
+    useEffect(() => {
+        if (expandedReservation) {
+            fetchReservationAddons(expandedReservation).then((addons) => {
+                setReservationAddons((prev) => ({
+                    ...prev,
+                    [expandedReservation]: addons,
+                }));
+            });
+        }
+    }, [expandedReservation]);
+
+    async function fetchReservationAddons(reservationId) {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${reservationId}`);
+            const reservationAddons = await response.json();
+
+            return await Promise.all(
+                reservationAddons.map(async (addon) => {
+                    const addonResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/${addon.addonId}`);
+                    const addonDetails = await addonResponse.json();
+
+                    return {
+                        ...addon,
+                        label: addonDetails.label,
+                    };
+                })
+            );
+        } catch (error) {
+            console.error("Error fetching reservation addons:", error);
+            return [];
+        }
+    }
 
     useEffect(() => {
         let filtered = reservations;
@@ -227,10 +261,18 @@ export default function ListReservations() {
                             </HStack>
                             {expandedReservation === reservation.id && (
                                 <Box mt={4} bg="gray.600" p={4} borderRadius="md" w="100%">
-                                    <Text color="gray.300">
-                                        Add-ons:{" "}
-                                        {reservation.reservationAddons.map((addon) => addon.name).join(", ") || "None"}
+                                    <Text color="gray.300" fontWeight="bold">
+                                        Add-ons:
                                     </Text>
+                                    {reservationAddons[reservation.id]?.length > 0 ? (
+                                        reservationAddons[reservation.id].map((addon) => (
+                                            <Text key={addon.id} color="gray.300">
+                                                - {addon.label} (Quantity: {addon.value})
+                                            </Text>
+                                        ))
+                                    ) : (
+                                        <Text color="gray.300">No add-ons available.</Text>
+                                    )}
                                     <Text fontWeight="bold" color="white">
                                         Additional Details
                                     </Text>

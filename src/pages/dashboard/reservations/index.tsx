@@ -29,6 +29,7 @@ export default function ListReservations() {
     const [filteredReservations, setFilteredReservations] = useState([]);
     const toast = useToast();
     const [reservationAddons, setReservationAddons] = useState({});
+    const [reservationUsers, setReservationUsers] = useState({});
 
     useEffect(() => {
         async function fetchReservations() {
@@ -99,6 +100,31 @@ export default function ListReservations() {
 
         setFilteredReservations(filtered);
     }, [filterTenant, searchName, reservations]);
+
+    async function fetchUserById(userId) {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`);
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+            return null;
+        }
+    }
+
+    useEffect(() => {
+        if (expandedReservation) {
+            const reservation = reservations.find((res) => res.id === expandedReservation);
+
+            if (reservation?.user_id) {
+                fetchUserById(reservation.user_id).then((user) => {
+                    setReservationUsers((prev) => ({
+                        ...prev,
+                        [reservation.id]: user,
+                    }));
+                });
+            }
+        }
+    }, [expandedReservation, reservations]);
 
     const handleSelectReservation = (id) => {
         setSelectedReservation(selectedReservation === id ? null : id);
@@ -281,9 +307,12 @@ export default function ListReservations() {
                                     <Text fontWeight="bold" mt={4} color="white">
                                         Customer Information
                                     </Text>
-                                    <Text color="gray.300">Name: {reservation.user?.name || "N/A"}</Text>
-                                    <Text color="gray.300">Email: {reservation.user?.email || "N/A"}</Text>
-                                    <Text color="gray.300">Phone: {reservation.user?.phone || "N/A"}</Text>
+                                    <Text color="gray.300">Name: {reservationUsers[reservation.id]?.name || "N/A"}</Text>
+                                    <Text color="gray.300">Email: {reservationUsers[reservation.id]?.email || "N/A"}</Text>
+                                    <Text color="gray.300">
+                                        Phone: {reservationUsers[reservation.id]?.phone || "None"}
+                                    </Text>
+                                    <Text color="gray.300">Guests: {reservation.guestQuantity}</Text>
 
                                     <Text fontWeight="bold" mt={4} color="white">
                                         Notes

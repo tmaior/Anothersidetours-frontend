@@ -30,6 +30,7 @@ export default function ListReservations() {
     const toast = useToast();
     const [reservationAddons, setReservationAddons] = useState({});
     const [reservationUsers, setReservationUsers] = useState({});
+    const [additionalInformation, setAdditionalInformation] = useState({});
 
     useEffect(() => {
         async function fetchReservations() {
@@ -125,6 +126,33 @@ export default function ListReservations() {
             }
         }
     }, [expandedReservation, reservations]);
+
+    async function fetchAdditionalInformation(reservationId) {
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/customer-additional-information?reservationId=${reservationId}`
+            );
+            const data = await response.json();
+            return data.map((info) => ({
+                title: info.additionalInformation.title,
+                value: info.value,
+            }));
+        } catch (error) {
+            console.error("Error fetching additional information:", error);
+            return [];
+        }
+    }
+
+    useEffect(() => {
+        if (expandedReservation) {
+            fetchAdditionalInformation(expandedReservation).then((data) => {
+                setAdditionalInformation((prev) => ({
+                    ...prev,
+                    [expandedReservation]: data,
+                }));
+            });
+        }
+    }, [expandedReservation]);
 
     const handleSelectReservation = (id) => {
         setSelectedReservation(selectedReservation === id ? null : id);
@@ -299,10 +327,18 @@ export default function ListReservations() {
                                     ) : (
                                         <Text color="gray.300">No add-ons available.</Text>
                                     )}
-                                    <Text fontWeight="bold" color="white">
-                                        Additional Details
+                                    <Text fontWeight="bold" mt={4} color="white">
+                                        Additional Information
                                     </Text>
-                                    <Text color="gray.300">{reservation.additionalInformation || "N/A"}</Text>
+                                    {additionalInformation[reservation.id]?.length > 0 ? (
+                                        additionalInformation[reservation.id].map((info, index) => (
+                                            <Text key={index} color="gray.300">
+                                                {info.title}: {info.value}
+                                            </Text>
+                                        ))
+                                    ) : (
+                                        <Text color="gray.300">No additional information available.</Text>
+                                    )}
 
                                     <Text fontWeight="bold" mt={4} color="white">
                                         Customer Information

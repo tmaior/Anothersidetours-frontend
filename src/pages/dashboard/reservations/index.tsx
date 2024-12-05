@@ -36,7 +36,11 @@ export default function ListReservations() {
     const { isOpen: isAddonModalOpen, onOpen: openAddonModal, onClose: closeAddonModal } = useDisclosure();
     const [availableAddons, setAvailableAddons] = useState([]);
     const [selectedAddon, setSelectedAddon] = useState("");
-    const [customAddon, setCustomAddon] = useState({ label: "", price: 0 });
+    const [customAddon, setCustomAddon] = useState<{ label: string; price: number; quantity: number }>({
+        label: "",
+        price: 0,
+        quantity: 1,
+    });
 
     useEffect(() => {
         async function fetchReservations() {
@@ -126,60 +130,113 @@ export default function ListReservations() {
             return;
         }
 
-        const addonData = selectedAddon
-            ? availableAddons.find((addon) => addon.id === selectedAddon)
-            : customAddon;
+        const addonData = availableAddons.find((addon) => addon.id === selectedAddon);
+        if (!addonData) {
+            toast({
+                title: "Error",
+                description: "Add-on not found.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        const currentAddons = reservationAddons[selectedReservation] || [];
+        const existingAddon = currentAddons.find((addon) => addon.addonId === selectedAddon);
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons`, {
+            let updatedAddon;
+            if (addonData.type === "SELECT") {
+                const quantity = customAddon.quantity;
+
+                if (!quantity || quantity < 1) {
+                    toast({
+                        title: "Error",
+                        description: "Quantity must be greater than 0.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                    return;
+                }
+
+                if (existingAddon) {
+                    updatedAddon = {
+                        ...existingAddon,
+                        value: `${parseInt(existingAddon.value || "0") + quantity}`,
+                    };
+                } else {
+                    updatedAddon = {
+                        addonId: selectedAddon,
+                        label: addonData.label,
+                        value: `${quantity}`,
+                    };
+                }
+            } else if (addonData.type === "CHECKBOX") {
+                if (existingAddon) {
+                    toast({
+                        title: "Error",
+                        description: "Checkbox Add-on already added.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                    return;
+                }
+                updatedAddon = {
+                    addonId: selectedAddon,
+                    label: addonData.label,
+                    value: addonData.price.toString(),
+                };
+            }
+
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     tenantId: reservation.tenantId,
                     reservationId: selectedReservation,
-                    addonId: selectedAddon || null,
-                    value: addonData.price.toString(),
+                    addonId: updatedAddon.addonId,
+                    value: updatedAddon.value,
                 }),
             });
 
-            if (!response.ok) throw new Error("Failed to add add-on");
-
-            const updatedAddon = await response.json();
-
             setReservationAddons((prev) => ({
                 ...prev,
-                [selectedReservation]: [...(prev[selectedReservation] || []), updatedAddon],
+                [selectedReservation]: [
+                    ...currentAddons.filter((addon) => addon.addonId !== updatedAddon.addonId),
+                    updatedAddon,
+                ],
             }));
 
             setReservations(
                 reservations.map((res) =>
                     res.id === selectedReservation
-                        ? { ...res, total_price: res.total_price + addonData.price }
+                        ? { ...res, total_price: res.total_price + addonData.price * (customAddon.quantity || 1) }
                         : res
                 )
             );
 
             toast({
                 title: "Add-on Added",
-                description: "The add-on was successfully added.",
+                description: "The Add-on was successfully added.",
                 status: "success",
                 duration: 3000,
                 isClosable: true,
             });
             closeAddonModal();
         } catch (error) {
-            console.error("Error adding add-on:", error);
+            console.error("Error adding Add-on:", error);
             toast({
                 title: "Error",
-                description: "Failed to add add-on.",
+                description: "Failed to add Add-on.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
             });
         }
     };
-
-
 
     useEffect(() => {
         let filtered = reservations;
@@ -642,7 +699,15 @@ export default function ListReservations() {
                         <ModalBody>
                             <Select
                                 placeholder="Select an existing add-on"
-                                onChange={(e) => setSelectedAddon(e.target.value)}
+                                onChange={(e) => {
+                                    const addon = availableAddons.find((a) => a.id === e.target.value);
+                                    setSelectedAddon(e.target.value);
+                                    if (addon && addon.type === "SELECT") {
+                                        setCustomAddon((prev) => ({ ...prev, quantity: 1 }));
+                                    } else {
+                                        setCustomAddon((prev) => ({ ...prev, quantity: 0 }));
+                                    }
+                                }}
                                 bg={inputBgColor}
                             >
                                 {availableAddons.map((addon) => (
@@ -651,6 +716,23 @@ export default function ListReservations() {
                                     </option>
                                 ))}
                             </Select>
+                            {selectedAddon &&
+                                availableAddons.find((addon) => addon.id === selectedAddon)?.type === "SELECT" && (
+                                    <Input
+                                        placeholder="Quantity"
+                                        type="number"
+                                        min={1}
+                                        value={customAddon.quantity}
+                                        onChange={(e) =>
+                                            setCustomAddon((prev) => ({
+                                                ...prev,
+                                                quantity: parseInt(e.target.value, 10) || 1,
+                                            }))
+                                        }
+                                        bg={inputBgColor}
+                                        mt={2}
+                                    />
+                                )}
                             {/*<Text mt={4}>Or create a custom add-on:</Text>*/}
                             {/*<Input*/}
                             {/*    placeholder="Custom Add-on Label"*/}

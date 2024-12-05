@@ -6,10 +6,10 @@ import {
     Heading,
     HStack,
     Image,
-    Input,
+    Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay,
     Text,
     Textarea,
-    useColorModeValue,
+    useColorModeValue, useDisclosure,
     useToast,
     VStack,
 } from "@chakra-ui/react";
@@ -31,6 +31,8 @@ export default function ListReservations() {
     const [reservationAddons, setReservationAddons] = useState({});
     const [reservationUsers, setReservationUsers] = useState({});
     const [additionalInformation, setAdditionalInformation] = useState({});
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const [reason, setReason] = useState("");
 
     useEffect(() => {
         async function fetchReservations() {
@@ -248,72 +250,123 @@ export default function ListReservations() {
     };
 
     const handleAccept = async () => {
-        if (selectedReservation) {
-            try {
-                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${selectedReservation}`, {
-                    method: "PATCH",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({status: "confirmed"}),
-                });
-                setReservations(
-                    reservations.map((reservation) =>
-                        reservation.id === selectedReservation
-                            ? {...reservation, status: "confirmed"}
-                            : reservation
-                    )
-                );
-                toast({
-                    title: "Reservation Confirmed",
-                    description: "The reservation has been confirmed.",
-                    status: "success",
-                    duration: 3000,
-                    isClosable: true,
-                });
-            } catch (error) {
-                console.error("Error accepting reservation:", error);
-                toast({
-                    title: "Error",
-                    description: "Failed to confirm the reservation.",
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
-                });
-            }
+        if (!selectedReservation) return;
+
+        const reservation = reservations.find((res) => res.id === selectedReservation);
+
+        if (!reservation) {
+            toast({
+                title: "Error",
+                description: "Reservation not found.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        try {
+            const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/confirm-payment`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: reservation.user?.email,
+                    paymentMethodId: reservation.paymentMethodId,
+                    amount: reservation.total_price * 100,
+                    currency: "usd",
+                }),
+            });
+
+            if (!paymentResponse.ok) throw new Error("Failed to confirm payment");
+
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${selectedReservation}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "ACCEPTED" }),
+            });
+
+            setReservations(
+                reservations.map((res) =>
+                    res.id === selectedReservation ? { ...res, status: "ACCEPTED" } : res
+                )
+            );
+
+            toast({
+                title: "Reservation Accepted",
+                description: "The reservation has been accepted and payment confirmed.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error confirming payment:", error);
+            toast({
+                title: "Error",
+                description: "Failed to accept reservation.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
         }
     };
 
-    const handleReject = async () => {
-        if (selectedReservation) {
-            try {
-                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${selectedReservation}`, {
-                    method: "PATCH",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({status: "rejected"}),
-                });
-                setReservations(
-                    reservations.map((reservation) =>
-                        reservation.id === selectedReservation
-                            ? {...reservation, status: "rejected"}
-                            : reservation
-                    )
-                );
-                toast({
-                    title: "Reservation Rejected",
-                    description: "The reservation has been rejected.",
-                    status: "success",
-                    duration: 3000,
-                    isClosable: true,
-                });
-            } catch (error) {
-                console.error("Error rejecting reservation:", error);
-                toast({
-                    title: "Error",
-                    description: "Failed to reject the reservation.",
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
-                });
-            }
+    const handleReject = () => {
+        onOpen();
+    };
+
+    const confirmReject = async () => {
+        if (!selectedReservation) return;
+
+        const reservation = reservations.find((res) => res.id === selectedReservation);
+
+        if (!reservation) {
+            toast({
+                title: "Error",
+                description: "Reservation not found.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/invalidate-payment-method`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ paymentMethodId: reservation.paymentMethodId }),
+            });
+
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${selectedReservation}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "REJECTED" }),
+            });
+
+            setReservations(
+                reservations.map((res) =>
+                    res.id === selectedReservation ? { ...res, status: "REJECTED" } : res
+                )
+            );
+
+            toast({
+                title: "Reservation Rejected",
+                description: "The reservation has been rejected.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+
+            onClose();
+        } catch (error) {
+            console.error("Error rejecting reservation:", error);
+            toast({
+                title: "Error",
+                description: "Failed to reject reservation.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
         }
     };
 
@@ -468,14 +521,18 @@ export default function ListReservations() {
                     <Button
                         colorScheme="green"
                         onClick={handleAccept}
-                        isDisabled={!selectedReservation}
+                        isDisabled={
+                            reservations.find((res) => res.id === selectedReservation)?.status !== "PENDING"
+                        }
                     >
                         Accept
                     </Button>
                     <Button
                         colorScheme="red"
-                        onClick={handleReject}
-                        isDisabled={!selectedReservation}
+                        onClick={confirmReject}
+                        isDisabled={
+                            reservations.find((res) => res.id === selectedReservation)?.status !== "PENDING"
+                        }
                     >
                         Reject
                     </Button>

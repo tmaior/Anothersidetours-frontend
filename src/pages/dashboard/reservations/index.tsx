@@ -6,7 +6,7 @@ import {
     Heading,
     HStack,
     Image,
-    Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay,
+    Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Select,
     Text,
     Textarea,
     useColorModeValue, useDisclosure,
@@ -33,6 +33,10 @@ export default function ListReservations() {
     const [additionalInformation, setAdditionalInformation] = useState({});
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [reason, setReason] = useState("");
+    const { isOpen: isAddonModalOpen, onOpen: openAddonModal, onClose: closeAddonModal } = useDisclosure();
+    const [availableAddons, setAvailableAddons] = useState([]);
+    const [selectedAddon, setSelectedAddon] = useState("");
+    const [customAddon, setCustomAddon] = useState({ label: "", price: 0 });
 
     useEffect(() => {
         async function fetchReservations() {
@@ -87,6 +91,95 @@ export default function ListReservations() {
             return [];
         }
     }
+
+    useEffect(() => {
+        async function fetchAddons() {
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons`);
+                const data = await response.json();
+                setAvailableAddons(data || []);
+            } catch (error) {
+                console.error("Error fetching addons:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to load add-ons.",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
+        }
+        fetchAddons();
+    }, []);
+
+    const handleAddAddon = async () => {
+        const reservation = reservations.find((res) => res.id === selectedReservation);
+
+        if (!reservation) {
+            toast({
+                title: "Error",
+                description: "Reservation not found.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        const addonData = selectedAddon
+            ? availableAddons.find((addon) => addon.id === selectedAddon)
+            : customAddon;
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    tenantId: reservation.tenantId,
+                    reservationId: selectedReservation,
+                    addonId: selectedAddon || null,
+                    value: addonData.price.toString(),
+                }),
+            });
+
+            if (!response.ok) throw new Error("Failed to add add-on");
+
+            const updatedAddon = await response.json();
+
+            setReservationAddons((prev) => ({
+                ...prev,
+                [selectedReservation]: [...(prev[selectedReservation] || []), updatedAddon],
+            }));
+
+            setReservations(
+                reservations.map((res) =>
+                    res.id === selectedReservation
+                        ? { ...res, total_price: res.total_price + addonData.price }
+                        : res
+                )
+            );
+
+            toast({
+                title: "Add-on Added",
+                description: "The add-on was successfully added.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+            closeAddonModal();
+        } catch (error) {
+            console.error("Error adding add-on:", error);
+            toast({
+                title: "Error",
+                description: "Failed to add add-on.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
+
 
     useEffect(() => {
         let filtered = reservations;
@@ -437,6 +530,9 @@ export default function ListReservations() {
                                 >
                                     {expandedReservation === reservation.id ? "Hide Details" : "View Details"}
                                 </Button>
+                                <Button size="sm" colorScheme="blue" onClick={openAddonModal}>
+                                    Add Add-ons
+                                </Button>
                             </HStack>
                             {expandedReservation === reservation.id && (
                                 <Box mt={4} bg="gray.600" p={4} borderRadius="md" w="100%">
@@ -537,6 +633,55 @@ export default function ListReservations() {
                         Reject
                     </Button>
                 </HStack>
+
+                <Modal isOpen={isAddonModalOpen} onClose={closeAddonModal}>
+                    <ModalOverlay />
+                    <ModalContent>
+                        <ModalHeader>Add Add-ons</ModalHeader>
+                        <ModalCloseButton />
+                        <ModalBody>
+                            <Select
+                                placeholder="Select an existing add-on"
+                                onChange={(e) => setSelectedAddon(e.target.value)}
+                                bg={inputBgColor}
+                            >
+                                {availableAddons.map((addon) => (
+                                    <option key={addon.id} value={addon.id}>
+                                        {addon.label} (${addon.price})
+                                    </option>
+                                ))}
+                            </Select>
+                            {/*<Text mt={4}>Or create a custom add-on:</Text>*/}
+                            {/*<Input*/}
+                            {/*    placeholder="Custom Add-on Label"*/}
+                            {/*    value={customAddon.label}*/}
+                            {/*    onChange={(e) =>*/}
+                            {/*        setCustomAddon({ ...customAddon, label: e.target.value })*/}
+                            {/*    }*/}
+                            {/*    bg={inputBgColor}*/}
+                            {/*    mt={2}*/}
+                            {/*/>*/}
+                            {/*<Input*/}
+                            {/*    placeholder="Custom Add-on Price"*/}
+                            {/*    type="number"*/}
+                            {/*    value={customAddon.price}*/}
+                            {/*    onChange={(e) =>*/}
+                            {/*        setCustomAddon({*/}
+                            {/*            ...customAddon,*/}
+                            {/*            price: parseFloat(e.target.value) || 0,*/}
+                            {/*        })*/}
+                            {/*    }*/}
+                            {/*    bg={inputBgColor}*/}
+                            {/*    mt={2}*/}
+                            {/*/>*/}
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button colorScheme="blue" onClick={handleAddAddon}>
+                                Add Add-on
+                            </Button>
+                        </ModalFooter>
+                    </ModalContent>
+                </Modal>
             </Box>
         </DashboardLayout>
     );

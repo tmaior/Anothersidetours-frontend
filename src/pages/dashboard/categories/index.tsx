@@ -10,7 +10,7 @@ import {
     ModalContent,
     ModalFooter,
     ModalHeader,
-    ModalOverlay,
+    ModalOverlay, Radio, RadioGroup, Stack,
     Text,
     Textarea,
     useDisclosure,
@@ -37,6 +37,8 @@ export default function CategoryManagement() {
         onClose: closeAddTour,
     } = useDisclosure();
     const toast = useToast();
+    const [blackoutType, setBlackoutType] = useState("date");
+    const [timeRange, setTimeRange] = useState({ start: "", end: "" });
 
     useEffect(() => {
         async function fetchData() {
@@ -184,25 +186,41 @@ export default function CategoryManagement() {
         }
     };
 
-    const handleAddBlackoutDate = async (date) => {
+    const handleAddBlackoutDate = async () => {
         try {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedCategory.id}/blackout-dates`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ date }),
-            });
+            const blackout =
+                blackoutType === "date"
+                    ? { type: "date", value: timeRange.start }
+                    : { type: "time", value: { start: timeRange.start, end: timeRange.end } };
 
-            setBlackoutDates((prev) => [...prev, date]);
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedCategory.id}/blackout-dates`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(blackout),
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to add blackout date.");
+            }
+
+            const newBlackout = await response.json();
+
+            setBlackoutDates((prev) => [...prev, newBlackout]);
+
+            setTimeRange({ start: "", end: "" });
 
             toast({
                 title: "Added",
-                description: "Blackout date added successfully.",
+                description: "Blackout added successfully.",
                 status: "success",
                 duration: 3000,
                 isClosable: true,
             });
         } catch (error) {
-            console.error("Error adding blackout date:", error);
+            console.error("Error adding blackout:", error);
             toast({
                 title: "Error",
                 description: "Failed to add blackout date.",
@@ -212,6 +230,7 @@ export default function CategoryManagement() {
             });
         }
     };
+
 
     const handleRemoveBlackoutDate = async (date) => {
         try {
@@ -299,13 +318,17 @@ export default function CategoryManagement() {
                             Blackout Dates
                         </Heading>
                         {Array.isArray(blackoutDates) && blackoutDates.length > 0 ? (
-                            blackoutDates.map((date, index) => (
+                            blackoutDates.map((blackout, index) => (
                                 <Flex key={index} align="center" mb={2}>
-                                    <Text>{date}</Text>
+                                    <Text>
+                                        {blackout.type === "date"
+                                            ? `Date: ${blackout.value}`
+                                            : `Time: ${blackout.value.start} - ${blackout.value.end}`}
+                                    </Text>
                                     <Button
                                         size="xs"
                                         colorScheme="red"
-                                        onClick={() => handleRemoveBlackoutDate(date)}
+                                        onClick={() => handleRemoveBlackoutDate(blackout)}
                                     >
                                         Remove
                                     </Button>
@@ -314,15 +337,42 @@ export default function CategoryManagement() {
                         ) : (
                             <Text>No blackout dates available.</Text>
                         )}
-                        <Input
-                            type="date"
-                            mt={4}
-                            onChange={(e) => handleAddBlackoutDate(e.target.value)}
-                        />
 
+                        <RadioGroup onChange={setBlackoutType} value={blackoutType} mt={4}>
+                            <Stack direction="row">
+                                <Radio value="date">By Date</Radio>
+                                <Radio value="time">By Time</Radio>
+                            </Stack>
+                        </RadioGroup>
 
+                        {blackoutType === "date" ? (
+                            <Input
+                                type="date"
+                                mt={4}
+                                value={timeRange.start}
+                                onChange={(e) => setTimeRange({ start: e.target.value, end: "" })}
+                            />
+                        ) : (
+                            <Flex mt={4}>
+                                <Input
+                                    type="time"
+                                    placeholder="Start Time"
+                                    value={timeRange.start}
+                                    onChange={(e) => setTimeRange({ ...timeRange, start: e.target.value })}
+                                    mr={2}
+                                />
+                                <Input
+                                    type="time"
+                                    placeholder="End Time"
+                                    value={timeRange.end}
+                                    onChange={(e) => setTimeRange({ ...timeRange, end: e.target.value })}
+                                />
+                            </Flex>
+                        )}
 
-
+                        <Button mt={4} colorScheme="blue" onClick={handleAddBlackoutDate}>
+                            Add Blackout
+                        </Button>
                     </Box>
                 )}
 

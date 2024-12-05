@@ -359,30 +359,31 @@ export default function CategoryManagement() {
                         <ModalCloseButton />
                         <ModalBody>
                             <VStack align="stretch">
-                                {tours
-                                    .filter(
-                                        (tour) =>
-                                            !selectedCategory.tours?.some((categoryTour) => categoryTour.id === tour.id)
-                                    )
-                                    .map((tour) => (
-                                        <Flex key={tour.id} justify="space-between" align="center">
-                                            <Text>{tour.name}</Text>
-                                            <Button
-                                                size="xs"
-                                                colorScheme="blue"
-                                                onClick={() => handleAddTour(tour.id)}
-                                            >
-                                                Add
-                                            </Button>
-                                        </Flex>
-                                    ))}
+                                {tours.filter(
+                                    (tour) =>
+                                        selectedCategory?.tours &&
+                                        !selectedCategory.tours.some((categoryTour) => categoryTour.id === tour.id)
+                                ).map((tour) => (
+                                    <Flex key={tour.id} justify="space-between" align="center">
+                                        <Text>{tour.name}</Text>
+                                        <Button
+                                            size="xs"
+                                            colorScheme="blue"
+                                            onClick={() => handleAddTour(tour.id)}
+                                        >
+                                            Add
+                                        </Button>
+                                    </Flex>
+                                ))}
+
+                                {(!selectedCategory || !selectedCategory.tours || tours.filter(
+                                    (tour) =>
+                                        selectedCategory?.tours &&
+                                        !selectedCategory.tours.some((categoryTour) => categoryTour.id === tour.id)
+                                ).length === 0) && (
+                                    <Text>No available tours to add.</Text>
+                                )}
                             </VStack>
-                            {tours.filter(
-                                (tour) =>
-                                    !selectedCategory.tours?.some((categoryTour) => categoryTour.id === tour.id)
-                            ).length === 0 && (
-                                <Text>No available tours to add.</Text>
-                            )}
                         </ModalBody>
                     </ModalContent>
                 </Modal>

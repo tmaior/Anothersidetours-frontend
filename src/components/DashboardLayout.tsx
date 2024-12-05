@@ -113,6 +113,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         fontSize="xl"
                         fontWeight="bold"
                         color="white"
+                        onClick={() => router.push("/dashboard/categories")}
                         _hover={{ cursor: "pointer" }}
                     >
                         Categories
@@ -122,6 +123,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         fontSize="xl"
                         fontWeight="bold"
                         color="white"
+                        onClick={() => router.push("/dashboard/blackouts")}
                         _hover={{ cursor: "pointer" }}
                     >
                         Blackouts

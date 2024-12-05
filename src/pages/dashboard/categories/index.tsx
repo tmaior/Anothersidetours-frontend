@@ -292,6 +292,9 @@ export default function CategoryManagement() {
                             Add Tour
                         </Button>
 
+
+
+
                         <Heading size="sm" mt={4}>
                             Blackout Dates
                         </Heading>
@@ -316,6 +319,10 @@ export default function CategoryManagement() {
                             mt={4}
                             onChange={(e) => handleAddBlackoutDate(e.target.value)}
                         />
+
+
+
+
                     </Box>
                 )}
 

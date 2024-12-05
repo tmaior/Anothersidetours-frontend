@@ -1,7 +1,6 @@
 import {
     Box,
     Button,
-    Checkbox,
     Flex,
     Heading,
     Input,
@@ -27,7 +26,16 @@ export default function CategoryManagement() {
     const [tours, setTours] = useState([]);
     const [blackoutDates, setBlackoutDates] = useState([]);
     const [newCategory, setNewCategory] = useState({ name: "", description: "" });
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const {
+        isOpen: isCreateCategoryOpen,
+        onOpen: openCreateCategory,
+        onClose: closeCreateCategory,
+    } = useDisclosure();
+    const {
+        isOpen: isAddTourOpen,
+        onOpen: openAddTour,
+        onClose: closeAddTour,
+    } = useDisclosure();
     const toast = useToast();
 
     useEffect(() => {
@@ -77,7 +85,7 @@ export default function CategoryManagement() {
                 duration: 3000,
                 isClosable: true,
             });
-            onClose();
+            closeCreateCategory();
         } catch (error) {
             console.error("Error creating category:", error);
             toast({
@@ -97,6 +105,7 @@ export default function CategoryManagement() {
             );
             const data = await response.json();
             setSelectedCategory({ ...data, tours: data.tours || [] });
+            setBlackoutDates(data.blackoutDates || []);
         } catch (error) {
             console.error("Error fetching category:", error);
             toast({
@@ -109,35 +118,65 @@ export default function CategoryManagement() {
         }
     };
 
-    const handleTourToggle = async (tourId) => {
-        const isLinked = selectedCategory.tours?.some((tour) => tour.id === tourId);
-        const method = isLinked ? "DELETE" : "POST";
-
+    const handleAddTour = async (tourId) => {
         try {
             await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedCategory.id}/tours`, {
-                method,
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ tourId }),
             });
 
-            const updatedTours = isLinked
-                ? selectedCategory.tours?.filter((tour) => tour.id !== tourId) || []
-                : [...(selectedCategory.tours || []), tours.find((tour) => tour.id === tourId)];
-
-            setSelectedCategory((prev) => ({ ...prev, tours: updatedTours }));
+            const newTour = tours.find((tour) => tour.id === tourId);
+            setSelectedCategory((prev) => ({
+                ...prev,
+                tours: [...(prev.tours || []), newTour],
+            }));
 
             toast({
-                title: "Updated",
-                description: `Tour ${isLinked ? "removed from" : "added to"} category.`,
+                title: "Tour Added",
+                description: "Tour added to category successfully.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+            closeAddTour();
+        } catch (error) {
+            console.error("Error adding tour:", error);
+            toast({
+                title: "Error",
+                description: "Failed to add tour to category.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
+    const handleRemoveTour = async (tourId) => {
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedCategory.id}/tours`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ tourId }),
+            });
+
+            setSelectedCategory((prev) => ({
+                ...prev,
+                tours: prev.tours.filter((tour) => tour.id !== tourId),
+            }));
+
+            toast({
+                title: "Tour Removed",
+                description: "Tour removed from category successfully.",
                 status: "success",
                 duration: 3000,
                 isClosable: true,
             });
         } catch (error) {
-            console.error("Error updating tours:", error);
+            console.error("Error removing tour:", error);
             toast({
                 title: "Error",
-                description: "Failed to update tours.",
+                description: "Failed to remove tour from category.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -152,7 +191,9 @@ export default function CategoryManagement() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ date }),
             });
+
             setBlackoutDates((prev) => [...prev, date]);
+
             toast({
                 title: "Added",
                 description: "Blackout date added successfully.",
@@ -172,12 +213,41 @@ export default function CategoryManagement() {
         }
     };
 
+    const handleRemoveBlackoutDate = async (date) => {
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedCategory.id}/blackout-dates`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ date }),
+            });
+
+            setBlackoutDates((prev) => prev.filter((d) => d !== date));
+
+            toast({
+                title: "Removed",
+                description: "Blackout date removed successfully.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error removing blackout date:", error);
+            toast({
+                title: "Error",
+                description: "Failed to remove blackout date.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
     return (
         <DashboardLayout>
             <Box p={8}>
                 <Flex justify="space-between" align="center" mb={8}>
                     <Heading>Category Management</Heading>
-                    <Button colorScheme="blue" onClick={onOpen}>
+                    <Button colorScheme="blue" onClick={openCreateCategory}>
                         Create Category
                     </Button>
                 </Flex>
@@ -204,15 +274,23 @@ export default function CategoryManagement() {
                         <Heading size="sm" mt={4}>
                             Tours
                         </Heading>
-                        {tours.map((tour) => (
-                            <Checkbox
-                                key={tour.id}
-                                isChecked={selectedCategory.tours?.some((t) => t.id === tour.id) || false}
-                                onChange={() => handleTourToggle(tour.id)}
-                            >
-                                {tour.name}
-                            </Checkbox>
-                        ))}
+                        <VStack spacing={2} align="stretch">
+                            {selectedCategory.tours?.map((tour) => (
+                                <Flex key={tour.id} justify="space-between" align="center">
+                                    <Text>{tour.name}</Text>
+                                    <Button
+                                        size="xs"
+                                        colorScheme="red"
+                                        onClick={() => handleRemoveTour(tour.id)}
+                                    >
+                                        Remove
+                                    </Button>
+                                </Flex>
+                            ))}
+                        </VStack>
+                        <Button mt={4} colorScheme="blue" onClick={openAddTour}>
+                            Add Tour
+                        </Button>
 
                         <Heading size="sm" mt={4}>
                             Blackout Dates
@@ -221,7 +299,11 @@ export default function CategoryManagement() {
                             blackoutDates.map((date, index) => (
                                 <Flex key={index} align="center" mb={2}>
                                     <Text>{date}</Text>
-                                    <Button size="xs" colorScheme="red" ml={2}>
+                                    <Button
+                                        size="xs"
+                                        colorScheme="red"
+                                        onClick={() => handleRemoveBlackoutDate(date)}
+                                    >
                                         Remove
                                     </Button>
                                 </Flex>
@@ -237,7 +319,7 @@ export default function CategoryManagement() {
                     </Box>
                 )}
 
-                <Modal isOpen={isOpen} onClose={onClose}>
+                <Modal isOpen={isCreateCategoryOpen} onClose={closeCreateCategory}>
                     <ModalOverlay />
                     <ModalContent>
                         <ModalHeader>Create New Category</ModalHeader>
@@ -267,6 +349,30 @@ export default function CategoryManagement() {
                                 Create
                             </Button>
                         </ModalFooter>
+                    </ModalContent>
+                </Modal>
+
+                <Modal isOpen={isAddTourOpen} onClose={closeAddTour}>
+                    <ModalOverlay />
+                    <ModalContent>
+                        <ModalHeader>Add Tour</ModalHeader>
+                        <ModalCloseButton />
+                        <ModalBody>
+                            <VStack align="stretch">
+                                {tours.map((tour) => (
+                                    <Flex key={tour.id} justify="space-between" align="center">
+                                        <Text>{tour.name}</Text>
+                                        <Button
+                                            size="xs"
+                                            colorScheme="blue"
+                                            onClick={() => handleAddTour(tour.id)}
+                                        >
+                                            Add
+                                        </Button>
+                                    </Flex>
+                                ))}
+                            </VStack>
+                        </ModalBody>
                     </ModalContent>
                 </Modal>
             </Box>

@@ -143,6 +143,82 @@ export default function ListReservations() {
         }
     }
 
+    const handleAddNote = async (reservationId) => {
+        if (newNote.trim()) {
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        reservationId,
+                        description: newNote,
+                    }),
+                });
+
+                if (!response.ok) throw new Error("Failed to add note");
+
+                const createdNote = await response.json();
+
+                setNotes((prevNotes) => ({
+                    ...prevNotes,
+                    [reservationId]: [...(prevNotes[reservationId] || []), createdNote],
+                }));
+
+                setNewNote("");
+                toast({
+                    title: "Note Added",
+                    description: "Note has been added successfully.",
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            } catch (error) {
+                console.error("Error adding note:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to add note.",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
+        }
+    };
+
+    const handleRemoveNote = async (reservationId, noteId) => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${noteId}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) throw new Error("Failed to delete note");
+
+            setNotes((prevNotes) => ({
+                ...prevNotes,
+                [reservationId]: prevNotes[reservationId].filter((note) => note.id !== noteId),
+            }));
+
+            toast({
+                title: "Note Removed",
+                description: "Note has been removed successfully.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error removing note:", error);
+            toast({
+                title: "Error",
+                description: "Failed to remove note.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
     useEffect(() => {
         if (expandedReservation) {
             fetchAdditionalInformation(expandedReservation).then((data) => {
@@ -151,6 +227,19 @@ export default function ListReservations() {
                     [expandedReservation]: data,
                 }));
             });
+            const fetchNotes = async (reservationId) => {
+                try {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${reservationId}`);
+                    const data = await response.json();
+                    setNotes((prevNotes) => ({
+                        ...prevNotes,
+                        [reservationId]: data,
+                    }));
+                } catch (error) {
+                    console.error("Error fetching notes:", error);
+                }
+            };
+            fetchNotes(expandedReservation);
         }
     }, [expandedReservation]);
 
@@ -158,35 +247,18 @@ export default function ListReservations() {
         setSelectedReservation(selectedReservation === id ? null : id);
     };
 
-    const handleAddNote = (id) => {
-        if (newNote.trim()) {
-            setNotes((prevNotes) => ({
-                ...prevNotes,
-                [id]: [...(prevNotes[id] || []), newNote],
-            }));
-            setNewNote("");
-        }
-    };
-
-    const handleRemoveNote = (id, index) => {
-        setNotes((prevNotes) => ({
-            ...prevNotes,
-            [id]: prevNotes[id].filter((_, i) => i !== index),
-        }));
-    };
-
     const handleAccept = async () => {
         if (selectedReservation) {
             try {
                 await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${selectedReservation}`, {
                     method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ status: "confirmed" }),
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({status: "confirmed"}),
                 });
                 setReservations(
                     reservations.map((reservation) =>
                         reservation.id === selectedReservation
-                            ? { ...reservation, status: "confirmed" }
+                            ? {...reservation, status: "confirmed"}
                             : reservation
                     )
                 );
@@ -215,13 +287,13 @@ export default function ListReservations() {
             try {
                 await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${selectedReservation}`, {
                     method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ status: "rejected" }),
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({status: "rejected"}),
                 });
                 setReservations(
                     reservations.map((reservation) =>
                         reservation.id === selectedReservation
-                            ? { ...reservation, status: "rejected" }
+                            ? {...reservation, status: "rejected"}
                             : reservation
                     )
                 );
@@ -343,8 +415,10 @@ export default function ListReservations() {
                                     <Text fontWeight="bold" mt={4} color="white">
                                         Customer Information
                                     </Text>
-                                    <Text color="gray.300">Name: {reservationUsers[reservation.id]?.name || "N/A"}</Text>
-                                    <Text color="gray.300">Email: {reservationUsers[reservation.id]?.email || "N/A"}</Text>
+                                    <Text
+                                        color="gray.300">Name: {reservationUsers[reservation.id]?.name || "N/A"}</Text>
+                                    <Text
+                                        color="gray.300">Email: {reservationUsers[reservation.id]?.email || "N/A"}</Text>
                                     <Text color="gray.300">
                                         Phone: {reservationUsers[reservation.id]?.phone || "None"}
                                     </Text>
@@ -353,18 +427,22 @@ export default function ListReservations() {
                                     <Text fontWeight="bold" mt={4} color="white">
                                         Notes
                                     </Text>
-                                    {notes[reservation.id]?.map((note, index) => (
-                                        <HStack key={index} mt={2} justify="space-between">
-                                            <Text color="gray.300">{note}</Text>
-                                            <Button
-                                                size="xs"
-                                                colorScheme="red"
-                                                onClick={() => handleRemoveNote(reservation.id, index)}
-                                            >
-                                                Remove
-                                            </Button>
-                                        </HStack>
-                                    ))}
+                                    {notes[reservation.id]?.length > 0 ? (
+                                        notes[reservation.id].map((note) => (
+                                            <HStack key={note.id} mt={2} justify="space-between">
+                                                <Text color="gray.300">{note.description}</Text>
+                                                <Button
+                                                    size="xs"
+                                                    colorScheme="red"
+                                                    onClick={() => handleRemoveNote(reservation.id, note.id)}
+                                                >
+                                                    Remove
+                                                </Button>
+                                            </HStack>
+                                        ))
+                                    ) : (
+                                        <Text color="gray.300">No notes available.</Text>
+                                    )}
                                     <HStack mt={4}>
                                         <Textarea
                                             placeholder="Add a note..."

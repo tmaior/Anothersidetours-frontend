@@ -80,9 +80,16 @@ export default function ListTours() {
     const handleDelete = async () => {
         if (selectedTour) {
             try {
-                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${selectedTour}`, {
-                    method: "DELETE",
-                });
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/tours/${selectedTour}`,
+                    { method: "DELETE" }
+                );
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || "Failed to delete the tour.");
+                }
+
                 setTours(tours.filter((tour) => tour.id !== selectedTour));
                 setSelectedTour(null);
                 toast({
@@ -96,7 +103,7 @@ export default function ListTours() {
                 console.error("Error deleting tour:", error);
                 toast({
                     title: "Error",
-                    description: "Failed to delete the tour.",
+                    description: error.message,
                     status: "error",
                     duration: 5000,
                     isClosable: true,

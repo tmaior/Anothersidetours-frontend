@@ -31,7 +31,9 @@ export default function ListReservations() {
     const [reservationAddons, setReservationAddons] = useState({});
     const [reservationUsers, setReservationUsers] = useState({});
     const [additionalInformation, setAdditionalInformation] = useState({});
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { isOpen, onOpen, onClose } = useDisclosure();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [reason, setReason] = useState("");
     const { isOpen: isAddonModalOpen, onOpen: openAddonModal, onClose: closeAddonModal } = useDisclosure();
     const [availableAddons, setAvailableAddons] = useState([]);
@@ -460,9 +462,9 @@ export default function ListReservations() {
         }
     };
 
-    const handleReject = () => {
-        onOpen();
-    };
+    // const handleReject = () => {
+    //     onOpen();
+    // };
 
     const confirmReject = async () => {
         if (!selectedReservation) return;

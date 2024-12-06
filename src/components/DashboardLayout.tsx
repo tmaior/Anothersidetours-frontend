@@ -129,14 +129,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         Blackouts
                     </Text>
                     <Divider borderColor="gray.600" />
-                    <Text
-                        fontSize="xl"
-                        fontWeight="bold"
-                        color="white"
-                        _hover={{ cursor: "pointer" }}
-                    >
-                        Employees
-                    </Text>
+                    {/*<Text*/}
+                    {/*    fontSize="xl"*/}
+                    {/*    fontWeight="bold"*/}
+                    {/*    color="white"*/}
+                    {/*    _hover={{ cursor: "pointer" }}*/}
+                    {/*>*/}
+                    {/*    Employees*/}
+                    {/*</Text>*/}
                 </VStack>
             </Box>
             <Box flex="1" p={8} bg="gray.100">

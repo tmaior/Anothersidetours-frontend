@@ -1,35 +1,35 @@
 import {
     Box,
-    VStack,
-    Heading,
-    Text,
-    Input,
-    Select,
-    Textarea,
-    HStack,
-    Image,
     Button,
     Flex,
-    useColorModeValue,
+    Heading,
+    HStack,
+    Image,
+    Input,
+    NumberDecrementStepper,
+    NumberIncrementStepper,
     NumberInput,
     NumberInputField,
     NumberInputStepper,
-    NumberIncrementStepper,
-    NumberDecrementStepper,
     Popover,
-    PopoverTrigger,
-    PopoverContent,
     PopoverArrow,
-    PopoverCloseButton,
-    PopoverHeader,
     PopoverBody,
+    PopoverCloseButton,
+    PopoverContent,
+    PopoverHeader,
+    PopoverTrigger,
+    Select,
+    Text,
+    Textarea,
+    useColorModeValue,
+    VStack,
 } from "@chakra-ui/react";
-import React, { useState, useEffect, useRef } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import CurrencyInput from "react-currency-input-field";
-import { useRouter } from "next/router";
+import {useRouter} from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
 
-export default function TourForm({ isEditing = false, tourId = null, initialData = null }) {
+export default function TourForm({isEditing = false, tourId = null, initialData = null}) {
     const bgColor = useColorModeValue("white", "gray.800");
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
     const inputTextColor = useColorModeValue("black", "white");
@@ -193,6 +193,22 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                 throw new Error(`Error ${isEditing ? "updating" : "creating"} tour`);
             }
 
+            const createdTour = await response.json();
+
+            const scheduleResponse = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/${createdTour.id}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({timeSlots}),
+                }
+            );
+            if (!scheduleResponse.ok) {
+                throw new Error("Error creating tour schedules");
+            }
+
             router.push("/dashboard/list-tours");
         } catch (error) {
             console.error(error);
@@ -335,7 +351,7 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                 </Box>
                             )}
                             <HStack align={"flex-start"}>
-                                <TimeSelector onTimeAdd={handleTimeAdd} inputTextColor={inputTextColor} />
+                                <TimeSelector onTimeAdd={handleTimeAdd} inputTextColor={inputTextColor}/>
                             </HStack>
                             <Box>
                                 {timeSlots.map((time, index) => (
@@ -397,7 +413,7 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
     );
 }
 
-function TimeSelector({ onTimeAdd, inputTextColor }) {
+function TimeSelector({onTimeAdd, inputTextColor}) {
     const [hour, setHour] = useState(12);
     const [minute, setMinute] = useState(0);
     const [ampm, setAmPm] = useState('AM');
@@ -421,8 +437,8 @@ function TimeSelector({ onTimeAdd, inputTextColor }) {
                 <Button onClick={openPopover}>Add Schedule</Button>
             </PopoverTrigger>
             <PopoverContent w={"290px"}>
-                <PopoverArrow />
-                <PopoverCloseButton />
+                <PopoverArrow/>
+                <PopoverCloseButton/>
                 <PopoverHeader color={"black"}>Select Time</PopoverHeader>
                 <PopoverBody>
                     <VStack spacing={4} align="flex-start">
@@ -439,10 +455,10 @@ function TimeSelector({ onTimeAdd, inputTextColor }) {
                                 }}
                                 clampValueOnBlur={false}
                             >
-                                <NumberInputField w={"80px"} color={inputTextColor} bg={inputBgColor} />
+                                <NumberInputField w={"80px"} color={inputTextColor} bg={inputBgColor}/>
                                 <NumberInputStepper>
-                                    <NumberIncrementStepper />
-                                    <NumberDecrementStepper />
+                                    <NumberIncrementStepper/>
+                                    <NumberDecrementStepper/>
                                 </NumberInputStepper>
                             </NumberInput>
                             <Text>:</Text>
@@ -458,10 +474,10 @@ function TimeSelector({ onTimeAdd, inputTextColor }) {
                                 }}
                                 clampValueOnBlur={false}
                             >
-                                <NumberInputField w={"80px"} maxLength={2} color={inputTextColor} bg={inputBgColor} />
+                                <NumberInputField w={"80px"} maxLength={2} color={inputTextColor} bg={inputBgColor}/>
                                 <NumberInputStepper>
-                                    <NumberIncrementStepper />
-                                    <NumberDecrementStepper />
+                                    <NumberIncrementStepper/>
+                                    <NumberDecrementStepper/>
                                 </NumberInputStepper>
                             </NumberInput>
                             <Select

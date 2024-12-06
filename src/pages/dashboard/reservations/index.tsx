@@ -212,13 +212,23 @@ export default function ListReservations() {
                 ],
             }));
 
+            const newTotalPrice = reservation.total_price + addonData.price * (customAddon.quantity || 1);
+
             setReservations(
                 reservations.map((res) =>
                     res.id === selectedReservation
-                        ? { ...res, total_price: res.total_price + addonData.price * (customAddon.quantity || 1) }
+                        ? { ...res, total_price: newTotalPrice }
                         : res
                 )
             );
+
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${selectedReservation}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    total_price: newTotalPrice,
+                }),
+            });
 
             toast({
                 title: "Add-on Added",
@@ -227,6 +237,7 @@ export default function ListReservations() {
                 duration: 3000,
                 isClosable: true,
             });
+
             closeAddonModal();
         } catch (error) {
             console.error("Error adding Add-on:", error);
@@ -239,6 +250,49 @@ export default function ListReservations() {
             });
         }
     };
+
+    // const handleRemoveAddon = async (reservationId, addonId, addonPrice, addonQuantity) => {
+    //     try {
+    //
+    //         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/${addonId}`, {
+    //             method: "DELETE",
+    //         });
+    //
+    //         if (!response.ok) {
+    //             throw new Error("Failed to remove add-on");
+    //         }
+    //
+    //         setReservationAddons((prev) => ({
+    //             ...prev,
+    //             [reservationId]: prev[reservationId].filter((addon) => addon.id !== addonId),
+    //         }));
+    //
+    //         setReservations((prevReservations) =>
+    //             prevReservations.map((res) =>
+    //                 res.id === reservationId
+    //                     ? { ...res, total_price: res.total_price - addonPrice * addonQuantity }
+    //                     : res
+    //             )
+    //         );
+    //
+    //         toast({
+    //             title: "Add-on Removed",
+    //             description: "The add-on was successfully removed.",
+    //             status: "success",
+    //             duration: 3000,
+    //             isClosable: true,
+    //         });
+    //     } catch (error) {
+    //         console.error("Error removing add-on:", error);
+    //         toast({
+    //             title: "Error",
+    //             description: "Failed to remove add-on.",
+    //             status: "error",
+    //             duration: 5000,
+    //             isClosable: true,
+    //         });
+    //     }
+    // };
 
     useEffect(() => {
         let filtered = reservations;

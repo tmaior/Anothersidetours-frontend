@@ -26,14 +26,19 @@ import DashboardLayout from "../../../components/DashboardLayout";
 export default function CategoryManagement() {
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [expandedCategory, setExpandedCategory] = useState(null);
+    // const [expandedCategory, setExpandedCategory] = useState(null);
+    const [newCategory, setNewCategory] = useState({ name: "", description: "" });
     const [tours, setTours] = useState([]);
     const [blackoutDates, setBlackoutDates] = useState([]);
-    const [newCategory, setNewCategory] = useState({ name: "", description: "" });
     const {
         isOpen: isCreateCategoryOpen,
         onOpen: openCreateCategory,
         onClose: closeCreateCategory,
+    } = useDisclosure();
+    const {
+        isOpen: isEditCategoryOpen,
+        onOpen: openEditCategory,
+        onClose: closeEditCategory,
     } = useDisclosure();
     const {
         isOpen: isAddTourOpen,
@@ -107,16 +112,8 @@ export default function CategoryManagement() {
     };
 
     const handleSelectCategory = async (category) => {
+        setSelectedCategory(category);
         try {
-            const categoryResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${category.id}`);
-
-            if (!categoryResponse.ok) {
-                throw new Error("Failed to fetch category details.");
-            }
-
-            const categoryData = await categoryResponse.json();
-            setSelectedCategory({ ...categoryData, tours: categoryData.tours || [] });
-
             const blackoutResponse = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/filter`,
                 {
@@ -133,18 +130,46 @@ export default function CategoryManagement() {
             const blackoutData = await blackoutResponse.json();
             setBlackoutDates(blackoutData || []);
 
+            openEditCategory();
+        } catch (error) {
+            console.error("Error fetching blackout dates:", error);
             toast({
-                title: "Success",
-                description: "Category loaded successfully.",
+                title: "Error",
+                description: "Failed to fetch blackout dates.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
+    const handleUpdateCategory = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedCategory.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(selectedCategory),
+            });
+
+            if (!response.ok) throw new Error("Failed to update category");
+
+            const updatedCategory = await response.json();
+            setCategories((prev) =>
+                prev.map((category) => (category.id === updatedCategory.id ? updatedCategory : category))
+            );
+            toast({
+                title: "Category Updated",
+                description: "The category was successfully updated.",
                 status: "success",
                 duration: 3000,
                 isClosable: true,
             });
+            closeEditCategory();
         } catch (error) {
-            console.error("Error fetching category or blackout dates:", error);
+            console.error("Error updating category:", error);
             toast({
                 title: "Error",
-                description: "Failed to fetch category or blackout dates.",
+                description: "Failed to update category.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -184,8 +209,40 @@ export default function CategoryManagement() {
         }
     };
 
-    const toggleExpandCategory = (categoryId) => {
-        setExpandedCategory(expandedCategory === categoryId ? null : categoryId);
+    // const toggleExpandCategory = (categoryId) => {
+    //     setExpandedCategory(expandedCategory === categoryId ? null : categoryId);
+    // };
+
+    const handleRemoveBlackoutDate = async (blackoutId) => {
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/${blackoutId}`,
+                { method: "DELETE" }
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to remove blackout date");
+            }
+
+            setBlackoutDates((prev) => prev.filter((blackout) => blackout.id !== blackoutId));
+
+            toast({
+                title: "Blackout Date Removed",
+                description: "The blackout date was successfully removed.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error removing blackout date:", error);
+            toast({
+                title: "Error",
+                description: "Failed to remove blackout date.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
     };
 
     const handleAddTour = async (tourId) => {
@@ -247,41 +304,6 @@ export default function CategoryManagement() {
             toast({
                 title: "Error",
                 description: "Failed to remove tour from category.",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
-        }
-    };
-
-    const handleRemoveBlackoutDate = async (blackout) => {
-        try {
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/${blackout.id}`,
-                {
-                    method: "DELETE",
-                    headers: { "Content-Type": "application/json" },
-                }
-            );
-
-            if (!response.ok) {
-                throw new Error("Failed to delete blackout date.");
-            }
-
-            setBlackoutDates((prev) => prev.filter((d) => d.id !== blackout.id));
-
-            toast({
-                title: "Removed",
-                description: "Blackout date removed successfully.",
-                status: "success",
-                duration: 3000,
-                isClosable: true,
-            });
-        } catch (error) {
-            console.error("Error removing blackout date:", error);
-            toast({
-                title: "Error",
-                description: "Failed to remove blackout date.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -364,9 +386,9 @@ export default function CategoryManagement() {
                                 <Flex>
                                     <Button
                                         colorScheme="teal"
-                                        onClick={() => toggleExpandCategory(category.id)}
+                                        onClick={() => handleSelectCategory(category)} // Open the edit modal
                                     >
-                                        {expandedCategory === category.id ? "Hide Details" : "Edit"}
+                                        Edit
                                     </Button>
                                     <Button
                                         colorScheme="red"
@@ -381,70 +403,139 @@ export default function CategoryManagement() {
                     ))}
                 </VStack>
 
-                {expandedCategory && selectedCategory && expandedCategory === selectedCategory.id && (
-                    <Box mt={8} p={4} borderWidth={1} borderRadius="md">
-                        <Heading size="md">Edit Category</Heading>
-                        <Input
-                            value={selectedCategory.name}
-                            onChange={(e) =>
-                                setSelectedCategory((prev) => ({ ...prev, name: e.target.value }))
-                            }
-                            mb={4}
-                        />
-                        <Textarea
-                            value={selectedCategory.description}
-                            onChange={(e) =>
-                                setSelectedCategory((prev) => ({
-                                    ...prev,
-                                    description: e.target.value,
-                                }))
-                            }
-                            mb={4}
-                        />
+                <Modal isOpen={isCreateCategoryOpen} onClose={closeCreateCategory}>
+                    <ModalOverlay />
+                    <ModalContent>
+                        <ModalHeader>Create Category</ModalHeader>
+                        <ModalCloseButton />
+                        <ModalBody>
+                            <Input
+                                value={newCategory.name}
+                                onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                                placeholder="Category Name"
+                                mb={4}
+                            />
+                            <Textarea
+                                value={newCategory.description}
+                                onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                                placeholder="Category Description"
+                                mb={4}
+                            />
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button colorScheme="blue" onClick={handleCreateCategory}>
+                                Create
+                            </Button>
+                        </ModalFooter>
+                    </ModalContent>
+                </Modal>
 
-                        <Heading size="sm" mt={4}>Tours</Heading>
-                        <VStack spacing={2} align="stretch">
-                            {selectedCategory.tours?.map((tour) => (
-                                <Flex key={tour.id} justify="space-between" align="center">
-                                    <Text>{tour.name}</Text>
-                                    <Button size="xs" colorScheme="red" onClick={() => handleRemoveTour(tour.id)}>
-                                        Remove
-                                    </Button>
-                                </Flex>
-                            ))}
-                        </VStack>
-                        <Button mt={4} colorScheme="blue" onClick={openAddTour}>
-                            Add Tour
-                        </Button>
+                <Modal isOpen={isEditCategoryOpen} onClose={closeEditCategory}>
+                    <ModalOverlay />
+                    <ModalContent>
+                        <ModalHeader>Edit Category</ModalHeader>
+                        <ModalCloseButton />
+                        <ModalBody>
+                            <Input
+                                value={selectedCategory?.name || ""}
+                                onChange={(e) =>
+                                    setSelectedCategory((prev) => ({ ...prev, name: e.target.value }))
+                                }
+                                placeholder="Category Name"
+                                mb={4}
+                            />
+                            <Textarea
+                                value={selectedCategory?.description || ""}
+                                onChange={(e) =>
+                                    setSelectedCategory((prev) => ({ ...prev, description: e.target.value }))
+                                }
+                                placeholder="Category Description"
+                                mb={4}
+                            />
 
-                        <Heading size="sm" mt={4}>Blackout Dates</Heading>
-                        {blackoutDates.length > 0 ? (
-                            blackoutDates.map((blackout, index) => (
-                                <Flex key={index} align="center" mb={2}>
-                                    <Text>{blackout.date
-                                        ? `Date: ${new Date(blackout.date).toLocaleDateString("en-US", { timeZone: "UTC" })}`
-                                        : `Time: ${blackout.startTime} - ${blackout.endTime}`}</Text>
-                                    <Button size="xs" colorScheme="red" onClick={() => handleRemoveBlackoutDate(blackout)}>
-                                        Remove
-                                    </Button>
-                                </Flex>
-                            ))
-                        ) : (
-                            <Text>No blackout dates available.</Text>
-                        )}
-                        <Button mt={4} colorScheme="blue" onClick={openAddBlackout}>
-                            Add Blackout Date
-                        </Button>
+                            <Heading size="sm" mt={4}>Blackout Dates</Heading>
+                            {blackoutDates.length > 0 ? (
+                                blackoutDates.map((blackout, index) => (
+                                    <Flex key={index} justify="space-between" align="center">
+                                        <Text>
+                                            {blackout.date
+                                                ? `Date: ${new Date(blackout.date).toLocaleDateString()}`
+                                                : `Time: ${blackout.startTime} - ${blackout.endTime}`}
+                                        </Text>
+                                        <Button
+                                            size="xs"
+                                            colorScheme="red"
+                                            onClick={() => handleRemoveBlackoutDate(blackout.id)}
+                                        >
+                                            Remove
+                                        </Button>
+                                    </Flex>
+                                ))
+                            ) : (
+                                <Text>No blackout dates added.</Text>
+                            )}
 
-                        <Button
-                            mt={4}
-                            colorScheme="blue"
-                            onClick={() => setExpandedCategory(null)}
-                        >
-                            Save Changes
-                        </Button>
-                    </Box>
-                )}
+                            <Heading size="sm" mt={4}>Associated Tours</Heading>
+                            {selectedCategory?.tours?.length > 0 ? (
+                                selectedCategory.tours.map((tour) => (
+                                    <Flex key={tour.id} justify="space-between" align="center">
+                                        <Text>{tour.name}</Text>
+                                        <Button
+                                            size="xs"
+                                            colorScheme="red"
+                                            onClick={() => handleRemoveTour(tour.id)}
+                                        >
+                                            Remove
+                                        </Button>
+                                    </Flex>
+                                ))
+                            ) : (
+                                <Text>No tours added.</Text>
+                            )}
+
+                            <Button colorScheme="blue" onClick={openAddTour} mt={4}>
+                                Add Tour
+                            </Button>
+
+                            <Button colorScheme="blue" onClick={openAddBlackout} mt={4}>
+                                Add Blackout Date
+                            </Button>
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button colorScheme="blue" onClick={handleUpdateCategory}>
+                                Save Changes
+                            </Button>
+                        </ModalFooter>
+                    </ModalContent>
+                </Modal>
+
+                <Modal isOpen={isAddTourOpen} onClose={closeAddTour}>
+                    <ModalOverlay />
+                    <ModalContent>
+                        <ModalHeader>Add Tour to Category</ModalHeader>
+                        <ModalCloseButton />
+                        <ModalBody>
+                            <VStack align="stretch">
+                                {tours
+                                    .filter(
+                                        (tour) =>
+                                            selectedCategory?.tours &&
+                                            !selectedCategory.tours.some(
+                                                (categoryTour) => categoryTour.id === tour.id
+                                            )
+                                    )
+                                    .map((tour) => (
+                                        <Flex key={tour.id} justify="space-between" align="center">
+                                            <Text>{tour.name}</Text>
+                                            <Button size="xs" colorScheme="blue" onClick={() => handleAddTour(tour.id)}>
+                                                Add
+                                            </Button>
+                                        </Flex>
+                                    ))}
+                            </VStack>
+                        </ModalBody>
+                    </ModalContent>
+                </Modal>
 
                 <Modal isOpen={isAddBlackoutOpen} onClose={closeAddBlackout}>
                     <ModalOverlay />
@@ -487,63 +578,6 @@ export default function CategoryManagement() {
                         <ModalFooter>
                             <Button colorScheme="blue" onClick={handleAddBlackoutDate}>
                                 Add Blackout
-                            </Button>
-                        </ModalFooter>
-                    </ModalContent>
-                </Modal>
-
-                <Modal isOpen={isAddTourOpen} onClose={closeAddTour}>
-                    <ModalOverlay />
-                    <ModalContent>
-                        <ModalHeader>Add Tour</ModalHeader>
-                        <ModalCloseButton />
-                        <ModalBody>
-                            <VStack align="stretch">
-                                {tours.filter(
-                                    (tour) =>
-                                        selectedCategory?.tours &&
-                                        !selectedCategory.tours.some((categoryTour) => categoryTour.id === tour.id)
-                                ).map((tour) => (
-                                    <Flex key={tour.id} justify="space-between" align="center">
-                                        <Text>{tour.name}</Text>
-                                        <Button size="xs" colorScheme="blue" onClick={() => handleAddTour(tour.id)}>
-                                            Add
-                                        </Button>
-                                    </Flex>
-                                ))}
-                            </VStack>
-                        </ModalBody>
-                    </ModalContent>
-                </Modal>
-
-                <Modal isOpen={isCreateCategoryOpen} onClose={closeCreateCategory}>
-                    <ModalOverlay />
-                    <ModalContent>
-                        <ModalHeader>Create New Category</ModalHeader>
-                        <ModalCloseButton />
-                        <ModalBody>
-                            <Input
-                                placeholder="Category Name"
-                                value={newCategory.name}
-                                onChange={(e) =>
-                                    setNewCategory((prev) => ({ ...prev, name: e.target.value }))
-                                }
-                                mb={4}
-                            />
-                            <Textarea
-                                placeholder="Category Description"
-                                value={newCategory.description}
-                                onChange={(e) =>
-                                    setNewCategory((prev) => ({
-                                        ...prev,
-                                        description: e.target.value,
-                                    }))
-                                }
-                            />
-                        </ModalBody>
-                        <ModalFooter>
-                            <Button colorScheme="blue" onClick={handleCreateCategory}>
-                                Create
                             </Button>
                         </ModalFooter>
                     </ModalContent>

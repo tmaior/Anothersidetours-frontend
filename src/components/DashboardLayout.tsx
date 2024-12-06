@@ -36,23 +36,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     >
                         Tenant
                     </Text>
+                    {/*<Text*/}
+                    {/*    fontSize="md"*/}
+                    {/*    color="gray.400"*/}
+                    {/*    pl={4}*/}
+                    {/*    onClick={() => router.push("/dashboard/tenant")}*/}
+                    {/*    _hover={{ cursor: "pointer", color: "gray.200" }}*/}
+                    {/*>*/}
+                    {/*    Register Tenant*/}
+                    {/*</Text>*/}
                     <Text
                         fontSize="md"
                         color="gray.400"
                         pl={4}
-                        onClick={() => router.push("/dashboard/tenant")}
+                        onClick={() => router.push("/dashboard/tenant-list")}
                         _hover={{ cursor: "pointer", color: "gray.200" }}
                     >
-                        Register Tenant
-                    </Text>
-                    <Text
-                        fontSize="md"
-                        color="gray.400"
-                        pl={4}
-                        onClick={() => router.push("/dashboard/list-cities")}
-                        _hover={{ cursor: "pointer", color: "gray.200" }}
-                    >
-                        List Tenant
+                        Tenant
                     </Text>
                     <Divider borderColor="gray.600" />
                     <Text

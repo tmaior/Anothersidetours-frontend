@@ -9,6 +9,13 @@ import {
     Flex,
     useColorModeValue,
     useToast,
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+    ModalCloseButton,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
@@ -22,7 +29,10 @@ export default function ListTenants() {
     const [selectedTenant, setSelectedTenant] = useState(null);
     const [searchName, setSearchName] = useState("");
     const [filteredTenants, setFilteredTenants] = useState([]);
+    const [tenantName, setTenantName] = useState("");
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const toast = useToast();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const router = useRouter();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -93,7 +103,53 @@ export default function ListTenants() {
 
     const handleEdit = () => {
         if (selectedTenant) {
-            router.push(`/dashboard/edit-tenant/${selectedTenant}`);
+            const tenantToEdit = tenants.find((tenant) => tenant.id === selectedTenant);
+            setTenantName(tenantToEdit.name);
+            setIsEditModalOpen(true);
+        }
+    };
+
+    const handleSaveChanges = async () => {
+        if (selectedTenant && tenantName.trim()) {
+            try {
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/tenants/${selectedTenant}`,
+                    {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ name: tenantName }),
+                    }
+                );
+
+                if (response.ok) {
+                    const updatedTenant = await response.json();
+                    setTenants((prev) =>
+                        prev.map((tenant) =>
+                            tenant.id === selectedTenant ? { ...tenant, name: tenantName } : tenant
+                        )
+                    );
+                    setIsEditModalOpen(false);
+                    setTenantName("");
+                    toast({
+                        title: "Tenant Updated",
+                        description: "The tenant's name has been updated.",
+                        status: "success",
+                        duration: 3000,
+                        isClosable: true,
+                    });
+                } else {
+                    throw new Error("Failed to update tenant");
+                }
+            } catch (error) {
+                console.error("Error updating tenant:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to update tenant.",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
         }
     };
 
@@ -164,6 +220,28 @@ export default function ListTenants() {
                 onClose={() => setIsCreateModalOpen(false)}
                 addTenantToList={addTenantToList}
             />
+            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Edit Tenant</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <Input
+                            placeholder="Edit Tenant Name"
+                            value={tenantName}
+                            onChange={(e) => setTenantName(e.target.value)}
+                        />
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button colorScheme="blue" onClick={handleSaveChanges}>
+                            Save Changes
+                        </Button>
+                        <Button colorScheme="red" onClick={() => setIsEditModalOpen(false)}>
+                            Cancel
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </DashboardLayout>
     );
 }

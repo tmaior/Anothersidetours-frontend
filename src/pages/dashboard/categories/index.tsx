@@ -222,7 +222,7 @@ export default function CategoryManagement() {
                 blackoutType === "date"
                     ? {
                         isGlobal: false,
-                        date: new Date(timeRange.start).toISOString(),
+                        date: new Date(`${timeRange.start}T00:00:00Z`),
                         categoryId: selectedCategory.id,
                     }
                     : {
@@ -363,7 +363,9 @@ export default function CategoryManagement() {
                                 <Flex key={index} align="center" mb={2}>
                                     <Text>
                                         {blackout.date
-                                            ? `Date: ${new Date(blackout.date).toLocaleDateString()}`
+                                            ? `Date: ${new Date(blackout.date).toLocaleDateString("en-US", {
+                                                timeZone: "UTC",
+                                            })}`
                                             : blackout.startTime && blackout.endTime
                                                 ? `Time: ${blackout.startTime} - ${blackout.endTime}`
                                                 : "Invalid blackout data"}

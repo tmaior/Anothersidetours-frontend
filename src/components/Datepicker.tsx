@@ -103,17 +103,27 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
                     const categoryData = await categoryResponse.json();
 
-                    categoryBlockedDates = categoryData.map((b: BlackoutDate) =>
-                        format(new Date(b.date), "yyyy-MM-dd")
-                    );
+                    categoryBlockedDates = categoryData.map((b: BlackoutDate) => {
+                        const utcDate = new Date(b.date);
+                        const year = utcDate.getUTCFullYear();
+                        const month = String(utcDate.getUTCMonth() + 1).padStart(2, "0");
+                        const day = String(utcDate.getUTCDate()).padStart(2, "0");
+                        return `${year}-${month}-${day}`;
+                    });
 
                     categoryBlockedTimes = categoryData
                         .filter((b: BlackoutDate) => b.startTime && b.endTime)
-                        .map((b: BlackoutDate) => ({
-                            date: format(new Date(b.date), "yyyy-MM-dd"),
-                            startTime: b.startTime,
-                            endTime: b.endTime,
-                        }));
+                        .map((b: BlackoutDate) => {
+                            const utcDate = new Date(b.date);
+                            const year = utcDate.getUTCFullYear();
+                            const month = String(utcDate.getUTCMonth() + 1).padStart(2, "0");
+                            const day = String(utcDate.getUTCDate()).padStart(2, "0");
+                            return {
+                                date: `${year}-${month}-${day}`,
+                                startTime: b.startTime,
+                                endTime: b.endTime,
+                            };
+                        });
                 }
 
                 const globalResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/global`);

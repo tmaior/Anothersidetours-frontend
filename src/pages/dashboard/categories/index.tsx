@@ -270,17 +270,21 @@ export default function CategoryManagement() {
         }
     };
 
-
-
-    const handleRemoveBlackoutDate = async (date) => {
+    const handleRemoveBlackoutDate = async (blackout) => {
         try {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedCategory.id}/blackout-dates`, {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ date }),
-            });
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/${blackout.id}`,
+                {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
 
-            setBlackoutDates((prev) => prev.filter((d) => d !== date));
+            if (!response.ok) {
+                throw new Error("Failed to delete blackout date.");
+            }
+
+            setBlackoutDates((prev) => prev.filter((d) => d.id !== blackout.id));
 
             toast({
                 title: "Removed",

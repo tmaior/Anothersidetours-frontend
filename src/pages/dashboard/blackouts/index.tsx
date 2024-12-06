@@ -73,6 +73,17 @@ export default function BlackoutDatesManagement() {
             return;
         }
 
+        if (!isGlobal && !categoryId) {
+            toast({
+                title: "Error",
+                description: "Please select a category for the blackout.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
         const formattedDate = new Date(date).toISOString();
 
         try {
@@ -168,18 +179,17 @@ export default function BlackoutDatesManagement() {
                                     <Flex justify="space-between" align="center">
                                         <Box>
                                             <Text>
-                                                <strong>Date:</strong> {new Date(date.date).toISOString().split('T')[0]}
+                                                <strong>Date:</strong> {new Date(date.date).toISOString().split("T")[0]}
                                             </Text>
                                             {date.isGlobal ? (
                                                 <Text>
                                                     <strong>Type:</strong> Global
                                                 </Text>
                                             ) : (
-                                                date.category && (
-                                                    <Text>
-                                                        <strong>Category:</strong> {date.category.name}
-                                                    </Text>
-                                                )
+                                                <Text>
+                                                    <strong>Category:</strong>{" "}
+                                                    {date.category?.name || categories.find(cat => cat.id === date.categoryId)?.name || "No Category"}
+                                                </Text>
                                             )}
                                         </Box>
                                         <Button

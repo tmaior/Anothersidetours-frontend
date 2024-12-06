@@ -152,10 +152,10 @@ export default function CategoryManagement() {
 
     const handleAddTour = async (tourId) => {
         try {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedCategory.id}/tours`, {
-                method: "POST",
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`, {
+                method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ tourId }),
+                body: JSON.stringify({ categoryId: selectedCategory.id }),
             });
 
             const newTour = tours.find((tour) => tour.id === tourId);

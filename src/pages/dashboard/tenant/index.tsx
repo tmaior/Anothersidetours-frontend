@@ -1,28 +1,31 @@
 import {
-    Box,
     VStack,
-    Heading,
     Input,
     Button,
     useColorModeValue,
     useToast,
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+    ModalCloseButton,
 } from "@chakra-ui/react";
 import React, { useState } from "react";
-import { useRouter } from "next/router";
-import DashboardLayout from "../../../components/DashboardLayout";
 
-export default function TenantForm({ isEditing = false, tenantId = null, initialData = null }) {
+export default function CreateTenantModal({ isOpen, onClose, addTenantToList }) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const bgColor = useColorModeValue("white", "gray.800");
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
     const inputTextColor = useColorModeValue("black", "white");
-    const router = useRouter();
     const toast = useToast();
 
     const [formData, setFormData] = useState({
-        name: initialData?.name || "",
+        name: "",
     });
 
-    const handleFormChange = (field: keyof typeof formData, value: string) => {
+    const handleFormChange = (field, value) => {
         setFormData({
             ...formData,
             [field]: value,
@@ -31,14 +34,8 @@ export default function TenantForm({ isEditing = false, tenantId = null, initial
 
     const handleSubmit = async () => {
         try {
-            const endpoint = isEditing
-                ? `${process.env.NEXT_PUBLIC_API_URL}/tenants/${tenantId}`
-                : `${process.env.NEXT_PUBLIC_API_URL}/tenants`;
-
-            const method = isEditing ? "PUT" : "POST";
-
-            const response = await fetch(endpoint, {
-                method,
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`, {
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -46,25 +43,27 @@ export default function TenantForm({ isEditing = false, tenantId = null, initial
             });
 
             if (!response.ok) {
-                throw new Error(
-                    `Error ${isEditing ? "updating" : "creating"} tenant`
-                );
+                throw new Error("Error creating tenant");
             }
 
+            const newTenant = await response.json();
+            addTenantToList(newTenant);
+
             toast({
-                title: isEditing ? "City Updated" : "City Created",
-                description: `City ${isEditing ? "updated" : "created"} successfully.`,
+                title: "Tenant Created",
+                description: "The tenant was created successfully.",
                 status: "success",
                 duration: 3000,
                 isClosable: true,
             });
 
-            router.push("/dashboard/list-tenants");
+            setFormData({ name: "" });
+            onClose();
         } catch (error) {
-            console.error(error);
+            console.error("Error creating tenant:", error);
             toast({
                 title: "Error",
-                description: `Failed to ${isEditing ? "update" : "create"} the city.`,
+                description: "Failed to create tenant.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -73,43 +72,28 @@ export default function TenantForm({ isEditing = false, tenantId = null, initial
     };
 
     return (
-        <DashboardLayout>
-            <Box
-                ml="250px"
-                p={8}
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                minHeight="100vh"
-            >
-                <Box
-                    p={8}
-                    bg={bgColor}
-                    color="white"
-                    borderRadius="md"
-                    boxShadow="md"
-                    maxW="600px"
-                    w="100%"
-                >
-                    <Heading color="black" mb={4}>
-                        {isEditing ? "Edit City" : "Register City"}
-                    </Heading>
-                    <form>
-                        <VStack spacing={4} align="stretch">
-                            <Input
-                                placeholder="City Name"
-                                bg={inputBgColor}
-                                color={inputTextColor}
-                                value={formData.name}
-                                onChange={(e) => handleFormChange("name", e.target.value)}
-                            />
-                            <Button colorScheme="teal" onClick={handleSubmit}>
-                                Save
-                            </Button>
-                        </VStack>
-                    </form>
-                </Box>
-            </Box>
-        </DashboardLayout>
+        <Modal isOpen={isOpen} onClose={onClose}>
+            <ModalOverlay />
+            <ModalContent>
+                <ModalHeader>Create Tenant</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                    <VStack spacing={4} align="stretch">
+                        <Input
+                            placeholder="Tenant Name"
+                            bg={inputBgColor}
+                            color={inputTextColor}
+                            value={formData.name}
+                            onChange={(e) => handleFormChange("name", e.target.value)}
+                        />
+                    </VStack>
+                </ModalBody>
+                <ModalFooter>
+                    <Button colorScheme="teal" onClick={handleSubmit}>
+                        Save
+                    </Button>
+                </ModalFooter>
+            </ModalContent>
+        </Modal>
     );
 }

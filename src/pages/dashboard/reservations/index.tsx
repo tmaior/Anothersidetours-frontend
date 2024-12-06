@@ -267,13 +267,22 @@ export default function ListReservations() {
     //             [reservationId]: prev[reservationId].filter((addon) => addon.id !== addonId),
     //         }));
     //
+    //         const reservation = reservations.find((res) => res.id === reservationId);
+    //         const newTotalPrice = reservation.total_price - addonPrice * addonQuantity;
+    //
     //         setReservations((prevReservations) =>
     //             prevReservations.map((res) =>
-    //                 res.id === reservationId
-    //                     ? { ...res, total_price: res.total_price - addonPrice * addonQuantity }
-    //                     : res
+    //                 res.id === reservationId ? { ...res, total_price: newTotalPrice } : res
     //             )
     //         );
+    //
+    //         await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservationId}`, {
+    //             method: "PUT",
+    //             headers: { "Content-Type": "application/json" },
+    //             body: JSON.stringify({
+    //                 total_price: newTotalPrice,
+    //             }),
+    //         });
     //
     //         toast({
     //             title: "Add-on Removed",
@@ -293,6 +302,7 @@ export default function ListReservations() {
     //         });
     //     }
     // };
+
 
     useEffect(() => {
         let filtered = reservations;

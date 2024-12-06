@@ -162,34 +162,38 @@ export default function BlackoutDatesManagement() {
                     </Flex>
 
                     <VStack spacing={4}>
-                        {blackoutDates.map((date) => (
-                            <Box key={date.id} p={4} borderWidth={1} borderRadius="md" w="100%">
-                                <Flex justify="space-between" align="center">
-                                    <Box>
-                                        <Text>
-                                            <strong>Date:</strong> {date.startDate} to {date.endDate}
-                                        </Text>
-                                        {date.startTime && date.endTime && (
+                        {Array.isArray(blackoutDates) && blackoutDates.length > 0 ? (
+                            blackoutDates.map((date) => (
+                                <Box key={date.id} p={4} borderWidth={1} borderRadius="md" w="100%">
+                                    <Flex justify="space-between" align="center">
+                                        <Box>
                                             <Text>
-                                                <strong>Time:</strong> {date.startTime} - {date.endTime}
+                                                <strong>Date:</strong> {date.startDate} to {date.endDate}
                                             </Text>
-                                        )}
-                                        {date.category && (
-                                            <Text>
-                                                <strong>Category:</strong> {date.category.name}
-                                            </Text>
-                                        )}
-                                    </Box>
-                                    <Button
-                                        colorScheme="red"
-                                        size="sm"
-                                        onClick={() => handleRemoveBlackoutDate(date.id)}
-                                    >
-                                        Remove
-                                    </Button>
-                                </Flex>
-                            </Box>
-                        ))}
+                                            {date.startTime && date.endTime && (
+                                                <Text>
+                                                    <strong>Time:</strong> {date.startTime} - {date.endTime}
+                                                </Text>
+                                            )}
+                                            {date.category && (
+                                                <Text>
+                                                    <strong>Category:</strong> {date.category.name}
+                                                </Text>
+                                            )}
+                                        </Box>
+                                        <Button
+                                            colorScheme="red"
+                                            size="sm"
+                                            onClick={() => handleRemoveBlackoutDate(date.id)}
+                                        >
+                                            Remove
+                                        </Button>
+                                    </Flex>
+                                </Box>
+                            ))
+                        ) : (
+                            <Text>No blackout dates available.</Text>
+                        )}
                     </VStack>
 
                     <Modal isOpen={isOpen} onClose={onClose}>

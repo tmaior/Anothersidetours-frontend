@@ -87,20 +87,30 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
                 if (categoryId) {
                     const categoryResponse = await fetch(
-                        `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates?categoryId=${categoryId}`
+                        `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/filter`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ categoryId }),
+                        }
                     );
-                    if (!categoryResponse.ok) throw new Error('Failed to fetch category-specific blackout dates');
+
+                    if (!categoryResponse.ok) {
+                        throw new Error("Failed to fetch category-specific blackout dates");
+                    }
 
                     const categoryData = await categoryResponse.json();
 
                     categoryBlockedDates = categoryData.map((b: BlackoutDate) =>
-                        format(new Date(b.date), 'yyyy-MM-dd')
+                        format(new Date(b.date), "yyyy-MM-dd")
                     );
 
                     categoryBlockedTimes = categoryData
                         .filter((b: BlackoutDate) => b.startTime && b.endTime)
                         .map((b: BlackoutDate) => ({
-                            date: format(new Date(b.date), 'yyyy-MM-dd'),
+                            date: format(new Date(b.date), "yyyy-MM-dd"),
                             startTime: b.startTime,
                             endTime: b.endTime,
                         }));

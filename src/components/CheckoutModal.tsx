@@ -64,6 +64,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
     const stripe = useStripe();
     const elements = useElements();
     let reservationId = string;
+    const { setReservationId } = useGuest();
 
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -142,6 +143,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
             if (reservationResponse.ok) {
                 const reservationResult = await reservationResponse.json();
                 reservationId = reservationResult.id;
+                setReservationId(reservationResult.id);
             } else {
                 console.error('Failed to create reservation');
             }

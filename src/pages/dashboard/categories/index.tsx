@@ -102,23 +102,53 @@ export default function CategoryManagement() {
 
     const handleSelectCategory = async (category) => {
         try {
-            const response = await fetch(
+            const categoryResponse = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/categories/${category.id}`
             );
-            const data = await response.json();
-            setSelectedCategory({ ...data, tours: data.tours || [] });
-            setBlackoutDates(data.blackoutDates || []);
+
+            if (!categoryResponse.ok) {
+                throw new Error("Failed to fetch category details.");
+            }
+
+            const categoryData = await categoryResponse.json();
+            setSelectedCategory({ ...categoryData, tours: categoryData.tours || [] });
+
+            const blackoutResponse = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/filter`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ categoryId: category.id }),
+                }
+            );
+
+            if (!blackoutResponse.ok) {
+                throw new Error("Failed to fetch blackout dates.");
+            }
+
+            const blackoutData = await blackoutResponse.json();
+            setBlackoutDates(blackoutData || []);
+
+            toast({
+                title: "Success",
+                description: "Category loaded successfully.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
         } catch (error) {
-            console.error("Error fetching category:", error);
+            console.error("Error fetching category or blackout dates:", error);
             toast({
                 title: "Error",
-                description: "Failed to fetch category details.",
+                description: "Failed to fetch category or blackout dates.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
             });
         }
     };
+
+
 
     const handleAddTour = async (tourId) => {
         try {
@@ -190,11 +220,21 @@ export default function CategoryManagement() {
         try {
             const blackout =
                 blackoutType === "date"
-                    ? { type: "date", value: timeRange.start }
-                    : { type: "time", value: { start: timeRange.start, end: timeRange.end } };
+                    ? {
+                        isGlobal: false,
+                        date: new Date(timeRange.start).toISOString(),
+                        categoryId: selectedCategory.id,
+                    }
+                    : {
+                        isGlobal: false,
+                        categoryId: selectedCategory.id,
+                        startTime: timeRange.start,
+                        endTime: timeRange.end,
+                        reason: "Scheduled maintenance",
+                    };
 
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/categories/${selectedCategory.id}/blackout-dates`,
+                `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -207,14 +247,13 @@ export default function CategoryManagement() {
             }
 
             const newBlackout = await response.json();
-
             setBlackoutDates((prev) => [...prev, newBlackout]);
 
             setTimeRange({ start: "", end: "" });
 
             toast({
                 title: "Added",
-                description: "Blackout added successfully.",
+                description: "Blackout date added successfully.",
                 status: "success",
                 duration: 3000,
                 isClosable: true,
@@ -230,6 +269,7 @@ export default function CategoryManagement() {
             });
         }
     };
+
 
 
     const handleRemoveBlackoutDate = async (date) => {
@@ -311,9 +351,6 @@ export default function CategoryManagement() {
                             Add Tour
                         </Button>
 
-
-
-
                         <Heading size="sm" mt={4}>
                             Blackout Dates
                         </Heading>
@@ -321,9 +358,11 @@ export default function CategoryManagement() {
                             blackoutDates.map((blackout, index) => (
                                 <Flex key={index} align="center" mb={2}>
                                     <Text>
-                                        {blackout.type === "date"
-                                            ? `Date: ${blackout.value}`
-                                            : `Time: ${blackout.value.start} - ${blackout.value.end}`}
+                                        {blackout.date
+                                            ? `Date: ${new Date(blackout.date).toLocaleDateString()}`
+                                            : blackout.startTime && blackout.endTime
+                                                ? `Time: ${blackout.startTime} - ${blackout.endTime}`
+                                                : "Invalid blackout data"}
                                     </Text>
                                     <Button
                                         size="xs"

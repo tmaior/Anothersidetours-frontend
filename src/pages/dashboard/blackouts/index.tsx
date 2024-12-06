@@ -18,7 +18,7 @@ import {
     VStack,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import DashboardLayout from "../../../components/DashboardLayout"; // Ajuste o caminho conforme necessário.
+import DashboardLayout from "../../../components/DashboardLayout";
 
 export default function BlackoutDatesManagement() {
     const [blackoutDates, setBlackoutDates] = useState([]);

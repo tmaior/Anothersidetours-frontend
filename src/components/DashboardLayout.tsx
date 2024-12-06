@@ -135,15 +135,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         color="white"
                         _hover={{ cursor: "pointer" }}
                     >
-                        Additional Information
-                    </Text>
-                    <Divider borderColor="gray.600" />
-                    <Text
-                        fontSize="xl"
-                        fontWeight="bold"
-                        color="white"
-                        _hover={{ cursor: "pointer" }}
-                    >
                         Employees
                     </Text>
                 </VStack>

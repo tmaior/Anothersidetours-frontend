@@ -42,7 +42,7 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
         description: "",
         price: 0,
         duration: 0,
-        tenant: "",
+        tenantId: "",
         category: "",
         guide: "",
         addons: [],
@@ -65,7 +65,7 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                 description: initialData.description,
                 price: initialData.price,
                 duration: initialData.duration / 60,
-                tenant: initialData.tenantId || "",
+                tenantId: initialData.tenantId || "",
                 category: initialData.categoryId || "",
                 guide: initialData.guideId || "",
                 addons: initialData.addons || [],
@@ -261,8 +261,8 @@ export default function TourForm({ isEditing = false, tourId = null, initialData
                                 placeholder="Select the City"
                                 bg={inputBgColor}
                                 color={inputTextColor}
-                                value={formData.tenant}
-                                onChange={(e) => handleFormChange("tenant", e.target.value)}
+                                value={formData.tenantId}
+                                onChange={(e) => handleFormChange("tenantId", e.target.value)}
                             >
                                 {tenants.map((tenant) => (
                                     <option key={tenant.id} value={tenant.id}>

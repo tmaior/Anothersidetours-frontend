@@ -209,6 +209,25 @@ export default function TourForm({isEditing = false, tourId = null, initialData 
                 throw new Error("Error creating tour schedules");
             }
 
+            if (additionalInfos.length > 0) {
+                const additionalInfoRequests = additionalInfos.map((info) =>
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({tourId: createdTour.id, title: info}),
+                    })
+                );
+
+                const additionalInfoResponses = await Promise.all(additionalInfoRequests);
+
+                const failedRequests = additionalInfoResponses.filter((res) => !res.ok);
+                if (failedRequests.length > 0) {
+                    throw new Error("Error creating additional information");
+                }
+            }
+
             router.push("/dashboard/list-tours");
         } catch (error) {
             console.error(error);

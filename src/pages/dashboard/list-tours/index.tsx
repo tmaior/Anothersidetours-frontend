@@ -82,7 +82,15 @@ export default function ListTours() {
             try {
                 const response = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/tours/${selectedTour}`,
-                    { method: "DELETE" }
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            isDeleted: true,
+                        }),
+                    }
                 );
 
                 if (!response.ok) {

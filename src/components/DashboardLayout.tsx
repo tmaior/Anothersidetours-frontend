@@ -34,7 +34,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         color="white"
                         _hover={{ cursor: "pointer" }}
                     >
-                        Cities
+                        Tenant
                     </Text>
                     <Text
                         fontSize="md"
@@ -43,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         onClick={() => router.push("/dashboard/tenant")}
                         _hover={{ cursor: "pointer", color: "gray.200" }}
                     >
-                        Register Cities
+                        Register Tenant
                     </Text>
                     <Text
                         fontSize="md"
@@ -52,7 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         onClick={() => router.push("/dashboard/list-cities")}
                         _hover={{ cursor: "pointer", color: "gray.200" }}
                     >
-                        List Cities
+                        List Tenant
                     </Text>
                     <Divider borderColor="gray.600" />
                     <Text

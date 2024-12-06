@@ -16,6 +16,7 @@ import {
     useDisclosure,
     useToast,
     VStack,
+    Checkbox,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
@@ -24,11 +25,9 @@ export default function BlackoutDatesManagement() {
     const [blackoutDates, setBlackoutDates] = useState([]);
     const [categories, setCategories] = useState([]);
     const [newBlackoutDate, setNewBlackoutDate] = useState({
-        startDate: "",
-        endDate: "",
-        startTime: "",
-        endTime: "",
+        date: "",
         categoryId: "",
+        isGlobal: false,
     });
     const { isOpen, onOpen, onClose } = useDisclosure();
     const toast = useToast();
@@ -61,12 +60,12 @@ export default function BlackoutDatesManagement() {
     }, [toast]);
 
     const handleCreateBlackoutDate = async () => {
-        const { startDate, endDate, startTime, endTime, categoryId } = newBlackoutDate;
+        const { date, categoryId, isGlobal } = newBlackoutDate;
 
-        if (!startDate || !endDate || (startTime && !endTime) || (!startTime && endTime)) {
+        if (!date) {
             toast({
                 title: "Error",
-                description: "Please fill in all required fields correctly.",
+                description: "Please select a date for the blackout.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -74,30 +73,30 @@ export default function BlackoutDatesManagement() {
             return;
         }
 
+        const formattedDate = new Date(date).toISOString();
+
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    startDate,
-                    endDate,
-                    startTime,
-                    endTime,
-                    categoryId: categoryId || null,
+                    date: formattedDate,
+                    categoryId: isGlobal ? null : categoryId,
+                    isGlobal,
                 }),
             });
 
             if (!response.ok) throw new Error("Failed to create blackout date");
 
             const createdBlackoutDate = await response.json();
-            setBlackoutDates((prev) => [...prev, createdBlackoutDate]);
+            setBlackoutDates((prev) => (Array.isArray(prev) ? [...prev, createdBlackoutDate] : [createdBlackoutDate]));
+
             setNewBlackoutDate({
-                startDate: "",
-                endDate: "",
-                startTime: "",
-                endTime: "",
+                date: "",
                 categoryId: "",
+                isGlobal: false,
             });
+
             toast({
                 title: "Blackout Date Created",
                 description: "The blackout date was successfully created.",
@@ -105,6 +104,7 @@ export default function BlackoutDatesManagement() {
                 duration: 3000,
                 isClosable: true,
             });
+
             onClose();
         } catch (error) {
             console.error("Error creating blackout date:", error);
@@ -168,17 +168,18 @@ export default function BlackoutDatesManagement() {
                                     <Flex justify="space-between" align="center">
                                         <Box>
                                             <Text>
-                                                <strong>Date:</strong> {date.startDate} to {date.endDate}
+                                                <strong>Date:</strong> {new Date(date.date).toISOString().split('T')[0]}
                                             </Text>
-                                            {date.startTime && date.endTime && (
+                                            {date.isGlobal ? (
                                                 <Text>
-                                                    <strong>Time:</strong> {date.startTime} - {date.endTime}
+                                                    <strong>Type:</strong> Global
                                                 </Text>
-                                            )}
-                                            {date.category && (
-                                                <Text>
-                                                    <strong>Category:</strong> {date.category.name}
-                                                </Text>
+                                            ) : (
+                                                date.category && (
+                                                    <Text>
+                                                        <strong>Category:</strong> {date.category.name}
+                                                    </Text>
+                                                )
                                             )}
                                         </Box>
                                         <Button
@@ -204,55 +205,31 @@ export default function BlackoutDatesManagement() {
                             <ModalBody>
                                 <Input
                                     type="date"
-                                    placeholder="Start Date"
-                                    value={newBlackoutDate.startDate}
+                                    placeholder="Select Date"
+                                    value={newBlackoutDate.date}
                                     onChange={(e) =>
                                         setNewBlackoutDate((prev) => ({
                                             ...prev,
-                                            startDate: e.target.value,
+                                            date: e.target.value,
                                         }))
                                     }
                                     mb={4}
                                 />
-                                <Input
-                                    type="date"
-                                    placeholder="End Date"
-                                    value={newBlackoutDate.endDate}
+                                <Checkbox
+                                    isChecked={newBlackoutDate.isGlobal}
                                     onChange={(e) =>
                                         setNewBlackoutDate((prev) => ({
                                             ...prev,
-                                            endDate: e.target.value,
+                                            isGlobal: e.target.checked,
+                                            categoryId: e.target.checked ? "" : prev.categoryId,
                                         }))
                                     }
                                     mb={4}
-                                />
-                                <Flex mb={4}>
-                                    <Input
-                                        type="time"
-                                        placeholder="Start Time"
-                                        value={newBlackoutDate.startTime}
-                                        onChange={(e) =>
-                                            setNewBlackoutDate((prev) => ({
-                                                ...prev,
-                                                startTime: e.target.value,
-                                            }))
-                                        }
-                                        mr={2}
-                                    />
-                                    <Input
-                                        type="time"
-                                        placeholder="End Time"
-                                        value={newBlackoutDate.endTime}
-                                        onChange={(e) =>
-                                            setNewBlackoutDate((prev) => ({
-                                                ...prev,
-                                                endTime: e.target.value,
-                                            }))
-                                        }
-                                    />
-                                </Flex>
+                                >
+                                    Global Blackout
+                                </Checkbox>
                                 <Select
-                                    placeholder="Select Category (optional)"
+                                    placeholder="Select Category"
                                     value={newBlackoutDate.categoryId}
                                     onChange={(e) =>
                                         setNewBlackoutDate((prev) => ({
@@ -260,6 +237,7 @@ export default function BlackoutDatesManagement() {
                                             categoryId: e.target.value,
                                         }))
                                     }
+                                    isDisabled={newBlackoutDate.isGlobal}
                                 >
                                     {categories.map((category) => (
                                         <option key={category.id} value={category.id}>

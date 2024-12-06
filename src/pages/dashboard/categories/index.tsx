@@ -26,6 +26,7 @@ import DashboardLayout from "../../../components/DashboardLayout";
 export default function CategoryManagement() {
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [expandedCategory, setExpandedCategory] = useState(null);
     const [tours, setTours] = useState([]);
     const [blackoutDates, setBlackoutDates] = useState([]);
     const [newCategory, setNewCategory] = useState({ name: "", description: "" });
@@ -55,10 +56,7 @@ export default function CategoryManagement() {
                     fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`),
                     fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`),
                 ]);
-                const [categoriesData, toursData] = await Promise.all([
-                    categoryResponse.json(),
-                    toursResponse.json(),
-                ]);
+                const [categoriesData, toursData] = await Promise.all([categoryResponse.json(), toursResponse.json()]);
                 setCategories(categoriesData);
                 setTours(toursData);
             } catch (error) {
@@ -110,9 +108,7 @@ export default function CategoryManagement() {
 
     const handleSelectCategory = async (category) => {
         try {
-            const categoryResponse = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/categories/${category.id}`
-            );
+            const categoryResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${category.id}`);
 
             if (!categoryResponse.ok) {
                 throw new Error("Failed to fetch category details.");
@@ -186,6 +182,10 @@ export default function CategoryManagement() {
                 isClosable: true,
             });
         }
+    };
+
+    const toggleExpandCategory = (categoryId) => {
+        setExpandedCategory(expandedCategory === categoryId ? null : categoryId);
     };
 
     const handleAddTour = async (tourId) => {
@@ -381,57 +381,59 @@ export default function CategoryManagement() {
                 {selectedCategory && (
                     <Box mt={8} p={4} borderWidth={1} borderRadius="md">
                         <Heading size="md">Edit {selectedCategory.name}</Heading>
-                        <Heading size="sm" mt={4}>
-                            Tours
-                        </Heading>
-                        <VStack spacing={2} align="stretch">
-                            {selectedCategory.tours?.map((tour) => (
-                                <Flex key={tour.id} justify="space-between" align="center">
-                                    <Text>{tour.name}</Text>
-                                    <Button
-                                        size="xs"
-                                        colorScheme="red"
-                                        onClick={() => handleRemoveTour(tour.id)}
-                                    >
-                                        Remove
-                                    </Button>
-                                </Flex>
-                            ))}
-                        </VStack>
-                        <Button mt={4} colorScheme="blue" onClick={openAddTour}>
-                            Add Tour
+                        <Button
+                            size="sm"
+                            colorScheme="teal"
+                            onClick={() => toggleExpandCategory(selectedCategory.id)}
+                        >
+                            {expandedCategory === selectedCategory.id ? "Hide Details" : "View Details"}
                         </Button>
 
-                        <Heading size="sm" mt={4}>
-                            Blackout Dates
-                        </Heading>
-                        {Array.isArray(blackoutDates) && blackoutDates.length > 0 ? (
-                            blackoutDates.map((blackout, index) => (
-                                <Flex key={index} align="center" mb={2}>
-                                    <Text>
-                                        {blackout.date
-                                            ? `Date: ${new Date(blackout.date).toLocaleDateString("en-US", {
-                                                timeZone: "UTC",
-                                            })}`
-                                            : blackout.startTime && blackout.endTime
-                                                ? `Time: ${blackout.startTime} - ${blackout.endTime}`
-                                                : "Invalid blackout data"}
-                                    </Text>
-                                    <Button
-                                        size="xs"
-                                        colorScheme="red"
-                                        onClick={() => handleRemoveBlackoutDate(blackout)}
-                                    >
-                                        Remove
-                                    </Button>
-                                </Flex>
-                            ))
-                        ) : (
-                            <Text>No blackout dates available.</Text>
+                        {expandedCategory === selectedCategory.id && (
+                            <Box mt={4}>
+                                <Heading size="sm">Tours</Heading>
+                                <VStack spacing={2} align="stretch">
+                                    {selectedCategory.tours?.map((tour) => (
+                                        <Flex key={tour.id} justify="space-between" align="center">
+                                            <Text>{tour.name}</Text>
+                                            <Button size="xs" colorScheme="red" onClick={() => handleRemoveTour(tour.id)}>
+                                                Remove
+                                            </Button>
+                                        </Flex>
+                                    ))}
+                                </VStack>
+                                <Button mt={4} colorScheme="blue" onClick={openAddTour}>
+                                    Add Tour
+                                </Button>
+
+                                <Heading size="sm" mt={4}>
+                                    Blackout Dates
+                                </Heading>
+                                {Array.isArray(blackoutDates) && blackoutDates.length > 0 ? (
+                                    blackoutDates.map((blackout, index) => (
+                                        <Flex key={index} align="center" mb={2}>
+                                            <Text>
+                                                {blackout.date
+                                                    ? `Date: ${new Date(blackout.date).toLocaleDateString("en-US", {
+                                                        timeZone: "UTC",
+                                                    })}`
+                                                    : blackout.startTime && blackout.endTime
+                                                        ? `Time: ${blackout.startTime} - ${blackout.endTime}`
+                                                        : "Invalid blackout data"}
+                                            </Text>
+                                            <Button size="xs" colorScheme="red" onClick={() => handleRemoveBlackoutDate(blackout)}>
+                                                Remove
+                                            </Button>
+                                        </Flex>
+                                    ))
+                                ) : (
+                                    <Text>No blackout dates available.</Text>
+                                )}
+                                <Button mt={4} colorScheme="blue" onClick={openAddBlackout}>
+                                    Add Blackout Date
+                                </Button>
+                            </Box>
                         )}
-                        <Button mt={4} colorScheme="blue" onClick={openAddBlackout}>
-                            Add Blackout Date
-                        </Button>
                     </Box>
                 )}
 
@@ -482,23 +484,11 @@ export default function CategoryManagement() {
                                 ).map((tour) => (
                                     <Flex key={tour.id} justify="space-between" align="center">
                                         <Text>{tour.name}</Text>
-                                        <Button
-                                            size="xs"
-                                            colorScheme="blue"
-                                            onClick={() => handleAddTour(tour.id)}
-                                        >
+                                        <Button size="xs" colorScheme="blue" onClick={() => handleAddTour(tour.id)}>
                                             Add
                                         </Button>
                                     </Flex>
                                 ))}
-
-                                {(!selectedCategory || !selectedCategory.tours || tours.filter(
-                                    (tour) =>
-                                        selectedCategory?.tours &&
-                                        !selectedCategory.tours.some((categoryTour) => categoryTour.id === tour.id)
-                                ).length === 0) && (
-                                    <Text>No available tours to add.</Text>
-                                )}
                             </VStack>
                         </ModalBody>
                     </ModalContent>

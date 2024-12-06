@@ -106,7 +106,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         color="white"
                         _hover={{ cursor: "pointer" }}
                     >
-                        Guides
+                        Add-ons
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/create-addons")}
+                        _hover={{ cursor: "pointer", color: "gray.200" }}
+                    >
+                        Register Add-ons
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/list-addons")}
+                        _hover={{ cursor: "pointer", color: "gray.200" }}
+                    >
+                        List Add-ons
                     </Text>
                     <Divider borderColor="gray.600" />
                     <Text

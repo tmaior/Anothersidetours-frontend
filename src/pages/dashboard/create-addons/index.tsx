@@ -1,24 +1,16 @@
-import {
-    Box,
-    Button,
-    Heading,
-    Input,
-    Select,
-    Text,
-    Textarea,
-    useColorModeValue,
-    VStack,
-} from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { Box, Button, Heading, Input, Select, Text, Textarea, useColorModeValue, VStack } from "@chakra-ui/react";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 
-export default function AddonForm({ isEditing = false, addonId = null, initialData = null }) {
+export default function AddonForm() {
     const bgColor = useColorModeValue("white", "gray.800");
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
     const inputTextColor = useColorModeValue("black", "white");
     const router = useRouter();
+    const { addonId } = router.query;
 
+    const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         tenantId: "",
         tourId: "",
@@ -32,53 +24,45 @@ export default function AddonForm({ isEditing = false, addonId = null, initialDa
     const [tours, setTours] = useState([]);
 
     useEffect(() => {
-        if (isEditing && initialData) {
-            setFormData({
-                tenantId: initialData.tenantId || "",
-                tourId: initialData.tourId || "",
-                label: initialData.label || "",
-                description: initialData.description || "",
-                type: initialData.type || "CHECKBOX",
-                price: initialData.price || 0,
-            });
-        }
-    }, [isEditing, initialData]);
-
-    useEffect(() => {
         async function fetchData() {
-            try {
-                const [tenantsRes, toursRes] = await Promise.all([
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`),
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`),
-                ]);
-
-                const [tenantsData, toursData] = await Promise.all([
-                    tenantsRes.json(),
-                    toursRes.json(),
-                ]);
-
-                setTenants(tenantsData);
-                setTours(toursData);
-            } catch (error) {
-                console.error("Error fetching data:", error);
+            if (addonId) {
+                setIsEditing(true);
+                const addonRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`);
+                const addonData = await addonRes.json();
+                setFormData({
+                    tenantId: addonData.tenantId || "",
+                    tourId: addonData.tourId || "",
+                    label: addonData.label || "",
+                    description: addonData.description || "",
+                    type: addonData.type || "CHECKBOX",
+                    price: addonData.price || 0,
+                });
             }
+
+            const [tenantsRes, toursRes] = await Promise.all([
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`),
+            ]);
+
+            const [tenantsData, toursData] = await Promise.all([tenantsRes.json(), toursRes.json()]);
+            setTenants(tenantsData);
+            setTours(toursData);
         }
 
         fetchData();
-    }, []);
+    }, [addonId]);
 
     const handleFormChange = (field, value) => {
         setFormData({ ...formData, [field]: value });
     };
 
     const handleSubmit = async () => {
+        const method = isEditing ? "PUT" : "POST";
+        const endpoint = isEditing
+            ? `${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`
+            : `${process.env.NEXT_PUBLIC_API_URL}/addons`;
+
         try {
-            const endpoint = isEditing
-                ? `${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`
-                : `${process.env.NEXT_PUBLIC_API_URL}/addons`;
-
-            const method = isEditing ? "PUT" : "POST";
-
             const response = await fetch(endpoint, {
                 method,
                 headers: { "Content-Type": "application/json" },
@@ -175,7 +159,7 @@ export default function AddonForm({ isEditing = false, addonId = null, initialDa
                             />
 
                             <Button colorScheme="teal" onClick={handleSubmit}>
-                                Save
+                                {isEditing ? "Update" : "Create"}
                             </Button>
                         </VStack>
                     </form>

@@ -58,22 +58,29 @@ export default function ListAddons() {
     const handleDelete = async () => {
         if (selectedAddon) {
             try {
-                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/${selectedAddon}`, {
-                    method: "DELETE",
-                });
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/addons/${selectedAddon}`,
+                    { method: "DELETE" }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to delete the add-on.");
+                }
+
                 setAddons(addons.filter((addon) => addon.id !== selectedAddon));
                 setSelectedAddon(null);
                 toast({
-                    title: "Addon Deleted",
-                    description: "Addon deleted successfully.",
+                    title: "Add-on Deleted",
+                    description: "The selected add-on has been deleted.",
                     status: "success",
                     duration: 3000,
                     isClosable: true,
                 });
             } catch (error) {
+                console.error("Error deleting add-on:", error);
                 toast({
                     title: "Error",
-                    description: "Failed to delete addon.",
+                    description: "Failed to delete add-on.",
                     status: "error",
                     duration: 5000,
                     isClosable: true,
@@ -84,7 +91,10 @@ export default function ListAddons() {
 
     const handleEdit = () => {
         if (selectedAddon) {
-            router.push(`/dashboard/edit-addon/${selectedAddon}`);
+            router.push({
+                pathname: "/dashboard/create-addons",
+                query: { addonId: selectedAddon },
+            });
         }
     };
 

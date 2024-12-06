@@ -10,7 +10,10 @@ import {
     ModalContent,
     ModalFooter,
     ModalHeader,
-    ModalOverlay, Radio, RadioGroup, Stack,
+    ModalOverlay,
+    Radio,
+    RadioGroup,
+    Stack,
     Text,
     Textarea,
     useDisclosure,
@@ -35,6 +38,11 @@ export default function CategoryManagement() {
         isOpen: isAddTourOpen,
         onOpen: openAddTour,
         onClose: closeAddTour,
+    } = useDisclosure();
+    const {
+        isOpen: isAddBlackoutOpen,
+        onOpen: openAddBlackout,
+        onClose: closeAddBlackout,
     } = useDisclosure();
     const toast = useToast();
     const [blackoutType, setBlackoutType] = useState("date");
@@ -148,7 +156,37 @@ export default function CategoryManagement() {
         }
     };
 
+    const handleDeleteCategory = async (categoryId) => {
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryId}`,
+                { method: "DELETE" }
+            );
 
+            if (!response.ok) {
+                throw new Error("Failed to delete category");
+            }
+
+            setCategories((prev) => prev.filter((category) => category.id !== categoryId));
+
+            toast({
+                title: "Category Deleted",
+                description: "The category was successfully deleted.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error deleting category:", error);
+            toast({
+                title: "Error",
+                description: "Failed to delete category.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
 
     const handleAddTour = async (tourId) => {
         try {
@@ -216,6 +254,41 @@ export default function CategoryManagement() {
         }
     };
 
+    const handleRemoveBlackoutDate = async (blackout) => {
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/${blackout.id}`,
+                {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to delete blackout date.");
+            }
+
+            setBlackoutDates((prev) => prev.filter((d) => d.id !== blackout.id));
+
+            toast({
+                title: "Removed",
+                description: "Blackout date removed successfully.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error removing blackout date:", error);
+            toast({
+                title: "Error",
+                description: "Failed to remove blackout date.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
     const handleAddBlackoutDate = async () => {
         try {
             const blackout =
@@ -270,41 +343,6 @@ export default function CategoryManagement() {
         }
     };
 
-    const handleRemoveBlackoutDate = async (blackout) => {
-        try {
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/${blackout.id}`,
-                {
-                    method: "DELETE",
-                    headers: { "Content-Type": "application/json" },
-                }
-            );
-
-            if (!response.ok) {
-                throw new Error("Failed to delete blackout date.");
-            }
-
-            setBlackoutDates((prev) => prev.filter((d) => d.id !== blackout.id));
-
-            toast({
-                title: "Removed",
-                description: "Blackout date removed successfully.",
-                status: "success",
-                duration: 3000,
-                isClosable: true,
-            });
-        } catch (error) {
-            console.error("Error removing blackout date:", error);
-            toast({
-                title: "Error",
-                description: "Failed to remove blackout date.",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
-        }
-    };
-
     return (
         <DashboardLayout>
             <Box p={8}>
@@ -323,9 +361,18 @@ export default function CategoryManagement() {
                                     <Heading size="md">{category.name}</Heading>
                                     <Text>{category.description}</Text>
                                 </Box>
-                                <Button colorScheme="teal" onClick={() => handleSelectCategory(category)}>
-                                    Edit
-                                </Button>
+                                <Flex>
+                                    <Button colorScheme="teal" onClick={() => handleSelectCategory(category)}>
+                                        Edit
+                                    </Button>
+                                    <Button
+                                        colorScheme="red"
+                                        ml={2}
+                                        onClick={() => handleDeleteCategory(category.id)}
+                                    >
+                                        Delete
+                                    </Button>
+                                </Flex>
                             </Flex>
                         </Box>
                     ))}
@@ -382,41 +429,8 @@ export default function CategoryManagement() {
                         ) : (
                             <Text>No blackout dates available.</Text>
                         )}
-
-                        <RadioGroup onChange={setBlackoutType} value={blackoutType} mt={4}>
-                            <Stack direction="row">
-                                <Radio value="date">By Date</Radio>
-                                <Radio value="time">By Time</Radio>
-                            </Stack>
-                        </RadioGroup>
-
-                        {blackoutType === "date" ? (
-                            <Input
-                                type="date"
-                                mt={4}
-                                value={timeRange.start}
-                                onChange={(e) => setTimeRange({ start: e.target.value, end: "" })}
-                            />
-                        ) : (
-                            <Flex mt={4}>
-                                <Input
-                                    type="time"
-                                    placeholder="Start Time"
-                                    value={timeRange.start}
-                                    onChange={(e) => setTimeRange({ ...timeRange, start: e.target.value })}
-                                    mr={2}
-                                />
-                                <Input
-                                    type="time"
-                                    placeholder="End Time"
-                                    value={timeRange.end}
-                                    onChange={(e) => setTimeRange({ ...timeRange, end: e.target.value })}
-                                />
-                            </Flex>
-                        )}
-
-                        <Button mt={4} colorScheme="blue" onClick={handleAddBlackoutDate}>
-                            Add Blackout
+                        <Button mt={4} colorScheme="blue" onClick={openAddBlackout}>
+                            Add Blackout Date
                         </Button>
                     </Box>
                 )}
@@ -487,6 +501,52 @@ export default function CategoryManagement() {
                                 )}
                             </VStack>
                         </ModalBody>
+                    </ModalContent>
+                </Modal>
+
+                <Modal isOpen={isAddBlackoutOpen} onClose={closeAddBlackout}>
+                    <ModalOverlay />
+                    <ModalContent>
+                        <ModalHeader>Add Blackout Date</ModalHeader>
+                        <ModalCloseButton />
+                        <ModalBody>
+                            <RadioGroup onChange={setBlackoutType} value={blackoutType} mt={4}>
+                                <Stack direction="row">
+                                    <Radio value="date">By Date</Radio>
+                                    <Radio value="time">By Time</Radio>
+                                </Stack>
+                            </RadioGroup>
+
+                            {blackoutType === "date" ? (
+                                <Input
+                                    type="date"
+                                    mt={4}
+                                    value={timeRange.start}
+                                    onChange={(e) => setTimeRange({ start: e.target.value, end: "" })}
+                                />
+                            ) : (
+                                <Flex mt={4}>
+                                    <Input
+                                        type="time"
+                                        placeholder="Start Time"
+                                        value={timeRange.start}
+                                        onChange={(e) => setTimeRange({ ...timeRange, start: e.target.value })}
+                                        mr={2}
+                                    />
+                                    <Input
+                                        type="time"
+                                        placeholder="End Time"
+                                        value={timeRange.end}
+                                        onChange={(e) => setTimeRange({ ...timeRange, end: e.target.value })}
+                                    />
+                                </Flex>
+                            )}
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button colorScheme="blue" onClick={handleAddBlackoutDate}>
+                                Add Blackout
+                            </Button>
+                        </ModalFooter>
                     </ModalContent>
                 </Modal>
             </Box>

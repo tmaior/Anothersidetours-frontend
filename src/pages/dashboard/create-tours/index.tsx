@@ -167,6 +167,8 @@ export default function TourForm({isEditing = false, tourId = null, initialData 
             }
 
             const durationInMinutes = formData.duration * 60;
+
+
             const tourData = {
                 ...formData,
                 duration: durationInMinutes,
@@ -174,6 +176,10 @@ export default function TourForm({isEditing = false, tourId = null, initialData 
                 imageUrl,
                 additionalInfos,
             };
+
+            if (formData.category) {
+                tourData.category = formData.category;
+            }
 
             const endpoint = isEditing
                 ? `${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`
@@ -272,10 +278,13 @@ export default function TourForm({isEditing = false, tourId = null, initialData 
                                 value={formData.price}
                                 decimalsLimit={2}
                                 prefix="$"
-                                allowNegative={false}
-                                customInput={Input}
-                                bg={inputBgColor}
-                                color={inputTextColor}
+                                customInput={(props) => (
+                                    <Input
+                                        {...props}
+                                        bg={inputBgColor}
+                                        color={inputTextColor}
+                                    />
+                                )}
                                 onValueChange={(value) => handleFormChange("price", parseFloat(value || "0"))}
                             />
                             <Text color="gray.500" fontSize="sm">
@@ -290,10 +299,10 @@ export default function TourForm({isEditing = false, tourId = null, initialData 
                                 onChange={(e) => handleFormChange("duration", e.target.value)}
                             />
                             <Text color="gray.500" fontSize="sm">
-                                Select the city where the tour is.
+                                Select the tenant where the tour is.
                             </Text>
                             <Select
-                                placeholder="Select the City"
+                                placeholder="Select the Tenant"
                                 bg={inputBgColor}
                                 color={inputTextColor}
                                 value={formData.tenantId}

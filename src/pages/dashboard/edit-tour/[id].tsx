@@ -10,7 +10,7 @@ export default function EditTour() {
 
     useEffect(() => {
         if (id) {
-            async function fetchTour() {
+            (async () => {
                 try {
                     const response = await fetch(
                         `${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`
@@ -22,9 +22,7 @@ export default function EditTour() {
                 } finally {
                     setIsLoading(false);
                 }
-            }
-
-            fetchTour();
+            })();
         }
     }, [id]);
 

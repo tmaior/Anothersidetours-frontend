@@ -122,7 +122,7 @@ export default function ListTenants() {
                 );
 
                 if (response.ok) {
-                    const updatedTenant = await response.json();
+                    // const updatedTenant = await response.json();
                     setTenants((prev) =>
                         prev.map((tenant) =>
                             tenant.id === selectedTenant ? { ...tenant, name: tenantName } : tenant

@@ -143,7 +143,7 @@ export default function ListTours() {
             <Box bg={bgColor} p={8} borderRadius="md" color="black">
                 <HStack mb={4} spacing={4}>
                     <Select
-                        placeholder="Select City"
+                        placeholder="Select Tenant"
                         bg={inputBgColor}
                         onChange={(e) => setFilterTenant(e.target.value)}
                     >

@@ -3,30 +3,29 @@ import {
     VStack,
     HStack,
     Input,
-    Select,
     Checkbox,
     Button,
+    Badge,
     Text,
     Image,
     Heading,
     Flex,
     useColorModeValue,
-    useToast,
+    useToast, InputLeftElement, InputGroup, Divider, Center,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import {useRouter} from "next/router";
+import { useRouter } from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
+import {SearchIcon} from "@chakra-ui/icons";
 
 export default function ListTours() {
-    const bgColor = useColorModeValue("white", "gray.800");
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
     const [tours, setTours] = useState([]);
     const [selectedTour, setSelectedTour] = useState(null);
-    const [tenants, setTenants] = useState([]);
-    const [filterTenant, setFilterTenant] = useState("");
     const [searchName, setSearchName] = useState("");
     const [filteredTours, setFilteredTours] = useState([]);
     const toast = useToast();
+    const router = useRouter();
 
     useEffect(() => {
         async function fetchData() {
@@ -38,11 +37,11 @@ export default function ListTours() {
                 setTours(Array.isArray(toursData) ? toursData : []);
                 setFilteredTours(Array.isArray(toursData) ? toursData : []);
 
-                const tenantsResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tenants`
-                );
-                const tenantsData = await tenantsResponse.json();
-                setTenants(Array.isArray(tenantsData) ? tenantsData : []);
+                // const tenantsResponse = await fetch(
+                //     `${process.env.NEXT_PUBLIC_API_URL}/tenants`
+                // );
+                // const tenantsData = await tenantsResponse.json();
+                // setTenants(Array.isArray(tenantsData) ? tenantsData : []);
             } catch (error) {
                 console.error("Error fetching data:", error);
                 toast({
@@ -60,9 +59,6 @@ export default function ListTours() {
     useEffect(() => {
         let filtered = tours;
 
-        if (filterTenant) {
-            filtered = filtered.filter((tour) => tour.tenantId === filterTenant);
-        }
 
         if (searchName) {
             filtered = filtered.filter((tour) =>
@@ -71,62 +67,64 @@ export default function ListTours() {
         }
 
         setFilteredTours(Array.isArray(filtered) ? filtered : []);
-    }, [filterTenant, searchName, tours]);
+    }, [searchName, tours]);
 
     const handleSelectTour = (id) => {
         setSelectedTour(selectedTour === id ? null : id);
     };
 
-    const handleDelete = async () => {
-        if (selectedTour) {
-            try {
-                const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tours/${selectedTour}`,
-                    {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            isDeleted: true,
-                        }),
-                    }
-                );
+    // const handleDelete = async () => {
+    //     if (selectedTour) {
+    //         try {
+    //             const response = await fetch(
+    //                 `${process.env.NEXT_PUBLIC_API_URL}/tours/${selectedTour}`,
+    //                 {
+    //                     method: "PUT",
+    //                     headers: {
+    //                         "Content-Type": "application/json",
+    //                     },
+    //                     body: JSON.stringify({
+    //                         isDeleted: true,
+    //                     }),
+    //                 }
+    //             );
+    //
+    //             if (!response.ok) {
+    //                 const errorData = await response.json();
+    //                 throw new Error(errorData.message || "Failed to delete the tour.");
+    //             }
+    //
+    //             setTours(tours.filter((tour) => tour.id !== selectedTour));
+    //             setSelectedTour(null);
+    //             toast({
+    //                 title: "Tour Deleted",
+    //                 description: "The selected tour has been deleted.",
+    //                 status: "success",
+    //                 duration: 3000,
+    //                 isClosable: true,
+    //             });
+    //         } catch (error) {
+    //             console.error("Error deleting tour:", error);
+    //             toast({
+    //                 title: "Error",
+    //                 description: error.message,
+    //                 status: "error",
+    //                 duration: 5000,
+    //                 isClosable: true,
+    //             });
+    //         }
+    //     }
+    // };
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || "Failed to delete the tour.");
-                }
-
-                setTours(tours.filter((tour) => tour.id !== selectedTour));
-                setSelectedTour(null);
-                toast({
-                    title: "Tour Deleted",
-                    description: "The selected tour has been deleted.",
-                    status: "success",
-                    duration: 3000,
-                    isClosable: true,
-                });
-            } catch (error) {
-                console.error("Error deleting tour:", error);
-                toast({
-                    title: "Error",
-                    description: error.message,
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
-                });
-            }
-        }
-    };
-
-    const router = useRouter();
-
-    const handleEdit = () => {
-        if (selectedTour) {
-            router.push(`/dashboard/edit-tour/${selectedTour}`);
-        }
-    };
+    // const handleEdit = () => {
+    //     if (selectedTour) {
+    //         router.push(`/dashboard/edit-tour/${selectedTour}`);
+    //     }
+    // };
+    //
+    // const handleCreate = () => {
+    //     router.push("/dashboard/create-tour");
+    // };
 
     const formatDuration = (minutes) => {
         const hours = Math.floor(minutes / 60);
@@ -140,81 +138,85 @@ export default function ListTours() {
 
     return (
         <DashboardLayout>
-            <Box bg={bgColor} p={8} borderRadius="md" color="black">
+            {/*<Box bg={bgColor} p={8} borderRadius="md" color="black">*/}
                 <HStack mb={4} spacing={4}>
-                    <Select
-                        placeholder="Select Tenant"
-                        bg={inputBgColor}
-                        onChange={(e) => setFilterTenant(e.target.value)}
+                    <Text fontSize="4xl" fontWeight="medium" textAlign="center">
+                        Products
+                    </Text>
+                    <Center height='50px'>
+                        <Divider orientation='vertical' borderWidth="1px" />
+                    </Center>
+                    <HStack>
+                        <InputGroup>
+                            <InputLeftElement pointerEvents="none">
+                                <SearchIcon color="gray.400" />
+                            </InputLeftElement>
+                            <Input
+                                placeholder="Search by name"
+                                bg={inputBgColor}
+                                value={searchName}
+                                w={"1200px"}
+                                onChange={(e) => setSearchName(e.target.value)}
+                            />
+                        </InputGroup>
+                    </HStack>
+                    <Button
+                        colorScheme="blue"
+                        onClick={() => router.push("/dashboard/create-tours")}
                     >
-                        {tenants.map((tenant) => (
-                            <option key={tenant.id} value={tenant.id}>
-                                {tenant.name}
-                            </option>
-                        ))}
-                    </Select>
-                    <Input
-                        placeholder="Search by name"
-                        bg={inputBgColor}
-                        value={searchName}
-                        onChange={(e) => setSearchName(e.target.value)}
-                    />
+                        + Create Product
+                    </Button>
                 </HStack>
+            <Divider orientation='horizontal' borderWidth="1px" color={"black"} />
                 <VStack spacing={6} align="stretch">
                     {filteredTours.map((tour) => (
                         <Flex
                             key={tour.id}
                             p={4}
-                            bg="gray.700"
-                            borderRadius="md"
-                            boxShadow="md"
+                            bg="gray.50"
+                            borderRadius="lg"
+                            boxShadow="lg"
                             align="center"
+                            justify="space-between"
+                            flexWrap="wrap"
                         >
+                            <HStack spacing={4} align="center">
+                                <Image
+                                    src={tour.imageUrl || "https://via.placeholder.com/300x200"}
+                                    alt={tour.name}
+                                    boxSize="100px"
+                                    borderRadius="md"
+                                />
+                                <Box>
+                                    <Heading fontSize="lg">{tour.name}</Heading>
+                                    <Text color="gray.600" noOfLines={2}>
+                                        {tour.description}
+                                    </Text>
+                                    <HStack mt={2}>
+                                        {tour.isPrivate && (
+                                            <Badge colorScheme="yellow">Private</Badge>
+                                        )}
+                                        {tour.isHidden && (
+                                            <Badge colorScheme="gray">Hidden</Badge>
+                                        )}
+                                    </HStack>
+                                    <Text mt={2} fontSize="sm" color="gray.500">
+                                        Price: ${tour.price.toFixed(2)}
+                                    </Text>
+                                    <Text fontSize="sm" color="gray.500">
+                                        Duration: {formatDuration(tour.duration)}
+                                    </Text>
+                                </Box>
+                            </HStack>
                             <Checkbox
                                 isChecked={selectedTour === tour.id}
                                 onChange={() => handleSelectTour(tour.id)}
                                 colorScheme="teal"
-                                mr={4}
                             />
-                            <Image
-                                src={tour.imageUrl || "https://via.placeholder.com/300x200"}
-                                alt={tour.name}
-                                boxSize="150px"
-                                borderRadius="md"
-                                mr={4}
-                            />
-                            <Box>
-                                <Heading fontSize="lg" color="white">
-                                    {tour.name}
-                                </Heading>
-                                <Text color="gray.300">{tour.description}</Text>
-                                <Text color="gray.400">
-                                    Price: ${tour.price.toFixed(2)}
-                                </Text>
-                                <Text color="gray.400">
-                                    Duration: {formatDuration(tour.duration)}
-                                </Text>
-                            </Box>
                         </Flex>
                     ))}
                 </VStack>
-                <HStack mt={4} spacing={4}>
-                    <Button
-                        colorScheme="blue"
-                        onClick={handleEdit}
-                        isDisabled={!selectedTour}
-                    >
-                        Edit
-                    </Button>
-                    <Button
-                        colorScheme="red"
-                        onClick={handleDelete}
-                        isDisabled={!selectedTour}
-                    >
-                        Delete
-                    </Button>
-                </HStack>
-            </Box>
+            {/*</Box>*/}
         </DashboardLayout>
     );
 }

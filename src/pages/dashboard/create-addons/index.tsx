@@ -144,7 +144,7 @@ export default function AddonForm() {
                                 bg={inputBgColor}
                                 color={inputTextColor}
                             >
-                                <option value="CHECKBOX">Unique</option>
+                                <option value="CHECKBOX">CheckBox</option>
                                 <option value="SELECT">Quantity</option>
                             </Select>
 

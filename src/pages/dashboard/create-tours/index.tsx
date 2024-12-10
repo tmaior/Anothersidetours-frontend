@@ -15,6 +15,7 @@ import {
     Textarea,
     VStack,
 } from "@chakra-ui/react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import {AddIcon, InfoOutlineIcon} from "@chakra-ui/icons";
 import React, {useState} from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
@@ -174,7 +175,7 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
 
                             <Divider my={6}/>
                         </FormControl>
-                        <Divider my={6} />
+                        {/*<Divider my={6} />*/}
                         <Heading as="h3" size="md" mb={4}>
                             Checklist
                         </Heading>
@@ -241,28 +242,28 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
                             </Box>
                         </HStack>
                         <Divider my={6} />
-                        <Box>
-                            <Text fontSize="sm" mb={1}>
-                                Cancellation Policy <InfoOutlineIcon ml={1} color="gray.500" />
-                            </Text>
-                            <Textarea placeholder="Add cancellation policy..." resize="none" />
-                            <Flex align="center" mt={2}>
-                                <Switch colorScheme="teal" mr={2} />
-                                <Text fontSize="sm">
-                                    My cancellation policy offers refunds, store credits, and/or date
-                                    changes
-                                </Text>
-                            </Flex>
-                        </Box>
-                        <Box>
-                            <Text fontSize="sm" mb={1}>
-                                Other Considerations <InfoOutlineIcon ml={1} color="gray.500" />
-                            </Text>
-                            <Textarea placeholder="Add other considerations..." resize="none" />
-                            <Text fontSize="xs" color="gray.500">
-                                0 characters | 0 words
-                            </Text>
-                        </Box>
+                        {/*<Box>*/}
+                        {/*    <Text fontSize="sm" mb={1}>*/}
+                        {/*        Cancellation Policy <InfoOutlineIcon ml={1} color="gray.500" />*/}
+                        {/*    </Text>*/}
+                        {/*    <Textarea placeholder="Add cancellation policy..." resize="none" />*/}
+                        {/*    <Flex align="center" mt={2}>*/}
+                        {/*        <Switch colorScheme="teal" mr={2} />*/}
+                        {/*        <Text fontSize="sm">*/}
+                        {/*            My cancellation policy offers refunds, store credits, and/or date*/}
+                        {/*            changes*/}
+                        {/*        </Text>*/}
+                        {/*    </Flex>*/}
+                        {/*</Box>*/}
+                        {/*<Box>*/}
+                        {/*    <Text fontSize="sm" mb={1}>*/}
+                        {/*        Other Considerations <InfoOutlineIcon ml={1} color="gray.500" />*/}
+                        {/*    </Text>*/}
+                        {/*    <Textarea placeholder="Add other considerations..." resize="none" />*/}
+                        {/*    <Text fontSize="xs" color="gray.500">*/}
+                        {/*        0 characters | 0 words*/}
+                        {/*    </Text>*/}
+                        {/*</Box>*/}
                     </VStack>
                 </Box>
                 <HStack justify="space-between" mt={8}>

@@ -1,169 +1,141 @@
-import { Box, Button, Heading, Input, Select, Text, Textarea, useColorModeValue, VStack } from "@chakra-ui/react";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import {
+    Box,
+    Button,
+    FormControl,
+    FormLabel,
+    HStack,
+    Input,
+    Switch,
+    Textarea,
+    Select,
+    VStack,
+    Text,
+} from "@chakra-ui/react";
+import { AddIcon } from "@chakra-ui/icons";
+import React, { useState } from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 
-export default function AddonForm() {
-    const bgColor = useColorModeValue("white", "gray.800");
-    const inputBgColor = useColorModeValue("gray.100", "gray.700");
-    const inputTextColor = useColorModeValue("black", "white");
-    const router = useRouter();
-    const { addonId } = router.query;
+export default function AddonContentPage() {
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [products, setProducts] = useState("");
+    const [image, setImage] = useState(null);
+    const [selectionType, setSelectionType] = useState("Quantity");
+    const [price, setPrice] = useState("");
+    const [isPrivate, setIsPrivate] = useState(false);
+    const [isRequired, setIsRequired] = useState(false);
 
-    const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({
-        tenantId: "",
-        tourId: "",
-        label: "",
-        description: "",
-        type: "CHECKBOX",
-        price: 0,
-    });
-
-    const [tenants, setTenants] = useState([]);
-    const [tours, setTours] = useState([]);
-
-    useEffect(() => {
-        async function fetchData() {
-            if (addonId) {
-                setIsEditing(true);
-                const addonRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`);
-                const addonData = await addonRes.json();
-                setFormData({
-                    tenantId: addonData.tenantId || "",
-                    tourId: addonData.tourId || "",
-                    label: addonData.label || "",
-                    description: addonData.description || "",
-                    type: addonData.type || "CHECKBOX",
-                    price: addonData.price || 0,
-                });
-            }
-
-            const [tenantsRes, toursRes] = await Promise.all([
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`),
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`),
-            ]);
-
-            const [tenantsData, toursData] = await Promise.all([tenantsRes.json(), toursRes.json()]);
-            setTenants(tenantsData);
-            setTours(toursData);
-        }
-
-        fetchData();
-    }, [addonId]);
-
-    const handleFormChange = (field, value) => {
-        setFormData({ ...formData, [field]: value });
-    };
-
-    const handleSubmit = async () => {
-        const method = isEditing ? "PUT" : "POST";
-        const endpoint = isEditing
-            ? `${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`
-            : `${process.env.NEXT_PUBLIC_API_URL}/addons`;
-
-        try {
-            const response = await fetch(endpoint, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
-            });
-
-            if (!response.ok) {
-                throw new Error(`Error ${isEditing ? "updating" : "creating"} addon`);
-            }
-
-            router.push("/dashboard/list-addons");
-        } catch (error) {
-            console.error(error);
-            alert("Error processing the request");
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files ? e.target.files[0] : null;
+        if (file) {
+            setImage(file);
         }
     };
 
     return (
         <DashboardLayout>
-            <Box ml="250px" p={8}>
-                <Box p={8} bg={bgColor} color="white" borderRadius="md" maxW="800px" w="100%">
-                    <Heading color={"black"} mb={4}>
-                        {isEditing ? "Edit Add-on" : "Create Add-on"}
-                    </Heading>
-                    <form>
-                        <VStack spacing={4}>
-                            <Text>Tenant</Text>
-                            <Select
-                                placeholder="Select Tenant"
-                                bg={inputBgColor}
-                                color={inputTextColor}
-                                value={formData.tenantId}
-                                onChange={(e) => handleFormChange("tenantId", e.target.value)}
-                            >
-                                {tenants.map((tenant) => (
-                                    <option key={tenant.id} value={tenant.id}>
-                                        {tenant.name}
-                                    </option>
-                                ))}
-                            </Select>
+            <Box p={8} maxWidth="900px" mx="auto">
+                <VStack spacing={6} align="stretch">
+                    <Text fontSize="2xl" fontWeight="bold" mb={6}>
+                        New Add-On
+                    </Text>
 
-                            <Text>Tour</Text>
-                            <Select
-                                placeholder="Select Tour"
-                                bg={inputBgColor}
-                                color={inputTextColor}
-                                value={formData.tourId}
-                                onChange={(e) => handleFormChange("tourId", e.target.value)}
-                            >
-                                {tours.map((tour) => (
-                                    <option key={tour.id} value={tour.id}>
-                                        {tour.name}
-                                    </option>
-                                ))}
-                            </Select>
+                    <FormControl isRequired>
+                        <FormLabel>Name</FormLabel>
+                        <Input
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Enter Add-On Name"
+                        />
+                    </FormControl>
 
-                            <Text>Label</Text>
+                    <FormControl isRequired>
+                        <FormLabel>Description</FormLabel>
+                        <Textarea
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Enter Add-On Description"
+                        />
+                    </FormControl>
+
+                    <FormControl>
+                        <FormLabel>Products</FormLabel>
+                        <Input
+                            value={products}
+                            onChange={(e) => setProducts(e.target.value)}
+                            placeholder="Select Products"
+                        />
+                    </FormControl>
+
+                    <FormControl>
+                        <FormLabel>Image</FormLabel>
+                        <Button variant="outline" leftIcon={<AddIcon />} onClick={() => document.getElementById("fileInput")?.click()}>
+                            Upload New Photo
+                        </Button>
+                        <input
+                            id="fileInput"
+                            type="file"
+                            accept="image/png, image/jpeg"
+                            style={{ display: "none" }}
+                            onChange={handleImageUpload}
+                        />
+                        {image && <Text mt={2}>{image.name}</Text>}
+                        <Text fontSize="sm" color="gray.500">
+                            Check that the image is in PNG or JPG format and does not exceed 5MB
+                        </Text>
+                    </FormControl>
+
+                    <FormControl isRequired>
+                        <FormLabel>Selection Type</FormLabel>
+                        <Select
+                            value={selectionType}
+                            onChange={(e) => setSelectionType(e.target.value)}
+                        >
+                            <option value="Quantity">Quantity</option>
+                            <option value="Checkbox">Checkbox</option>
+                        </Select>
+                    </FormControl>
+
+                    <FormControl isRequired>
+                        <FormLabel>Price</FormLabel>
+                        <HStack>
                             <Input
-                                placeholder="Label"
-                                bg={inputBgColor}
-                                color={inputTextColor}
-                                value={formData.label}
-                                onChange={(e) => handleFormChange("label", e.target.value)}
-                            />
-
-                            <Text>Description</Text>
-                            <Textarea
-                                placeholder="Description"
-                                bg={inputBgColor}
-                                color={inputTextColor}
-                                value={formData.description}
-                                onChange={(e) => handleFormChange("description", e.target.value)}
-                            />
-
-                            <Text>Type</Text>
-                            <Select
-                                value={formData.type}
-                                onChange={(e) => handleFormChange("type", e.target.value)}
-                                bg={inputBgColor}
-                                color={inputTextColor}
-                            >
-                                <option value="CHECKBOX">CheckBox</option>
-                                <option value="SELECT">Quantity</option>
-                            </Select>
-
-                            <Text>Price</Text>
-                            <Input
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
+                                placeholder="$"
+                                width="auto"
                                 type="number"
-                                placeholder="Price"
-                                bg={inputBgColor}
-                                color={inputTextColor}
-                                value={formData.price}
-                                onChange={(e) => handleFormChange("price", parseFloat(e.target.value))}
                             />
+                        </HStack>
+                    </FormControl>
 
-                            <Button colorScheme="teal" onClick={handleSubmit}>
-                                {isEditing ? "Update" : "Create"}
-                            </Button>
-                        </VStack>
-                    </form>
-                </Box>
+                    <FormControl>
+                        <HStack>
+                            <Switch
+                                isChecked={isPrivate}
+                                onChange={() => setIsPrivate(!isPrivate)}
+                            />
+                            <Text>Private (Add-on is only available for back office purchases)</Text>
+                        </HStack>
+                    </FormControl>
+
+                    <FormControl>
+                        <HStack>
+                            <Switch
+                                isChecked={isRequired}
+                                onChange={() => setIsRequired(!isRequired)}
+                            />
+                            <Text>Required (Add-on required during online checkout)</Text>
+                        </HStack>
+                    </FormControl>
+
+                    <HStack justify="space-between" mt={6}>
+                        <Button variant="outline" colorScheme="gray">
+                            Cancel
+                        </Button>
+                        <Button colorScheme="blue">Save</Button>
+                    </HStack>
+                </VStack>
             </Box>
         </DashboardLayout>
     );

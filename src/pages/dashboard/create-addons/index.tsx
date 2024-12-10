@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import {
     Box,
     Button,
@@ -5,30 +6,139 @@ import {
     FormLabel,
     HStack,
     Input,
+    Select,
     Switch,
     Textarea,
-    Select,
-    VStack,
     Text,
+    VStack,
+    useDisclosure,
+    useToast,
 } from "@chakra-ui/react";
-import { AddIcon } from "@chakra-ui/icons";
-import React, { useState } from "react";
+import {  DeleteIcon } from "@chakra-ui/icons";
 import DashboardLayout from "../../../components/DashboardLayout";
+import { useRouter } from "next/router";
 
 export default function AddonContentPage() {
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
-    const [products, setProducts] = useState("");
-    const [image, setImage] = useState(null);
-    const [selectionType, setSelectionType] = useState("Quantity");
+    const router = useRouter();
+    const { addonId } = router.query;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const toast = useToast();
     const [price, setPrice] = useState("");
-    const [isPrivate, setIsPrivate] = useState(false);
-    const [isRequired, setIsRequired] = useState(false);
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files ? e.target.files[0] : null;
-        if (file) {
-            setImage(file);
+    const [isEditing, setIsEditing] = useState(false);
+    const [formData, setFormData] = useState({
+        tourId: "",
+        label: "",
+        description: "",
+        type: "CHECKBOX",
+        price: 0,
+        isPrivate: false,
+        isRequired: false,
+    });
+    const [tours, setTours] = useState([]);
+
+    useEffect(() => {
+        async function fetchData() {
+            if (addonId) {
+                setIsEditing(true);
+                const addonRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`);
+                const addonData = await addonRes.json();
+                setFormData({
+                    // tenantId: addonData.tenantId || "",
+                    tourId: addonData.tourId || "",
+                    label: addonData.label || "",
+                    description: addonData.description || "",
+                    type: addonData.type || "CHECKBOX",
+                    price: addonData.price || 0,
+                    isRequired: addonData.isRequired || false,
+                    isPrivate: addonData.isPrivate || false,
+                });
+            }
+
+            const [ toursRes] = await Promise.all([
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`),
+            ]);
+
+            const [toursData] = await Promise.all([
+                toursRes.json(),
+            ]);
+            setTours(toursData);
+        }
+
+        fetchData();
+    }, [addonId]);
+
+    const handleFormChange = (field, value) => {
+        setFormData({ ...formData, [field]: value });
+    };
+
+    const handleSubmit = async () => {
+        const method = isEditing ? "PUT" : "POST";
+        const endpoint = isEditing
+            ? `${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`
+            : `${process.env.NEXT_PUBLIC_API_URL}/addons`;
+
+        try {
+            const response = await fetch(endpoint, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error ${isEditing ? "updating" : "creating"} addon`);
+            }
+
+            toast({
+                title: isEditing ? "Addon Updated" : "Addon Created",
+                description: `The add-on has been ${isEditing ? "updated" : "created"} successfully.`,
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+
+            router.push("/dashboard/list-addons");
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: "Error",
+                description: "An error occurred while processing the request.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
+    const handleRemoveAddon = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                throw new Error("Error deleting addon");
+            }
+
+            toast({
+                title: "Addon Removed",
+                description: "The add-on has been successfully removed.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+
+            router.push("/dashboard/list-addons");
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: "Error",
+                description: "An error occurred while deleting the add-on.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
         }
     };
 
@@ -37,14 +147,14 @@ export default function AddonContentPage() {
             <Box p={8} maxWidth="900px" mx="auto">
                 <VStack spacing={6} align="stretch">
                     <Text fontSize="2xl" fontWeight="bold" mb={6}>
-                        New Add-On
+                        {isEditing ? "Edit Add-On" : "New Add-On"}
                     </Text>
 
                     <FormControl isRequired>
                         <FormLabel>Name</FormLabel>
                         <Input
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            value={formData.label}
+                            onChange={(e) => handleFormChange("label", e.target.value)}
                             placeholder="Enter Add-On Name"
                         />
                     </FormControl>
@@ -52,47 +162,35 @@ export default function AddonContentPage() {
                     <FormControl isRequired>
                         <FormLabel>Description</FormLabel>
                         <Textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
+                            value={formData.description}
+                            onChange={(e) => handleFormChange("description", e.target.value)}
                             placeholder="Enter Add-On Description"
                         />
                     </FormControl>
 
                     <FormControl>
-                        <FormLabel>Products</FormLabel>
-                        <Input
-                            value={products}
-                            onChange={(e) => setProducts(e.target.value)}
-                            placeholder="Select Products"
-                        />
-                    </FormControl>
-
-                    <FormControl>
-                        <FormLabel>Image</FormLabel>
-                        <Button variant="outline" leftIcon={<AddIcon />} onClick={() => document.getElementById("fileInput")?.click()}>
-                            Upload New Photo
-                        </Button>
-                        <input
-                            id="fileInput"
-                            type="file"
-                            accept="image/png, image/jpeg"
-                            style={{ display: "none" }}
-                            onChange={handleImageUpload}
-                        />
-                        {image && <Text mt={2}>{image.name}</Text>}
-                        <Text fontSize="sm" color="gray.500">
-                            Check that the image is in PNG or JPG format and does not exceed 5MB
-                        </Text>
+                        <FormLabel>Tour</FormLabel>
+                        <Select
+                            value={formData.tourId}
+                            onChange={(e) => handleFormChange("tourId", e.target.value)}
+                        >
+                            <option value="">Select Tour</option>
+                            {tours.map((tour) => (
+                                <option key={tour.id} value={tour.id}>
+                                    {tour.name}
+                                </option>
+                            ))}
+                        </Select>
                     </FormControl>
 
                     <FormControl isRequired>
-                        <FormLabel>Selection Type</FormLabel>
+                        <FormLabel>Type</FormLabel>
                         <Select
-                            value={selectionType}
-                            onChange={(e) => setSelectionType(e.target.value)}
+                            value={formData.type}
+                            onChange={(e) => handleFormChange("type", e.target.value)}
                         >
-                            <option value="Quantity">Quantity</option>
-                            <option value="Checkbox">Checkbox</option>
+                            <option value="CHECKBOX">Checkbox</option>
+                            <option value="QUANTITY">Quantity</option>
                         </Select>
                     </FormControl>
 
@@ -112,8 +210,8 @@ export default function AddonContentPage() {
                     <FormControl>
                         <HStack>
                             <Switch
-                                isChecked={isPrivate}
-                                onChange={() => setIsPrivate(!isPrivate)}
+                                isChecked={formData.isPrivate}
+                                onChange={() => handleFormChange("isPrivate", !formData.isPrivate)}
                             />
                             <Text>Private (Add-on is only available for back office purchases)</Text>
                         </HStack>
@@ -122,18 +220,25 @@ export default function AddonContentPage() {
                     <FormControl>
                         <HStack>
                             <Switch
-                                isChecked={isRequired}
-                                onChange={() => setIsRequired(!isRequired)}
+                                isChecked={formData.isRequired}
+                                onChange={() => handleFormChange("isRequired", !formData.isRequired)}
                             />
                             <Text>Required (Add-on required during online checkout)</Text>
                         </HStack>
                     </FormControl>
 
                     <HStack justify="space-between" mt={6}>
-                        <Button variant="outline" colorScheme="gray">
+                        {isEditing && (
+                            <Button colorScheme="red" onClick={handleRemoveAddon} leftIcon={<DeleteIcon />}>
+                                Remove Add-On
+                            </Button>
+                        )}
+                        <Button variant="outline" colorScheme="gray" onClick={() => router.push("/dashboard/list-addons")}>
                             Cancel
                         </Button>
-                        <Button colorScheme="blue">Save</Button>
+                        <Button colorScheme="blue" onClick={handleSubmit}>
+                            {isEditing ? "Save Changes" : "Create Add-On"}
+                        </Button>
                     </HStack>
                 </VStack>
             </Box>

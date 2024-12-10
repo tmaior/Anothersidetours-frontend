@@ -19,7 +19,7 @@ import {
     Select,
     Switch,
     Text,
-    Textarea,
+    // Textarea,
     VStack,
 } from "@chakra-ui/react";
 import {AddIcon} from "@chakra-ui/icons";
@@ -32,9 +32,9 @@ export default function SchedulesAvailabilityPage() {
     const [schedule, setSchedule] = useState([]);
     const [guestLimit, setGuestLimit] = useState(8);
     const [earlyArrival, setEarlyArrival] = useState(false);
-    const [earlyCutoff, setEarlyCutoff] = useState(true);
-    const [futureCutoff, setFutureCutoff] = useState(false);
-    const [businessHours, setBusinessHours] = useState("");
+    // const [earlyCutoff, setEarlyCutoff] = useState(true);
+    // const [futureCutoff, setFutureCutoff] = useState(false);
+    // const [businessHours, setBusinessHours] = useState("");
 
     const handleAddSchedule = (time) => {
         setSchedule([...schedule, time]);
@@ -166,47 +166,47 @@ export default function SchedulesAvailabilityPage() {
                     </Box>
 
                     <Divider/>
-                    <Box>
-                        <Text fontSize="lg" fontWeight="bold" mb={2}>
-                            Availability Restrictions
-                        </Text>
-                        <FormControl>
-                            <HStack justify="space-between">
-                                <Text>Early Cutoff</Text>
-                                <Switch
-                                    isChecked={earlyCutoff}
-                                    onChange={(e) => setEarlyCutoff(e.target.checked)}
-                                />
-                            </HStack>
-                            <Text fontSize="sm" color="gray.600" mb={4}>
-                                Prevent purchases that are made within 1 day of event start time.
-                            </Text>
-                        </FormControl>
-                        <FormControl>
-                            <HStack justify="space-between">
-                                <Text>Future Cutoff</Text>
-                                <Switch
-                                    isChecked={futureCutoff}
-                                    onChange={(e) => setFutureCutoff(e.target.checked)}
-                                />
-                            </HStack>
-                            <Text fontSize="sm" color="gray.600" mb={4}>
-                                Prevent purchases made too far in advance.
-                            </Text>
-                        </FormControl>
-                        <FormControl>
-                            <FormLabel>Business Hours</FormLabel>
-                            <Textarea
-                                value={businessHours}
-                                onChange={(e) => setBusinessHours(e.target.value)}
-                                placeholder="Enter business hours"
-                            />
-                        </FormControl>
-                    </Box>
+                    {/*<Box>*/}
+                    {/*    <Text fontSize="lg" fontWeight="bold" mb={2}>*/}
+                    {/*        Availability Restrictions*/}
+                    {/*    </Text>*/}
+                    {/*    <FormControl>*/}
+                    {/*        <HStack justify="space-between">*/}
+                    {/*            <Text>Early Cutoff</Text>*/}
+                    {/*            <Switch*/}
+                    {/*                isChecked={earlyCutoff}*/}
+                    {/*                onChange={(e) => setEarlyCutoff(e.target.checked)}*/}
+                    {/*            />*/}
+                    {/*        </HStack>*/}
+                    {/*        <Text fontSize="sm" color="gray.600" mb={4}>*/}
+                    {/*            Prevent purchases that are made within 1 day of event start time.*/}
+                    {/*        </Text>*/}
+                    {/*    </FormControl>*/}
+                    {/*    <FormControl>*/}
+                    {/*        <HStack justify="space-between">*/}
+                    {/*            <Text>Future Cutoff</Text>*/}
+                    {/*            <Switch*/}
+                    {/*                isChecked={futureCutoff}*/}
+                    {/*                onChange={(e) => setFutureCutoff(e.target.checked)}*/}
+                    {/*            />*/}
+                    {/*        </HStack>*/}
+                    {/*        <Text fontSize="sm" color="gray.600" mb={4}>*/}
+                    {/*            Prevent purchases made too far in advance.*/}
+                    {/*        </Text>*/}
+                    {/*    </FormControl>*/}
+                    {/*    <FormControl>*/}
+                    {/*        <FormLabel>Business Hours</FormLabel>*/}
+                    {/*        <Textarea*/}
+                    {/*            value={businessHours}*/}
+                    {/*            onChange={(e) => setBusinessHours(e.target.value)}*/}
+                    {/*            placeholder="Enter business hours"*/}
+                    {/*        />*/}
+                    {/*    </FormControl>*/}
+                    {/*</Box>*/}
 
                     <HStack justify="space-between">
                         <Button variant="outline" colorScheme="gray">
-                            Cancel
+                            Back
                         </Button>
                         <Button colorScheme="blue">Save</Button>
                     </HStack>

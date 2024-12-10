@@ -1,6 +1,9 @@
-import {Box, Button, Divider, Icon, Text, VStack,Image} from "@chakra-ui/react";
+import {Box, Button, Divider, HStack, Image, Text, VStack} from "@chakra-ui/react";
 import {useRouter} from "next/router";
 import React from "react";
+import {SlCalender} from "react-icons/sl";
+import {FaBoxArchive} from "react-icons/fa6";
+import {MdAddchart, MdOutlineCategory} from "react-icons/md";
 
 export default function DashboardLayout({children}: { children: React.ReactNode }) {
     const router = useRouter();
@@ -26,7 +29,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         alignItems="center"
                     >
                         <Image
-                            src="/assets/logo.png"
+                            src="/assets/logo2.png"
                             alt="Home Logo"
                             boxSize="200px"
                             objectFit="contain"
@@ -70,8 +73,10 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                 color: "white",
                             }}
                         >
-                            <Icon name="dashboard" mr={2} />
-                            Products
+                            <HStack spacing={3}>
+                                <FaBoxArchive name="Products"/>
+                                <Text>Products</Text>
+                            </HStack>
                         </Button>
                     </Text>
                     {/*<Divider borderColor="gray.600"/>*/}
@@ -103,31 +108,59 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     {/*</Text>*/}
 
                     <Divider borderColor="gray.600"/>
-                    <Text
-                        fontSize="xl"
-                        fontWeight="bold"
-                        color="white"
-                        _hover={{cursor: "pointer"}}
-                    >
-                        Add-ons
-                    </Text>
-                    <Text
-                        fontSize="md"
-                        color="gray.400"
-                        pl={4}
-                        onClick={() => router.push("/dashboard/create-addons")}
-                        _hover={{cursor: "pointer", color: "gray.200"}}
-                    >
-                        Register Add-ons
-                    </Text>
+                    {/*<Text*/}
+                    {/*    fontSize="xl"*/}
+                    {/*    fontWeight="bold"*/}
+                    {/*    color="white"*/}
+                    {/*    _hover={{cursor: "pointer"}}*/}
+                    {/*>*/}
+                    {/*    Add-ons*/}
+                    {/*</Text>*/}
+                    {/*<Text*/}
+                    {/*    fontSize="md"*/}
+                    {/*    color="gray.400"*/}
+                    {/*    pl={4}*/}
+                    {/*    onClick={() => router.push("/dashboard/create-addons")}*/}
+                    {/*    _hover={{cursor: "pointer", color: "gray.200"}}*/}
+                    {/*>*/}
+                    {/*    Register Add-ons*/}
+                    {/*</Text>*/}
+                    {/*<Text*/}
+                    {/*    fontSize="md"*/}
+                    {/*    color="gray.400"*/}
+                    {/*    pl={4}*/}
+                    {/*    onClick={() => router.push("/dashboard/list-addons")}*/}
+                    {/*    _hover={{cursor: "pointer", color: "gray.200"}}*/}
+                    {/*>*/}
+                    {/*    List Add-ons*/}
+                    {/*</Text>*/}
                     <Text
                         fontSize="md"
                         color="gray.400"
                         pl={4}
                         onClick={() => router.push("/dashboard/list-addons")}
-                        _hover={{cursor: "pointer", color: "gray.200"}}
                     >
-                        List Add-ons
+                        <Button
+                            marginLeft={"-5"}
+                            justifyContent="flex-start"
+                            color="white"
+                            variant="ghost"
+                            w="230px"
+                            background={router.pathname === "/dashboard/list-addons" ? "blue.500" : "transparent"}
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                        >
+                            <HStack spacing={3}>
+                                <MdAddchart name="Add-ons"/>
+                                <Text>Add-ons</Text>
+                            </HStack>
+                        </Button>
                     </Text>
                     <Divider borderColor="gray.600"/>
                     <Text
@@ -152,8 +185,10 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                 color: "white",
                             }}
                         >
-                            <Icon name="Categories" mr={2} />
-                            Categories
+                            <HStack spacing={3}>
+                                <MdOutlineCategory name="Categories"/>
+                                <Text>Categories</Text>
+                            </HStack>
                         </Button>
                     </Text>
                     <Divider borderColor="gray.600"/>
@@ -179,8 +214,10 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                 color: "white",
                             }}
                         >
-                            <Icon name="Blackouts" mr={2} />
-                            Blackouts
+                            <HStack spacing={3}>
+                                <SlCalender name="Blackouts"/>
+                                <Text>Blackouts</Text>
+                            </HStack>
                         </Button>
                     </Text>
                     <Divider borderColor="gray.600"/>

@@ -14,7 +14,7 @@ import {
     useDisclosure,
     useToast,
 } from "@chakra-ui/react";
-import {  DeleteIcon } from "@chakra-ui/icons";
+import { DeleteIcon } from "@chakra-ui/icons";
 import DashboardLayout from "../../../components/DashboardLayout";
 import { useRouter } from "next/router";
 
@@ -37,6 +37,13 @@ export default function AddonContentPage() {
         isRequired: false,
     });
     const [tours, setTours] = useState([]);
+    const [errors, setErrors] = useState({
+        label: false,
+        description: false,
+        price: false,
+        tourId: false,
+        type: false,
+    });
 
     useEffect(() => {
         async function fetchData() {
@@ -45,35 +52,44 @@ export default function AddonContentPage() {
                 const addonRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`);
                 const addonData = await addonRes.json();
                 setFormData({
-                    // tenantId: addonData.tenantId || "",
                     tourId: addonData.tourId || "",
                     label: addonData.label || "",
                     description: addonData.description || "",
                     type: addonData.type || "CHECKBOX",
                     price: addonData.price || 0,
-                    isRequired: addonData.isRequired || false,
                     isPrivate: addonData.isPrivate || false,
+                    isRequired: addonData.isRequired || false,
                 });
             }
 
-            const [ toursRes] = await Promise.all([
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`),
-            ]);
-
-            const [toursData] = await Promise.all([
-                toursRes.json(),
-            ]);
+            const toursRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`);
+            const toursData = await toursRes.json();
             setTours(toursData);
         }
-
         fetchData();
     }, [addonId]);
 
     const handleFormChange = (field, value) => {
         setFormData({ ...formData, [field]: value });
+        setErrors({ ...errors, [field]: value === "" });
+    };
+
+    const validateForm = () => {
+        const newErrors = {
+            label: formData.label === "",
+            description: formData.description === "",
+            price: formData.price === 0,
+            tourId: formData.tourId === "",
+            type: formData.type === "",
+        };
+        setErrors(newErrors);
+
+        return !Object.values(newErrors).includes(true);
     };
 
     const handleSubmit = async () => {
+        if (!validateForm()) return;
+
         const method = isEditing ? "PUT" : "POST";
         const endpoint = isEditing
             ? `${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`
@@ -150,22 +166,24 @@ export default function AddonContentPage() {
                         {isEditing ? "Edit Add-On" : "New Add-On"}
                     </Text>
 
-                    <FormControl isRequired>
+                    <FormControl isRequired isInvalid={errors.label}>
                         <FormLabel>Name</FormLabel>
                         <Input
                             value={formData.label}
                             onChange={(e) => handleFormChange("label", e.target.value)}
                             placeholder="Enter Add-On Name"
                         />
+                        {errors.label && <Text color="red.500">This field is required</Text>}
                     </FormControl>
 
-                    <FormControl isRequired>
+                    <FormControl isRequired isInvalid={errors.description}>
                         <FormLabel>Description</FormLabel>
                         <Textarea
                             value={formData.description}
                             onChange={(e) => handleFormChange("description", e.target.value)}
                             placeholder="Enter Add-On Description"
                         />
+                        {errors.description && <Text color="red.500">This field is required</Text>}
                     </FormControl>
 
                     <FormControl>
@@ -183,7 +201,7 @@ export default function AddonContentPage() {
                         </Select>
                     </FormControl>
 
-                    <FormControl isRequired>
+                    <FormControl isRequired isInvalid={errors.type}>
                         <FormLabel>Type</FormLabel>
                         <Select
                             value={formData.type}
@@ -194,7 +212,7 @@ export default function AddonContentPage() {
                         </Select>
                     </FormControl>
 
-                    <FormControl isRequired>
+                    <FormControl isRequired isInvalid={errors.price}>
                         <FormLabel>Price</FormLabel>
                         <HStack>
                             <Input
@@ -205,6 +223,7 @@ export default function AddonContentPage() {
                                 type="number"
                             />
                         </HStack>
+                        {errors.price && <Text color="red.500">This field is required</Text>}
                     </FormControl>
 
                     <FormControl>

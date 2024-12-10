@@ -24,7 +24,7 @@ export default function AddonContentPage() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { isOpen, onOpen, onClose } = useDisclosure();
     const toast = useToast();
-    const [price, setPrice] = useState("");
+    const [price, setPrice] = useState("0");
 
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
@@ -60,6 +60,7 @@ export default function AddonContentPage() {
                     isPrivate: addonData.isPrivate || false,
                     isRequired: addonData.isRequired || false,
                 });
+                setPrice(addonData.price ? addonData.price.toString() : "0");
             }
 
             const toursRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`);
@@ -69,17 +70,22 @@ export default function AddonContentPage() {
         fetchData();
     }, [addonId]);
 
-    const handleFormChange = (field, value) => {
+    const handleFormChange = (field: string, value: string | number) => {
+        if (field === "price") {
+            value = parseFloat(value.toString()) || 0;
+            setPrice(value.toString());
+        }
+
         setFormData({ ...formData, [field]: value });
-        setErrors({ ...errors, [field]: value === "" });
+        setErrors({ ...errors, [field]: value === "" || (field === "price" && value <= 0) });
     };
 
     const validateForm = () => {
         const newErrors = {
             label: formData.label === "",
             description: formData.description === "",
-            price: formData.price === 0,
-            tourId: formData.tourId === "",
+            price: formData.price <= 0,
+            // tourId: formData.tourId === "",
             type: formData.type === "",
         };
         setErrors(newErrors);
@@ -208,7 +214,7 @@ export default function AddonContentPage() {
                             onChange={(e) => handleFormChange("type", e.target.value)}
                         >
                             <option value="CHECKBOX">Checkbox</option>
-                            <option value="QUANTITY">Quantity</option>
+                            <option value="SELECT">Quantity</option>
                         </Select>
                     </FormControl>
 
@@ -217,13 +223,13 @@ export default function AddonContentPage() {
                         <HStack>
                             <Input
                                 value={price}
-                                onChange={(e) => setPrice(e.target.value)}
+                                onChange={(e) => handleFormChange("price", e.target.value)}
                                 placeholder="$"
                                 width="auto"
                                 type="number"
                             />
                         </HStack>
-                        {errors.price && <Text color="red.500">This field is required</Text>}
+                        {errors.price && <Text color="red.500">This field is required and must be greater than 0</Text>}
                     </FormControl>
 
                     <FormControl>

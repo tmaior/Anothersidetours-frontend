@@ -113,6 +113,12 @@ export default function ListAddons() {
                             </option>
                         ))}
                     </Select>
+                    <Button
+                        colorScheme="blue"
+                        onClick={() => router.push("/dashboard/create-addons")}
+                    >
+                        + Create Add-ons
+                    </Button>
                 </HStack>
                 <VStack spacing={4} align="stretch">
                     {addons

@@ -6,7 +6,16 @@ import {
     FormControl,
     FormLabel,
     HStack,
-    Input,
+    Input, NumberDecrementStepper, NumberIncrementStepper,
+    NumberInput,
+    NumberInputField, NumberInputStepper,
+    Popover,
+    PopoverArrow,
+    PopoverBody,
+    PopoverCloseButton,
+    PopoverContent,
+    PopoverHeader,
+    PopoverTrigger,
     Select,
     Switch,
     Text,
@@ -27,11 +36,8 @@ export default function SchedulesAvailabilityPage() {
     const [futureCutoff, setFutureCutoff] = useState(false);
     const [businessHours, setBusinessHours] = useState("");
 
-    const handleAddSchedule = () => {
-        setSchedule([
-            ...schedule,
-            `New schedule at ${new Date().toLocaleTimeString()}`,
-        ]);
+    const handleAddSchedule = (time) => {
+        setSchedule([...schedule, time]);
     };
 
     const handleRemoveSchedule = (index: number) => {
@@ -90,13 +96,24 @@ export default function SchedulesAvailabilityPage() {
                         <Text fontSize="sm" fontWeight="bold" mb={2}>
                             Schedule
                         </Text>
-                        <Button
-                            leftIcon={<AddIcon/>}
-                            onClick={handleAddSchedule}
-                            colorScheme="blue"
-                        >
-                            Add Schedule
-                        </Button>
+                        <Popover>
+                            <PopoverTrigger>
+                                <Button
+                                    leftIcon={<AddIcon />}
+                                    colorScheme="blue"
+                                >
+                                    Add Schedule
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent w={"290px"}>
+                                <PopoverArrow />
+                                <PopoverCloseButton />
+                                <PopoverHeader>Select Time</PopoverHeader>
+                                <PopoverBody>
+                                    <TimeSelector onTimeAdd={handleAddSchedule} />
+                                </PopoverBody>
+                            </PopoverContent>
+                        </Popover>
                         <VStack align="stretch" mt={4}>
                             {schedule.map((sched, index) => (
                                 <Flex
@@ -196,5 +213,73 @@ export default function SchedulesAvailabilityPage() {
                 </VStack>
             </Box>
         </DashboardLayout>
+    );
+}
+
+function TimeSelector({ onTimeAdd }) {
+    const [hour, setHour] = useState(12);
+    const [minute, setMinute] = useState(0);
+    const [ampm, setAmPm] = useState('AM');
+
+    const handleAddTime = () => {
+        const formattedHour = hour.toString().padStart(2, '0');
+        const formattedMinute = minute.toString().padStart(2, '0');
+        const timeString = `${formattedHour}:${formattedMinute} ${ampm}`;
+        onTimeAdd(timeString);
+    };
+
+    return (
+        <VStack spacing={4}>
+            <HStack spacing={2}>
+                <NumberInput
+                    w={"80px"}
+                    max={12}
+                    min={1}
+                    value={hour}
+                    onChange={(valueString) => {
+                        const valueNumber = parseInt(valueString, 10);
+                        if (!isNaN(valueNumber)) {
+                            setHour(valueNumber);
+                        }
+                    }}
+                >
+                    <NumberInputField />
+                    <NumberInputStepper>
+                        <NumberIncrementStepper />
+                        <NumberDecrementStepper />
+                    </NumberInputStepper>
+                </NumberInput>
+                <Text>:</Text>
+                <NumberInput
+                    w={"80px"}
+                    max={59}
+                    min={0}
+                    value={minute}
+                    onChange={(valueString) => {
+                        const valueNumber = parseInt(valueString, 10);
+                        if (!isNaN(valueNumber)) {
+                            setMinute(valueNumber);
+                        }
+                    }}
+                >
+                    <NumberInputField />
+                    <NumberInputStepper>
+                        <NumberIncrementStepper />
+                        <NumberDecrementStepper />
+                    </NumberInputStepper>
+                </NumberInput>
+                <Select
+                    value={ampm}
+                    onChange={(e) => setAmPm(e.target.value)}
+                    width="80px"
+                >
+                    <option value="AM">AM</option>
+                    <option value="PM">PM</option>
+                </Select>
+            </HStack>
+            <Button colorScheme="blue" onClick={handleAddTime}>
+                Add Time
+            </Button>
+        </VStack>
     );
 }

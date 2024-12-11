@@ -104,13 +104,11 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
             bringItems,
             newIncludedItem,
             newBringItem,
-            imagePreview,
             title,
             description,
             sopNotes,
             meetingLocation,
             mapEnabled,
-            operationProcedures
         };
         localStorage.setItem("descriptionContentData", JSON.stringify(data));
     }, [
@@ -124,6 +122,7 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
         sopNotes,
         meetingLocation,
         mapEnabled,
+        operationProcedures,
     ]);
 
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -251,7 +250,7 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
                         </FormControl>
                         <Box>
                             <Text fontSize="sm" mb={1}>
-                                Standard operating procedure (SOP) note. <Text as="span" color="red">*</Text>
+                                Standard Operating Procedure (SOP)
                             </Text>
                             <Textarea
                                 placeholder="Write the Standard operating procedure"

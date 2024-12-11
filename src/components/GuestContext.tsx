@@ -97,7 +97,7 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [schedule, setSchedule] = useState<
         { startTime: string | null; startPeriod: string; endTime: string | null; endPeriod: string }[]
     >([]);
-    const [eventDuration, setEventDuration] = useState("1");
+    const [eventDuration, setEventDuration] = useState(1);
     const [guestLimit, setGuestLimit] = useState(8);
     const [earlyArrival, setEarlyArrival] = useState(false);
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -119,7 +119,7 @@ export function GuestProvider({children}: { children: ReactNode }) {
         setDescription("");
         setOperationProcedures("");
         setSchedule([]);
-        setEventDuration("1");
+        setEventDuration(1);
         setGuestLimit(8);
         setEarlyArrival(false);
         setImageFile(null);

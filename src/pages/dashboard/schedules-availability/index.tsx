@@ -43,7 +43,8 @@ export default function SchedulesAvailabilityPage() {
         setPrice,
         setIncludedItems,
         setBringItems,
-        setImagePreview
+        setImagePreview,
+        operationProcedures,
     } = useGuest();
     const router = useRouter();
 
@@ -63,7 +64,7 @@ export default function SchedulesAvailabilityPage() {
     const handleAddTimeRange = () => {
         setSchedule([
             ...schedule,
-            {startTime: null, startPeriod: "AM", endTime: null, endPeriod: "AM"},
+            { startTime: "08:00", startPeriod: "AM", endTime: "06:00", endPeriod: "PM" },
         ]);
     };
     const toast = useToast();
@@ -82,9 +83,55 @@ export default function SchedulesAvailabilityPage() {
         setSchedule(updatedSchedule);
     };
 
-    const createTour = async () => {
+    // const createTour = async () => {
+    //     try {
+    //         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`, {
+    //             method: "POST",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //             },
+    //             body: JSON.stringify({
+    //                 name: title,
+    //                 description,
+    //                 duration: Number(eventDuration),
+    //                 imageUrl: imagePreview,
+    //                 price: Number(price),
+    //                 includedItems,
+    //                 bringItems,
+    //                 schedule,
+    //                 guestLimit: Number(guestLimit)
+    //             }),
+    //         });
+    //
+    //         if (!response.ok) {
+    //             throw new Error("Failed to create tour");
+    //         }
+    //
+    //         toast({
+    //             title: "Tour Created",
+    //             description: "The tour was created successfully.",
+    //             status: "success",
+    //             duration: 3000,
+    //             isClosable: true,
+    //         });
+    //
+    //         resetFields();
+    //         router.push("/");
+    //     } catch (error) {
+    //         console.error(error);
+    //         toast({
+    //             title: "Error",
+    //             description: "Failed to create tour. Please try again.",
+    //             status: "error",
+    //             duration: 5000,
+    //             isClosable: true,
+    //         });
+    //     }
+    // };
+
+    const handleSaveTour = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`, {
+            const tourResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -95,20 +142,76 @@ export default function SchedulesAvailabilityPage() {
                     duration: Number(eventDuration),
                     imageUrl: imagePreview,
                     price: Number(price),
-                    includedItems,
-                    bringItems,
-                    schedule,
                     guestLimit: Number(guestLimit),
+                    StandardOperation: operationProcedures,
                 }),
             });
 
-            if (!response.ok) {
+            console.log("Response status:", tourResponse.status);
+
+            if (!tourResponse.ok) {
                 throw new Error("Failed to create tour");
+            }
+
+            const createdTour = await tourResponse.json();
+
+            console.log("Created tour:", createdTour);
+
+            const tourId = createdTour.id;
+
+            if (schedule.length > 0) {
+                const scheduleResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/${tourId}`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            timeSlots: schedule.map(
+                                (slot) =>
+                                    `${slot.startTime} ${slot.startPeriod} - ${slot.endTime} ${slot.endPeriod}`
+                            ),
+                        }),
+                    }
+                );
+
+                if (!scheduleResponse.ok) {
+                    throw new Error("Failed to save schedule");
+                }
+            }
+
+            if (bringItems.length > 0) {
+                await Promise.all(
+                    bringItems.map((item) =>
+                        fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/what-to-bring`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ tourId, item }),
+                        })
+                    )
+                );
+            }
+
+            if (includedItems.length > 0) {
+                await Promise.all(
+                    includedItems.map((item) =>
+                        fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/whats-included`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ tourId, item }),
+                        })
+                    )
+                );
             }
 
             toast({
                 title: "Tour Created",
-                description: "The tour was created successfully.",
+                description: "The tour and related data were created successfully.",
                 status: "success",
                 duration: 3000,
                 isClosable: true,
@@ -117,30 +220,16 @@ export default function SchedulesAvailabilityPage() {
             resetFields();
             router.push("/");
         } catch (error) {
-            console.error(error);
+            console.error("Error:", error);
             toast({
                 title: "Error",
-                description: "Failed to create tour. Please try again.",
+                description: "Failed to create the tour. Please try again.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
             });
         }
-    };
 
-    const handleSaveTour = async () => {
-        // if (!title || !description || !price || includedItems.length === 0 || bringItems.length === 0) {
-        //     toast({
-        //         title: "Validation Error",
-        //         description: "All fields are required. Please fill in all the details.",
-        //         status: "error",
-        //         duration: 4000,
-        //         isClosable: true,
-        //     });
-        //     return;
-        // }
-
-        await createTour();
     };
 
 

@@ -182,6 +182,9 @@ export default function BlackoutDatesManagement() {
                 throw new Error("Failed to create blackout date.");
             }
 
+            const newBlackoutDateResponse = await response.json();
+            setBlackoutDates((prev) => [...prev, newBlackoutDateResponse]);
+
             toast({
                 title: "Blackout Date Created",
                 description: "The blackout date was successfully created.",
@@ -258,23 +261,43 @@ export default function BlackoutDatesManagement() {
                                                     <strong>End Date:</strong> No End
                                                 </Text>
                                             )}
+                                            {date.startTime && (
+                                                <Text>
+                                                    <strong>Start Time:</strong>{" "}
+                                                    {new Date(`1970-01-01 ${date.startTime}`).toLocaleTimeString([], {
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                        hour12: true,
+                                                    })}
+                                                </Text>
+                                            )}
+                                            {date.endTime && (
+                                                <Text>
+                                                    <strong>End Time:</strong>{" "}
+                                                    {new Date(`1970-01-01 ${date.endTime}`).toLocaleTimeString([], {
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                        hour12: true,
+                                                    })}
+                                                </Text>
+                                            )}
                                             {date.timeRanges?.length > 0 && (
                                                 <Box mt={2}>
                                                     <Text fontWeight="bold">Time Ranges:</Text>
                                                     <VStack align="start" spacing={1}>
                                                         {date.timeRanges.map((range, index) => (
                                                             <Text key={index}>
-                                                                {new Date(range.startTime).toLocaleTimeString([], {
+                                                                {range.startTime ? new Date(range.startTime).toLocaleTimeString([], {
                                                                     hour: "2-digit",
                                                                     minute: "2-digit",
                                                                     hour12: true,
-                                                                })}{" "}
+                                                                }) : "No Start Time"}{" "}
                                                                 -{" "}
-                                                                {new Date(range.endTime).toLocaleTimeString([], {
+                                                                {range.endTime ? new Date(range.endTime).toLocaleTimeString([], {
                                                                     hour: "2-digit",
                                                                     minute: "2-digit",
                                                                     hour12: true,
-                                                                })}
+                                                                }) : "No End Time"}
                                                             </Text>
                                                         ))}
                                                     </VStack>

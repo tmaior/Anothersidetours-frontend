@@ -85,6 +85,27 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 const tourData = await tourResponse.json();
                 const categoryId = tourData.categoryId;
 
+                const formatDate = (dateObj: Date) => {
+                    const year = dateObj.getUTCFullYear();
+                    const month = String(dateObj.getUTCMonth() + 1).padStart(2, "0");
+                    const day = String(dateObj.getUTCDate()).padStart(2, "0");
+                    return `${year}-${month}-${day}`;
+                };
+
+                const getDateRange = (start: string, end: string): string[] => {
+                    const startDateObj = new Date(start);
+                    const endDateObj = new Date(end);
+                    const dates = [];
+
+                    let currentDate = startDateObj;
+                    while (currentDate <= endDateObj) {
+                        dates.push(formatDate(currentDate));
+                        currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
+                    }
+
+                    return dates;
+                };
+
                 if (categoryId) {
                     const categoryResponse = await fetch(
                         `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/filter`,
@@ -103,46 +124,55 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
                     const categoryData = await categoryResponse.json();
 
-                    categoryBlockedDates = categoryData.map((b: BlackoutDate) => {
-                        const utcDate = new Date(b.date);
-                        const year = utcDate.getUTCFullYear();
-                        const month = String(utcDate.getUTCMonth() + 1).padStart(2, "0");
-                        const day = String(utcDate.getUTCDate()).padStart(2, "0");
-                        return `${year}-${month}-${day}`;
-                    });
+                    categoryData.forEach((b: BlackoutDate) => {
+                        if (b.startDate && b.endDate) {
+                            const intervalDates = getDateRange(b.startDate, b.endDate);
+                            categoryBlockedDates.push(...intervalDates);
 
-                    categoryBlockedTimes = categoryData
-                        .filter((b: BlackoutDate) => b.startTime && b.endTime)
-                        .map((b: BlackoutDate) => {
-                            const utcDate = new Date(b.date);
-                            const year = utcDate.getUTCFullYear();
-                            const month = String(utcDate.getUTCMonth() + 1).padStart(2, "0");
-                            const day = String(utcDate.getUTCDate()).padStart(2, "0");
-                            return {
-                                date: `${year}-${month}-${day}`,
-                                startTime: b.startTime,
-                                endTime: b.endTime,
-                            };
-                        });
+                            if (b.startTime && b.endTime) {
+                                intervalDates.forEach(date => {
+                                    categoryBlockedTimes.push({
+                                        date,
+                                        startTime: b.startTime,
+                                        endTime: b.endTime,
+                                    });
+                                });
+                            }
+
+                        } else if (b.date) {
+                            const singleDate = new Date(b.date);
+                            const formattedDate = formatDate(singleDate);
+                            categoryBlockedDates.push(formattedDate);
+
+                            if (b.startTime && b.endTime) {
+                                categoryBlockedTimes.push({
+                                    date: formattedDate,
+                                    startTime: b.startTime,
+                                    endTime: b.endTime,
+                                });
+                            }
+                        }
+                    });
                 }
 
                 const globalResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/global`);
                 if (!globalResponse.ok) throw new Error('Failed to fetch global blackout dates');
 
                 const globalData = await globalResponse.json();
-                globalBlockedDates = globalData.map((b: BlackoutDate) => {
-                    if (!b.date) {
-                        console.warn('Blackout date is missing the "date" field:', b);
-                        return null;
-                    }
 
-                    try {
-                        return new Date(b.date).toISOString().split('T')[0];
-                    } catch (error) {
-                        console.error(`Error processing date: ${b.date}`, error);
-                        return null;
+                globalData.forEach((b: BlackoutDate) => {
+                    if (b.startDate && b.endDate) {
+                        const intervalDates = getDateRange(b.startDate, b.endDate);
+                        globalBlockedDates.push(...intervalDates);
+                    } else if (b.date) {
+                        try {
+                            const formattedDate = new Date(b.date).toISOString().split('T')[0];
+                            globalBlockedDates.push(formattedDate);
+                        } catch (error) {
+                            console.error(`Error processing date: ${b.date}`, error);
+                        }
                     }
-                }).filter((d: string | null) => d !== null);
+                });
 
                 combinedBlockedDates = Array.from(new Set([...categoryBlockedDates, ...globalBlockedDates]));
 
@@ -154,6 +184,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
         };
         fetchBlockedDatesForTour();
     }, [tourId]);
+
 
     const renderHeader = () => (
         <Box display="flex" justifyContent="space-between" alignItems="center" p={2} bg="gray.100">

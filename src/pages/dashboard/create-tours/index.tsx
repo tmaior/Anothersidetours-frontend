@@ -15,28 +15,81 @@ import {
     Textarea,
     VStack,
 } from "@chakra-ui/react";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import {AddIcon, InfoOutlineIcon} from "@chakra-ui/icons";
-import React, {useState} from "react";
+import { AddIcon } from "@chakra-ui/icons";
+import React, { useEffect, useState } from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
-import {router} from "next/client";
+import ProgressBar from "../../../components/ProgressBar";
+import { useRouter } from "next/router";
 
 interface TourFormProps {
-    isEditing?: boolean,
-    tourId?: string | string[],
-    initialData?: unknown
+    isEditing?: boolean;
+    tourId?: string | string[];
+    initialData?: unknown;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function DescriptionContentPage({ isEditing, tourId, initialData }: TourFormProps) {
-    const [includedItems, setIncludedItems] = useState([]);
-    const [bringItems, setBringItems] = useState([]);
+    const [includedItems, setIncludedItems] = useState<string[]>([]);
+    const [bringItems, setBringItems] = useState<string[]>([]);
     const [newIncludedItem, setNewIncludedItem] = useState("");
     const [newBringItem, setNewBringItem] = useState("");
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [overrideFooter, setOverrideFooter] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [, setImageFile] = useState<File | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [imageFile, setImageFile] = useState<File | null>(null);
+
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [sopNotes, setSopNotes] = useState("");
+    const [meetingLocation, setMeetingLocation] = useState("");
+    const [mapEnabled, setMapEnabled] = useState(false);
+
+    const router = useRouter(); // Uso do useRouter para navegação
+
+    useEffect(() => {
+        const savedData = localStorage.getItem("descriptionContentData");
+        if (savedData) {
+            const parsed = JSON.parse(savedData);
+            setIncludedItems(parsed.includedItems || []);
+            setBringItems(parsed.bringItems || []);
+            setNewIncludedItem(parsed.newIncludedItem || "");
+            setNewBringItem(parsed.newBringItem || "");
+            setImagePreview(parsed.imagePreview || null);
+            setTitle(parsed.title || "");
+            setDescription(parsed.description || "");
+            setSopNotes(parsed.sopNotes || "");
+            setMeetingLocation(parsed.meetingLocation || "");
+            setMapEnabled(parsed.mapEnabled || false);
+        }
+    }, []);
+
+    useEffect(() => {
+        const data = {
+            includedItems,
+            bringItems,
+            newIncludedItem,
+            newBringItem,
+            imagePreview,
+            title,
+            description,
+            sopNotes,
+            meetingLocation,
+            mapEnabled,
+        };
+        localStorage.setItem("descriptionContentData", JSON.stringify(data));
+    }, [
+        includedItems,
+        bringItems,
+        newIncludedItem,
+        newBringItem,
+        imagePreview,
+        title,
+        description,
+        sopNotes,
+        meetingLocation,
+        mapEnabled,
+    ]);
 
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files ? event.target.files[0] : null;
@@ -69,17 +122,18 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
         }
     };
 
-    const handleRemoveIncludedItem = (index) => {
+    const handleRemoveIncludedItem = (index: number) => {
         setIncludedItems(includedItems.filter((_, i) => i !== index));
     };
 
-    const handleRemoveBringItem = (index) => {
+    const handleRemoveBringItem = (index: number) => {
         setBringItems(bringItems.filter((_, i) => i !== index));
     };
 
     return (
         <DashboardLayout>
             <Box p={8} maxWidth="900px" mx="auto">
+                <ProgressBar steps={["Description", "Schedules"]} currentStep={0} />
                 <Heading mb={6}>Description Content</Heading>
 
                 <Box mb={8}>
@@ -87,7 +141,8 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
                         Experience Description
                     </Text>
                     <Text fontSize="sm" color="gray.600" mb={4}>
-                        Important details that will be presented to your customer throughout the booking process
+                        Important details that will be presented to your customer throughout the
+                        booking process
                     </Text>
 
                     <VStack spacing={4} align="stretch">
@@ -95,7 +150,12 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
                             <Text fontSize="sm" mb={1}>
                                 Title is required <Text as="span" color="red">*</Text>
                             </Text>
-                            <Input placeholder="Enter Title" isRequired />
+                            <Input
+                                placeholder="Enter Title"
+                                isRequired
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                            />
                         </Box>
                         <Box>
                             <Text fontSize="sm" mb={1}>
@@ -105,6 +165,23 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
                                 placeholder="Write a detailed description..."
                                 resize="none"
                                 isRequired
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                            />
+                            <Text fontSize="xs" color="gray.500">
+                                0 characters | 0 words
+                            </Text>
+                        </Box>
+                        <Box>
+                            <Text fontSize="sm" mb={1}>
+                                Standard operating procedure (SOP) note. <Text as="span" color="red">*</Text>
+                            </Text>
+                            <Textarea
+                                placeholder="Write the Standard operating procedure"
+                                resize="none"
+                                isRequired
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
                             />
                             <Text fontSize="xs" color="gray.500">
                                 0 characters | 0 words
@@ -270,7 +347,10 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
                     <Button variant="outline" colorScheme="gray">
                         Cancel
                     </Button>
-                    <Button colorScheme="blue" onClick={() => router.push("/dashboard/schedules-availability")}>
+                    <Button
+                        colorScheme="blue"
+                        onClick={() => router.push("/dashboard/schedules-availability")}
+                    >
                         Next
                     </Button>
                 </HStack>

@@ -25,6 +25,7 @@ import {
 import {AddIcon} from "@chakra-ui/icons";
 import React, {useState} from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
+import ProgressBar from "../../../components/ProgressBar";
 
 export default function SchedulesAvailabilityPage() {
     const [eventDuration, setEventDuration] = useState("4");
@@ -47,6 +48,7 @@ export default function SchedulesAvailabilityPage() {
     return (
         <DashboardLayout>
             <Box p={8} maxWidth="900px" mx="auto">
+                <ProgressBar steps={["Description", "Schedules"]} currentStep={1} />
                 <Text fontSize="2xl" fontWeight="bold" mb={6}>
                     Schedules & Availability
                 </Text>
@@ -205,7 +207,7 @@ export default function SchedulesAvailabilityPage() {
                     {/*</Box>*/}
 
                     <HStack justify="space-between">
-                        <Button variant="outline" colorScheme="gray">
+                        <Button variant="outline" onClick={() => window.history.back()}>
                             Back
                         </Button>
                         <Button colorScheme="blue">Save</Button>

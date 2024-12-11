@@ -28,7 +28,9 @@ interface DatePickerProps {
 }
 
 interface BlackoutDate {
-    date: string;
+    date?: string;
+    startDate?: string;
+    endDate?: string;
     startTime?: string;
     endTime?: string;
 }
@@ -42,9 +44,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
     const [monthDayData, setMonthDayData] = useState<{ [key: string]: React.ReactElement }>({});
     const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+    const [filteredTimes, setFilteredTimes] = useState<string[]>([]);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [blockedDates, setBlockedDates] = useState<string[]>([]);
-    const price = originalPrice;
     const {tourId} = useGuest();
     const [blockedTimes, setBlockedTimes] = useState<
         { date: string; startTime: string; endTime: string }[]
@@ -63,13 +65,13 @@ const DatePicker: React.FC<DatePickerProps> = ({
             const dayKey = format(day, 'yyyy-MM-dd');
             newMonthDayData[dayKey] = (
                 <span>
-            <sup>$ </sup>{100 + price}
-        </span>
+                    <sup>$ </sup>{100 + originalPrice}
+                </span>
             );
         });
 
         setMonthDayData(newMonthDayData);
-    }, [currentMonth, price]);
+    }, [currentMonth, originalPrice]);
 
     useEffect(() => {
         const fetchBlockedDatesForTour = async () => {
@@ -114,7 +116,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                             headers: {
                                 "Content-Type": "application/json",
                             },
-                            body: JSON.stringify({ categoryId }),
+                            body: JSON.stringify({categoryId}),
                         }
                     );
 
@@ -127,29 +129,28 @@ const DatePicker: React.FC<DatePickerProps> = ({
                     categoryData.forEach((b: BlackoutDate) => {
                         if (b.startDate && b.endDate) {
                             const intervalDates = getDateRange(b.startDate, b.endDate);
-                            categoryBlockedDates.push(...intervalDates);
-
                             if (b.startTime && b.endTime) {
                                 intervalDates.forEach(date => {
                                     categoryBlockedTimes.push({
                                         date,
-                                        startTime: b.startTime,
-                                        endTime: b.endTime,
+                                        startTime: b.startTime!,
+                                        endTime: b.endTime!,
                                     });
                                 });
+                            } else {
+                                categoryBlockedDates.push(...intervalDates);
                             }
-
                         } else if (b.date) {
                             const singleDate = new Date(b.date);
                             const formattedDate = formatDate(singleDate);
-                            categoryBlockedDates.push(formattedDate);
-
                             if (b.startTime && b.endTime) {
                                 categoryBlockedTimes.push({
                                     date: formattedDate,
-                                    startTime: b.startTime,
-                                    endTime: b.endTime,
+                                    startTime: b.startTime!,
+                                    endTime: b.endTime!,
                                 });
+                            } else {
+                                categoryBlockedDates.push(formattedDate);
                             }
                         }
                     });
@@ -163,11 +164,29 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 globalData.forEach((b: BlackoutDate) => {
                     if (b.startDate && b.endDate) {
                         const intervalDates = getDateRange(b.startDate, b.endDate);
-                        globalBlockedDates.push(...intervalDates);
+                        if (b.startTime && b.endTime) {
+                            intervalDates.forEach(date => {
+                                categoryBlockedTimes.push({
+                                    date,
+                                    startTime: b.startTime!,
+                                    endTime: b.endTime!,
+                                });
+                            });
+                        } else {
+                            globalBlockedDates.push(...intervalDates);
+                        }
                     } else if (b.date) {
                         try {
                             const formattedDate = new Date(b.date).toISOString().split('T')[0];
-                            globalBlockedDates.push(formattedDate);
+                            if (b.startTime && b.endTime) {
+                                categoryBlockedTimes.push({
+                                    date: formattedDate,
+                                    startTime: b.startTime!,
+                                    endTime: b.endTime!,
+                                });
+                            } else {
+                                globalBlockedDates.push(formattedDate);
+                            }
                         } catch (error) {
                             console.error(`Error processing date: ${b.date}`, error);
                         }
@@ -184,7 +203,6 @@ const DatePicker: React.FC<DatePickerProps> = ({
         };
         fetchBlockedDatesForTour();
     }, [tourId]);
-
 
     const renderHeader = () => (
         <Box display="flex" justifyContent="space-between" alignItems="center" p={2} bg="gray.100">
@@ -246,11 +264,6 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 const isPast = isBefore(day, today);
                 const isBlocked = blockedDates.includes(dayKey);
 
-                const blockedTime = blockedTimes.find(bt => bt.date === dayKey);
-                const isBlockedTime =
-                    blockedTime &&
-                    (selectedTime >= blockedTime.startTime && selectedTime <= blockedTime.endTime);
-
                 if (isCurrentMonthDay) {
                     days.push(
                         <Box key={day.toISOString() + i}>
@@ -260,39 +273,40 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                 p="2px"
                                 position="relative"
                                 onClick={() => {
-                                    if (!isPast && !isBlocked && !isBlockedTime) {
+                                    if (!isPast && !isBlocked) {
                                         onChange(cloneDay);
-                                        fetchAvailableTimes();
                                     }
                                 }}
                                 bg={
                                     isSelected
                                         ? '#337AB7'
-                                        : isPast || isBlocked || isBlockedTime
+                                        : isPast || isBlocked
                                             ? 'gray.300'
                                             : '#E9F7D4'
                                 }
                                 color={
                                     isSelected
                                         ? 'white'
-                                        : isPast || isBlocked || isBlockedTime
+                                        : isPast || isBlocked
                                             ? 'gray.500'
                                             : '#337AB7'
                                 }
                                 cursor={
-                                    isBlocked || isBlockedTime
+                                    isBlocked
                                         ? 'not-allowed'
                                         : isPast
                                             ? 'not-allowed'
                                             : 'pointer'
                                 }
                                 _hover={
-                                    isBlocked || isBlockedTime
+                                    isBlocked
                                         ? {}
-                                        : {bg: '#337AB7', color: 'white'}
+                                        : isPast
+                                            ? {}
+                                            : {bg: '#337AB7', color: 'white'}
                                 }
                                 pointerEvents={
-                                    isBlocked || isBlockedTime
+                                    isBlocked
                                         ? 'none'
                                         : isPast
                                             ? 'none'
@@ -309,11 +323,11 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                     transform="translate(-50%, -50%)"
                                     fontSize="12px"
                                     fontWeight="medium"
-                                    color={isBlocked || isBlockedTime ? 'red.500' : 'inherit'}
                                     textAlign="center"
                                 >
-                                    {!isPast
-                                        ? isBlocked || isBlockedTime
+                                    {!isPast && !isBlocked
+                                        ? monthDayData[dayKey] || ''
+                                        : isBlocked && !isPast
                                             ? (
                                                 <Text
                                                     fontSize="9px"
@@ -326,8 +340,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                                     Info
                                                 </Text>
                                             )
-                                            : monthDayData[dayKey] || ''
-                                        : ''}
+                                            : ''}
                                 </Text>
                             </Flex>
                         </Box>
@@ -360,7 +373,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             }
 
             setError(null);
-        } catch (error) {
+        } catch (error: any) {
             setError(error.response?.data?.message || 'Failed to fetch available times');
             setAvailableTimes([]);
         }
@@ -369,6 +382,48 @@ const DatePicker: React.FC<DatePickerProps> = ({
     useEffect(() => {
         fetchAvailableTimes();
     }, [fetchAvailableTimes]);
+
+    function parseTimeToMinutes(timeStr: string): number {
+        const [time, modifier] = timeStr.split(" ");
+        const [hourStr, minuteStr] = time.split(":");
+        let hours = parseInt(hourStr, 10);
+        const minutes = parseInt(minuteStr, 10);
+
+        if (modifier && modifier.toUpperCase() === "PM" && hours < 12) {
+            hours += 12;
+        }
+        if (modifier && modifier.toUpperCase() === "AM" && hours === 12) {
+            hours = 0;
+        }
+
+        return hours * 60 + minutes;
+    }
+
+    useEffect(() => {
+        if (!selectedDate) {
+            setFilteredTimes([]);
+            return;
+        }
+
+        const dayKey = format(selectedDate, 'yyyy-MM-dd');
+        const dailyBlocked = blockedTimes.filter(bt => bt.date === dayKey);
+
+        if (dailyBlocked.length === 0) {
+            setFilteredTimes(availableTimes);
+            return;
+        }
+
+        const timesFiltered = availableTimes.filter(timeStr => {
+            const timeInMinutes = parseTimeToMinutes(timeStr);
+            return !dailyBlocked.some(bt => {
+                const start = parseTimeToMinutes(bt.startTime);
+                const end = parseTimeToMinutes(bt.endTime);
+                return timeInMinutes >= start && timeInMinutes <= end;
+            });
+        });
+
+        setFilteredTimes(timesFiltered);
+    }, [selectedDate, blockedTimes, availableTimes]);
 
     const handleTimeSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const selected = event.target.value;
@@ -390,7 +445,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 onChange={handleTimeSelection}
                 value={selectedTime ?? undefined}
             >
-                {availableTimes.map((time, index) => {
+                {filteredTimes.map((time, index) => {
                     let formattedTime = "";
                     try {
                         if (time.includes(":")) {
@@ -407,7 +462,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                             }
                             formattedTime = format(date, "hh:mm a");
                         }
-                    } catch (error) {
+                    } catch (error: any) {
                         console.error(error.message);
                         formattedTime = "Invalid time";
                     }
@@ -418,7 +473,6 @@ const DatePicker: React.FC<DatePickerProps> = ({
                         </option>
                     );
                 })}
-
             </Select>
         </VStack>
     );

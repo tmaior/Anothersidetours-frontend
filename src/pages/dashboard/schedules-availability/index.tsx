@@ -29,6 +29,7 @@ import ProgressBar from "../../../components/ProgressBar";
 
 export default function SchedulesAvailabilityPage() {
     const [eventDuration, setEventDuration] = useState("4");
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [inventoryDuration, setInventoryDuration] = useState("4");
     const [schedule, setSchedule] = useState([]);
     const [guestLimit, setGuestLimit] = useState(8);
@@ -63,7 +64,7 @@ export default function SchedulesAvailabilityPage() {
                             booked by customers.
                         </Text>
                         <Flex gap={4}>
-                            <FormControl>
+                            <FormControl w={"300px"}>
                                 <FormLabel>Event Duration</FormLabel>
                                 <Flex gap={2}>
                                     <Input
@@ -77,20 +78,20 @@ export default function SchedulesAvailabilityPage() {
                                     </Select>
                                 </Flex>
                             </FormControl>
-                            <FormControl>
-                                <FormLabel>Inventory Duration</FormLabel>
-                                <Flex gap={2}>
-                                    <Input
-                                        type="number"
-                                        value={inventoryDuration}
-                                        onChange={(e) => setInventoryDuration(e.target.value)}
-                                    />
-                                    <Select>
-                                        <option value="hour">hour</option>
-                                        <option value="minute">minute</option>
-                                    </Select>
-                                </Flex>
-                            </FormControl>
+                            {/*<FormControl>*/}
+                            {/*    <FormLabel>Inventory Duration</FormLabel>*/}
+                            {/*    <Flex gap={2}>*/}
+                            {/*        <Input*/}
+                            {/*            type="number"*/}
+                            {/*            value={inventoryDuration}*/}
+                            {/*            onChange={(e) => setInventoryDuration(e.target.value)}*/}
+                            {/*        />*/}
+                            {/*        <Select>*/}
+                            {/*            <option value="hour">hour</option>*/}
+                            {/*            <option value="minute">minute</option>*/}
+                            {/*        </Select>*/}
+                            {/*    </Flex>*/}
+                            {/*</FormControl>*/}
                         </Flex>
                     </Box>
 

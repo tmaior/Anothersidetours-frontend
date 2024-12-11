@@ -49,7 +49,7 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
         setIncludedItems,
         bringItems,
         setBringItems,
-        setoperationProcedures,
+        setOperationProcedures,
         operationProcedures
     } = useGuest();
 
@@ -190,7 +190,7 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
                                 resize="none"
                                 isRequired
                                 value={operationProcedures}
-                                onChange={(e) => setoperationProcedures(e.target.value)}
+                                onChange={(e) => setOperationProcedures(e.target.value)}
                             />
                             <Text fontSize="xs" color="gray.500">
                                 0 characters | 0 words
@@ -364,7 +364,7 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
                             setNewBringItem("");
                             setTitle("");
                             setDescription("");
-                            setoperationProcedures("");
+                            setOperationProcedures("");
                             setMeetingLocation("");
                             setMapEnabled(false);
                             localStorage.removeItem("descriptionContentData");

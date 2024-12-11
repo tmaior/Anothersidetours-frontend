@@ -39,6 +39,26 @@ interface GuestContextType {
     // setExpiryDate: React.Dispatch<React.SetStateAction<string>>;
     // cvc: string;
     // setCvc: React.Dispatch<React.SetStateAction<string>>;
+    includedItems: string[];
+    setIncludedItems: React.Dispatch<React.SetStateAction<string[]>>;
+    bringItems: string[];
+    setBringItems: React.Dispatch<React.SetStateAction<string[]>>;
+    description: string;
+    setDescription: React.Dispatch<React.SetStateAction<string>>;
+    operationProcedures: string;
+    setOperationProcedures: React.Dispatch<React.SetStateAction<string>>;
+    schedule: { startTime: string | null; startPeriod: string; endTime: string | null; endPeriod: string }[];
+    setSchedule: React.Dispatch<
+        React.SetStateAction<
+            { startTime: string | null; startPeriod: string; endTime: string | null; endPeriod: string }[]
+        >
+    >;
+    eventDuration: string;
+    setEventDuration: React.Dispatch<React.SetStateAction<string>>;
+    guestLimit: number;
+    setGuestLimit: React.Dispatch<React.SetStateAction<number>>;
+    earlyArrival: boolean;
+    setEarlyArrival: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const GuestContext = createContext<GuestContextType | undefined>(undefined);
@@ -59,22 +79,40 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [phone, setPhone] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
-    const [tenantId, setTenantId] = useState("95957cd4-4fd6-499b-b021-b5bd7c7a37a2");
+    const [tenantId, setTenantId] = useState("68b9cae6-3ef2-47d9-9af0-1afb23e2be2f");
     const [tourId, setTourId] = useState("");
     const [userId, setUserId] = useState("");
     const [detailedAddons, setDetailedAddons] = useState([]);
     const [reservationId, setReservationId] = useState("");
+    const [includedItems, setIncludedItems] = useState<string[]>([]);
+    const [bringItems, setBringItems] = useState<string[]>([]);
+    const [description, setDescription] = useState("");
+    const [operationProcedures, setOperationProcedures] = useState("");
+    const [schedule, setSchedule] = useState<
+        { startTime: string | null; startPeriod: string; endTime: string | null; endPeriod: string }[]
+    >([]);
+    const [eventDuration, setEventDuration] = useState("1");
+    const [guestLimit, setGuestLimit] = useState(8);
+    const [earlyArrival, setEarlyArrival] = useState(false);
 
     const resetGuestQuantity = () => {
         setGuestQuantity(2);
         setName("");
         setEmail("");
         setTitle("");
-        // setTenantId("");
+        setTenantId("");
         // setTourId("");
         setUserId("");
         setPhone("");
         setReservationId("");
+        setIncludedItems([]);
+        setBringItems([]);
+        setDescription("");
+        setOperationProcedures("");
+        setSchedule([]);
+        setEventDuration("1");
+        setGuestLimit(8);
+        setEarlyArrival(false);
     };
 
     return (
@@ -105,6 +143,22 @@ export function GuestProvider({children}: { children: ReactNode }) {
                 setPhone,
                 reservationId,
                 setReservationId,
+                includedItems,
+                setIncludedItems,
+                bringItems,
+                setBringItems,
+                description,
+                setDescription,
+                operationProcedures,
+                setOperationProcedures,
+                schedule,
+                setSchedule,
+                eventDuration,
+                setEventDuration,
+                guestLimit,
+                setGuestLimit,
+                earlyArrival,
+                setEarlyArrival,
             }}
         >
             {children}

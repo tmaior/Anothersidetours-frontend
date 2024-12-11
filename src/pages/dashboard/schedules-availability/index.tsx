@@ -14,17 +14,22 @@ import {
     VStack,
 } from "@chakra-ui/react";
 import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
-import React, {useState} from "react";
+import React from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ProgressBar from "../../../components/ProgressBar";
+import {useGuest} from "../../../components/GuestContext";
 
 export default function SchedulesAvailabilityPage() {
-    const [eventDuration, setEventDuration] = useState("1");
-    const [schedule, setSchedule] = useState<
-        { startTime: string | null; startPeriod: string; endTime: string | null; endPeriod: string }[]
-    >([]);
-    const [guestLimit, setGuestLimit] = useState(8);
-    const [earlyArrival, setEarlyArrival] = useState(false);
+    const {
+        schedule,
+        setSchedule,
+        eventDuration,
+        setEventDuration,
+        guestLimit,
+        setGuestLimit,
+        earlyArrival,
+        setEarlyArrival,
+    } = useGuest();
 
     const handleAddTimeRange = () => {
         setSchedule([
@@ -91,11 +96,14 @@ export default function SchedulesAvailabilityPage() {
                         <VStack align="stretch" mt={4}>
                             {schedule.map((timeRange, index) => (
                                 <HStack key={index} spacing={4} align="center">
-
                                     <Select
                                         value={timeRange.startTime?.split(":")[0] || ""}
                                         onChange={(e) =>
-                                            handleTimeChange(index, "startTime", `${e.target.value}:${timeRange.startTime?.split(":")[1] || "00"}`)
+                                            handleTimeChange(
+                                                index,
+                                                "startTime",
+                                                `${e.target.value}:${timeRange.startTime?.split(":")[1] || "00"}`
+                                            )
                                         }
                                         width="100px"
                                     >
@@ -109,7 +117,11 @@ export default function SchedulesAvailabilityPage() {
                                     <Select
                                         value={timeRange.startTime?.split(":")[1] || ""}
                                         onChange={(e) =>
-                                            handleTimeChange(index, "startTime", `${timeRange.startTime?.split(":")[0] || "12"}:${e.target.value}`)
+                                            handleTimeChange(
+                                                index,
+                                                "startTime",
+                                                `${timeRange.startTime?.split(":")[0] || "12"}:${e.target.value}`
+                                            )
                                         }
                                         width="100px"
                                     >
@@ -132,7 +144,11 @@ export default function SchedulesAvailabilityPage() {
                                     <Select
                                         value={timeRange.endTime?.split(":")[0] || ""}
                                         onChange={(e) =>
-                                            handleTimeChange(index, "endTime", `${e.target.value}:${timeRange.endTime?.split(":")[1] || "00"}`)
+                                            handleTimeChange(
+                                                index,
+                                                "endTime",
+                                                `${e.target.value}:${timeRange.endTime?.split(":")[1] || "00"}`
+                                            )
                                         }
                                         width="100px"
                                     >
@@ -146,7 +162,11 @@ export default function SchedulesAvailabilityPage() {
                                     <Select
                                         value={timeRange.endTime?.split(":")[1] || ""}
                                         onChange={(e) =>
-                                            handleTimeChange(index, "endTime", `${timeRange.endTime?.split(":")[0] || "12"}:${e.target.value}`)
+                                            handleTimeChange(
+                                                index,
+                                                "endTime",
+                                                `${timeRange.endTime?.split(":")[0] || "12"}:${e.target.value}`
+                                            )
                                         }
                                         width="100px"
                                     >
@@ -173,7 +193,6 @@ export default function SchedulesAvailabilityPage() {
                                         aria-label="Remove Time Range"
                                     />
                                 </HStack>
-
                             ))}
                         </VStack>
                     </Box>
@@ -192,7 +211,6 @@ export default function SchedulesAvailabilityPage() {
                             </Text>
                         </FormControl>
                     </Box>
-
                     <Divider/>
                     <Box>
                         <Text fontSize="lg" fontWeight="bold" mb={2}>
@@ -207,7 +225,6 @@ export default function SchedulesAvailabilityPage() {
                             />
                         </FormControl>
                     </Box>
-
                     <Divider/>
                     <HStack justify="space-between">
                         <Button variant="outline" onClick={() => window.history.back()}>

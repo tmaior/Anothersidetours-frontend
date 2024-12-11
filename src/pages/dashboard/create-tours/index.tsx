@@ -34,9 +34,6 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
     const [newBringItem, setNewBringItem] = useState("");
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [overrideFooter, setOverrideFooter] = useState(false);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [imageFile, setImageFile] = useState<File | null>(null);
     const [sopNotes, setSopNotes] = useState("");
     const [meetingLocation, setMeetingLocation] = useState("");
     const [mapEnabled, setMapEnabled] = useState(false);
@@ -50,7 +47,12 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
         bringItems,
         setBringItems,
         setOperationProcedures,
-        operationProcedures
+        operationProcedures,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        imageFile,
+        setImageFile,
+        imagePreview,
+        setImagePreview,
     } = useGuest();
 
     const router = useRouter();

@@ -59,6 +59,10 @@ interface GuestContextType {
     setGuestLimit: React.Dispatch<React.SetStateAction<number>>;
     earlyArrival: boolean;
     setEarlyArrival: React.Dispatch<React.SetStateAction<boolean>>;
+    imageFile: File | null;
+    setImageFile: React.Dispatch<React.SetStateAction<File | null>>;
+    imagePreview: string | null;
+    setImagePreview: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const GuestContext = createContext<GuestContextType | undefined>(undefined);
@@ -94,6 +98,8 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [eventDuration, setEventDuration] = useState("1");
     const [guestLimit, setGuestLimit] = useState(8);
     const [earlyArrival, setEarlyArrival] = useState(false);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     const resetGuestQuantity = () => {
         setGuestQuantity(2);
@@ -113,6 +119,8 @@ export function GuestProvider({children}: { children: ReactNode }) {
         setEventDuration("1");
         setGuestLimit(8);
         setEarlyArrival(false);
+        setImageFile(null);
+        setImagePreview(null);
     };
 
     return (
@@ -159,6 +167,10 @@ export function GuestProvider({children}: { children: ReactNode }) {
                 setGuestLimit,
                 earlyArrival,
                 setEarlyArrival,
+                imageFile,
+                setImageFile,
+                imagePreview,
+                setImagePreview,
             }}
         >
             {children}

@@ -19,7 +19,7 @@ import DashboardLayout from "../../../components/DashboardLayout";
 import ProgressBar from "../../../components/ProgressBar";
 
 export default function SchedulesAvailabilityPage() {
-    const [eventDuration, setEventDuration] = useState("4");
+    const [eventDuration, setEventDuration] = useState("1");
     const [schedule, setSchedule] = useState<
         { startTime: string | null; startPeriod: string; endTime: string | null; endPeriod: string }[]
     >([]);

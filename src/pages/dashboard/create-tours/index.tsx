@@ -12,7 +12,7 @@ import {
     Input,
     Switch,
     Text,
-    Textarea,
+    Textarea, useToast,
     VStack,
 } from "@chakra-ui/react";
 import {AddIcon} from "@chakra-ui/icons";
@@ -54,24 +54,32 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
         imagePreview,
         setImagePreview,
     } = useGuest();
-
+    const [price, setPrice] = useState("0");
     const router = useRouter();
+    const [errors, setErrors] = useState({
+        title: false,
+        description: false,
+        price: false,
+    });
+    const [formData, setFormData] = useState({
+        title: "",
+        description: "",
+        price: 0,
+    });
+    const toast = useToast();
 
     useEffect(() => {
-        const savedData = localStorage.getItem("descriptionContentData");
-        if (savedData) {
-            const parsed = JSON.parse(savedData);
-            setIncludedItems(parsed.includedItems || []);
-            setBringItems(parsed.bringItems || []);
-            setNewIncludedItem(parsed.newIncludedItem || "");
-            setNewBringItem(parsed.newBringItem || "");
-            setImagePreview(parsed.imagePreview || null);
-            setTitle(parsed.title || "");
-            setDescription(parsed.description || "");
-            setSopNotes(parsed.sopNotes || "");
-            setMeetingLocation(parsed.meetingLocation || "");
-            setMapEnabled(parsed.mapEnabled || false);
-        }
+        setFormData({
+            title: title || "",
+            description: description || "",
+            price: parseFloat(price) || 0,
+        });
+
+        setNewIncludedItem("");
+        setNewBringItem("");
+        setSopNotes(operationProcedures || "");
+        setMeetingLocation(meetingLocation || "");
+        setMapEnabled(false);
     }, []);
 
     useEffect(() => {
@@ -141,6 +149,51 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
         setBringItems(bringItems.filter((_, i) => i !== index));
     };
 
+    const validateForm = () => {
+        const newErrors = {
+            title: formData.title.trim() === "",
+            description: formData.description.trim() === "",
+            price: formData.price <= 0,
+        };
+        setErrors(newErrors);
+
+        return !Object.values(newErrors).includes(true);
+    };
+
+    const handleNextClick = () => {
+        if (!validateForm()) {
+            toast({
+                title: "Validation Error",
+                description: "Please fix the highlighted fields before proceeding.",
+                status: "error",
+                duration: 4000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        setTitle(formData.title);
+        setDescription(formData.description);
+        setOperationProcedures(sopNotes);
+        router.push("/dashboard/schedules-availability");
+    };
+
+    const handleFormChange = (field: string, value: string | number) => {
+        if (field === "price") {
+            value = parseFloat(value.toString()) || 0;
+            setPrice(value.toString());
+        }
+
+        setFormData({ ...formData, [field]: value });
+
+        setErrors({ ...errors, [field]: value === "" || (field === "price" && value <= 0) });
+
+        if (field === "title") setTitle(value as string);
+        if (field === "description") setDescription(value as string);
+    };
+
+
+
     return (
         <DashboardLayout>
             <Box p={8} maxWidth="900px" mx="auto">
@@ -157,32 +210,24 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
                     </Text>
 
                     <VStack spacing={4} align="stretch">
-                        <Box>
-                            <Text fontSize="sm" mb={1}>
-                                Title is required <Text as="span" color="red">*</Text>
-                            </Text>
+                        <FormControl isRequired isInvalid={errors.title}>
+                            <FormLabel>Title</FormLabel>
                             <Input
+                                value={formData.title}
+                                onChange={(e) => handleFormChange("title", e.target.value)}
                                 placeholder="Enter Title"
-                                isRequired
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
                             />
-                        </Box>
-                        <Box>
-                            <Text fontSize="sm" mb={1}>
-                                Description is required <Text as="span" color="red">*</Text>
-                            </Text>
+                            {errors.title && <Text color="red.500">This field is required</Text>}
+                        </FormControl>
+                        <FormControl isRequired isInvalid={errors.description}>
+                            <FormLabel>Description</FormLabel>
                             <Textarea
-                                placeholder="Write a detailed description..."
-                                resize="none"
-                                isRequired
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
+                                value={formData.description}
+                                onChange={(e) => handleFormChange("description", e.target.value)}
+                                placeholder="Enter Description"
                             />
-                            <Text fontSize="xs" color="gray.500">
-                                0 characters | 0 words
-                            </Text>
-                        </Box>
+                            {errors.description && <Text color="red.500">This field is required</Text>}
+                        </FormControl>
                         <Box>
                             <Text fontSize="sm" mb={1}>
                                 Standard operating procedure (SOP) note. <Text as="span" color="red">*</Text>
@@ -263,6 +308,19 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
                             <Input marginTop={"10px"} placeholder="Enter meeting location"/>
 
                             <Divider my={6}/>
+                        </FormControl>
+                        <FormControl isRequired isInvalid={errors.price}>
+                            <FormLabel>Price</FormLabel>
+                            <HStack>
+                                <Input
+                                    value={price}
+                                    onChange={(e) => handleFormChange("price", e.target.value)}
+                                    placeholder="$"
+                                    width="auto"
+                                    type="number"
+                                />
+                            </HStack>
+                            {errors.price && <Text color="red.500">This field is required and must be greater than 0</Text>}
                         </FormControl>
                         {/*<Divider my={6} />*/}
                         <Heading as="h3" size="md" mb={4}>
@@ -377,7 +435,7 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
                     </Button>
                     <Button
                         colorScheme="blue"
-                        onClick={() => router.push("/dashboard/schedules-availability")}
+                        onClick={handleNextClick}
                     >
                         Next
                     </Button>

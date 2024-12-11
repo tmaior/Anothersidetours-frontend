@@ -15,11 +15,12 @@ import {
     Textarea,
     VStack,
 } from "@chakra-ui/react";
-import { AddIcon } from "@chakra-ui/icons";
-import React, { useEffect, useState } from "react";
+import {AddIcon} from "@chakra-ui/icons";
+import React, {useEffect, useState} from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ProgressBar from "../../../components/ProgressBar";
-import { useRouter } from "next/router";
+import {useRouter} from "next/router";
+import {useGuest} from "../../../components/GuestContext";
 
 interface TourFormProps {
     isEditing?: boolean;
@@ -28,9 +29,7 @@ interface TourFormProps {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function DescriptionContentPage({ isEditing, tourId, initialData }: TourFormProps) {
-    const [includedItems, setIncludedItems] = useState<string[]>([]);
-    const [bringItems, setBringItems] = useState<string[]>([]);
+export default function DescriptionContentPage({isEditing, tourId, initialData}: TourFormProps) {
     const [newIncludedItem, setNewIncludedItem] = useState("");
     const [newBringItem, setNewBringItem] = useState("");
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -38,14 +37,23 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [imageFile, setImageFile] = useState<File | null>(null);
-
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
     const [sopNotes, setSopNotes] = useState("");
     const [meetingLocation, setMeetingLocation] = useState("");
     const [mapEnabled, setMapEnabled] = useState(false);
+    const {
+        title,
+        setTitle,
+        description,
+        setDescription,
+        includedItems,
+        setIncludedItems,
+        bringItems,
+        setBringItems,
+        setoperationProcedures,
+        operationProcedures
+    } = useGuest();
 
-    const router = useRouter(); // Uso do useRouter para navegação
+    const router = useRouter();
 
     useEffect(() => {
         const savedData = localStorage.getItem("descriptionContentData");
@@ -76,6 +84,7 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
             sopNotes,
             meetingLocation,
             mapEnabled,
+            operationProcedures
         };
         localStorage.setItem("descriptionContentData", JSON.stringify(data));
     }, [
@@ -133,7 +142,7 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
     return (
         <DashboardLayout>
             <Box p={8} maxWidth="900px" mx="auto">
-                <ProgressBar steps={["Description", "Schedules"]} currentStep={0} />
+                <ProgressBar steps={["Description", "Schedules"]} currentStep={0}/>
                 <Heading mb={6}>Description Content</Heading>
 
                 <Box mb={8}>
@@ -180,8 +189,8 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
                                 placeholder="Write the Standard operating procedure"
                                 resize="none"
                                 isRequired
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
+                                value={operationProcedures}
+                                onChange={(e) => setoperationProcedures(e.target.value)}
                             />
                             <Text fontSize="xs" color="gray.500">
                                 0 characters | 0 words
@@ -190,7 +199,8 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
                         <FormControl mb={4}>
                             <FormLabel>Photos</FormLabel>
                             <Text fontSize="sm" color="gray.600" mb={2}>
-                                You can add a images to each product with a maximum size of 5 MB. Suggested pixel dimensions 1024×768
+                                You can add a images to each product with a maximum size of 5 MB. Suggested pixel
+                                dimensions 1024×768
                             </Text>
                             <HStack spacing={4} align="center">
                                 {imagePreview ? (
@@ -268,9 +278,9 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
                                         onChange={(e) => setNewIncludedItem(e.target.value)}
                                     />
                                     <IconButton
-                                        icon={<AddIcon />}
+                                        icon={<AddIcon/>}
                                         ml={2}
-                                        onClick={handleAddIncludedItem} aria-label={""} />
+                                        onClick={handleAddIncludedItem} aria-label={""}/>
                                 </Flex>
                                 <VStack align="stretch" mt={2}>
                                     {includedItems.map((item, index) => (
@@ -298,9 +308,9 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
                                         onChange={(e) => setNewBringItem(e.target.value)}
                                     />
                                     <IconButton
-                                        icon={<AddIcon />}
+                                        icon={<AddIcon/>}
                                         ml={2}
-                                        onClick={handleAddBringItem} aria-label={""} />
+                                        onClick={handleAddBringItem} aria-label={""}/>
                                 </Flex>
                                 <VStack align="stretch" mt={2}>
                                     {bringItems.map((item, index) => (
@@ -318,7 +328,7 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
                                 </VStack>
                             </Box>
                         </HStack>
-                        <Divider my={6} />
+                        <Divider my={6}/>
                         {/*<Box>*/}
                         {/*    <Text fontSize="sm" mb={1}>*/}
                         {/*        Cancellation Policy <InfoOutlineIcon ml={1} color="gray.500" />*/}
@@ -344,7 +354,23 @@ export default function DescriptionContentPage({ isEditing, tourId, initialData 
                     </VStack>
                 </Box>
                 <HStack justify="space-between" mt={8}>
-                    <Button variant="outline" colorScheme="gray">
+                    <Button
+                        variant="outline"
+                        colorScheme="gray"
+                        onClick={() => {
+                            setIncludedItems([]);
+                            setBringItems([]);
+                            setNewIncludedItem("");
+                            setNewBringItem("");
+                            setTitle("");
+                            setDescription("");
+                            setoperationProcedures("");
+                            setMeetingLocation("");
+                            setMapEnabled(false);
+                            localStorage.removeItem("descriptionContentData");
+                            router.push("/");
+                        }}
+                    >
                         Cancel
                     </Button>
                     <Button

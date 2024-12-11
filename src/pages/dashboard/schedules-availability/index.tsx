@@ -159,7 +159,15 @@ export default function SchedulesAvailabilityPage() {
 
             const tourId = createdTour.id;
 
-            if (schedule.length > 0) {
+            try {
+                const timeSlots =
+                    schedule.length > 0
+                        ? schedule.map(
+                            (slot) =>
+                                `${slot.startTime} ${slot.startPeriod} - ${slot.endTime} ${slot.endPeriod}`
+                        )
+                        : [];
+
                 const scheduleResponse = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/${tourId}`,
                     {
@@ -167,18 +175,16 @@ export default function SchedulesAvailabilityPage() {
                         headers: {
                             "Content-Type": "application/json",
                         },
-                        body: JSON.stringify({
-                            timeSlots: schedule.map(
-                                (slot) =>
-                                    `${slot.startTime} ${slot.startPeriod} - ${slot.endTime} ${slot.endPeriod}`
-                            ),
-                        }),
+                        body: JSON.stringify({ timeSlots }),
                     }
                 );
 
                 if (!scheduleResponse.ok) {
                     throw new Error("Failed to save schedule");
                 }
+            } catch (error) {
+                console.error("Error saving schedule:", error);
+                throw error;
             }
 
             if (bringItems.length > 0) {
@@ -189,7 +195,7 @@ export default function SchedulesAvailabilityPage() {
                             headers: {
                                 "Content-Type": "application/json",
                             },
-                            body: JSON.stringify({ tourId, item }),
+                            body: JSON.stringify({ tourId: tourId, item }),
                         })
                     )
                 );
@@ -203,7 +209,7 @@ export default function SchedulesAvailabilityPage() {
                             headers: {
                                 "Content-Type": "application/json",
                             },
-                            body: JSON.stringify({ tourId, item }),
+                            body: JSON.stringify({ tourId: tourId, item }),
                         })
                     )
                 );

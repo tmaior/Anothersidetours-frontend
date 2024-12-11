@@ -24,7 +24,7 @@ export default function AddonContentPage() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { isOpen, onOpen, onClose } = useDisclosure();
     const toast = useToast();
-    const [price, setPrice] = useState("0");
+    const [price, setPrice] = useState<number>(0);
 
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
@@ -41,7 +41,6 @@ export default function AddonContentPage() {
         label: false,
         description: false,
         price: false,
-        tourId: false,
         type: false,
     });
 
@@ -70,14 +69,14 @@ export default function AddonContentPage() {
         fetchData();
     }, [addonId]);
 
-    const handleFormChange = (field: string, value: string | number) => {
+    const handleFormChange = (field: string, value: string | number | boolean) => {
         if (field === "price") {
-            value = parseFloat(value.toString()) || 0;
-            setPrice(value.toString());
+            const numericValue = parseFloat(value.toString()) || 0;
+            setPrice(numericValue);
         }
 
         setFormData({ ...formData, [field]: value });
-        setErrors({ ...errors, [field]: value === "" || (field === "price" && value <= 0) });
+        setErrors({ ...errors, [field]: value === "" || (field === "price" && typeof value === "number" && value <= 0) });
     };
 
     const validateForm = () => {

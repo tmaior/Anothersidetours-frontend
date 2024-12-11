@@ -77,7 +77,11 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
         setImageFile(null);
     };
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        title: string;
+        description: string;
+        price: number;
+    }>({
         title: "",
         description: "",
         price: 0,
@@ -88,7 +92,7 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
         setFormData({
             title: title || "",
             description: description || "",
-            price: parseFloat(price) || 0,
+            price: price ? parseFloat(price.toString()) : 0,
         });
 
         setNewIncludedItem("");
@@ -200,13 +204,16 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
 
     const handleFormChange = (field: string, value: string | number) => {
         if (field === "price") {
-            value = parseFloat(value.toString()) || 0;
-            setPrice(value.toString());
+            const numericValue = parseFloat(value.toString()) || 0;
+            setPrice(numericValue);
         }
 
         setFormData({ ...formData, [field]: value });
 
-        setErrors({ ...errors, [field]: value === "" || (field === "price" && value <= 0) });
+        setErrors({
+            ...errors,
+            [field]: value === "" || (field === "price" && Number(value) <= 0),
+        });
 
         if (field === "title") setTitle(value as string);
         if (field === "description") setDescription(value as string);

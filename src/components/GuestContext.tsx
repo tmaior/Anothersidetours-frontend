@@ -102,7 +102,7 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [earlyArrival, setEarlyArrival] = useState(false);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [price, setPrice] = useState(0);
+    const [price, setPrice] = useState<number>(0);
 
     const resetGuestQuantity = () => {
         setGuestQuantity(2);

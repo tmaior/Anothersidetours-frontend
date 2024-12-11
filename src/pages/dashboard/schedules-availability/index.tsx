@@ -6,50 +6,51 @@ import {
     FormControl,
     FormLabel,
     HStack,
-    Input, NumberDecrementStepper, NumberIncrementStepper,
-    NumberInput,
-    NumberInputField, NumberInputStepper,
-    Popover,
-    PopoverArrow,
-    PopoverBody,
-    PopoverCloseButton,
-    PopoverContent,
-    PopoverHeader,
-    PopoverTrigger,
+    IconButton,
+    Input,
     Select,
     Switch,
     Text,
-    // Textarea,
     VStack,
 } from "@chakra-ui/react";
-import {AddIcon} from "@chakra-ui/icons";
+import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
 import React, {useState} from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ProgressBar from "../../../components/ProgressBar";
 
 export default function SchedulesAvailabilityPage() {
     const [eventDuration, setEventDuration] = useState("4");
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [inventoryDuration, setInventoryDuration] = useState("4");
-    const [schedule, setSchedule] = useState([]);
+    const [schedule, setSchedule] = useState<
+        { startTime: string | null; startPeriod: string; endTime: string | null; endPeriod: string }[]
+    >([]);
     const [guestLimit, setGuestLimit] = useState(8);
     const [earlyArrival, setEarlyArrival] = useState(false);
-    // const [earlyCutoff, setEarlyCutoff] = useState(true);
-    // const [futureCutoff, setFutureCutoff] = useState(false);
-    // const [businessHours, setBusinessHours] = useState("");
 
-    const handleAddSchedule = (time) => {
-        setSchedule([...schedule, time]);
+    const handleAddTimeRange = () => {
+        setSchedule([
+            ...schedule,
+            {startTime: null, startPeriod: "AM", endTime: null, endPeriod: "AM"},
+        ]);
     };
 
-    const handleRemoveSchedule = (index: number) => {
+    const handleRemoveTimeRange = (index: number) => {
         setSchedule(schedule.filter((_, i) => i !== index));
+    };
+
+    const handleTimeChange = (
+        index: number,
+        key: "startTime" | "endTime" | "startPeriod" | "endPeriod",
+        value: string
+    ) => {
+        const updatedSchedule = [...schedule];
+        updatedSchedule[index][key] = value;
+        setSchedule(updatedSchedule);
     };
 
     return (
         <DashboardLayout>
             <Box p={8} maxWidth="900px" mx="auto">
-                <ProgressBar steps={["Description", "Schedules"]} currentStep={1} />
+                <ProgressBar steps={["Description", "Schedules"]} currentStep={1}/>
                 <Text fontSize="2xl" fontWeight="bold" mb={6}>
                     Schedules & Availability
                 </Text>
@@ -60,8 +61,7 @@ export default function SchedulesAvailabilityPage() {
                             Schedules
                         </Text>
                         <Text fontSize="sm" color="gray.600" mb={4}>
-                            Build activity schedules that your Experiences is available to be
-                            booked by customers.
+                            Build activity schedules that your Experiences are available to be booked by customers.
                         </Text>
                         <Flex gap={4}>
                             <FormControl w={"300px"}>
@@ -78,20 +78,6 @@ export default function SchedulesAvailabilityPage() {
                                     </Select>
                                 </Flex>
                             </FormControl>
-                            {/*<FormControl>*/}
-                            {/*    <FormLabel>Inventory Duration</FormLabel>*/}
-                            {/*    <Flex gap={2}>*/}
-                            {/*        <Input*/}
-                            {/*            type="number"*/}
-                            {/*            value={inventoryDuration}*/}
-                            {/*            onChange={(e) => setInventoryDuration(e.target.value)}*/}
-                            {/*        />*/}
-                            {/*        <Select>*/}
-                            {/*            <option value="hour">hour</option>*/}
-                            {/*            <option value="minute">minute</option>*/}
-                            {/*        </Select>*/}
-                            {/*    </Flex>*/}
-                            {/*</FormControl>*/}
                         </Flex>
                     </Box>
 
@@ -99,45 +85,99 @@ export default function SchedulesAvailabilityPage() {
                         <Text fontSize="sm" fontWeight="bold" mb={2}>
                             Schedule
                         </Text>
-                        <Popover>
-                            <PopoverTrigger>
-                                <Button
-                                    leftIcon={<AddIcon />}
-                                    colorScheme="blue"
-                                >
-                                    Add Schedule
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent w={"290px"}>
-                                <PopoverArrow />
-                                <PopoverCloseButton />
-                                <PopoverHeader>Select Time</PopoverHeader>
-                                <PopoverBody>
-                                    <TimeSelector onTimeAdd={handleAddSchedule} />
-                                </PopoverBody>
-                            </PopoverContent>
-                        </Popover>
+                        <Button leftIcon={<AddIcon/>} colorScheme="blue" onClick={handleAddTimeRange}>
+                            Add Time Range
+                        </Button>
                         <VStack align="stretch" mt={4}>
-                            {schedule.map((sched, index) => (
-                                <Flex
-                                    key={index}
-                                    justify="space-between"
-                                    p={2}
-                                    bg="gray.100"
-                                    borderRadius="md"
-                                >
-                                    <Text>{sched}</Text>
-                                    <Button
-                                        size="sm"
-                                        colorScheme="red"
-                                        onClick={() => handleRemoveSchedule(index)}
+                            {schedule.map((timeRange, index) => (
+                                <HStack key={index} spacing={4} align="center">
+
+                                    <Select
+                                        value={timeRange.startTime?.split(":")[0] || ""}
+                                        onChange={(e) =>
+                                            handleTimeChange(index, "startTime", `${e.target.value}:${timeRange.startTime?.split(":")[1] || "00"}`)
+                                        }
+                                        width="100px"
                                     >
-                                        Remove
-                                    </Button>
-                                </Flex>
+                                        {Array.from({length: 12}, (_, i) => (
+                                            <option key={i + 1} value={(i + 1).toString().padStart(2, "0")}>
+                                                {i + 1}
+                                            </option>
+                                        ))}
+                                    </Select>
+
+                                    <Select
+                                        value={timeRange.startTime?.split(":")[1] || ""}
+                                        onChange={(e) =>
+                                            handleTimeChange(index, "startTime", `${timeRange.startTime?.split(":")[0] || "12"}:${e.target.value}`)
+                                        }
+                                        width="100px"
+                                    >
+                                        {Array.from({length: 12}, (_, i) => (i * 5).toString().padStart(2, "0")).map((minute) => (
+                                            <option key={minute} value={minute}>
+                                                {minute}
+                                            </option>
+                                        ))}
+                                    </Select>
+
+                                    <Select
+                                        value={timeRange.startPeriod}
+                                        onChange={(e) => handleTimeChange(index, "startPeriod", e.target.value)}
+                                        width="80px"
+                                    >
+                                        <option value="AM">AM</option>
+                                        <option value="PM">PM</option>
+                                    </Select>
+
+                                    <Select
+                                        value={timeRange.endTime?.split(":")[0] || ""}
+                                        onChange={(e) =>
+                                            handleTimeChange(index, "endTime", `${e.target.value}:${timeRange.endTime?.split(":")[1] || "00"}`)
+                                        }
+                                        width="100px"
+                                    >
+                                        {Array.from({length: 12}, (_, i) => (
+                                            <option key={i + 1} value={(i + 1).toString().padStart(2, "0")}>
+                                                {i + 1}
+                                            </option>
+                                        ))}
+                                    </Select>
+
+                                    <Select
+                                        value={timeRange.endTime?.split(":")[1] || ""}
+                                        onChange={(e) =>
+                                            handleTimeChange(index, "endTime", `${timeRange.endTime?.split(":")[0] || "12"}:${e.target.value}`)
+                                        }
+                                        width="100px"
+                                    >
+                                        {Array.from({length: 12}, (_, i) => (i * 5).toString().padStart(2, "0")).map((minute) => (
+                                            <option key={minute} value={minute}>
+                                                {minute}
+                                            </option>
+                                        ))}
+                                    </Select>
+
+                                    <Select
+                                        value={timeRange.endPeriod}
+                                        onChange={(e) => handleTimeChange(index, "endPeriod", e.target.value)}
+                                        width="80px"
+                                    >
+                                        <option value="AM">AM</option>
+                                        <option value="PM">PM</option>
+                                    </Select>
+
+                                    <IconButton
+                                        icon={<DeleteIcon/>}
+                                        colorScheme="red"
+                                        onClick={() => handleRemoveTimeRange(index)}
+                                        aria-label="Remove Time Range"
+                                    />
+                                </HStack>
+
                             ))}
                         </VStack>
                     </Box>
+
                     <Box>
                         <FormControl>
                             <HStack justify="space-between">
@@ -169,44 +209,6 @@ export default function SchedulesAvailabilityPage() {
                     </Box>
 
                     <Divider/>
-                    {/*<Box>*/}
-                    {/*    <Text fontSize="lg" fontWeight="bold" mb={2}>*/}
-                    {/*        Availability Restrictions*/}
-                    {/*    </Text>*/}
-                    {/*    <FormControl>*/}
-                    {/*        <HStack justify="space-between">*/}
-                    {/*            <Text>Early Cutoff</Text>*/}
-                    {/*            <Switch*/}
-                    {/*                isChecked={earlyCutoff}*/}
-                    {/*                onChange={(e) => setEarlyCutoff(e.target.checked)}*/}
-                    {/*            />*/}
-                    {/*        </HStack>*/}
-                    {/*        <Text fontSize="sm" color="gray.600" mb={4}>*/}
-                    {/*            Prevent purchases that are made within 1 day of event start time.*/}
-                    {/*        </Text>*/}
-                    {/*    </FormControl>*/}
-                    {/*    <FormControl>*/}
-                    {/*        <HStack justify="space-between">*/}
-                    {/*            <Text>Future Cutoff</Text>*/}
-                    {/*            <Switch*/}
-                    {/*                isChecked={futureCutoff}*/}
-                    {/*                onChange={(e) => setFutureCutoff(e.target.checked)}*/}
-                    {/*            />*/}
-                    {/*        </HStack>*/}
-                    {/*        <Text fontSize="sm" color="gray.600" mb={4}>*/}
-                    {/*            Prevent purchases made too far in advance.*/}
-                    {/*        </Text>*/}
-                    {/*    </FormControl>*/}
-                    {/*    <FormControl>*/}
-                    {/*        <FormLabel>Business Hours</FormLabel>*/}
-                    {/*        <Textarea*/}
-                    {/*            value={businessHours}*/}
-                    {/*            onChange={(e) => setBusinessHours(e.target.value)}*/}
-                    {/*            placeholder="Enter business hours"*/}
-                    {/*        />*/}
-                    {/*    </FormControl>*/}
-                    {/*</Box>*/}
-
                     <HStack justify="space-between">
                         <Button variant="outline" onClick={() => window.history.back()}>
                             Back
@@ -216,73 +218,5 @@ export default function SchedulesAvailabilityPage() {
                 </VStack>
             </Box>
         </DashboardLayout>
-    );
-}
-
-function TimeSelector({ onTimeAdd }) {
-    const [hour, setHour] = useState(12);
-    const [minute, setMinute] = useState(0);
-    const [ampm, setAmPm] = useState('AM');
-
-    const handleAddTime = () => {
-        const formattedHour = hour.toString().padStart(2, '0');
-        const formattedMinute = minute.toString().padStart(2, '0');
-        const timeString = `${formattedHour}:${formattedMinute} ${ampm}`;
-        onTimeAdd(timeString);
-    };
-
-    return (
-        <VStack spacing={4}>
-            <HStack spacing={2}>
-                <NumberInput
-                    w={"80px"}
-                    max={12}
-                    min={1}
-                    value={hour}
-                    onChange={(valueString) => {
-                        const valueNumber = parseInt(valueString, 10);
-                        if (!isNaN(valueNumber)) {
-                            setHour(valueNumber);
-                        }
-                    }}
-                >
-                    <NumberInputField />
-                    <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                    </NumberInputStepper>
-                </NumberInput>
-                <Text>:</Text>
-                <NumberInput
-                    w={"80px"}
-                    max={59}
-                    min={0}
-                    value={minute}
-                    onChange={(valueString) => {
-                        const valueNumber = parseInt(valueString, 10);
-                        if (!isNaN(valueNumber)) {
-                            setMinute(valueNumber);
-                        }
-                    }}
-                >
-                    <NumberInputField />
-                    <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                    </NumberInputStepper>
-                </NumberInput>
-                <Select
-                    value={ampm}
-                    onChange={(e) => setAmPm(e.target.value)}
-                    width="80px"
-                >
-                    <option value="AM">AM</option>
-                    <option value="PM">PM</option>
-                </Select>
-            </HStack>
-            <Button colorScheme="blue" onClick={handleAddTime}>
-                Add Time
-            </Button>
-        </VStack>
     );
 }

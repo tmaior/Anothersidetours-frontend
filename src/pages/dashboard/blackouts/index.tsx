@@ -83,19 +83,40 @@ export default function BlackoutDatesManagement() {
         }));
     };
 
-    const handleRemoveBlackoutDate = (id: string) => {
-        setBlackoutDates((prev) => prev.filter((date) => date.id !== id));
-        toast({
-            title: "Removed",
-            description: "Blackout date removed successfully.",
-            status: "success",
-            duration: 3000,
-            isClosable: true,
-        });
+    const handleRemoveBlackoutDate = async (id: string) => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete blackout date.');
+            }
+            setBlackoutDates((prev) => prev.filter((date) => date.id !== id));
+            toast({
+                title: "Removed",
+                description: "Blackout date removed successfully.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error('Error removing blackout date:', error);
+            toast({
+                title: "Error",
+                description: error.message || "An error occurred while removing the blackout date.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
     };
 
     const handleCreateBlackoutDate = async () => {
-        const {name, startDate, endDate, noEnd, isGlobal, categoryId, timeRanges} = newBlackoutDate;
+        const { name, startDate, endDate, noEnd, isGlobal, categoryId, timeRanges } = newBlackoutDate;
 
         if (!name) {
             toast({
@@ -119,36 +140,77 @@ export default function BlackoutDatesManagement() {
             return;
         }
 
-        const newDate = {
-            id: Date.now().toString(),
-            name,
-            startDate,
-            endDate: noEnd ? null : endDate,
-            isGlobal,
-            categoryId: isGlobal ? null : categoryId,
-            timeRanges,
+        const formatTimeToAMPM = (date: Date | null) => {
+            if (!date) return "";
+            return date.toLocaleString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+            });
         };
 
-        setBlackoutDates((prev) => [...prev, newDate]);
-        setNewBlackoutDate({
-            name: "",
-            startDate: new Date(),
-            endDate: null,
-            noEnd: true,
-            isGlobal: false,
-            categoryId: "",
-            timeRanges: [],
-        });
+        const formattedStartTime = timeRanges[0]?.startTime ? formatTimeToAMPM(timeRanges[0].startTime) : undefined;
+        const formattedEndTime = timeRanges[0]?.endTime ? formatTimeToAMPM(timeRanges[0].endTime) : undefined;
 
-        toast({
-            title: "Blackout Date Created",
-            description: "The blackout date was successfully created.",
-            status: "success",
-            duration: 3000,
-            isClosable: true,
-        });
+        const formattedStartDate = startDate ? startDate.toISOString() : "";
+        const formattedEndDate = endDate ? endDate.toISOString() : "";
 
-        onClose();
+        const payload = {
+            isGlobal,
+            startDate: formattedStartDate,
+            startTime: formattedStartTime,
+            endTime: formattedEndTime,
+            reason: "Blackout date for specific period",
+            tourId: "",
+            categoryId: isGlobal ? null : categoryId,
+        };
+
+        if (!noEnd && formattedEndDate) {
+            payload["endDate"] = formattedEndDate;
+        }
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to create blackout date.");
+            }
+
+            toast({
+                title: "Blackout Date Created",
+                description: "The blackout date was successfully created.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+
+            setNewBlackoutDate({
+                name: "",
+                startDate: new Date(),
+                endDate: null,
+                noEnd: true,
+                isGlobal: false,
+                categoryId: "",
+                timeRanges: [],
+            });
+
+            onClose();
+        } catch (error) {
+            console.error("Error creating blackout date:", error);
+            toast({
+                title: "Error",
+                description: error.message || "An error occurred while creating the blackout date.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
     };
 
     return (
@@ -256,14 +318,14 @@ export default function BlackoutDatesManagement() {
                                             <Text>Start Date</Text>
                                             <DatePicker
                                                 selected={newBlackoutDate.startDate}
-                                                onChange={(date: Date) =>
+                                                onChange={(date: Date | null) =>
                                                     setNewBlackoutDate((prev) => ({
                                                         ...prev,
                                                         startDate: date,
                                                     }))
                                                 }
                                                 dateFormat="dd/MM/yyyy"
-                                                customInput={<Input/>}
+                                                customInput={<Input />}
                                             />
                                         </Box>
                                         <Box>
@@ -278,7 +340,7 @@ export default function BlackoutDatesManagement() {
                                                     }))
                                                 }
                                                 dateFormat="dd/MM/yyyy"
-                                                customInput={<Input/>}
+                                                customInput={<Input />}
                                                 isClearable
                                             />
                                         </Box>
@@ -334,7 +396,7 @@ export default function BlackoutDatesManagement() {
                                                         setNewBlackoutDate((prev) => {
                                                             const updatedRanges = [...prev.timeRanges];
                                                             updatedRanges[index].startTime = time;
-                                                            return {...prev, timeRanges: updatedRanges};
+                                                            return { ...prev, timeRanges: updatedRanges };
                                                         })
                                                     }
                                                     showTimeSelect
@@ -342,7 +404,7 @@ export default function BlackoutDatesManagement() {
                                                     timeIntervals={30}
                                                     timeCaption="Start Time"
                                                     dateFormat="hh:mm aa"
-                                                    customInput={<Input/>}
+                                                    customInput={<Input />}
                                                 />
                                                 <DatePicker
                                                     selected={range.endTime}
@@ -350,7 +412,7 @@ export default function BlackoutDatesManagement() {
                                                         setNewBlackoutDate((prev) => {
                                                             const updatedRanges = [...prev.timeRanges];
                                                             updatedRanges[index].endTime = time;
-                                                            return {...prev, timeRanges: updatedRanges};
+                                                            return { ...prev, timeRanges: updatedRanges };
                                                         })
                                                     }
                                                     showTimeSelect
@@ -358,10 +420,10 @@ export default function BlackoutDatesManagement() {
                                                     timeIntervals={30}
                                                     timeCaption="End Time"
                                                     dateFormat="hh:mm aa"
-                                                    customInput={<Input/>}
+                                                    customInput={<Input />}
                                                 />
                                                 <IconButton
-                                                    icon={<DeleteIcon/>}
+                                                    icon={<DeleteIcon />}
                                                     colorScheme="red"
                                                     onClick={() => handleRemoveTimeRange(index)}
                                                     aria-label="Remove time range"
@@ -369,7 +431,7 @@ export default function BlackoutDatesManagement() {
                                             </HStack>
                                         ))}
                                         <Button
-                                            leftIcon={<AddIcon/>}
+                                            leftIcon={<AddIcon />}
                                             colorScheme="blue"
                                             onClick={handleAddTimeRange}
                                         >

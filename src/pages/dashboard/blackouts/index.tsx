@@ -115,6 +115,10 @@ export default function BlackoutDatesManagement() {
         }
     };
 
+    const convertToUtcMidnight = (date: Date): Date => {
+        return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    };
+
     const handleCreateBlackoutDate = async () => {
         const { name, startDate, endDate, noEnd, isGlobal, categoryId, timeRanges } = newBlackoutDate;
 
@@ -152,12 +156,15 @@ export default function BlackoutDatesManagement() {
         const formattedStartTime = timeRanges[0]?.startTime ? formatTimeToAMPM(timeRanges[0].startTime) : undefined;
         const formattedEndTime = timeRanges[0]?.endTime ? formatTimeToAMPM(timeRanges[0].endTime) : undefined;
 
-        const formattedStartDate = startDate ? startDate.toISOString() : "";
-        const formattedEndDate = endDate ? endDate.toISOString() : "";
+        const utcStartDate = startDate ? convertToUtcMidnight(startDate).toISOString() : "";
+        let utcEndDate = "";
+        if (!noEnd && endDate) {
+            utcEndDate = convertToUtcMidnight(endDate).toISOString();
+        }
 
-        const payload = {
+        const payload: any = {
             isGlobal,
-            startDate: formattedStartDate,
+            startDate: utcStartDate,
             startTime: formattedStartTime,
             endTime: formattedEndTime,
             reason: "Blackout date for specific period",
@@ -165,8 +172,8 @@ export default function BlackoutDatesManagement() {
             categoryId: isGlobal ? null : categoryId,
         };
 
-        if (!noEnd && formattedEndDate) {
-            payload["endDate"] = formattedEndDate;
+        if (!noEnd && utcEndDate) {
+            payload["endDate"] = utcEndDate;
         }
 
         try {
@@ -204,7 +211,7 @@ export default function BlackoutDatesManagement() {
             });
 
             onClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error creating blackout date:", error);
             toast({
                 title: "Error",
@@ -248,7 +255,7 @@ export default function BlackoutDatesManagement() {
                                             {date.startDate && (
                                                 <Text>
                                                     <strong>Start Date:</strong>{" "}
-                                                    {new Date(date.startDate).toLocaleDateString()}
+                                                    {new Date(date.startDate).toLocaleDateString('en-GB', { timeZone: 'UTC' })}
                                                 </Text>
                                             )}
                                             {date.endDate ? (
@@ -344,7 +351,7 @@ export default function BlackoutDatesManagement() {
                                                 onChange={(date: Date | null) =>
                                                     setNewBlackoutDate((prev) => ({
                                                         ...prev,
-                                                        startDate: date,
+                                                        startDate: date || new Date(),
                                                     }))
                                                 }
                                                 dateFormat="dd/MM/yyyy"

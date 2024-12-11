@@ -12,7 +12,8 @@ import {
     Input,
     Switch,
     Text,
-    Textarea, useToast,
+    Textarea,
+    useToast,
     VStack,
 } from "@chakra-ui/react";
 import {AddIcon} from "@chakra-ui/icons";
@@ -53,14 +54,29 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
         setImageFile,
         imagePreview,
         setImagePreview,
+        price,
+        setPrice,
     } = useGuest();
-    const [price, setPrice] = useState("0");
     const router = useRouter();
     const [errors, setErrors] = useState({
         title: false,
         description: false,
         price: false,
     });
+
+    const resetFields = () => {
+        setTitle("");
+        setDescription("");
+        setPrice(0);
+        setIncludedItems([]);
+        setBringItems([]);
+        setNewIncludedItem("");
+        setNewBringItem("");
+        setOperationProcedures("");
+        setImagePreview(null);
+        setImageFile(null);
+    };
+
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -176,6 +192,11 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
         setDescription(formData.description);
         setOperationProcedures(sopNotes);
         router.push("/dashboard/schedules-availability");
+    };
+
+    const handleCancelClick = () => {
+        resetFields();
+        router.push("/");
     };
 
     const handleFormChange = (field: string, value: string | number) => {
@@ -417,19 +438,7 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
                     <Button
                         variant="outline"
                         colorScheme="gray"
-                        onClick={() => {
-                            setIncludedItems([]);
-                            setBringItems([]);
-                            setNewIncludedItem("");
-                            setNewBringItem("");
-                            setTitle("");
-                            setDescription("");
-                            setOperationProcedures("");
-                            setMeetingLocation("");
-                            setMapEnabled(false);
-                            localStorage.removeItem("descriptionContentData");
-                            router.push("/");
-                        }}
+                        onClick={handleCancelClick}
                     >
                         Cancel
                     </Button>

@@ -11,13 +11,15 @@ import {
     Select,
     Switch,
     Text,
+    useToast,
     VStack,
 } from "@chakra-ui/react";
 import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
-import React from "react";
+import React, {useEffect} from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ProgressBar from "../../../components/ProgressBar";
 import {useGuest} from "../../../components/GuestContext";
+import {useRouter} from "next/router";
 
 export default function SchedulesAvailabilityPage() {
     const {
@@ -29,7 +31,34 @@ export default function SchedulesAvailabilityPage() {
         setGuestLimit,
         earlyArrival,
         setEarlyArrival,
+        description,
+        title,
+        includedItems,
+        bringItems,
+        imageFile,
+        imagePreview,
+        price,
+        setTitle,
+        setDescription,
+        setPrice,
+        setIncludedItems,
+        setBringItems,
+        setImagePreview
     } = useGuest();
+    const router = useRouter();
+
+    const resetFields = () => {
+        setSchedule([]);
+        setEventDuration(0);
+        setGuestLimit(0);
+        setEarlyArrival(false);
+        setTitle("");
+        setDescription("");
+        setPrice(0);
+        setIncludedItems([]);
+        setBringItems([]);
+        setImagePreview(null)
+    };
 
     const handleAddTimeRange = () => {
         setSchedule([
@@ -37,6 +66,7 @@ export default function SchedulesAvailabilityPage() {
             {startTime: null, startPeriod: "AM", endTime: null, endPeriod: "AM"},
         ]);
     };
+    const toast = useToast();
 
     const handleRemoveTimeRange = (index: number) => {
         setSchedule(schedule.filter((_, i) => i !== index));
@@ -51,6 +81,68 @@ export default function SchedulesAvailabilityPage() {
         updatedSchedule[index][key] = value;
         setSchedule(updatedSchedule);
     };
+
+    const createTour = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: title,
+                    description,
+                    duration: Number(eventDuration),
+                    imageUrl: imagePreview,
+                    price: Number(price),
+                    includedItems,
+                    bringItems,
+                    schedule,
+                    guestLimit: Number(guestLimit),
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to create tour");
+            }
+
+            toast({
+                title: "Tour Created",
+                description: "The tour was created successfully.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+
+            resetFields();
+            router.push("/");
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: "Error",
+                description: "Failed to create tour. Please try again.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
+    const handleSaveTour = async () => {
+        // if (!title || !description || !price || includedItems.length === 0 || bringItems.length === 0) {
+        //     toast({
+        //         title: "Validation Error",
+        //         description: "All fields are required. Please fill in all the details.",
+        //         status: "error",
+        //         duration: 4000,
+        //         isClosable: true,
+        //     });
+        //     return;
+        // }
+
+        await createTour();
+    };
+
 
     return (
         <DashboardLayout>
@@ -75,7 +167,7 @@ export default function SchedulesAvailabilityPage() {
                                     <Input
                                         type="number"
                                         value={eventDuration}
-                                        onChange={(e) => setEventDuration(e.target.value)}
+                                        onChange={(e) => setEventDuration(Number(e.target.value))}
                                     />
                                     <Select>
                                         <option value="hour">hour</option>
@@ -230,7 +322,9 @@ export default function SchedulesAvailabilityPage() {
                         <Button variant="outline" onClick={() => window.history.back()}>
                             Back
                         </Button>
-                        <Button colorScheme="blue">Save</Button>
+                        <Button colorScheme="blue" onClick={handleSaveTour}>
+                            Save
+                        </Button>
                     </HStack>
                 </VStack>
             </Box>

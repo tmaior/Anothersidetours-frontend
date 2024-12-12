@@ -82,7 +82,7 @@ export default function FinalModal({isOpen, onClose}: FinalModalProps) {
                         </VStack>
                     </HStack>
                 </ModalBody>
-                <FooterBar onContinue={onClose} continueText={"CLOSE"}/>
+                <FooterBar/>
             </ModalContent>
         </Modal>
     );

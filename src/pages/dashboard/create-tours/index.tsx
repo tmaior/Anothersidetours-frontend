@@ -193,7 +193,6 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
 
         setTitle(formData.title);
         setDescription(formData.description);
-        setOperationProcedures(sopNotes);
         router.push("/dashboard/schedules-availability");
     };
 

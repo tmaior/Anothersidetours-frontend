@@ -31,8 +31,8 @@ const PickupSpinner: React.FC<PickupSpinnerProps> = ({
     };
 
     return (
-        <Flex flexDir={"column"} width="100%">
-            <Text marginLeft={"90px"}>{title}</Text>
+        <Flex flexDir={"column"} width="100%" >
+            <Text color={"blue.300"}>{title}</Text>
 
             <Box pl={95}>
                 <VStack align="flex-start" spacing={2} w="full">

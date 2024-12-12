@@ -29,8 +29,9 @@ export default function ModalPageLayout({ isOpen, onClose, children }: ModalPage
         >
             <Container
                 maxW="6xl"
+                h={"850px"}
                 bg="white"
-                p={6}
+                p={0}
                 borderRadius="md"
                 onClick={(e) => e.stopPropagation()}
             >

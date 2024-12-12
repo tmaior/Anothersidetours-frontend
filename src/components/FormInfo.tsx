@@ -33,7 +33,7 @@ const FormInfo = forwardRef((props, ref) => {
     return (
         <VStack w={"full"}>
             <Text w={"full"} color={"blue.300"}>CONTACT INFO</Text>
-            <VStack w={"full"} mt={"15px"} alignItems="flex-start">
+            <VStack w={"full"} mt={"0px"} alignItems="flex-start">
                 <Text w={"full"}>Name</Text>
                 <Input
                     borderRadius={"0px"}

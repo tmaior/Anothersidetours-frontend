@@ -57,7 +57,7 @@ export default function Navbar({title, description}:NavbarProps) {
                 </Flex>
             </Box>
 
-            <Flex w={"full"} h={"auto"} alignItems={"center"} justify={"center"} p={4}>
+            <Flex w={"full"} h={"auto"} alignItems={"center"} justify={"center"} p={1}>
                 <Text fontSize={"18px"}>BOOKING DETAILS</Text>
             </Flex>
         </>

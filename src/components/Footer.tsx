@@ -19,7 +19,7 @@ export default function FooterBar({onContinue, continueText}: FooterBarProps) {
             zIndex={1000}
             px={0}
             flexDirection={["column", "row"]}
-            mt={4}
+            mt={9}
         >
             <HStack spacing={4} pl={8} py={[4, 0]}>
                 <Text fontSize="sm" color="gray.500">
@@ -27,7 +27,7 @@ export default function FooterBar({onContinue, continueText}: FooterBarProps) {
                 </Text>
                 <Image
                     src="/assets/logo.png"
-                    alt="Xola logo"
+                    alt="another side logo"
                     h="50px"
                 />
             </HStack>

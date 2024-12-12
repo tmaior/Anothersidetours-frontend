@@ -32,9 +32,9 @@ const FormInfo = forwardRef((props, ref) => {
 
     return (
         <VStack w={"full"}>
-            <Text w={"full"} color={"blue.300"}>CONTACT INFO</Text>
+            <Text w={"full"} color={"blue.300"} marginTop={"-20px"}>CONTACT INFO</Text>
             <VStack w={"full"} mt={"0px"} alignItems="flex-start">
-                <Text w={"full"}>Name</Text>
+                <Text w={"full"} marginTop={"-10px"}>Name</Text>
                 <Input
                     borderRadius={"0px"}
                     placeholder={"Full name"}
@@ -47,7 +47,7 @@ const FormInfo = forwardRef((props, ref) => {
                 {errors.name && <Text color="red.500" fontSize="sm">{errors.name}</Text>}
             </VStack>
             <VStack w={"full"} alignItems="flex-start">
-                <Text w={"full"}>Email</Text>
+                <Text w={"full"} marginTop={"-10px"}>Email</Text>
                 <Input
                     borderRadius={"0px"}
                     placeholder={"Email address"}
@@ -60,7 +60,7 @@ const FormInfo = forwardRef((props, ref) => {
                 {errors.email && <Text color="red.500" fontSize="sm">{errors.email}</Text>}
             </VStack>
             <VStack w={"full"} alignItems="flex-start">
-                <Text w={"full"}>Phone</Text>
+                <Text w={"full"} marginTop={"-10px"}>Phone</Text>
                 <InputMask
                     mask="(999) 999-9999"
                     value={phone}

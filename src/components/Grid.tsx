@@ -52,13 +52,13 @@ const Grid: React.FC<GridProps> = ({
     }, [originalPrice]);
 
     return (
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 2 }} spacing={150} p={"25px"}>
-            <VStack align="start" spacing={6}>
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 2 }} spacing={150} p={"25px"} h={"400px"}>
+            <VStack align="start" spacing={5} marginTop={"-50px"}>
                 <Quantity />
                 <FormInfo ref={formInfoRef} />
             </VStack>
 
-            <VStack align="start" spacing={4}>
+            <VStack align="start" spacing={4} marginTop={"-20px"}>
                 <DatePicker
                     title={title}
                     originalPrice={originalPrice}

@@ -55,6 +55,90 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
+                        onClick={() => router.push("/dashboard/Dashboard")}
+                    >
+                        <Button
+                            marginLeft={"-5"}
+                            justifyContent="flex-start"
+                            color="white"
+                            variant="ghost"
+                            w="230px"
+                            background={router.pathname === "/dashboard/Dashboard" ? "blue.500" : "transparent"}
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                        >
+                            <HStack spacing={3}>
+                                <FaBoxArchive name="Dashboard"/>
+                                <Text>Dashboard</Text>
+                            </HStack>
+                        </Button>
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/Purchases")}
+                    >
+                        <Button
+                            marginLeft={"-5"}
+                            justifyContent="flex-start"
+                            color="white"
+                            variant="ghost"
+                            w="230px"
+                            background={router.pathname === "/dashboard/Purchases" ? "blue.500" : "transparent"}
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                        >
+                            <HStack spacing={3}>
+                                <FaBoxArchive name="Purchases"/>
+                                <Text>Purchases</Text>
+                            </HStack>
+                        </Button>
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/Customer")}
+                    >
+                        <Button
+                            marginLeft={"-5"}
+                            justifyContent="flex-start"
+                            color="white"
+                            variant="ghost"
+                            w="230px"
+                            background={router.pathname === "/dashboard/Customer" ? "blue.500" : "transparent"}
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                        >
+                            <HStack spacing={3}>
+                                <FaBoxArchive name="Customer"/>
+                                <Text>Customer</Text>
+                            </HStack>
+                        </Button>
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
                         onClick={() => router.push("/dashboard/list-tours")}
                     >
                         <Button
@@ -76,6 +160,174 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             <HStack spacing={3}>
                                 <FaBoxArchive name="Products"/>
                                 <Text>Products</Text>
+                            </HStack>
+                        </Button>
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/Resources")}
+                    >
+                        <Button
+                            marginLeft={"-5"}
+                            justifyContent="flex-start"
+                            color="white"
+                            variant="ghost"
+                            w="230px"
+                            background={router.pathname === "/dashboard/Resources" ? "blue.500" : "transparent"}
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                        >
+                            <HStack spacing={3}>
+                                <FaBoxArchive name="Resources"/>
+                                <Text>Resources</Text>
+                            </HStack>
+                        </Button>
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/Reports")}
+                    >
+                        <Button
+                            marginLeft={"-5"}
+                            justifyContent="flex-start"
+                            color="white"
+                            variant="ghost"
+                            w="230px"
+                            background={router.pathname === "/dashboard/Reports" ? "blue.500" : "transparent"}
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                        >
+                            <HStack spacing={3}>
+                                <FaBoxArchive name="Reports"/>
+                                <Text>Reports</Text>
+                            </HStack>
+                        </Button>
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/Marketing")}
+                    >
+                        <Button
+                            marginLeft={"-5"}
+                            justifyContent="flex-start"
+                            color="white"
+                            variant="ghost"
+                            w="230px"
+                            background={router.pathname === "/dashboard/Marketing" ? "blue.500" : "transparent"}
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                        >
+                            <HStack spacing={3}>
+                                <FaBoxArchive name="Marketing"/>
+                                <Text>Marketing</Text>
+                            </HStack>
+                        </Button>
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/Distribution")}
+                    >
+                        <Button
+                            marginLeft={"-5"}
+                            justifyContent="flex-start"
+                            color="white"
+                            variant="ghost"
+                            w="230px"
+                            background={router.pathname === "/dashboard/Distribution" ? "blue.500" : "transparent"}
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                        >
+                            <HStack spacing={3}>
+                                <FaBoxArchive name="Distribution"/>
+                                <Text>Distribution</Text>
+                            </HStack>
+                        </Button>
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/App Store")}
+                    >
+                        <Button
+                            marginLeft={"-5"}
+                            justifyContent="flex-start"
+                            color="white"
+                            variant="ghost"
+                            w="230px"
+                            background={router.pathname === "/dashboard/App Store" ? "blue.500" : "transparent"}
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                        >
+                            <HStack spacing={3}>
+                                <FaBoxArchive name="Distribution"/>
+                                <Text>App Store</Text>
+                            </HStack>
+                        </Button>
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/Settings")}
+                    >
+                        <Button
+                            marginLeft={"-5"}
+                            justifyContent="flex-start"
+                            color="white"
+                            variant="ghost"
+                            w="230px"
+                            background={router.pathname === "/dashboard/Settings" ? "blue.500" : "transparent"}
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                        >
+                            <HStack spacing={3}>
+                                <FaBoxArchive name="Settings"/>
+                                <Text>Settings</Text>
                             </HStack>
                         </Button>
                     </Text>

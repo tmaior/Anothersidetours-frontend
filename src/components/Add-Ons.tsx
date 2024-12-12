@@ -52,7 +52,7 @@ export default function AddOns({ addons }: AddOnProps) {
     const checkboxAddons = addons.filter((addon) => addon.type === "CHECKBOX");
 
     return (
-        <Flex direction="column" width="100%" p={4}>
+        <Flex direction="column" width="100%" p={4} marginTop={"-120px"}>
             <Text w={"full"} color={"blue.300"}>ADD ONS</Text>
 
             {selectAddons.map((addon) => (

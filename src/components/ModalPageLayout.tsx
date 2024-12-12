@@ -20,16 +20,17 @@ export default function ModalPageLayout({ isOpen, onClose, children }: ModalPage
 
     return (
         <Box
+            marginTop={"-30px"}
             display="flex"
             alignItems="center"
             justifyContent="center"
             minHeight="100vh"
-            bg="rgba(0, 0, 0, 0.5)"
+            // bg="rgba(0, 0, 0, 0.5)"
             onClick={handleBackgroundClick}
         >
             <Container
                 maxW="6xl"
-                h={"850px"}
+                h={"750px"}
                 bg="white"
                 p={0}
                 borderRadius="md"

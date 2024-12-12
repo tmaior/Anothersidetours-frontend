@@ -237,7 +237,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                         {/*<ModalCloseButton onClick={onClose}/>*/}
                         <ModalBody
                             minH="auto"
-                            maxH="95vh"
+                            maxH="80vh"
                         >
                             <HStack>
                                 <HStack w="500px">

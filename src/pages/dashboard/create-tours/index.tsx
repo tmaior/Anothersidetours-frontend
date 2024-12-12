@@ -97,6 +97,7 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
 
         setNewIncludedItem("");
         setNewBringItem("");
+        setOperationProcedures("");
         setSopNotes(operationProcedures || "");
         setMeetingLocation(meetingLocation || "");
         setMapEnabled(false);
@@ -207,7 +208,7 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
             setPrice(numericValue);
         }
 
-        setFormData({ ...formData, [field]: value });
+        setFormData({...formData, [field]: value});
 
         setErrors({
             ...errors,
@@ -217,7 +218,6 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
         if (field === "title") setTitle(value as string);
         if (field === "description") setDescription(value as string);
     };
-
 
 
     return (
@@ -346,7 +346,8 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
                                     type="number"
                                 />
                             </HStack>
-                            {errors.price && <Text color="red.500">This field is required and must be greater than 0</Text>}
+                            {errors.price &&
+                                <Text color="red.500">This field is required and must be greater than 0</Text>}
                         </FormControl>
                         {/*<Divider my={6} />*/}
                         <Heading as="h3" size="md" mb={4}>

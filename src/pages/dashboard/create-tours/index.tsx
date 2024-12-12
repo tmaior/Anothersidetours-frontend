@@ -97,7 +97,6 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
 
         setNewIncludedItem("");
         setNewBringItem("");
-        setOperationProcedures("");
         setSopNotes(operationProcedures || "");
         setMeetingLocation(meetingLocation || "");
         setMapEnabled(false);

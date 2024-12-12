@@ -45,6 +45,7 @@ export default function SchedulesAvailabilityPage() {
         setBringItems,
         setImagePreview,
         operationProcedures,
+        setOperationProcedures
     } = useGuest();
     const router = useRouter();
 
@@ -59,6 +60,7 @@ export default function SchedulesAvailabilityPage() {
         setIncludedItems([]);
         setBringItems([]);
         setImagePreview(null)
+        setOperationProcedures("");
     };
 
     const handleAddTimeRange = () => {

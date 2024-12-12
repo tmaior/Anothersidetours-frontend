@@ -15,7 +15,7 @@ import {
     VStack,
 } from "@chakra-ui/react";
 import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
-import React, {useEffect} from "react";
+import React from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ProgressBar from "../../../components/ProgressBar";
 import {useGuest} from "../../../components/GuestContext";
@@ -35,6 +35,7 @@ export default function SchedulesAvailabilityPage() {
         title,
         includedItems,
         bringItems,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         imageFile,
         imagePreview,
         price,
@@ -85,51 +86,49 @@ export default function SchedulesAvailabilityPage() {
         setSchedule(updatedSchedule);
     };
 
-    // const createTour = async () => {
-    //     try {
-    //         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`, {
-    //             method: "POST",
-    //             headers: {
-    //                 "Content-Type": "application/json",
-    //             },
-    //             body: JSON.stringify({
-    //                 name: title,
-    //                 description,
-    //                 duration: Number(eventDuration),
-    //                 imageUrl: imagePreview,
-    //                 price: Number(price),
-    //                 includedItems,
-    //                 bringItems,
-    //                 schedule,
-    //                 guestLimit: Number(guestLimit)
-    //             }),
-    //         });
-    //
-    //         if (!response.ok) {
-    //             throw new Error("Failed to create tour");
-    //         }
-    //
-    //         toast({
-    //             title: "Tour Created",
-    //             description: "The tour was created successfully.",
-    //             status: "success",
-    //             duration: 3000,
-    //             isClosable: true,
-    //         });
-    //
-    //         resetFields();
-    //         router.push("/");
-    //     } catch (error) {
-    //         console.error(error);
-    //         toast({
-    //             title: "Error",
-    //             description: "Failed to create tour. Please try again.",
-    //             status: "error",
-    //             duration: 5000,
-    //             isClosable: true,
-    //         });
-    //     }
-    // };
+    const generateTimeSlots = (startTime, startPeriod, endTime, endPeriod) => {
+        const convertTo24Hour = (time, period) => {
+            let [hours, minutes] = time.split(":").map(Number);
+            if (period === "PM" && hours < 12) hours += 12;
+            if (period === "AM" && hours === 12) hours = 0;
+            return { hours, minutes };
+        };
+
+        const formatTime = (hours, minutes) => {
+            const period = hours >= 12 ? "PM" : "AM";
+            const formattedHours = ((hours % 12) || 12).toString().padStart(2, "0");
+            const formattedMinutes = minutes.toString().padStart(2, "0");
+            return `${formattedHours}:${formattedMinutes} ${period}`;
+        };
+
+        const start = convertTo24Hour(startTime, startPeriod);
+        const end = convertTo24Hour(endTime, endPeriod);
+
+        const timeSlots = [];
+        let current = { ...start };
+
+        while (
+            current.hours < end.hours ||
+            (current.hours === end.hours && current.minutes < end.minutes)
+            ) {
+            timeSlots.push(formatTime(current.hours, current.minutes));
+
+            current.minutes += 60;
+            if (current.minutes >= 60) {
+                current.hours += 1;
+                current.minutes -= 60;
+            }
+        }
+
+        if (
+            current.hours === end.hours &&
+            current.minutes === end.minutes
+        ) {
+            timeSlots.push(formatTime(current.hours, current.minutes));
+        }
+
+        return timeSlots;
+    };
 
     const handleSaveTour = async () => {
         try {
@@ -149,44 +148,30 @@ export default function SchedulesAvailabilityPage() {
                 }),
             });
 
-            console.log("Response status:", tourResponse.status);
-
             if (!tourResponse.ok) {
                 throw new Error("Failed to create tour");
             }
 
             const createdTour = await tourResponse.json();
-
-            console.log("Created tour:", createdTour);
-
             const tourId = createdTour.id;
 
-            try {
-                const timeSlots =
-                    schedule.length > 0
-                        ? schedule.map(
-                            (slot) =>
-                                `${slot.startTime} ${slot.startPeriod} - ${slot.endTime} ${slot.endPeriod}`
-                        )
-                        : [];
+            const expandedTimeSlots = schedule.flatMap((slot) =>
+                generateTimeSlots(slot.startTime, slot.startPeriod, slot.endTime, slot.endPeriod)
+            );
 
-                const scheduleResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/${tourId}`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ timeSlots }),
-                    }
-                );
-
-                if (!scheduleResponse.ok) {
-                    throw new Error("Failed to save schedule");
+            const scheduleResponse = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/${tourId}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ timeSlots: expandedTimeSlots }),
                 }
-            } catch (error) {
-                console.error("Error saving schedule:", error);
-                throw error;
+            );
+
+            if (!scheduleResponse.ok) {
+                throw new Error("Failed to save schedule");
             }
 
             if (bringItems.length > 0) {
@@ -237,7 +222,6 @@ export default function SchedulesAvailabilityPage() {
                 isClosable: true,
             });
         }
-
     };
 
 

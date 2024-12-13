@@ -1,9 +1,17 @@
-import {Box, Button, Divider, HStack, Image, Text, VStack} from "@chakra-ui/react";
+import {Box, Button, HStack, Image, Text, VStack} from "@chakra-ui/react";
 import {useRouter} from "next/router";
 import React from "react";
 import {SlCalender} from "react-icons/sl";
 import {FaBoxArchive} from "react-icons/fa6";
 import {MdAddchart, MdOutlineCategory} from "react-icons/md";
+import {GoPeople} from "react-icons/go";
+import {IoClipboardOutline} from "react-icons/io5";
+import {LuMegaphone, LuPiggyBank} from "react-icons/lu";
+import {FaHandshake} from "react-icons/fa";
+import {GiSettingsKnobs} from "react-icons/gi";
+import {VscGraph} from "react-icons/vsc";
+import {AiOutlineDashboard} from "react-icons/ai";
+import {IoMdAppstore} from "react-icons/io";
 
 export default function DashboardLayout({children}: { children: React.ReactNode }) {
     const router = useRouter();
@@ -55,7 +63,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
-                        onClick={() => router.push("/dashboard/Dashboard")}
+                        onClick={() => router.push("/dashboard/under-construction")}
                     >
                         <Button
                             marginTop={"-30px"}
@@ -75,7 +83,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             }}
                         >
                             <HStack spacing={3}>
-                                <FaBoxArchive name="Dashboard"/>
+                                <AiOutlineDashboard name="Dashboard"/>
                                 <Text>Dashboard</Text>
                             </HStack>
                         </Button>
@@ -84,7 +92,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
-                        onClick={() => router.push("/dashboard/Purchases")}
+                        onClick={() => router.push("/dashboard/under-construction")}
                     >
                         <Button
                             marginLeft={"-5"}
@@ -104,7 +112,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             }}
                         >
                             <HStack spacing={3}>
-                                <FaBoxArchive name="Purchases"/>
+                                <LuPiggyBank name="Purchases"/>
                                 <Text>Purchases</Text>
                             </HStack>
                         </Button>
@@ -113,7 +121,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
-                        onClick={() => router.push("/dashboard/Customer")}
+                        onClick={() => router.push("/dashboard/under-construction")}
                     >
                         <Button
                             marginLeft={"-5"}
@@ -133,7 +141,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             }}
                         >
                             <HStack spacing={3}>
-                                <FaBoxArchive name="Customer"/>
+                                <GoPeople name="Customer"/>
                                 <Text>Customer</Text>
                             </HStack>
                         </Button>
@@ -171,7 +179,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
-                        onClick={() => router.push("/dashboard/Resources")}
+                        onClick={() => router.push("/dashboard/under-construction")}
                     >
                         <Button
                             marginLeft={"-5"}
@@ -191,7 +199,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             }}
                         >
                             <HStack spacing={3}>
-                                <FaBoxArchive name="Resources"/>
+                                <IoClipboardOutline name="Resources"/>
                                 <Text>Resources</Text>
                             </HStack>
                         </Button>
@@ -200,7 +208,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
-                        onClick={() => router.push("/dashboard/Reports")}
+                        onClick={() => router.push("/dashboard/under-construction")}
                     >
                         <Button
                             marginLeft={"-5"}
@@ -220,7 +228,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             }}
                         >
                             <HStack spacing={3}>
-                                <FaBoxArchive name="Reports"/>
+                                <VscGraph name="Reports"/>
                                 <Text>Reports</Text>
                             </HStack>
                         </Button>
@@ -229,7 +237,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
-                        onClick={() => router.push("/dashboard/Marketing")}
+                        onClick={() => router.push("/dashboard/under-construction")}
                     >
                         <Button
                             marginLeft={"-5"}
@@ -249,7 +257,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             }}
                         >
                             <HStack spacing={3}>
-                                <FaBoxArchive name="Marketing"/>
+                                <LuMegaphone name="Marketing"/>
                                 <Text>Marketing</Text>
                             </HStack>
                         </Button>
@@ -258,7 +266,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
-                        onClick={() => router.push("/dashboard/Distribution")}
+                        onClick={() => router.push("/dashboard/under-construction")}
                     >
                         <Button
                             marginLeft={"-5"}
@@ -278,7 +286,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             }}
                         >
                             <HStack spacing={3}>
-                                <FaBoxArchive name="Distribution"/>
+                                <FaHandshake name="Distribution"/>
                                 <Text>Distribution</Text>
                             </HStack>
                         </Button>
@@ -287,7 +295,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
-                        onClick={() => router.push("/dashboard/App Store")}
+                        onClick={() => router.push("/dashboard/under-construction")}
                     >
                         <Button
                             marginLeft={"-5"}
@@ -307,7 +315,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             }}
                         >
                             <HStack spacing={3}>
-                                <FaBoxArchive name="Distribution"/>
+                                <IoMdAppstore name="Distribution"/>
                                 <Text>App Store</Text>
                             </HStack>
                         </Button>
@@ -316,7 +324,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
-                        onClick={() => router.push("/dashboard/Settings")}
+                        onClick={() => router.push("/dashboard/under-construction")}
                     >
                         <Button
                             marginLeft={"-5"}
@@ -336,7 +344,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             }}
                         >
                             <HStack spacing={3}>
-                                <FaBoxArchive name="Settings"/>
+                                <GiSettingsKnobs name="Settings"/>
                                 <Text>Settings</Text>
                             </HStack>
                         </Button>

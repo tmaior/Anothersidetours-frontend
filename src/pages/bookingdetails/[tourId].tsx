@@ -11,7 +11,7 @@ import ModalPageLayout from "../../components/ModalPageLayout";
 export default function BookingDetailsPage() {
     const router = useRouter();
     const { tourId } = router.query;
-    const { setTourId } = useGuest();
+    const { setTourId,setImageUrl } = useGuest();
 
     const {
         isOpen: isBookingOpen,
@@ -35,6 +35,7 @@ export default function BookingDetailsPage() {
                 .then((data) => {
                     setTourData(data);
                     setTourId(id);
+                    setImageUrl(data.imageUrl);
                 })
                 .catch((err) => console.error(err));
         }

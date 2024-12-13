@@ -64,7 +64,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
     const stripe = useStripe();
     const elements = useElements();
     let reservationId = string;
-    const { setReservationId } = useGuest();
+    const { setReservationId,imageUrl } = useGuest();
 
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -229,7 +229,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                     <ModalContent
                         w="full"
                         maxW="1200px"
-                        minH="600px"
+                        minH="700px"
                         bg="white"
                     >
                         <ModalHeader marginLeft={"500"} alignContent={"center"}>{"CHECKOUT"}</ModalHeader>
@@ -244,7 +244,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                                     <HStack>
                                         <Flex w="40%" h="40%">
                                             <Box
-                                                bgImage={"url('https://m01.xola.com/cache/images/5b27d2976864ea736e8b45d9_large.jpg')"}
+                                                bgImage={imageUrl}
                                                 bgPosition="center"
                                                 bgSize="cover"
                                                 boxSize="150px"

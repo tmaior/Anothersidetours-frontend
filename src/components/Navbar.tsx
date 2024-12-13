@@ -1,11 +1,15 @@
 import {Box, Flex, Text} from "@chakra-ui/react";
+import {useGuest} from "./GuestContext";
 
 interface NavbarProps {
     title?: string;
     description?: string;
+    imageUrl?: string;
 }
 
 export default function Navbar({title, description}:NavbarProps) {
+
+    const {imageUrl} = useGuest();
 
     return (
         <>
@@ -17,7 +21,7 @@ export default function Navbar({title, description}:NavbarProps) {
                     left={0}
                     right={0}
                     bottom={0}
-                    bgImage={"url('https://m01.xola.com/cache/images/5b27d2976864ea736e8b45d9_large.jpg')"}
+                    bgImage={imageUrl}
                     bgPosition="center"
                     bgSize="cover"
                     bgRepeat="no-repeat"

@@ -63,6 +63,8 @@ interface GuestContextType {
     setImageFile: React.Dispatch<React.SetStateAction<File | null>>;
     imagePreview: string | null;
     setImagePreview: React.Dispatch<React.SetStateAction<string | null>>;
+    imageUrl: string | null;
+    setImageUrl: React.Dispatch<React.SetStateAction<string | null>>;
     price: number;
     setPrice: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -103,6 +105,7 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [price, setPrice] = useState<number>(0);
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
 
     const resetGuestQuantity = () => {
         setGuestQuantity(2);
@@ -177,6 +180,8 @@ export function GuestProvider({children}: { children: ReactNode }) {
                 setImagePreview,
                 price,
                 setPrice,
+                imageUrl,
+                setImageUrl
             }}
         >
             {children}

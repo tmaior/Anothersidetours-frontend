@@ -22,12 +22,12 @@ interface FinalModalProps {
 
 export default function FinalModal({isOpen, onClose}: FinalModalProps) {
 
-    const { guestQuantity, name, title,selectedDate, selectedTime } = useGuest();
+    const { guestQuantity, name, title,selectedDate, selectedTime,imageUrl } = useGuest();
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} isCentered size="6xl">
             <ModalOverlay/>
-            <ModalContent height={"40vh"}>
+            <ModalContent height={"700px"}>
                 <ModalHeader textAlign="center">THANK YOU</ModalHeader>
                 <Divider />
                 <ModalBody>
@@ -45,16 +45,16 @@ export default function FinalModal({isOpen, onClose}: FinalModalProps) {
                     </Flex>
                     <HStack spacing={4}>
                         <Image
-                            src="https://anothersideoflosangelestours.com/wp-content/uploads/2022/02/image3-e1471839954960-1-1.jpg"
+                            src={imageUrl}
                             borderRadius="sm"
                             width="10%"
                             height="100px"
                             objectFit="cover"
                             mb={4}
-                            marginTop={"20px"}
+                            marginTop={"150px"}
                             alt="Tour preview image"
                         />
-                        <VStack marginTop={"20px"} align="start" spacing={1}>
+                        <VStack marginTop={"150px"} align="start" spacing={1}>
                             <Text fontWeight="bold" fontSize="lg">
                                 {title}
                             </Text>
@@ -74,9 +74,9 @@ export default function FinalModal({isOpen, onClose}: FinalModalProps) {
                                     <CalendarIcon />
                                     <Text fontSize="sm">{selectedDate ? format(selectedDate, 'dd MMM yyyy') : "No Date Selected"}</Text>
                                 </HStack>
-                                <HStack spacing={1}>
-                                    <TimeIcon marginLeft={"-3"}/>
-                                    <Text fontSize="sm" marginLeft={"1"}> {selectedTime} PDT</Text>
+                                <HStack spacing={1} marginLeft={"-5"} marginTop={"3px"}>
+                                    <TimeIcon />
+                                    <Text fontSize="sm"> {selectedTime}</Text>
                                 </HStack>
                             </VStack>
                         </VStack>

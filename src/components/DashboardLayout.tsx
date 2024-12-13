@@ -58,6 +58,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         onClick={() => router.push("/dashboard/Dashboard")}
                     >
                         <Button
+                            marginTop={"-30px"}
                             marginLeft={"-5"}
                             justifyContent="flex-start"
                             color="white"
@@ -87,6 +88,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
+                            marginTop={"-30px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -115,6 +117,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
+                            marginTop={"-30px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -143,6 +146,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
+                            marginTop={"-30px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -171,6 +175,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
+                            marginTop={"-30px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -199,6 +204,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
+                            marginTop={"-30px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -227,6 +233,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
+                            marginTop={"-30px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -255,6 +262,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
+                            marginTop={"-30px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -283,6 +291,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
+                            marginTop={"-30px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -311,6 +320,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
+                            marginTop={"-30px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -331,61 +341,6 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             </HStack>
                         </Button>
                     </Text>
-                    {/*<Divider borderColor="gray.600"/>*/}
-                    {/*<Text*/}
-                    {/*    fontSize="md"*/}
-                    {/*    color="gray.400"*/}
-                    {/*    pl={4}*/}
-                    {/*    onClick={() => router.push("/dashboard/reservations")}*/}
-                    {/*>*/}
-                    {/*    <Button*/}
-                    {/*        marginLeft={"-5"}*/}
-                    {/*        justifyContent="flex-start"*/}
-                    {/*        color="white"*/}
-                    {/*        variant="ghost"*/}
-                    {/*        w="230px"*/}
-                    {/*        background={router.pathname === "/dashboard/reservations" ? "blue.500" : "transparent"}*/}
-                    {/*        _hover={{*/}
-                    {/*            background: "rgba(255, 255, 255, 0.1)",*/}
-                    {/*            transition: "background 0.2s ease-in-out",*/}
-                    {/*        }}*/}
-                    {/*        _active={{*/}
-                    {/*            background: "blue.500",*/}
-                    {/*            color: "white",*/}
-                    {/*        }}*/}
-                    {/*    >*/}
-                    {/*        <Icon name="Tours" mr={2} />*/}
-                    {/*        Tours*/}
-                    {/*    </Button>*/}
-                    {/*</Text>*/}
-
-                    <Divider borderColor="gray.600"/>
-                    {/*<Text*/}
-                    {/*    fontSize="xl"*/}
-                    {/*    fontWeight="bold"*/}
-                    {/*    color="white"*/}
-                    {/*    _hover={{cursor: "pointer"}}*/}
-                    {/*>*/}
-                    {/*    Add-ons*/}
-                    {/*</Text>*/}
-                    {/*<Text*/}
-                    {/*    fontSize="md"*/}
-                    {/*    color="gray.400"*/}
-                    {/*    pl={4}*/}
-                    {/*    onClick={() => router.push("/dashboard/create-addons")}*/}
-                    {/*    _hover={{cursor: "pointer", color: "gray.200"}}*/}
-                    {/*>*/}
-                    {/*    Register Add-ons*/}
-                    {/*</Text>*/}
-                    {/*<Text*/}
-                    {/*    fontSize="md"*/}
-                    {/*    color="gray.400"*/}
-                    {/*    pl={4}*/}
-                    {/*    onClick={() => router.push("/dashboard/list-addons")}*/}
-                    {/*    _hover={{cursor: "pointer", color: "gray.200"}}*/}
-                    {/*>*/}
-                    {/*    List Add-ons*/}
-                    {/*</Text>*/}
                     <Text
                         fontSize="md"
                         color="gray.400"
@@ -394,6 +349,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
+                            marginTop={"-30px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -414,7 +370,6 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             </HStack>
                         </Button>
                     </Text>
-                    <Divider borderColor="gray.600"/>
                     <Text
                         fontSize="md"
                         color="gray.400"
@@ -423,6 +378,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
+                            marginTop={"-30px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -443,7 +399,6 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             </HStack>
                         </Button>
                     </Text>
-                    <Divider borderColor="gray.600"/>
                     <Text
                         fontSize="md"
                         color="gray.400"
@@ -452,6 +407,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
+                            marginTop={"-30px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -472,15 +428,6 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             </HStack>
                         </Button>
                     </Text>
-                    <Divider borderColor="gray.600"/>
-                    {/*<Text*/}
-                    {/*    fontSize="xl"*/}
-                    {/*    fontWeight="bold"*/}
-                    {/*    color="white"*/}
-                    {/*    _hover={{ cursor: "pointer" }}*/}
-                    {/*>*/}
-                    {/*    Employees*/}
-                    {/*</Text>*/}
                 </VStack>
             </Box>
             <Box flex="1" p={8} bg="white">

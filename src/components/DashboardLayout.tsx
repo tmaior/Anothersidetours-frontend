@@ -1,6 +1,29 @@
-import {Box, Button, HStack, Image, Text, VStack} from "@chakra-ui/react";
+import {
+    Avatar,
+    Box,
+    Button,
+    HStack,
+    Image,
+    Input,
+    Menu,
+    MenuButton,
+    MenuDivider,
+    MenuItem,
+    MenuList,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+    Text,
+    Textarea,
+    useDisclosure,
+    VStack
+} from "@chakra-ui/react";
 import {useRouter} from "next/router";
-import React from "react";
+import React, {useState} from "react";
 import {SlCalender} from "react-icons/sl";
 import {FaBoxArchive} from "react-icons/fa6";
 import {MdAddchart, MdOutlineCategory} from "react-icons/md";
@@ -10,11 +33,55 @@ import {LuMegaphone, LuPiggyBank} from "react-icons/lu";
 import {FaHandshake} from "react-icons/fa";
 import {GiSettingsKnobs} from "react-icons/gi";
 import {VscGraph} from "react-icons/vsc";
-import {AiOutlineDashboard} from "react-icons/ai";
+import {AiOutlineDashboard, AiOutlinePlus} from "react-icons/ai";
 import {IoMdAppstore} from "react-icons/io";
 
 export default function DashboardLayout({children}: { children: React.ReactNode }) {
     const router = useRouter();
+    const {isOpen, onOpen, onClose} = useDisclosure();
+
+    const [tenants, setTenants] = useState([
+        {
+            id: 1,
+            name: "Another Side Of Las Vegas Tours",
+            location: "Las Vegas, Nevada",
+            image: "https://bit.ly/broken-link"
+        },
+        {
+            id: 2,
+            name: "Another Side Of Los Angeles Tours",
+            location: "Los Angeles, California",
+            image: "https://bit.ly/broken-link"
+        },
+        {
+            id: 3,
+            name: "Another Side Of Maui Tours",
+            location: "Kaanapali, Hawaii",
+            image: "https://bit.ly/broken-link"
+        },
+        {
+            id: 4,
+            name: "Another Side Of San Diego Tours",
+            location: "San Diego, California",
+            image: "https://bit.ly/broken-link"
+        },
+    ]);
+
+    const [newTenant, setNewTenant] = useState({title: "", description: "", image: null});
+
+    const handleAddTenant = () => {
+        const newId = tenants.length + 1;
+        const newTenantObj = {
+            id: newId,
+            name: newTenant.title,
+            location: newTenant.description || "No location provided",
+            image: newTenant.image ? URL.createObjectURL(newTenant.image) : "https://bit.ly/broken-link"
+        };
+
+        setTenants((prev) => [...prev, newTenantObj]);
+        setNewTenant({title: "", description: "", image: null});
+        onClose();
+    };
 
     return (
         <Box display="flex" minH="100vh">
@@ -437,10 +504,141 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         </Button>
                     </Text>
                 </VStack>
+
+                <Box mt="auto" p={4} position="relative" marginLeft={"-6"}>
+                    <Menu placement="right-start" offset={[0, 0]} closeOnSelect={false}>
+                        <MenuButton
+                            color="white"
+                            variant="ghost"
+                            as={Button}
+                            borderRadius="md"
+                            w="100%"
+                            h="50px"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="flex-start"
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                        >
+                            <HStack spacing={3}>
+                                <Avatar size="sm" src={tenants[1]?.image}/>
+                                <Text fontSize="sm" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
+                                    {tenants[1]?.name}
+                                </Text>
+                            </HStack>
+                        </MenuButton>
+                        <MenuList
+                            minW="300px"
+                            bg="#222324"
+                            p={0}
+                        >
+                            {tenants.map((tenant, index) => (
+                                <MenuItem bg="#222324" color={"white"} key={tenant.id} _hover={{
+                                    background: "rgba(255, 255, 255, 0.1)",
+                                    transition: "background 0.2s ease-in-out",
+                                }} py={3}>
+                                    <HStack spacing={3}>
+                                        <Avatar size="sm" src={tenant.image}/>
+                                        <Box>
+                                            <Text fontSize="sm" fontWeight="bold">{tenant.name}</Text>
+                                            <Text fontSize="xs" color="gray.400">{tenant.location}</Text>
+                                        </Box>
+                                    </HStack>
+                                    {index === 1 && (
+                                        <Text color="green.400" ml="auto" fontSize="lg">✔</Text>
+                                    )}
+                                </MenuItem>
+                            ))}
+                            <MenuDivider borderColor="#333" bg="#222324"/>
+                            <MenuItem bg="#222324" color={"white"} _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}>Privacy Policy</MenuItem>
+                            <MenuItem bg="#222324" color={"white"} _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}>Support</MenuItem>
+                            <MenuItem bg="#222324" color={"white"} _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}>Help Center</MenuItem>
+                            <MenuDivider borderColor="#333"/>
+                            <MenuItem bg="#222324" color={"white"} _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}>Another Side Of San Diego Tours</MenuItem>
+                            <MenuItem bg="#222324" color={"white"} _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}>Logout</MenuItem>
+                            <MenuDivider borderColor="#333"/>
+                            <MenuItem bg="#222324" color={"white"} icon={<AiOutlinePlus/>} _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }} onClick={onOpen}>
+                                Add New Tenant
+                            </MenuItem>
+                        </MenuList>
+                    </Menu>
+                </Box>
             </Box>
-            <Box flex="1" p={8} bg="white">
+
+            <Box flex="1" p={8}>
                 {children}
             </Box>
+
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay/>
+                <ModalContent>
+                    <ModalHeader>Add New Tenant</ModalHeader>
+                    <ModalCloseButton/>
+                    <ModalBody>
+                        <VStack spacing={4}>
+                            <Input
+                                placeholder="Título"
+                                value={newTenant.title}
+                                onChange={(e) =>
+                                    setNewTenant((prev) => ({...prev, title: e.target.value}))
+                                }
+                            />
+                            <Textarea
+                                placeholder="Descrição"
+                                value={newTenant.description}
+                                onChange={(e) =>
+                                    setNewTenant((prev) => ({...prev, description: e.target.value}))
+                                }
+                            />
+                            <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) =>
+                                    setNewTenant((prev) => ({
+                                        ...prev,
+                                        image: e.target.files?.[0] || null,
+                                    }))
+                                }
+                            />
+                        </VStack>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button
+                            colorScheme="blue"
+                            mr={3}
+                            onClick={handleAddTenant}
+                            isDisabled={!newTenant.title || !newTenant.image}
+                        >
+                            Save
+                        </Button>
+                        <Button onClick={onClose}>Cancel</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </Box>
     );
 }

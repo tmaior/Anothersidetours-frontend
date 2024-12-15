@@ -505,7 +505,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     </Text>
                 </VStack>
 
-                <Box mt="auto" p={4} position="relative" marginLeft={"-6"}>
+                <Box mt="auto" p={4} position="relative" marginLeft={"-6"} w={"273px"}>
                     <Menu placement="right-start" offset={[0, 0]} closeOnSelect={false}>
                         <MenuButton
                             color="white"

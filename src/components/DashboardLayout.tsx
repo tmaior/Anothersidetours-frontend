@@ -40,21 +40,39 @@ import {useGuest} from "./GuestContext";
 export default function DashboardLayout({children}: { children: React.ReactNode }) {
     const router = useRouter();
     const {isOpen, onOpen, onClose} = useDisclosure();
-    const { setTenantId } = useGuest();
+    const {tenantId, setTenantId} = useGuest();
     const [tenants, setTenants] = useState([]);
     const [selectedTenant, setSelectedTenant] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`)
-            .then((response) => response.json())
-            .then((data) => {
-                setTenants(data);
-                if (data.length > 0) {
-                    setSelectedTenant(data[0]);
-                }
-            })
-            .catch((error) => console.error("Error fetching tenants:", error));
-    }, []);
+        if (!tenants.length || !tenantId) {
+            setIsLoading(true);
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`)
+                .then((response) => response.json())
+                .then((data) => {
+                    setTenants(data);
+                    if (!tenantId && data.length > 0) {
+                        const defaultTenant = data[0];
+                        setSelectedTenant(defaultTenant);
+                        setTenantId(defaultTenant.id);
+                    } else if (tenantId) {
+                        const existingTenant = data.find((tenant) => tenant.id === tenantId);
+                        if (existingTenant) {
+                            setSelectedTenant(existingTenant);
+                        }
+                    }
+                })
+                .catch((error) => console.error("Error fetching tenants:", error))
+                .finally(() => setIsLoading(false));
+        } else {
+            const existingTenant = tenants.find((tenant) => tenant.id === tenantId);
+            if (existingTenant) {
+                setSelectedTenant(existingTenant);
+            }
+            setIsLoading(false);
+        }
+    }, [tenantId, tenants, setTenantId]);
 
     const [newTenant, setNewTenant] = useState({title: "", description: "", image: null});
 
@@ -66,7 +84,6 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
             location: newTenant.description || "No location provided",
             image: newTenant.image ? URL.createObjectURL(newTenant.image) : "https://bit.ly/broken-link"
         };
-
         setTenants((prev) => [...prev, newTenantObj]);
         setNewTenant({title: "", description: "", image: null});
         onClose();
@@ -75,6 +92,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     const handleSelectTenant = (tenant) => {
         setSelectedTenant(tenant);
         setTenantId(tenant.id);
+        localStorage.setItem("selectedTenant", JSON.stringify(tenant));
     };
 
     return (
@@ -500,99 +518,105 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                 </VStack>
 
                 <Box mt="auto" p={4} marginLeft={"-6"} w={"273px"}>
-                    <Menu placement="right-start" offset={[0, 0]} closeOnSelect={false}>
-                        <MenuButton
-                            color="white"
-                            variant="ghost"
-                            as={Button}
-                            borderRadius="md"
-                            w="100%"
-                            h="50px"
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="flex-start"
-                            _hover={{
-                                background: "rgba(255, 255, 255, 0.1)",
-                                transition: "background 0.2s ease-in-out",
-                            }}
-                            _active={{
-                                background: "blue.500",
-                                color: "white",
-                            }}
-                        >
-                            <HStack spacing={3}>
-                                <Avatar size="sm" src={selectedTenant?.image || "https://bit.ly/broken-link"}/>
-                                <Box>
-                                    <Text fontSize="sm" fontWeight="bold">
-                                        {selectedTenant?.name || "No Tenant Selected"}
-                                    </Text>
-                                    <Text fontSize="xs" color="gray.400">
-                                        {selectedTenant?.location || "No location provided"}
-                                    </Text>
-                                </Box>
-                            </HStack>
-                        </MenuButton>
-                        <MenuList minW="300px" bg="#222324" p={0}>
-                            {tenants.map((tenant) => (
-                                <MenuItem
-                                    key={tenant.id}
-                                    bg="#222324"
-                                    color="white"
-                                    _hover={{
-                                        background: "rgba(255, 255, 255, 0.1)",
-                                        transition: "background 0.2s ease-in-out",
-                                    }}
-                                    onClick={() => handleSelectTenant(tenant)}
-                                >
-                                    <HStack spacing={3}>
-                                        <Avatar size="sm" src={tenant.image}/>
-                                        <Box>
-                                            <Text fontSize="sm" fontWeight="bold">
-                                                {tenant.name}
-                                            </Text>
-                                            <Text fontSize="xs" color="gray.400">
-                                                {tenant.location}
-                                            </Text>
-                                        </Box>
-                                    </HStack>
+                    {!isLoading && selectedTenant && (
+                        <Menu placement="right-start" offset={[0, 0]} closeOnSelect={false}>
+                            <MenuButton
+                                color="white"
+                                variant="ghost"
+                                as={Button}
+                                borderRadius="md"
+                                w="100%"
+                                h="50px"
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="flex-start"
+                                _hover={{
+                                    background: "rgba(255, 255, 255, 0.1)",
+                                    transition: "background 0.2s ease-in-out",
+                                }}
+                                _active={{
+                                    background: "blue.500",
+                                    color: "white",
+                                }}
+                            >
+                                <HStack spacing={3}>
+                                    <Avatar size="sm" src={selectedTenant?.image || "https://bit.ly/broken-link"}/>
+                                    <Box>
+                                        <Text fontSize="sm" fontWeight="bold">
+                                            {selectedTenant?.name || "No Tenant Selected"}
+                                        </Text>
+                                        <Text fontSize="xs" color="gray.400">
+                                            {selectedTenant?.location || "No location provided"}
+                                        </Text>
+                                    </Box>
+                                </HStack>
+                            </MenuButton>
+                            <MenuList minW="300px" bg="#222324" p={0}>
+                                {tenants.map((tenant) => (
+                                    <MenuItem
+                                        key={tenant.id}
+                                        bg="#222324"
+                                        color="white"
+                                        _hover={{
+                                            background: "rgba(255, 255, 255, 0.1)",
+                                            transition: "background 0.2s ease-in-out",
+                                        }}
+                                        onClick={() => handleSelectTenant(tenant)}
+                                    >
+                                        <HStack spacing={3}>
+                                            <Avatar size="sm" src={tenant.image}/>
+                                            <Box>
+                                                <Text fontSize="sm" fontWeight="bold">
+                                                    {tenant.name}
+                                                </Text>
+                                                <Text fontSize="xs" color="gray.400">
+                                                    {tenant.location}
+                                                </Text>
+                                            </Box>
+                                        </HStack>
+                                    </MenuItem>
+                                ))}
+                                <MenuDivider borderColor="#333" bg="#222324"/>
+                                <MenuItem bg="#222324" color={"white"} _hover={{
+                                    background: "rgba(255, 255, 255, 0.1)",
+                                    transition: "background 0.2s ease-in-out",
+                                }}>Privacy Policy</MenuItem>
+                                <MenuItem bg="#222324" color={"white"} _hover={{
+                                    background: "rgba(255, 255, 255, 0.1)",
+                                    transition: "background 0.2s ease-in-out",
+                                }}>Support</MenuItem>
+                                <MenuItem bg="#222324" color={"white"} _hover={{
+                                    background: "rgba(255, 255, 255, 0.1)",
+                                    transition: "background 0.2s ease-in-out",
+                                }}>Help Center</MenuItem>
+                                <MenuDivider borderColor="#333"/>
+                                {/*<MenuItem bg="#222324" color={"white"} _hover={{*/}
+                                {/*    background: "rgba(255, 255, 255, 0.1)",*/}
+                                {/*    transition: "background 0.2s ease-in-out",*/}
+                                {/*}}>Another Side Of San Diego Tours</MenuItem>*/}
+                                <MenuItem bg="#222324" color={"white"} _hover={{
+                                    background: "rgba(255, 255, 255, 0.1)",
+                                    transition: "background 0.2s ease-in-out",
+                                }}>Logout</MenuItem>
+                                <MenuDivider borderColor="#333"/>
+                                <MenuItem bg="#222324" color={"white"} icon={<AiOutlinePlus/>} _hover={{
+                                    background: "rgba(255, 255, 255, 0.1)",
+                                    transition: "background 0.2s ease-in-out",
+                                }} onClick={onOpen}>
+                                    Add New Tenant
                                 </MenuItem>
-                            ))}
-                            <MenuDivider borderColor="#333" bg="#222324"/>
-                            <MenuItem bg="#222324" color={"white"} _hover={{
-                                background: "rgba(255, 255, 255, 0.1)",
-                                transition: "background 0.2s ease-in-out",
-                            }}>Privacy Policy</MenuItem>
-                            <MenuItem bg="#222324" color={"white"} _hover={{
-                                background: "rgba(255, 255, 255, 0.1)",
-                                transition: "background 0.2s ease-in-out",
-                            }}>Support</MenuItem>
-                            <MenuItem bg="#222324" color={"white"} _hover={{
-                                background: "rgba(255, 255, 255, 0.1)",
-                                transition: "background 0.2s ease-in-out",
-                            }}>Help Center</MenuItem>
-                            <MenuDivider borderColor="#333"/>
-                            {/*<MenuItem bg="#222324" color={"white"} _hover={{*/}
-                            {/*    background: "rgba(255, 255, 255, 0.1)",*/}
-                            {/*    transition: "background 0.2s ease-in-out",*/}
-                            {/*}}>Another Side Of San Diego Tours</MenuItem>*/}
-                            <MenuItem bg="#222324" color={"white"} _hover={{
-                                background: "rgba(255, 255, 255, 0.1)",
-                                transition: "background 0.2s ease-in-out",
-                            }}>Logout</MenuItem>
-                            <MenuDivider borderColor="#333"/>
-                            <MenuItem bg="#222324" color={"white"} icon={<AiOutlinePlus/>} _hover={{
-                                background: "rgba(255, 255, 255, 0.1)",
-                                transition: "background 0.2s ease-in-out",
-                            }} onClick={onOpen}>
-                                Add New Tenant
-                            </MenuItem>
-                        </MenuList>
-                    </Menu>
+                            </MenuList>
+                        </Menu>
+                    )}
                 </Box>
             </Box>
 
-            <Box flex="1" p={8} >
-                {children}
+            <Box flex="1" p={8}>
+                {isLoading ? (
+                    <Text color="white">Loading...</Text>
+                ) : (
+                    children
+                )}
             </Box>
 
             <Modal isOpen={isOpen} onClose={onClose}>

@@ -518,7 +518,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                 </VStack>
 
                 <Box mt="auto" p={4} marginLeft={"-6"} w={"273px"}>
-                    {!isLoading && selectedTenant && (
+                    {/*{!isLoading && selectedTenant && (*/}
                         <Menu placement="right-start" offset={[0, 0]} closeOnSelect={false}>
                             <MenuButton
                                 color="white"
@@ -607,7 +607,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                 </MenuItem>
                             </MenuList>
                         </Menu>
-                    )}
+                    {/*)}*/}
                 </Box>
             </Box>
 

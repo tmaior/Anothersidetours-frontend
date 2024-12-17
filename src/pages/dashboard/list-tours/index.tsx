@@ -16,25 +16,28 @@ import {
     Text,
     useColorModeValue,
     useToast,
+    useClipboard,
 } from "@chakra-ui/react";
-import {useEffect, useState} from "react";
-import {useRouter} from "next/router";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
-import {EditIcon, SearchIcon, ViewIcon} from "@chakra-ui/icons";
+import { EditIcon, SearchIcon, ViewIcon } from "@chakra-ui/icons";
 
 export default function ListTours() {
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
     const [tours, setTours] = useState([]);
     const [filteredTours, setFilteredTours] = useState([]);
     const [searchName, setSearchName] = useState("");
+    const [tourIdToShow, setTourIdToShow] = useState(null);
     const toast = useToast();
     const router = useRouter();
+    const { hasCopied, onCopy } = useClipboard(tourIdToShow);
 
     useEffect(() => {
         async function fetchData() {
             try {
                 const toursResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/471ce85b-0598-41a8-972c-d6a56de5fdf1`
+                    `${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/76337f16-5271-42d3-b799-d87d99d9477f`
                 );
                 const toursData = await toursResponse.json();
                 setTours(Array.isArray(toursData) ? toursData : []);
@@ -68,6 +71,10 @@ export default function ListTours() {
         router.push(`/dashboard/edit-tour/${tourId}`);
     };
 
+    const handleView = (tourId) => {
+        setTourIdToShow((prevId) => (prevId === tourId ? null : tourId));
+    };
+
     return (
         <DashboardLayout>
             <Box p={2}>
@@ -76,12 +83,12 @@ export default function ListTours() {
                         Products
                     </Text>
                     <Center height="50px">
-                        <Divider orientation="vertical" borderWidth="1px"/>
+                        <Divider orientation="vertical" borderWidth="1px" />
                     </Center>
                     <HStack>
                         <InputGroup>
                             <InputLeftElement pointerEvents="none">
-                                <SearchIcon color="gray.400"/>
+                                <SearchIcon color="gray.400" />
                             </InputLeftElement>
                             <Input
                                 placeholder="Search by name"
@@ -100,7 +107,7 @@ export default function ListTours() {
                     </Button>
                 </HStack>
 
-                <Divider orientation="horizontal" borderWidth="1px" color={"black"}/>
+                <Divider orientation="horizontal" borderWidth="1px" color={"black"} />
 
                 <Grid
                     templateColumns="repeat(2, 1fr)"
@@ -116,6 +123,7 @@ export default function ListTours() {
                             bg="gray.50"
                             borderRadius="lg"
                             boxShadow="lg"
+                            position="relative"
                         >
                             <HStack spacing={4} align="start">
                                 <Image
@@ -125,29 +133,50 @@ export default function ListTours() {
                                     borderRadius="md"
                                     objectFit="cover"
                                 />
-                                <Box flex="1">
-                                    <HStack justify="space-between" mt={2}>
+                                <Box flex="1" position="relative">
+                                    {tourIdToShow === tour.id && (
+                                        <Text
+                                            fontSize="sm"
+                                            color="gray.500"
+                                            position="absolute"
+                                            top="-3px"
+                                            left="0"
+                                            zIndex="1"
+                                        >
+                                            ID: {tour.id}
+                                            <Button
+                                                size="sm"
+                                                variant="link"
+                                                onClick={onCopy}
+                                                ml={2}
+                                            >
+                                                {hasCopied ? "Copied" : "Copy"}
+                                            </Button>
+                                        </Text>
+                                    )}
+                                    <HStack justify="space-between" mt={4}>
                                         <Heading fontSize="lg" noOfLines={1} maxW="200px">
                                             {tour.name}
                                         </Heading>
                                         <Box display="flex" alignItems="center">
                                             <IconButton
                                                 aria-label="Edit"
-                                                icon={<EditIcon/>}
+                                                icon={<EditIcon />}
                                                 colorScheme="blue"
                                                 size="sm"
                                                 variant="ghost"
-                                                _hover={{display: "block"}}
+                                                _hover={{ display: "block" }}
                                                 display="none"
                                                 onClick={() => handleEdit(tour.id)}
                                             />
                                             <IconButton
                                                 aria-label="More options"
-                                                icon={<ViewIcon/>}
+                                                icon={<ViewIcon />}
                                                 size="sm"
                                                 variant="ghost"
-                                                _hover={{display: "block"}}
+                                                _hover={{ display: "block" }}
                                                 display="block"
+                                                onClick={() => handleView(tour.id)}
                                             />
                                         </Box>
                                     </HStack>

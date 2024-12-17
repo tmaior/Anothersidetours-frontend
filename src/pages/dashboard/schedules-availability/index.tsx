@@ -8,7 +8,7 @@ import {
     HStack,
     IconButton,
     Input,
-    Select,
+    Select, Spacer,
     Switch,
     Text,
     useToast,
@@ -390,7 +390,16 @@ export default function SchedulesAvailabilityPage() {
                             Guest Limits
                         </Text>
                         <FormControl>
-                            <FormLabel>Per Event Limit</FormLabel>
+                            <FormLabel>Min Per Event Limit</FormLabel>
+                            <Input
+                                type="number"
+                                value={guestLimit}
+                                onChange={(e) => setGuestLimit(Number(e.target.value))}
+                            />
+                        </FormControl>
+                        <Spacer marginTop={"20px"} />
+                        <FormControl>
+                            <FormLabel>Max Per Event Limit</FormLabel>
                             <Input
                                 type="number"
                                 value={guestLimit}

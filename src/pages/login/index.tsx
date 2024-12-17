@@ -2,7 +2,7 @@ import {
     Box,
     Button,
     Flex,
-    Heading,
+    Image,
     Input,
     FormControl,
     FormLabel,
@@ -46,9 +46,13 @@ export default function Login() {
                 borderRadius="md"
                 w={{ base: "90%", sm: "400px" }}
             >
-                <Heading mb={6} textAlign="center" size="lg" color="blue.600">
-                    Login
-                </Heading>
+                <Flex justify="center" mb={6}>
+                    <Image
+                        src="/assets/logo.png"
+                        alt="Logo"
+                        w={"800px"}
+                    />
+                </Flex>
 
                 <form onSubmit={handleSubmit}>
                     <VStack spacing={4} align="stretch">

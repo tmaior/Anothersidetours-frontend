@@ -1,6 +1,8 @@
 import {
     Box,
-    Button, Center, Divider,
+    Button,
+    Center,
+    Divider,
     Flex,
     HStack,
     Input,
@@ -14,6 +16,7 @@ import {
 import DashboardLayout from "../../../components/DashboardLayout";
 import ReservationItem from "../../../components/ReservationItem";
 import {SearchIcon} from "@chakra-ui/icons";
+import {useState} from "react";
 
 export default function Dashboard() {
     const reservations = [
@@ -33,6 +36,9 @@ export default function Dashboard() {
                     capacity: "0/2",
                     guide: "Ben Huss...",
                     hasNotes: true,
+                    id: "1",
+                    email: "ben.huss@example.com",
+                    phone: "123-456-7890",
                 },
                 {
                     time: "1:00 PM",
@@ -62,20 +68,41 @@ export default function Dashboard() {
         }
     ];
 
+    const [searchTerm, setSearchTerm] = useState("");
+
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value);
+    };
+
+    const filterReservations = (reservations) => {
+        if (!searchTerm) return reservations;
+
+        return reservations.filter((reservation) => {
+            const {guide, email, phone, id} = reservation;
+            const lowercasedSearchTerm = searchTerm.toLowerCase();
+            return (
+                (guide && guide.toLowerCase().includes(lowercasedSearchTerm)) ||
+                (email && email.toLowerCase().includes(lowercasedSearchTerm)) ||
+                (phone && phone.toLowerCase().includes(lowercasedSearchTerm)) ||
+                (id && id.toLowerCase().includes(lowercasedSearchTerm))
+            );
+        });
+    };
+
     return (
         <DashboardLayout>
             <Box p={4} marginTop={"-30px"}>
                 <Flex align="center" mb={4}>
-                    <Text fontSize="2xl" fontWeight="medium" >
+                    <Text fontSize="2xl" fontWeight="medium">
                         Dashboard
                     </Text>
                     <Center height='50px' w={"40px"}>
-                        <Divider orientation='vertical' />
+                        <Divider orientation='vertical'/>
                     </Center>
                     <HStack spacing={2}>
                         <InputGroup>
                             <InputLeftElement pointerEvents="none" marginTop={"-3px"}>
-                                <SearchIcon color="gray.400" />
+                                <SearchIcon color="gray.400"/>
                             </InputLeftElement>
                             <Input
                                 marginLeft={"5px"}
@@ -86,10 +113,13 @@ export default function Dashboard() {
                                 boxShadow="none"
                                 focusBorderColor="transparent"
                                 w={"1250px"}
-                                _placeholder={{ fontSize: "lg" }}
+                                _placeholder={{fontSize: "lg"}}
+                                value={searchTerm}
+                                onChange={handleSearch}
                             />
                         </InputGroup>
-                        <Button colorScheme="green" size="md" h={"40px"} w={"200px"} border={"none"} borderRadius={"4px"}>
+                        <Button colorScheme="green" size="md" h={"40px"} w={"200px"} border={"none"}
+                                borderRadius={"4px"}>
                             Make a Purchase
                         </Button>
                     </HStack>
@@ -135,16 +165,21 @@ export default function Dashboard() {
                     </Button>
                 </HStack>
                 <VStack spacing={6} align="stretch">
-                    {reservations.map((data, index) => (
-                        <ReservationItem
-                            key={index}
-                            date={data.date}
-                            day={data.day}
-                            availableSummary={data.availableSummary}
-                            reservedSummary={data.reservedSummary}
-                            reservations={data.reservations}
-                        />
-                    ))}
+                    {reservations
+                        .map((data) => ({
+                            ...data,
+                            reservations: filterReservations(data.reservations),
+                        }))
+                        .map((data, index) => (
+                            <ReservationItem
+                                key={index}
+                                date={data.date}
+                                day={data.day}
+                                availableSummary={data.availableSummary}
+                                reservedSummary={data.reservedSummary}
+                                reservations={data.reservations}
+                            />
+                        ))}
                 </VStack>
                 <Box textAlign="center" mt={6}>
                     <Button variant="outline" size="sm">

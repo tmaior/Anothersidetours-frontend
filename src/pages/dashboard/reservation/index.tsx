@@ -1,6 +1,6 @@
 import {
     Box,
-    Button,
+    Button, Center, Divider,
     Flex,
     HStack,
     Input,
@@ -64,29 +64,39 @@ export default function Dashboard() {
 
     return (
         <DashboardLayout>
-            <Box p={4}>
+            <Box p={4} marginTop={"-30px"}>
                 <Flex align="center" mb={4}>
-                    <Text fontSize="xl" fontWeight="bold">
+                    <Text fontSize="2xl" fontWeight="medium" >
                         Dashboard
                     </Text>
-                    <Spacer/>
+                    <Center height='50px' w={"40px"}>
+                        <Divider orientation='vertical' />
+                    </Center>
                     <HStack spacing={2}>
                         <InputGroup>
                             <InputLeftElement pointerEvents="none" marginTop={"-3px"}>
                                 <SearchIcon color="gray.400" />
                             </InputLeftElement>
                             <Input
+                                marginLeft={"5px"}
                                 placeholder="Name, email, phone or ID"
                                 width="250px"
                                 size="sm"
+                                border="none"
+                                boxShadow="none"
+                                focusBorderColor="transparent"
+                                w={"1250px"}
+                                _placeholder={{ fontSize: "lg" }}
                             />
                         </InputGroup>
                         <Button colorScheme="green" size="sm">
                             Make a Purchase
                         </Button>
                     </HStack>
+                    <Spacer/>
                 </Flex>
-                <HStack spacing={2} mb={4} align="center">
+                <Divider orientation='horizontal' width="100%"/>
+                <HStack spacing={2} mb={4} align="center" marginTop={"10px"}>
                     <Input type="date" defaultValue="2024-12-13" size="sm" width="130px"/>
 
                     <Select placeholder="Reserved" size="sm" width="120px">

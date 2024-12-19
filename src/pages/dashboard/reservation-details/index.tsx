@@ -255,7 +255,7 @@ export default function Dashboard2() {
                                             <Text color="green.500">3 Signed</Text>
                                             <Text color="red.500">0 Unsigned</Text>
                                         </Td>
-                                        <Td>Xola Default</Td>
+                                        <Td> - </Td>
                                         <Td> - </Td>
                                         <Td>
                                             <Text color="blue.600" as="a" href="tel:+13133103813">(313) 310-3813</Text>

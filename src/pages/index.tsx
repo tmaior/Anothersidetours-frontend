@@ -5,7 +5,7 @@ export default function IndexPage() {
     const router = useRouter();
 
     useEffect(() => {
-        router.replace("/dashboard/home");
+        router.replace("/dashboard/reservation");
     }, [router]);
 
     return null;

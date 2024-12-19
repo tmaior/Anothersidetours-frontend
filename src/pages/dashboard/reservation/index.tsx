@@ -1,6 +1,19 @@
-import {Box, Button, Flex, HStack, Input, Select, Spacer, Text, VStack,} from "@chakra-ui/react";
+import {
+    Box,
+    Button,
+    Flex,
+    HStack,
+    Input,
+    InputGroup,
+    InputLeftElement,
+    Select,
+    Spacer,
+    Text,
+    VStack,
+} from "@chakra-ui/react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ReservationItem from "../../../components/ReservationItem";
+import {SearchIcon} from "@chakra-ui/icons";
 
 export default function Dashboard() {
     const reservations = [
@@ -58,11 +71,16 @@ export default function Dashboard() {
                     </Text>
                     <Spacer/>
                     <HStack spacing={2}>
-                        <Input
-                            placeholder="Name, email, phone or ID"
-                            width="250px"
-                            size="sm"
-                        />
+                        <InputGroup>
+                            <InputLeftElement pointerEvents="none" marginTop={"-3px"}>
+                                <SearchIcon color="gray.400" />
+                            </InputLeftElement>
+                            <Input
+                                placeholder="Name, email, phone or ID"
+                                width="250px"
+                                size="sm"
+                            />
+                        </InputGroup>
                         <Button colorScheme="green" size="sm">
                             Make a Purchase
                         </Button>
@@ -81,10 +99,10 @@ export default function Dashboard() {
                         <option value="grid">Grid</option>
                     </Select>
 
-                    <Select size="sm" width="120px" placeholder="Default View">
-                        <option value="default">Default</option>
-                        <option value="view2">View 2</option>
-                    </Select>
+                    {/*<Select size="sm" width="120px" placeholder="Default View">*/}
+                    {/*    <option value="default">Default</option>*/}
+                    {/*    <option value="view2">View 2</option>*/}
+                    {/*</Select>*/}
 
                     <Spacer/>
                     <Button variant="outline" size="sm">

@@ -1,6 +1,8 @@
 import {Box, Button, Flex, HStack, IconButton, Image, Text, VStack,} from "@chakra-ui/react";
 import {BsSticky, BsThreeDots} from "react-icons/bs";
 import {FaPencilAlt} from "react-icons/fa";
+import React from "react";
+import {AiOutlineCompass} from "react-icons/ai";
 
 const ReservationItem = ({
                              date,
@@ -46,24 +48,33 @@ const ReservationItem = ({
                             <Text>{item.reservedDetails}</Text>
                         </HStack>
                     </Box>
-                    <HStack spacing={4} align="center">
+                    <HStack spacing={4} align="center" >
                         <Box boxSize="8px" borderRadius="full" bg={item.statusColor}/>
-                        <HStack spacing={1}>
-                            <FaPencilAlt color="gray"/>
-                            <Text fontSize="xs">{item.capacity}</Text>
-                        </HStack>
-                        <Text fontSize="xs" color="green.600">
-                            {item.guide}
-                        </Text>
-                        {item.hasNotes && (
-                            <IconButton
-                                icon={<BsSticky/>}
-                                variant="ghost"
-                                aria-label="Notes"
-                                size="sm"
-                                color="orange.500"
-                            />
-                        )}
+                        <Flex w={"900px"} display="flex" justifyContent="space-between" alignItems="center" p={2}>
+                            <HStack spacing={1}>
+                                <FaPencilAlt color="gray"/>
+                                <Text fontSize="xs">{item.capacity}</Text>
+                            </HStack>
+                            <Flex justify="center" align="center" flex="1">
+                                <AiOutlineCompass/>
+                                <Text marginLeft={"5px"} fontSize="xs" color="green.600" textAlign="center">
+                                    {item.guide || "No guide available"}
+                                </Text>
+                            </Flex>
+                            <Flex align="center" justify="center">
+                                {item.hasNotes ? (
+                                    <IconButton
+                                        icon={<BsSticky />}
+                                        variant="ghost"
+                                        aria-label="Notes"
+                                        size="sm"
+                                        color="orange.500"
+                                    />
+                                ) : (
+                                    <Box width="20px" />
+                                )}
+                            </Flex>
+                        </Flex>
                         <IconButton
                             icon={<BsThreeDots/>}
                             variant="ghost"

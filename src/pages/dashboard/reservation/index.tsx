@@ -89,7 +89,7 @@ export default function Dashboard() {
                                 _placeholder={{ fontSize: "lg" }}
                             />
                         </InputGroup>
-                        <Button colorScheme="green" size="sm">
+                        <Button colorScheme="green" size="md" h={"40px"} w={"200px"} border={"none"} borderRadius={"4px"}>
                             Make a Purchase
                         </Button>
                     </HStack>

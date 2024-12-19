@@ -110,7 +110,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                 <VStack spacing={4} align="stretch">
                     <Box
                         as="button"
-                        onClick={() => router.push("/dashboard/reservations")}
+                        onClick={() => router.push("/dashboard/reservation")}
                         display="flex"
                         justifyContent="center"
                         alignItems="center"
@@ -142,7 +142,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
-                        onClick={() => router.push("/dashboard/under-construction")}
+                        onClick={() => router.push("/dashboard/reservation")}
                     >
                         <Button
                             marginTop={"-30px"}

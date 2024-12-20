@@ -16,7 +16,7 @@ import {
 import DashboardLayout from "../../../components/DashboardLayout";
 import ReservationItem from "../../../components/ReservationItem";
 import {SearchIcon} from "@chakra-ui/icons";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 
 export default function Dashboard() {
     const reservations = [
@@ -50,6 +50,9 @@ export default function Dashboard() {
                     capacity: "0/2",
                     guide: "Ben Huss...",
                     hasNotes: true,
+                    id: "2",
+                    email: "good.huss@example.com",
+                    phone: "7890-123-456",
                 },
                 {
                     time: "3:00 PM",
@@ -61,14 +64,330 @@ export default function Dashboard() {
                     capacity: "1/3",
                     guide: "Anna Smith",
                     hasNotes: false,
+                    id: "3",
+                    email: "Anna@example.com",
+                    phone: "456-7890-123",
                 },
 
 
             ]
+        },
+        {
+            date: "23 Dec",
+            day: "Friday",
+            availableSummary: "0 Available",
+            reservedSummary: "7 Reserved",
+            reservations: [
+                {
+                    time: "1:00 PM",
+                    imageUrl: "/images/los-angeles-tour.png",
+                    title: "The Los Angeles Tour",
+                    available: "298 Available",
+                    reservedDetails: 2 + " Reserved",
+                    statusColor: "red.500",
+                    capacity: "0/2",
+                    guide: "Ben Huss...",
+                    hasNotes: true,
+                    id: "1",
+                    email: "ben.huss@example.com",
+                    phone: "123-456-7890",
+                },
+                {
+                    time: "1:00 PM",
+                    imageUrl: "/images/los-angeles-tour.png",
+                    title: "The Los Angeles Tour",
+                    available: "∞",
+                    reservedDetails: 2 + " Reserved",
+                    statusColor: "red.500",
+                    capacity: "0/2",
+                    guide: "Ben Huss...",
+                    hasNotes: true,
+                    id: "2",
+                    email: "good.huss@example.com",
+                    phone: "7890-123-456",
+                },
+                {
+                    time: "3:00 PM",
+                    imageUrl: "/images/beverly-tour.png",
+                    title: "The Beverly Hills Tour",
+                    available: 150,
+                    reservedDetails: 0 + " Reserved",
+                    statusColor: "green.500",
+                    capacity: "1/3",
+                    guide: "Anna Smith",
+                    hasNotes: false,
+                    id: "3",
+                    email: "Anna@example.com",
+                    phone: "456-7890-123",
+                },
+
+
+            ]
+        },
+        {
+            date: "30 Dec",
+            day: "Friday",
+            availableSummary: "0 Available",
+            reservedSummary: "7 Reserved",
+            reservations: [
+                {
+                    time: "1:00 PM",
+                    imageUrl: "/images/los-angeles-tour.png",
+                    title: "The Los Angeles Tour",
+                    available: "298 Available",
+                    reservedDetails: 2 + " Reserved",
+                    statusColor: "red.500",
+                    capacity: "0/2",
+                    guide: "Ben Huss...",
+                    hasNotes: true,
+                    id: "1",
+                    email: "ben.huss@example.com",
+                    phone: "123-456-7890",
+                },
+                {
+                    time: "1:00 PM",
+                    imageUrl: "/images/los-angeles-tour.png",
+                    title: "The Los Angeles Tour",
+                    available: "∞",
+                    reservedDetails: 2 + " Reserved",
+                    statusColor: "red.500",
+                    capacity: "0/2",
+                    guide: "Ben Huss...",
+                    hasNotes: true,
+                    id: "2",
+                    email: "good.huss@example.com",
+                    phone: "7890-123-456",
+                },
+                {
+                    time: "3:00 PM",
+                    imageUrl: "/images/beverly-tour.png",
+                    title: "The Beverly Hills Tour",
+                    available: 150,
+                    reservedDetails: 0 + " Reserved",
+                    statusColor: "green.500",
+                    capacity: "1/3",
+                    guide: "Anna Smith",
+                    hasNotes: false,
+                    id: "3",
+                    email: "Anna@example.com",
+                    phone: "456-7890-123",
+                },
+
+
+            ]
+        },
+        {
+            date: "06 Jan",
+            day: "Friday",
+            availableSummary: "0 Available",
+            reservedSummary: "7 Reserved",
+            reservations: [
+                {
+                    time: "1:00 PM",
+                    imageUrl: "/images/los-angeles-tour.png",
+                    title: "The Los Angeles Tour",
+                    available: "298 Available",
+                    reservedDetails: 2 + " Reserved",
+                    statusColor: "red.500",
+                    capacity: "0/2",
+                    guide: "Ben Huss...",
+                    hasNotes: true,
+                    id: "1",
+                    email: "ben.huss@example.com",
+                    phone: "123-456-7890",
+                },
+                {
+                    time: "1:00 PM",
+                    imageUrl: "/images/los-angeles-tour.png",
+                    title: "The Los Angeles Tour",
+                    available: "∞",
+                    reservedDetails: 2 + " Reserved",
+                    statusColor: "red.500",
+                    capacity: "0/2",
+                    guide: "Ben Huss...",
+                    hasNotes: true,
+                    id: "2",
+                    email: "good.huss@example.com",
+                    phone: "7890-123-456",
+                },
+                {
+                    time: "3:00 PM",
+                    imageUrl: "/images/beverly-tour.png",
+                    title: "The Beverly Hills Tour",
+                    available: 150,
+                    reservedDetails: 0 + " Reserved",
+                    statusColor: "green.500",
+                    capacity: "1/3",
+                    guide: "Anna Smith",
+                    hasNotes: false,
+                    id: "3",
+                    email: "Anna@example.com",
+                    phone: "456-7890-123",
+                },
+
+
+            ]
+        },
+        {
+            date: "13 Jan",
+            day: "Friday",
+            availableSummary: "0 Available",
+            reservedSummary: "7 Reserved",
+            reservations: [
+                {
+                    time: "1:00 PM",
+                    imageUrl: "/images/los-angeles-tour.png",
+                    title: "The Los Angeles Tour",
+                    available: "298 Available",
+                    reservedDetails: 2 + " Reserved",
+                    statusColor: "red.500",
+                    capacity: "0/2",
+                    guide: "Ben Huss...",
+                    hasNotes: true,
+                    id: "1",
+                    email: "ben.huss@example.com",
+                    phone: "123-456-7890",
+                },
+                {
+                    time: "1:00 PM",
+                    imageUrl: "/images/los-angeles-tour.png",
+                    title: "The Los Angeles Tour",
+                    available: "∞",
+                    reservedDetails: 2 + " Reserved",
+                    statusColor: "red.500",
+                    capacity: "0/2",
+                    guide: "Ben Huss...",
+                    hasNotes: true,
+                    id: "2",
+                    email: "good.huss@example.com",
+                    phone: "7890-123-456",
+                },
+                {
+                    time: "3:00 PM",
+                    imageUrl: "/images/beverly-tour.png",
+                    title: "The Beverly Hills Tour",
+                    available: 150,
+                    reservedDetails: 0 + " Reserved",
+                    statusColor: "green.500",
+                    capacity: "1/3",
+                    guide: "Anna Smith",
+                    hasNotes: false,
+                    id: "3",
+                    email: "Anna@example.com",
+                    phone: "456-7890-123",
+                },
+
+
+            ]
+        },
+        {
+            date: "20 Jan",
+            day: "Friday",
+            availableSummary: "0 Available",
+            reservedSummary: "7 Reserved",
+            reservations: [
+                {
+                    time: "1:00 PM",
+                    imageUrl: "/images/los-angeles-tour.png",
+                    title: "The Los Angeles Tour",
+                    available: "298 Available",
+                    reservedDetails: 2 + " Reserved",
+                    statusColor: "red.500",
+                    capacity: "0/2",
+                    guide: "Ben Huss...",
+                    hasNotes: true,
+                    id: "1",
+                    email: "ben.huss@example.com",
+                    phone: "123-456-7890",
+                },
+                {
+                    time: "1:00 PM",
+                    imageUrl: "/images/los-angeles-tour.png",
+                    title: "The Los Angeles Tour",
+                    available: "∞",
+                    reservedDetails: 2 + " Reserved",
+                    statusColor: "red.500",
+                    capacity: "0/2",
+                    guide: "Ben Huss...",
+                    hasNotes: true,
+                    id: "2",
+                    email: "good.huss@example.com",
+                    phone: "7890-123-456",
+                },
+                {
+                    time: "3:00 PM",
+                    imageUrl: "/images/beverly-tour.png",
+                    title: "The Beverly Hills Tour",
+                    available: 150,
+                    reservedDetails: 0 + " Reserved",
+                    statusColor: "green.500",
+                    capacity: "1/3",
+                    guide: "Anna Smith",
+                    hasNotes: false,
+                    id: "3",
+                    email: "Anna@example.com",
+                    phone: "456-7890-123",
+                },
+
+
+            ]
+        },
+        {
+            date: "27 Jan",
+            day: "Friday",
+            availableSummary: "0 Available",
+            reservedSummary: "7 Reserved",
+            reservations: [
+                {
+                    time: "1:00 PM",
+                    imageUrl: "/images/los-angeles-tour.png",
+                    title: "The Los Angeles Tour",
+                    available: "298 Available",
+                    reservedDetails: 2 + " Reserved",
+                    statusColor: "red.500",
+                    capacity: "0/2",
+                    guide: "Ben Huss...",
+                    hasNotes: true,
+                    id: "1",
+                    email: "ben.huss@example.com",
+                    phone: "123-456-7890",
+                },
+                {
+                    time: "1:00 PM",
+                    imageUrl: "/images/los-angeles-tour.png",
+                    title: "The Los Angeles Tour",
+                    available: "∞",
+                    reservedDetails: 2 + " Reserved",
+                    statusColor: "red.500",
+                    capacity: "0/2",
+                    guide: "Ben Huss...",
+                    hasNotes: true,
+                    id: "2",
+                    email: "good.huss@example.com",
+                    phone: "7890-123-456",
+                },
+                {
+                    time: "3:00 PM",
+                    imageUrl: "/images/beverly-tour.png",
+                    title: "The Beverly Hills Tour",
+                    available: 150,
+                    reservedDetails: 0 + " Reserved",
+                    statusColor: "green.500",
+                    capacity: "1/3",
+                    guide: "Anna Smith",
+                    hasNotes: false,
+                    id: "abc-defg-hijklm",
+                    email: "teste123@example.com",
+                    phone: "951",
+                },
+            ]
         }
+
     ];
 
     const [searchTerm, setSearchTerm] = useState("");
+    const [loadedDates, setLoadedDates] = useState([]);
+    const [selectedDate, setSelectedDate] = useState("");
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -87,6 +406,34 @@ export default function Dashboard() {
                 (id && id.toLowerCase().includes(lowercasedSearchTerm))
             );
         });
+    };
+
+    const getNextDateWithReservations = () => {
+        const today = new Date();
+        const todayISO = today.toISOString().split("T")[0];
+
+        for (const reservation of reservations) {
+            const reservationDate = new Date(`${reservation.date} ${new Date().getFullYear()}`).toISOString().split("T")[0];
+            if (!loadedDates.includes(reservationDate)) {
+                return reservationDate;
+            }
+        }
+        return null;
+    };
+
+    useEffect(() => {
+        const initialDate = getNextDateWithReservations();
+        if (initialDate) {
+            setSelectedDate(initialDate);
+            setLoadedDates([initialDate]);
+        }
+    }, []);
+
+    const handleLoadMore = () => {
+        const nextDate = getNextDateWithReservations();
+        if (nextDate) {
+            setLoadedDates((prev) => [...prev, nextDate]);
+        }
     };
 
     return (
@@ -118,7 +465,8 @@ export default function Dashboard() {
                                 onChange={handleSearch}
                             />
                         </InputGroup>
-                        <Button colorScheme="green" size="md"  marginLeft={"-50px"} h={"40px"} w={"200px"} border={"none"}
+                        <Button colorScheme="green" size="md" marginLeft={"-50px"} h={"40px"} w={"200px"}
+                                border={"none"}
                                 borderRadius={"4px"}>
                             Make a Purchase
                         </Button>
@@ -166,6 +514,7 @@ export default function Dashboard() {
                 </HStack>
                 <VStack spacing={6} align="stretch">
                     {reservations
+                        .filter((data) => loadedDates.includes(new Date(`${data.date} ${new Date().getFullYear()}`).toISOString().split("T")[0]))
                         .map((data) => ({
                             ...data,
                             reservations: filterReservations(data.reservations),
@@ -182,7 +531,7 @@ export default function Dashboard() {
                         ))}
                 </VStack>
                 <Box textAlign="center" mt={6}>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={handleLoadMore}>
                         Load More
                     </Button>
                 </Box>

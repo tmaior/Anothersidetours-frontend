@@ -328,7 +328,7 @@ const PurchasePage = () => {
                             <Button variant="outline">Cancel</Button>
                             <HStack spacing={4}>
                                 <Button variant="outline">Add Another Product</Button>
-                                <Button colorScheme="green">Pay $298.00</Button>
+                                <Button colorScheme="green">US${grandTotal.toFixed(2)}</Button>
                             </HStack>
                         </HStack>
                     </Box>

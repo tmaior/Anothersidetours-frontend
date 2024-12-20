@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import React, {useState} from 'react'
 import {
     Box,
     Breadcrumb,
@@ -36,6 +36,28 @@ const PurchasePage = () => {
     const [bookingFee, setBookingFee] = useState(false) // agora um boolean
 
     const feeAmount = bookingFee ? totalBase * 0.06 : 0
+
+    const [customLineItems, setCustomLineItems] = useState(false)
+    const [emailEnabled, setEmailEnabled] = useState(true)
+    const [phoneEnabled, setPhoneEnabled] = useState(true)
+    const [organizerAttending, setOrganizerAttending] = useState(true)
+    const [mainAttendeeIndex, setMainAttendeeIndex] = useState(0)
+    const [attendees, setAttendees] = useState([
+        {name: "Guests #1", info: ""},
+        {name: "Guests #2", info: ""}
+    ])
+
+    const handleNameChange = (index, newName) => {
+        const updated = [...attendees]
+        updated[index].name = newName
+        setAttendees(updated)
+    }
+
+    const handleInfoChange = (index, newInfo) => {
+        const updated = [...attendees]
+        updated[index].info = newInfo
+        setAttendees(updated)
+    }
 
     return (
         <DashboardLayout>
@@ -146,6 +168,111 @@ const PurchasePage = () => {
                                 <option value={(totalBase * 0.20).toFixed(2)}>20%</option>
                             </Select>
                         </FormControl>
+                        <Box p={8} maxW="1300px" mx="auto">
+                            <FormControl display="flex" alignItems="center" mb={4}>
+                                <FormLabel mb="0" fontWeight="medium">
+                                    Custom Line Items
+                                </FormLabel>
+                                <Switch
+                                    isChecked={customLineItems}
+                                    onChange={(e) => setCustomLineItems(e.target.checked)}
+                                    colorScheme="blue"
+                                    ml={4}
+                                />
+                            </FormControl>
+
+                            <Divider my={6}/>
+                            <Heading size="md" mb={4}>Organizer Details</Heading>
+                            <HStack mb={4}>
+                                <FormControl>
+                                    <FormLabel>Name</FormLabel>
+                                    <Select defaultValue="Guests #1">
+                                        <option>Guests #1</option>
+                                        <option>Guests #2</option>
+                                        <option>Guests #3</option>
+                                    </Select>
+                                </FormControl>
+                                <Button variant="outline" colorScheme="blue" alignSelf="flex-end" mt="auto">
+                                    Search Customers
+                                </Button>
+                            </HStack>
+                            <FormControl mb={4}>
+                                <HStack justify="space-between">
+                                    <HStack>
+                                        <Text fontWeight="medium">Email</Text>
+                                        <Switch
+                                            isChecked={emailEnabled}
+                                            onChange={(e) => setEmailEnabled(e.target.checked)}
+                                            colorScheme="blue"
+                                        />
+                                    </HStack>
+                                    {emailEnabled && <Text color="red.500" fontSize="xl">•</Text>}
+                                </HStack>
+                                {emailEnabled && (
+                                    <Input placeholder="Email" mt={2}/>
+                                )}
+                            </FormControl>
+                            <FormControl mb={4}>
+                                <HStack justify="space-between">
+                                    <HStack>
+                                        <Text fontWeight="medium">Phone Number</Text>
+                                        <Switch
+                                            isChecked={phoneEnabled}
+                                            onChange={(e) => setPhoneEnabled(e.target.checked)}
+                                            colorScheme="blue"
+                                        />
+                                    </HStack>
+                                    {phoneEnabled && <Text color="red.500" fontSize="xl">•</Text>}
+                                </HStack>
+                                {phoneEnabled && (
+                                    <Input placeholder="Phone Number" mt={2}/>
+                                )}
+                            </FormControl>
+                            <FormControl mb={4}>
+                                <HStack justify="space-between">
+                                    <Text fontWeight="medium">Organizer is attending</Text>
+                                    <Switch
+                                        isChecked={organizerAttending}
+                                        onChange={(e) => setOrganizerAttending(e.target.checked)}
+                                        colorScheme="blue"
+                                    />
+                                </HStack>
+                            </FormControl>
+
+                            <Divider my={6}/>
+
+                            <Box p={8}>
+                                <Heading size="md" mb={4}>Attendee Info</Heading>
+
+                                {attendees.map((attendee, i) => (
+                                    <Box key={i} borderWidth="1px" borderRadius="md" p={4} mb={4}>
+                                        <HStack spacing={4}>
+                                            <Button
+                                                variant="ghost"
+                                                fontSize="2xl"
+                                                onClick={() => setMainAttendeeIndex(i)}
+                                                aria-label="Set as main attendee"
+                                                border={mainAttendeeIndex === i ? "2px solid" : "none"}
+                                                borderColor={mainAttendeeIndex === i ? "blue.500" : "transparent"}
+                                                borderRadius="full"
+                                                p={2}
+                                            >
+                                                🏳
+                                            </Button>
+
+                                            <Text fontWeight="medium">Guests</Text>
+                                            <Input
+                                                placeholder={`Guests #${i + 1}`}
+                                                value={attendee.info}
+                                                onChange={(e) => handleInfoChange(i, e.target.value)}
+                                                variant="outline"
+                                                w="200px"
+                                            />
+                                        </HStack>
+                                    </Box>
+                                ))}
+                            </Box>
+                        </Box>
                     </Box>
 
                     <Box w={{base: "100%", md: "400px"}} bg="white" p={6} borderRadius="md" boxShadow="sm">

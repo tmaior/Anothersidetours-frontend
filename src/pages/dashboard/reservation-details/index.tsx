@@ -244,7 +244,7 @@ export default function Dashboard2() {
                                                 </AccordionItem>
                                             </Accordion>
                                         </Td>
-                                        <Td>Michael Hirt</Td>
+                                        <Td>-</Td>
                                         <Td>2 Guests</Td>
                                         <Td>0</Td>
                                         <Td>
@@ -258,11 +258,11 @@ export default function Dashboard2() {
                                         <Td> - </Td>
                                         <Td> - </Td>
                                         <Td>
-                                            <Text color="blue.600" as="a" href="tel:+13133103813">(313) 310-3813</Text>
+                                            <Text color="blue.600" as="a" href="tel:+13133103813">-</Text>
                                         </Td>
                                         <Td>
                                             <Text color="blue.600" as="a" href="mailto:michael@example.com">
-                                                michael@example.com
+                                                -
                                             </Text>
                                         </Td>
                                     </Tr>

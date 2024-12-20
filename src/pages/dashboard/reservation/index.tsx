@@ -7,16 +7,25 @@ import {
     HStack,
     Input,
     InputGroup,
-    InputLeftElement, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay,
+    InputLeftElement,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
     Select,
     Spacer,
-    Text, useDisclosure,
+    Text,
+    useDisclosure,
     VStack,
 } from "@chakra-ui/react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ReservationItem from "../../../components/ReservationItem";
 import {SearchIcon} from "@chakra-ui/icons";
 import {useEffect, useState} from "react";
+import { useRouter } from "next/router";
 
 export default function Dashboard() {
     const reservations = [
@@ -389,7 +398,8 @@ export default function Dashboard() {
     const [loadedDates, setLoadedDates] = useState([]);
     const [selectedDate, setSelectedDate] = useState("");
     const [activeNote, setActiveNote] = useState(null);
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const {isOpen, onOpen, onClose} = useDisclosure();
+    const router = useRouter();
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -398,6 +408,10 @@ export default function Dashboard() {
     const openNoteModal = (note) => {
         setActiveNote(note);
         onOpen();
+    };
+
+    const handlePurchaseClick = () => {
+        router.push("/dashboard/list-tours");
     };
 
     const filterReservations = (reservations) => {
@@ -474,7 +488,9 @@ export default function Dashboard() {
                         </InputGroup>
                         <Button colorScheme="green" size="md" marginLeft={"-50px"} h={"40px"} w={"200px"}
                                 border={"none"}
-                                borderRadius={"4px"}>
+                                borderRadius={"4px"}
+                                onClick={handlePurchaseClick}
+                        >
                             Make a Purchase
                         </Button>
                     </HStack>
@@ -545,10 +561,10 @@ export default function Dashboard() {
                 </Box>
             </Box>
             <Modal isOpen={isOpen} onClose={onClose}>
-                <ModalOverlay />
+                <ModalOverlay/>
                 <ModalContent>
                     <ModalHeader>Notes</ModalHeader>
-                    <ModalCloseButton />
+                    <ModalCloseButton/>
                     <ModalBody>
                         {activeNote ? (
                             <>

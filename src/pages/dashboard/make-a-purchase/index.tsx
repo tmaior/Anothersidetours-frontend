@@ -73,7 +73,7 @@ const PurchasePage = () => {
                             </HStack>
                         </FormControl>
 
-                        <FormControl mb={4}>
+                        <FormControl mb={4} w={"150px"}>
                             <FormLabel>Date</FormLabel>
                             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)}/>
                         </FormControl>

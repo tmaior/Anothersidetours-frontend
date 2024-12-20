@@ -127,14 +127,14 @@ const PurchasePage = () => {
                             </HStack>
                         </HStack>
 
-                        <FormControl display="flex" alignItems="center" mb={4}>
-                            <Text mr={4}>6% Booking Fee</Text>
+                        <HStack justify="space-between" mb={4}>
+                            <Text>6% Booking Fee</Text>
                             <Switch
                                 isChecked={bookingFee}
                                 onChange={(e) => setBookingFee(e.target.checked)}
                                 colorScheme="blue"
                             />
-                        </FormControl>
+                        </HStack>
 
                         <FormControl mb={4}>
                             <FormLabel>Gratuity (opcional)</FormLabel>

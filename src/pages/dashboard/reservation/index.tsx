@@ -7,10 +7,10 @@ import {
     HStack,
     Input,
     InputGroup,
-    InputLeftElement,
+    InputLeftElement, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay,
     Select,
     Spacer,
-    Text,
+    Text, useDisclosure,
     VStack,
 } from "@chakra-ui/react";
 import DashboardLayout from "../../../components/DashboardLayout";
@@ -388,9 +388,16 @@ export default function Dashboard() {
     const [searchTerm, setSearchTerm] = useState("");
     const [loadedDates, setLoadedDates] = useState([]);
     const [selectedDate, setSelectedDate] = useState("");
+    const [activeNote, setActiveNote] = useState(null);
+    const { isOpen, onOpen, onClose } = useDisclosure();
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
+    };
+
+    const openNoteModal = (note) => {
+        setActiveNote(note);
+        onOpen();
     };
 
     const filterReservations = (reservations) => {
@@ -527,6 +534,7 @@ export default function Dashboard() {
                                 availableSummary={data.availableSummary}
                                 reservedSummary={data.reservedSummary}
                                 reservations={data.reservations}
+                                onNoteClick={openNoteModal}
                             />
                         ))}
                 </VStack>
@@ -536,6 +544,26 @@ export default function Dashboard() {
                     </Button>
                 </Box>
             </Box>
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Notes</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        {activeNote ? (
+                            <>
+                                <Text fontWeight="bold">{activeNote.title}</Text>
+                                <Text>{activeNote.notes}</Text>
+                            </>
+                        ) : (
+                            <Text>No notes available</Text>
+                        )}
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button onClick={onClose}>Close</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </DashboardLayout>
     );
 }

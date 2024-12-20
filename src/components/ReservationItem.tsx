@@ -22,6 +22,7 @@ const ReservationItem = ({
                              availableSummary,
                              reservedSummary,
                              reservations,
+                             onNoteClick
                          }) => {
 
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -106,6 +107,7 @@ const ReservationItem = ({
                                         aria-label="Notes"
                                         size="sm"
                                         color="orange.500"
+                                        onClick={() => onNoteClick(item)}
                                     />
                                 ) : (
                                     <Box width="20px" />

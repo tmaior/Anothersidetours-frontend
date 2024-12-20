@@ -350,7 +350,6 @@ const PurchasePage = () => {
                                 <Button>Apply Code</Button>
                             </HStack>
                         </FormControl>
-                        <Button colorScheme="blue" width="100%">Make a Purchase</Button>
                     </Box>
                 </Flex>
             </Box>

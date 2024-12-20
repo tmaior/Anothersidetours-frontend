@@ -560,9 +560,9 @@ export default function Dashboard() {
                     </Button>
                 </Box>
             </Box>
-            <Modal isOpen={isOpen} onClose={onClose}>
+            <Modal isOpen={isOpen} onClose={onClose} size="3xl">
                 <ModalOverlay/>
-                <ModalContent>
+                <ModalContent h={"600px"}>
                     <ModalHeader>Notes</ModalHeader>
                     <ModalCloseButton/>
                     <ModalBody>

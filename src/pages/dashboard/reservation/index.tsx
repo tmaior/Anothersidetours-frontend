@@ -118,7 +118,7 @@ export default function Dashboard() {
                                 onChange={handleSearch}
                             />
                         </InputGroup>
-                        <Button colorScheme="green" size="md" h={"40px"} w={"200px"} border={"none"}
+                        <Button colorScheme="green" size="md"  marginLeft={"-50px"} h={"40px"} w={"200px"} border={"none"}
                                 borderRadius={"4px"}>
                             Make a Purchase
                         </Button>

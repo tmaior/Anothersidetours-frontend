@@ -1,7 +1,19 @@
-import {Box, Button, Flex, HStack, IconButton, Image, Text, VStack,} from "@chakra-ui/react";
+import {
+    Box,
+    Button, Checkbox,
+    Flex,
+    HStack,
+    IconButton,
+    Image,
+    Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader,
+    ModalOverlay,
+    Text,
+    useDisclosure,
+    VStack,
+} from "@chakra-ui/react";
 import {BsSticky, BsThreeDots} from "react-icons/bs";
 import {FaPencilAlt} from "react-icons/fa";
-import React from "react";
+import React, {useState} from "react";
 import {AiOutlineCompass} from "react-icons/ai";
 
 const ReservationItem = ({
@@ -11,6 +23,23 @@ const ReservationItem = ({
                              reservedSummary,
                              reservations,
                          }) => {
+
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const [selectedGuide, setSelectedGuide] = useState<string>("");
+    const guides = [
+        "AJ West",
+        "Ben Hussock",
+        "Jeff Mirkin",
+        "Jose Oyola",
+        "Kenneth Lippman",
+        "Luce Metrius",
+    ];
+
+    const handleGuideSelection = (guide: string) => {
+        setSelectedGuide(guide);
+        onClose();
+    };
+
     return (
         <VStack align="stretch" spacing={4} bg="gray.50" p={4} borderRadius="md">
             <Text fontSize="sm" fontWeight="semibold" color="gray.700">
@@ -56,9 +85,17 @@ const ReservationItem = ({
                                 <Text fontSize="xs">{item.capacity}</Text>
                             </HStack>
                             <Flex justify="center" align="center" flex="1">
-                                <AiOutlineCompass/>
-                                <Text marginLeft={"5px"} fontSize="xs" color="green.600" textAlign="center">
-                                    {item.guide || "No guide available"}
+                                <AiOutlineCompass />
+                                <Text
+                                    marginLeft={"5px"}
+                                    fontSize="xs"
+                                    color="green.600"
+                                    textAlign="center"
+                                    onClick={onOpen}
+                                    cursor="pointer"
+                                    _hover={{ color: "blue.500" }}
+                                >
+                                    {selectedGuide || item.guide || "No guide available"}
                                 </Text>
                             </Flex>
                             <Flex align="center" justify="center">
@@ -87,6 +124,32 @@ const ReservationItem = ({
                     </HStack>
                 </Flex>
             ))}
+
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Assign Guide</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        {guides.map((guide) => (
+                            <HStack key={guide} spacing={4} align="center">
+                                <Checkbox
+                                    isChecked={selectedGuide === guide}
+                                    onChange={() => handleGuideSelection(guide)}
+                                />
+                                <Text>{guide}</Text>
+                            </HStack>
+                        ))}
+                    </ModalBody>
+
+                    <ModalFooter>
+                        <Button colorScheme="blue" mr={3} onClick={onClose}>
+                            Save Changes
+                        </Button>
+                        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </VStack>
     );
 };

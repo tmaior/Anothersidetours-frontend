@@ -15,6 +15,7 @@ import {
     Select,
     Switch,
     Text,
+    VStack,
 } from '@chakra-ui/react'
 import DashboardLayout from "../../../components/DashboardLayout";
 
@@ -26,6 +27,16 @@ const PurchasePage = () => {
     const [privateTourAddOn, setPrivateTourAddOn] = useState(0)
     const [bookingFeePercent, setBookingFeePercent] = useState(0)
     const [gratuity, setGratuity] = useState('')
+    const [paymentWorkflow, setPaymentWorkflow] = useState("Now")
+    const [paymentMethod, setPaymentMethod] = useState("Credit Card")
+    const [cardNumber, setCardNumber] = useState("")
+    const [doNotCharge, setDoNotCharge] = useState(false)
+    const [internalNotesEnabled, setInternalNotesEnabled] = useState(true)
+    const [purchaseTags, setPurchaseTags] = useState("")
+    const [purchaseNote, setPurchaseNote] = useState("")
+
+    const isCreditCardMethod = paymentMethod === "Credit Card"
+    const isCreditCardRequired = isCreditCardMethod && !doNotCharge && cardNumber.trim() === ""
 
     const basePricePerGuest = 149
     const totalBase = quantity * basePricePerGuest
@@ -33,7 +44,7 @@ const PurchasePage = () => {
     const gratuityAmount = gratuity !== '' ? parseFloat(gratuity) : 0
     const grandTotal = totalBase + totalAddOns + gratuityAmount
 
-    const [bookingFee, setBookingFee] = useState(false) // agora um boolean
+    const [bookingFee, setBookingFee] = useState(false)
 
     const feeAmount = bookingFee ? totalBase * 0.06 : 0
 
@@ -62,17 +73,15 @@ const PurchasePage = () => {
     return (
         <DashboardLayout>
             <Box p={8}>
-                <Breadcrumb mb={4}>
-                    <BreadcrumbItem>
-                        <BreadcrumbLink href="#">Purchases</BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbItem isCurrentPage>
-                        <BreadcrumbLink href="#">Make a Purchase</BreadcrumbLink>
-                    </BreadcrumbItem>
-                </Breadcrumb>
-
+                {/*<Breadcrumb mb={4}>*/}
+                {/*    <BreadcrumbItem>*/}
+                {/*        <BreadcrumbLink href="#">Purchases</BreadcrumbLink>*/}
+                {/*    </BreadcrumbItem>*/}
+                {/*    <BreadcrumbItem isCurrentPage>*/}
+                {/*        <BreadcrumbLink href="#">Make a Purchase</BreadcrumbLink>*/}
+                {/*    </BreadcrumbItem>*/}
+                {/*</Breadcrumb>*/}
                 <Heading size="lg" mb={6}>Make a Purchase</Heading>
-
                 <Flex direction={{base: 'column', md: 'row'}} gap={8}>
                     <Box flex="1" bg="gray.50" p={6} borderRadius="md" boxShadow="sm">
                         <FormControl mb={4}>
@@ -94,12 +103,10 @@ const PurchasePage = () => {
                                 <Text>Guests</Text>
                             </HStack>
                         </FormControl>
-
                         <FormControl mb={4} w={"150px"}>
                             <FormLabel>Date</FormLabel>
                             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)}/>
                         </FormControl>
-
                         <FormControl mb={4}>
                             <FormLabel>Time</FormLabel>
                             <Select value={time} onChange={(e) => setTime(e.target.value)}>
@@ -108,9 +115,7 @@ const PurchasePage = () => {
                                 <option value="10:00">10:00 AM</option>
                             </Select>
                         </FormControl>
-
                         <Heading size="md" mt={8} mb={4}>Add-ons</Heading>
-
                         <HStack justify="space-between" mb={4}>
                             <Text>Add A Pick-Up and Drop Off for The Hike? (US$50,00)</Text>
                             <HStack>
@@ -129,7 +134,6 @@ const PurchasePage = () => {
                                 </Button>
                             </HStack>
                         </HStack>
-
                         <HStack justify="space-between" mb={4}>
                             <Text>Private Tour? (US$50,00)</Text>
                             <HStack>
@@ -148,7 +152,6 @@ const PurchasePage = () => {
                                 </Button>
                             </HStack>
                         </HStack>
-
                         <HStack justify="space-between" mb={4}>
                             <Text>6% Booking Fee</Text>
                             <Switch
@@ -157,9 +160,8 @@ const PurchasePage = () => {
                                 colorScheme="blue"
                             />
                         </HStack>
-
                         <FormControl mb={4}>
-                            <FormLabel>Gratuity (opcional)</FormLabel>
+                            <FormLabel>Gratuity (optional)</FormLabel>
                             <Select placeholder="Select tip amount" value={gratuity}
                                     onChange={(e) => setGratuity(e.target.value)}>
                                 <option value="0">0%</option>
@@ -168,113 +170,168 @@ const PurchasePage = () => {
                                 <option value={(totalBase * 0.20).toFixed(2)}>20%</option>
                             </Select>
                         </FormControl>
-                        <Box p={8} maxW="1300px" mx="auto">
-                            <FormControl display="flex" alignItems="center" mb={4}>
-                                <FormLabel mb="0" fontWeight="medium">
-                                    Custom Line Items
-                                </FormLabel>
-                                <Switch
-                                    isChecked={customLineItems}
-                                    onChange={(e) => setCustomLineItems(e.target.checked)}
-                                    colorScheme="blue"
-                                    ml={4}
-                                />
+                        <FormControl display="flex" alignItems="center" mb={4}>
+                            <FormLabel mb="0" fontWeight="medium">
+                                Custom Line Items
+                            </FormLabel>
+                            <Switch
+                                isChecked={customLineItems}
+                                onChange={(e) => setCustomLineItems(e.target.checked)}
+                                colorScheme="blue"
+                                ml={4}
+                            />
+                        </FormControl>
+                        <Divider my={6}/>
+                        <Heading size="md" mb={4}>Organizer Details</Heading>
+                        <HStack mb={4}>
+                            <FormControl>
+                                <FormLabel>Name</FormLabel>
+                                <Select defaultValue="Guests #1">
+                                    <option>Guests #1</option>
+                                    <option>Guests #2</option>
+                                    <option>Guests #3</option>
+                                </Select>
                             </FormControl>
-
-                            <Divider my={6}/>
-                            <Heading size="md" mb={4}>Organizer Details</Heading>
-                            <HStack mb={4}>
-                                <FormControl>
-                                    <FormLabel>Name</FormLabel>
-                                    <Select defaultValue="Guests #1">
-                                        <option>Guests #1</option>
-                                        <option>Guests #2</option>
-                                        <option>Guests #3</option>
-                                    </Select>
-                                </FormControl>
-                                <Button variant="outline" colorScheme="blue" alignSelf="flex-end" mt="auto">
-                                    Search Customers
-                                </Button>
-                            </HStack>
-                            <FormControl mb={4}>
-                                <HStack justify="space-between">
-                                    <HStack>
-                                        <Text fontWeight="medium">Email</Text>
-                                        <Switch
-                                            isChecked={emailEnabled}
-                                            onChange={(e) => setEmailEnabled(e.target.checked)}
-                                            colorScheme="blue"
-                                        />
-                                    </HStack>
-                                    {emailEnabled && <Text color="red.500" fontSize="xl">•</Text>}
-                                </HStack>
-                                {emailEnabled && (
-                                    <Input placeholder="Email" mt={2}/>
-                                )}
-                            </FormControl>
-                            <FormControl mb={4}>
-                                <HStack justify="space-between">
-                                    <HStack>
-                                        <Text fontWeight="medium">Phone Number</Text>
-                                        <Switch
-                                            isChecked={phoneEnabled}
-                                            onChange={(e) => setPhoneEnabled(e.target.checked)}
-                                            colorScheme="blue"
-                                        />
-                                    </HStack>
-                                    {phoneEnabled && <Text color="red.500" fontSize="xl">•</Text>}
-                                </HStack>
-                                {phoneEnabled && (
-                                    <Input placeholder="Phone Number" mt={2}/>
-                                )}
-                            </FormControl>
-                            <FormControl mb={4}>
-                                <HStack justify="space-between">
-                                    <Text fontWeight="medium">Organizer is attending</Text>
+                            <Button variant="outline" colorScheme="blue" alignSelf="flex-end" mt="auto">
+                                Search Customers
+                            </Button>
+                        </HStack>
+                        <FormControl mb={4}>
+                            <HStack justify="space-between">
+                                <HStack>
+                                    <Text fontWeight="medium">Email</Text>
                                     <Switch
-                                        isChecked={organizerAttending}
-                                        onChange={(e) => setOrganizerAttending(e.target.checked)}
+                                        isChecked={emailEnabled}
+                                        onChange={(e) => setEmailEnabled(e.target.checked)}
                                         colorScheme="blue"
                                     />
                                 </HStack>
-                            </FormControl>
+                                {emailEnabled && <Text color="red.500" fontSize="xl">•</Text>}
+                            </HStack>
+                            {emailEnabled && (
+                                <Input placeholder="Email" mt={2}/>
+                            )}
+                        </FormControl>
+                        <FormControl mb={4}>
+                            <HStack justify="space-between">
+                                <HStack>
+                                    <Text fontWeight="medium">Phone Number</Text>
+                                    <Switch
+                                        isChecked={phoneEnabled}
+                                        onChange={(e) => setPhoneEnabled(e.target.checked)}
+                                        colorScheme="blue"
+                                    />
+                                </HStack>
+                                {phoneEnabled && <Text color="red.500" fontSize="xl">•</Text>}
+                            </HStack>
+                            {phoneEnabled && (
+                                <Input placeholder="Phone Number" mt={2}/>
+                            )}
+                        </FormControl>
+                        <FormControl mb={4}>
+                            <HStack justify="space-between">
+                                <Text fontWeight="medium">Organizer is attending</Text>
+                                <Switch
+                                    isChecked={organizerAttending}
+                                    onChange={(e) => setOrganizerAttending(e.target.checked)}
+                                    colorScheme="blue"
+                                />
+                            </HStack>
+                        </FormControl>
+                        <Divider my={6}/>
+                        <Heading size="md" mb={4}>Attendee Info</Heading>
+                        {attendees.map((attendee, i) => (
+                            <Box key={i} borderWidth="1px" borderRadius="md" p={4} mb={4}>
+                                <HStack spacing={4}>
+                                    <Button
+                                        variant="ghost"
+                                        fontSize="2xl"
+                                        onClick={() => setMainAttendeeIndex(i)}
+                                        aria-label="Set as main attendee"
+                                        border={mainAttendeeIndex === i ? "2px solid" : "none"}
+                                        borderColor={mainAttendeeIndex === i ? "blue.500" : "transparent"}
+                                        borderRadius="full"
+                                        p={2}
+                                    >
+                                        🏳
+                                    </Button>
 
-                            <Divider my={6}/>
-
-                            <Box p={8}>
-                                <Heading size="md" mb={4}>Attendee Info</Heading>
-
-                                {attendees.map((attendee, i) => (
-                                    <Box key={i} borderWidth="1px" borderRadius="md" p={4} mb={4}>
-                                        <HStack spacing={4}>
-                                            <Button
-                                                variant="ghost"
-                                                fontSize="2xl"
-                                                onClick={() => setMainAttendeeIndex(i)}
-                                                aria-label="Set as main attendee"
-                                                border={mainAttendeeIndex === i ? "2px solid" : "none"}
-                                                borderColor={mainAttendeeIndex === i ? "blue.500" : "transparent"}
-                                                borderRadius="full"
-                                                p={2}
-                                            >
-                                                🏳
-                                            </Button>
-
-                                            <Text fontWeight="medium">Guests</Text>
-                                            <Input
-                                                placeholder={`Guests #${i + 1}`}
-                                                value={attendee.info}
-                                                onChange={(e) => handleInfoChange(i, e.target.value)}
-                                                variant="outline"
-                                                w="200px"
-                                            />
-                                        </HStack>
-                                    </Box>
-                                ))}
+                                    <Text fontWeight="medium">Guests</Text>
+                                    <Input
+                                        placeholder={`Guests #${i + 1}`}
+                                        value={attendee.info}
+                                        onChange={(e) => handleInfoChange(i, e.target.value)}
+                                        variant="outline"
+                                        w="200px"
+                                    />
+                                </HStack>
                             </Box>
-                        </Box>
+                        ))}
+                        <Heading size="md" mb={4}>Payment</Heading>
+                        {isCreditCardMethod && (
+                            <FormControl display="flex" alignItems="center" mb={4}>
+                                <Switch
+                                    isChecked={doNotCharge}
+                                    onChange={(e) => setDoNotCharge(e.target.checked)}
+                                    colorScheme="blue"
+                                    mr={2}
+                                />
+                                <FormLabel mb="0">Do Not Charge Card Now</FormLabel>
+                            </FormControl>
+                        )}
+                        {isCreditCardMethod && !doNotCharge && (
+                            <Box mb={4}>
+                                {isCreditCardRequired && (
+                                    <Text color="red.500" mb={1}>
+                                        Credit Card is required
+                                    </Text>
+                                )}
+                                <Input
+                                    placeholder="Número do cartão"
+                                    value={cardNumber}
+                                    onChange={(e) => setCardNumber(e.target.value)}
+                                    borderColor={isCreditCardRequired ? "red.500" : "gray.200"}
+                                />
+                            </Box>
+                        )}
+                        <Divider my={6}/>
+                        <FormControl display="flex" alignItems="center" mb={4}>
+                            <Text mr={4} fontWeight="medium">Internal Notes</Text>
+                            <Switch
+                                isChecked={internalNotesEnabled}
+                                onChange={(e) => setInternalNotesEnabled(e.target.checked)}
+                                colorScheme="blue"
+                            />
+                        </FormControl>
+                        {internalNotesEnabled && (
+                            <VStack align="stretch" spacing={4} mb={4}>
+                                <FormControl>
+                                    <FormLabel>Purchase Tags</FormLabel>
+                                    <Input
+                                        placeholder="Tag"
+                                        value={purchaseTags}
+                                        onChange={(e) => setPurchaseTags(e.target.value)}
+                                    />
+                                </FormControl>
+                                <FormControl>
+                                    <FormLabel>Purchase Note</FormLabel>
+                                    <Input
+                                        placeholder=""
+                                        value={purchaseNote}
+                                        onChange={(e) => setPurchaseNote(e.target.value)}
+                                    />
+                                </FormControl>
+                            </VStack>
+                        )}
+                        <Divider my={6}/>
+                        <HStack justify="space-between">
+                            <Button variant="outline">Cancel</Button>
+                            <HStack spacing={4}>
+                                <Button variant="outline">Add Another Product</Button>
+                                <Button colorScheme="green">Pay $298.00</Button>
+                            </HStack>
+                        </HStack>
                     </Box>
-
                     <Box w={{base: "100%", md: "400px"}} bg="white" p={6} borderRadius="md" boxShadow="sm">
                         <Heading size="md" mb={4}>Purchase Summary</Heading>
                         <Box bg="blue.50" p={4} borderRadius="md" mb={4}>
@@ -282,9 +339,7 @@ const PurchasePage = () => {
                             <Text fontSize="sm">{date} - {time}</Text>
                             <Text mt={2}>Guests ({quantity} × US$149.00) = US${totalBase.toFixed(2)}</Text>
                         </Box>
-
                         <Divider mb={4}/>
-
                         <Text fontWeight="bold" mb={2}>Grand Total</Text>
                         <Text fontSize="xl" mb={4}>US${grandTotal.toFixed(2)}</Text>
 

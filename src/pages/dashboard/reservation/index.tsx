@@ -25,7 +25,8 @@ import DashboardLayout from "../../../components/DashboardLayout";
 import ReservationItem from "../../../components/ReservationItem";
 import {SearchIcon} from "@chakra-ui/icons";
 import {useEffect, useState} from "react";
-import { useRouter } from "next/router";
+import {useRouter} from "next/router";
+import ReservationDetail from "../reservation-details";
 
 export default function Dashboard() {
     const reservations = [
@@ -396,8 +397,13 @@ export default function Dashboard() {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [loadedDates, setLoadedDates] = useState([]);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [selectedDate, setSelectedDate] = useState("");
     const [activeNote, setActiveNote] = useState(null);
+
+    const [selectedReservation, setSelectedReservation] = useState(null);
+    const [isDetailVisible, setIsDetailVisible] = useState(false);
+
     const {isOpen, onOpen, onClose} = useDisclosure();
     const router = useRouter();
 
@@ -416,7 +422,6 @@ export default function Dashboard() {
 
     const filterReservations = (reservations) => {
         if (!searchTerm) return reservations;
-
         return reservations.filter((reservation) => {
             const {guide, email, phone, id} = reservation;
             const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -457,109 +462,142 @@ export default function Dashboard() {
         }
     };
 
+    const handleSelectReservation = (reserva) => {
+        setSelectedReservation(reserva);
+        setIsDetailVisible(true);
+    };
+
+    const handleCloseDetail = () => {
+        setIsDetailVisible(false);
+        setSelectedReservation(null);
+    };
+
     return (
         <DashboardLayout>
-            <Box p={4} marginTop={"-30px"}>
-                <Flex align="center" mb={4}>
-                    <Text fontSize="2xl" fontWeight="medium">
-                        Dashboard
-                    </Text>
-                    <Center height='50px' w={"40px"}>
-                        <Divider orientation='vertical'/>
-                    </Center>
-                    <HStack spacing={2}>
-                        <InputGroup>
-                            <InputLeftElement pointerEvents="none" marginTop={"-3px"}>
-                                <SearchIcon color="gray.400"/>
-                            </InputLeftElement>
-                            <Input
-                                marginLeft={"5px"}
-                                placeholder="Name, email, phone or ID"
-                                width="250px"
-                                size="sm"
-                                border="none"
-                                boxShadow="none"
-                                focusBorderColor="transparent"
-                                w={"1250px"}
-                                _placeholder={{fontSize: "lg"}}
-                                value={searchTerm}
-                                onChange={handleSearch}
-                            />
-                        </InputGroup>
-                        <Button colorScheme="green" size="md" marginLeft={"-50px"} h={"40px"} w={"200px"}
-                                border={"none"}
-                                borderRadius={"4px"}
-                                onClick={handlePurchaseClick}
-                        >
-                            Make a Purchase
-                        </Button>
-                    </HStack>
-                    <Spacer/>
-                </Flex>
-                <Divider orientation='horizontal' width="100%"/>
-                <HStack spacing={2} mb={4} align="center" marginTop={"10px"}>
-                    <Input type="date" defaultValue="2024-12-13" size="sm" width="130px"/>
-
-                    <Select placeholder="Reserved" size="sm" width="120px">
-                        <option value="reserved">Reserved</option>
-                        <option value="not_reserved">Not Reserved</option>
-                    </Select>
-
-                    <Select size="sm" width="90px" placeholder="List">
-                        <option value="list">List</option>
-                        <option value="grid">Grid</option>
-                    </Select>
-
-                    {/*<Select size="sm" width="120px" placeholder="Default View">*/}
-                    {/*    <option value="default">Default</option>*/}
-                    {/*    <option value="view2">View 2</option>*/}
-                    {/*</Select>*/}
-
-                    <Spacer/>
-                    <Button variant="outline" size="sm">
-                        Sync Calendar
+            <Flex align="center" mb={4}>
+                <Text fontSize="2xl" fontWeight="medium" marginLeft={"-15px"}>
+                    Dashboard
+                </Text>
+                <Center height='50px' w={"40px"}>
+                    <Divider orientation='vertical'/>
+                </Center>
+                <HStack spacing={2}>
+                    <InputGroup>
+                        <InputLeftElement pointerEvents="none" marginTop={"-3px"}>
+                            <SearchIcon color="gray.400"/>
+                        </InputLeftElement>
+                        <Input
+                            marginLeft={"5px"}
+                            placeholder="Name, email, phone or ID"
+                            width="250px"
+                            size="sm"
+                            border="none"
+                            boxShadow="none"
+                            focusBorderColor="transparent"
+                            w={"1250px"}
+                            _placeholder={{fontSize: "lg"}}
+                            value={searchTerm}
+                            onChange={handleSearch}
+                        />
+                    </InputGroup>
+                    <Button
+                        colorScheme="green"
+                        size="md"
+                        marginLeft={"-50px"}
+                        h={"40px"}
+                        w={"200px"}
+                        border={"none"}
+                        borderRadius={"4px"}
+                        onClick={handlePurchaseClick}
+                    >
+                        Make a Purchase
                     </Button>
                 </HStack>
+                <Spacer/>
+            </Flex>
+            <HStack spacing={4} mb={4}>
+                <Text fontSize="sm" color="gray.600">
+                    Filters:
+                </Text>
+                <Button variant="outline" size="sm">
+                    Products: All
+                </Button>
+                <Button variant="outline" size="sm">
+                    Equipment: All
+                </Button>
+                <Button variant="outline" size="sm">
+                    Guides: All
+                </Button>
+            </HStack>
+            <HStack spacing={2} mb={4} align="center" marginTop={"10px"}>
+                <Input type="date" defaultValue="2024-12-13" size="sm" width="130px"/>
+                <Select placeholder="Reserved" size="sm" width="120px">
+                    <option value="reserved">Reserved</option>
+                    <option value="not_reserved">Not Reserved</option>
+                </Select>
+                <Select size="sm" width="90px" placeholder="List">
+                    <option value="list">List</option>
+                    <option value="grid">Grid</option>
+                </Select>
+                <Spacer/>
+                <Button variant="outline" size="sm">
+                    Sync Calendar
+                </Button>
+            </HStack>
+            <Flex height="calc(100vh - 80px)">
+                <Box
+                    w={isDetailVisible ? "15%" : "100%"}
+                    overflowY="auto"
+                    overflowX="hidden"
+                    borderRight={isDetailVisible ? "1px solid #e2e8f0" : "none"}
+                    transition="width 0.3s ease"
+                    display="flex"
+                    flexDirection="column"
+                >
+                    <Box p={4} marginTop={"-30px"}>
 
-                <HStack spacing={4} mb={4}>
-                    <Text fontSize="sm" color="gray.600">
-                        Filters:
-                    </Text>
-                    <Button variant="outline" size="sm">
-                        Products: All
-                    </Button>
-                    <Button variant="outline" size="sm">
-                        Equipment: All
-                    </Button>
-                    <Button variant="outline" size="sm">
-                        Guides: All
-                    </Button>
-                </HStack>
-                <VStack spacing={6} align="stretch">
-                    {reservations
-                        .filter((data) => loadedDates.includes(new Date(`${data.date} ${new Date().getFullYear()}`).toISOString().split("T")[0]))
-                        .map((data) => ({
-                            ...data,
-                            reservations: filterReservations(data.reservations),
-                        }))
-                        .map((data, index) => (
-                            <ReservationItem
-                                key={index}
-                                date={data.date}
-                                day={data.day}
-                                availableSummary={data.availableSummary}
-                                reservedSummary={data.reservedSummary}
-                                reservations={data.reservations}
-                                onNoteClick={openNoteModal}
-                            />
-                        ))}
-                </VStack>
-                <Box textAlign="center" mt={6}>
-                    <Button variant="outline" size="sm" onClick={handleLoadMore}>
-                        Load More
-                    </Button>
+                        <Divider orientation='horizontal' width="100%"/>
+                        <VStack spacing={6} align="stretch" marginTop={"10px"}>
+                            {reservations
+                                .filter((data) =>
+                                    loadedDates.includes(
+                                        new Date(`${data.date} ${new Date().getFullYear()}`).toISOString().split("T")[0]
+                                    )
+                                )
+                                .map((data) => ({
+                                    ...data,
+                                    reservations: filterReservations(data.reservations),
+                                }))
+                                .map((data, index) => (
+                                    <ReservationItem
+                                        key={index}
+                                        date={data.date}
+                                        day={data.day}
+                                        availableSummary={data.availableSummary}
+                                        reservedSummary={data.reservedSummary}
+                                        reservations={data.reservations}
+                                        onNoteClick={openNoteModal}
+                                        onSelectReservation={handleSelectReservation}
+                                        isCompactView={isDetailVisible}
+                                    />
+                                ))}
+                        </VStack>
+                        <Box textAlign="center" mt={6}>
+                            <Button variant="outline" size="sm" onClick={handleLoadMore}>
+                                Load More
+                            </Button>
+                        </Box>
+                    </Box>
                 </Box>
-            </Box>
+                {isDetailVisible && (
+                    <Box w="70%" overflowY="auto" transition="width 0.3s ease">
+                        <ReservationDetail
+                            reservation={selectedReservation}
+                            onCloseDetail={handleCloseDetail}
+                        />
+                    </Box>
+                )}
+            </Flex>
             <Modal isOpen={isOpen} onClose={onClose} size="3xl">
                 <ModalOverlay/>
                 <ModalContent h={"600px"}>

@@ -22,6 +22,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
 import { EditIcon, SearchIcon, ViewIcon } from "@chakra-ui/icons";
+import {useGuest} from "../../../components/GuestContext";
 
 export default function ListTours() {
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
@@ -32,12 +33,13 @@ export default function ListTours() {
     const toast = useToast();
     const router = useRouter();
     const { hasCopied, onCopy } = useClipboard(tourIdToShow);
+    const {tenantId} = useGuest();
 
     useEffect(() => {
         async function fetchData() {
             try {
                 const toursResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/76337f16-5271-42d3-b799-d87d99d9477f`
+                    `${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`
                 );
                 const toursData = await toursResponse.json();
                 setTours(Array.isArray(toursData) ? toursData : []);

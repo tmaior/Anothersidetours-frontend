@@ -543,7 +543,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                     <Avatar size="sm" src={selectedTenant?.image || "https://bit.ly/broken-link"}/>
                                     <Box>
                                         <Text fontSize="sm" fontWeight="bold">
-                                            {selectedTenant?.name || "No Tenant Selected"}
+                                            {selectedTenant?.name || "No City Selected"}
                                         </Text>
                                         <Text fontSize="xs" color="gray.400">
                                             {selectedTenant?.location || "No location provided"}
@@ -603,7 +603,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                     background: "rgba(255, 255, 255, 0.1)",
                                     transition: "background 0.2s ease-in-out",
                                 }} onClick={onOpen}>
-                                    Add New Tenant
+                                    Add New City
                                 </MenuItem>
                             </MenuList>
                         </Menu>
@@ -622,19 +622,19 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
             <Modal isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay/>
                 <ModalContent>
-                    <ModalHeader>Add New Tenant</ModalHeader>
+                    <ModalHeader>Add New City</ModalHeader>
                     <ModalCloseButton/>
                     <ModalBody>
                         <VStack spacing={4}>
                             <Input
-                                placeholder="Título"
+                                placeholder="Name"
                                 value={newTenant.title}
                                 onChange={(e) =>
                                     setNewTenant((prev) => ({...prev, title: e.target.value}))
                                 }
                             />
                             <Textarea
-                                placeholder="Descrição"
+                                placeholder="Description"
                                 value={newTenant.description}
                                 onChange={(e) =>
                                     setNewTenant((prev) => ({...prev, description: e.target.value}))

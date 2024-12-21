@@ -1,6 +1,7 @@
 import {
     Box,
-    Button, Checkbox,
+    Button,
+    Checkbox,
     Flex,
     HStack,
     IconButton,
@@ -11,10 +12,10 @@ import {
     useDisclosure,
     VStack,
 } from "@chakra-ui/react";
-import {BsSticky, BsThreeDots} from "react-icons/bs";
-import {FaPencilAlt} from "react-icons/fa";
-import React, {useState} from "react";
-import {AiOutlineCompass} from "react-icons/ai";
+import { BsSticky, BsThreeDots } from "react-icons/bs";
+import { FaPencilAlt } from "react-icons/fa";
+import React, { useState } from "react";
+import { AiOutlineCompass } from "react-icons/ai";
 
 const ReservationItem = ({
                              date,
@@ -22,9 +23,10 @@ const ReservationItem = ({
                              availableSummary,
                              reservedSummary,
                              reservations,
-                             onNoteClick
+                             onNoteClick,
+                             onSelectReservation,
+                             isCompactView,
                          }) => {
-
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [selectedGuide, setSelectedGuide] = useState<string>("");
     const guides = [
@@ -55,6 +57,8 @@ const ReservationItem = ({
                     align="center"
                     justify="space-between"
                     boxShadow="sm"
+                    cursor="pointer"
+                    onClick={() => onSelectReservation(item)}
                 >
                     <HStack spacing={3}>
                         <Box minWidth="70px">
@@ -78,52 +82,76 @@ const ReservationItem = ({
                             <Text>{item.reservedDetails}</Text>
                         </HStack>
                     </Box>
-                    <HStack spacing={4} align="center" >
-                        <Box boxSize="8px" borderRadius="full" bg={item.statusColor}/>
-                        <Flex w={"900px"} display="flex" justifyContent="space-between" alignItems="center" p={2}>
-                            <HStack spacing={1}>
-                                <FaPencilAlt color="gray"/>
-                                <Text fontSize="xs">{item.capacity}</Text>
-                            </HStack>
-                            <Flex justify="center" align="center" flex="1">
-                                <AiOutlineCompass />
-                                <Text
-                                    marginLeft={"5px"}
-                                    fontSize="xs"
-                                    color="green.600"
-                                    textAlign="center"
-                                    onClick={onOpen}
-                                    cursor="pointer"
-                                    _hover={{ color: "blue.500" }}
-                                >
-                                    {selectedGuide || item.guide || "No guide available"}
-                                </Text>
-                            </Flex>
-                            <Flex align="center" justify="center">
-                                {item.hasNotes ? (
-                                    <IconButton
-                                        icon={<BsSticky />}
-                                        variant="ghost"
-                                        aria-label="Notes"
-                                        size="sm"
-                                        color="orange.500"
-                                        onClick={() => onNoteClick(item)}
+
+                    {!isCompactView && (
+                        <HStack spacing={4} align="center">
+                            <Box boxSize="8px" borderRadius="full" bg={item.statusColor} />
+                            <Flex
+                                w={"900px"}
+                                display="flex"
+                                justifyContent="space-between"
+                                alignItems="center"
+                                p={2}
+                            >
+                                <HStack spacing={1}>
+                                    <FaPencilAlt
+                                        color="gray"
+                                        onClick={(e) => e.stopPropagation()}
                                     />
-                                ) : (
-                                    <Box width="20px" />
-                                )}
+                                    <Text fontSize="xs">{item.capacity}</Text>
+                                </HStack>
+                                <Flex justify="center" align="center" flex="1">
+                                    <AiOutlineCompass />
+                                    <Text
+                                        marginLeft={"5px"}
+                                        fontSize="xs"
+                                        color="green.600"
+                                        textAlign="center"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onOpen();
+                                        }}
+                                        cursor="pointer"
+                                        _hover={{ color: "blue.500" }}
+                                    >
+                                        {selectedGuide || item.guide || "No guide available"}
+                                    </Text>
+                                </Flex>
+                                <Flex align="center" justify="center">
+                                    {item.hasNotes ? (
+                                        <IconButton
+                                            icon={<BsSticky />}
+                                            variant="ghost"
+                                            aria-label="Notes"
+                                            size="sm"
+                                            color="orange.500"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onNoteClick(item);
+                                            }}
+                                        />
+                                    ) : (
+                                        <Box width="20px" />
+                                    )}
+                                </Flex>
                             </Flex>
-                        </Flex>
-                        <IconButton
-                            icon={<BsThreeDots/>}
-                            variant="ghost"
-                            aria-label="Options"
-                            size="sm"
-                        />
-                        <Button variant="outline" colorScheme="green" size="xs">
-                            +
-                        </Button>
-                    </HStack>
+                            <IconButton
+                                icon={<BsThreeDots />}
+                                variant="ghost"
+                                aria-label="Options"
+                                size="sm"
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                            <Button
+                                variant="outline"
+                                colorScheme="green"
+                                size="xs"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                +
+                            </Button>
+                        </HStack>
+                    )}
                 </Flex>
             ))}
 

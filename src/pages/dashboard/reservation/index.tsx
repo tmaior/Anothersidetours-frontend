@@ -417,7 +417,7 @@ export default function Dashboard() {
     };
 
     const handlePurchaseClick = () => {
-        router.push("/dashboard/list-tours");
+        router.push("/dashboard/choose-a-product");
     };
 
     const filterReservations = (reservations) => {

@@ -2,10 +2,15 @@ import React, {useEffect, useState} from "react";
 import {
     Box,
     Button,
+    Checkbox,
+    CheckboxGroup,
     FormControl,
     FormLabel,
     HStack,
+    Image,
     Input,
+    InputGroup,
+    InputLeftElement,
     Modal,
     ModalBody,
     ModalCloseButton,
@@ -18,35 +23,80 @@ import {
     useToast,
     VStack,
 } from "@chakra-ui/react";
-import {DeleteIcon} from "@chakra-ui/icons";
+import {DeleteIcon, SearchIcon, SettingsIcon} from "@chakra-ui/icons";
 import DashboardLayout from "../../../components/DashboardLayout";
+
+interface Category {
+    id: string;
+    name: string;
+    description: string;
+    tours: Tour[];
+}
+
+interface Tour {
+    id: string;
+    name: string;
+    imageUrl?: string;
+    categoryId?: string | null;
+}
 
 export default function CategoryManagement() {
     const [newCategory, setNewCategory] = useState({name: "", description: ""});
-    const [categories, setCategories] = useState([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [filteredTours, setFilteredTours] = useState<Tour[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+    const [selectedTours, setSelectedTours] = useState<string[]>([]);
+    const [allTours, setAllTours] = useState<Tour[]>([]);
+
     const {isOpen, onOpen, onClose} = useDisclosure();
+    const {
+        isOpen: isManageOpen,
+        onOpen: onManageOpen,
+        onClose: onManageClose,
+    } = useDisclosure();
     const toast = useToast();
 
-    useEffect(() => {
-        async function fetchCategories() {
-            try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`);
-                if (!response.ok) throw new Error("Failed to fetch categories");
-                const data = await response.json();
-                setCategories(data);
-            } catch (error) {
-                toast({
-                    title: "Error",
-                    description: "Failed to load categories.",
-                    status: "error",
-                    duration: 3000,
-                    isClosable: true,
-                });
-            }
+    const fetchCategories = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`);
+            if (!response.ok) throw new Error("Failed to fetch categories");
+            const data = await response.json();
+            setCategories(data);
+        } catch (error) {
+            console.error("Error fetching categories:", error);
+            toast({
+                title: "Error",
+                description: "Failed to load categories.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
         }
+    };
 
+    const fetchTours = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`);
+            if (!response.ok) throw new Error("Failed to fetch tours");
+            const data = await response.json();
+            setAllTours(data);
+        } catch (error) {
+            console.error("Error fetching tours:", error);
+            toast({
+                title: "Error",
+                description: "Failed to load tours.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    };
+
+    useEffect(() => {
         fetchCategories();
-    }, [toast]);
+        fetchTours();
+    }, []);
 
     const handleCreateCategory = async () => {
         if (!newCategory.name) {
@@ -61,17 +111,21 @@ export default function CategoryManagement() {
         }
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(newCategory),
-            });
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/categories`,
+                {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(newCategory),
+                }
+            );
 
             if (!response.ok) throw new Error("Failed to create category");
 
             const createdCategory = await response.json();
             setCategories((prev) => [...prev, createdCategory]);
             setNewCategory({name: "", description: ""});
+
             toast({
                 title: "Category Created",
                 description: `Category "${createdCategory.name}" was created successfully.`,
@@ -94,13 +148,16 @@ export default function CategoryManagement() {
 
     const handleDeleteCategory = async (categoryId: string) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryId}`, {
-                method: "DELETE",
-            });
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryId}`,
+                {
+                    method: "DELETE",
+                }
+            );
 
             if (!response.ok) throw new Error("Failed to delete category");
 
-            setCategories((prev) => prev.filter((category) => category.id !== categoryId));
+            setCategories((prev) => prev.filter((c) => c.id !== categoryId));
             toast({
                 title: "Category Deleted",
                 description: "The category has been successfully removed.",
@@ -120,13 +177,98 @@ export default function CategoryManagement() {
         }
     };
 
+    const handleManageTours = (category: Category) => {
+        setSelectedCategory(category);
+
+        const toursInCategory = category.tours?.map((tour) => tour.id) || [];
+
+        setSelectedTours(toursInCategory);
+
+        const relevantTours = allTours.filter(
+            (tour) => tour.categoryId === category.id || tour.categoryId === null
+        );
+        setFilteredTours(relevantTours);
+        setSearchTerm("");
+        onManageOpen();
+    };
+
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const term = e.target.value.toLowerCase();
+        setSearchTerm(term);
+        if (selectedCategory) {
+            const categoryTours = selectedCategory.tours.filter((tour) =>
+                tour.name.toLowerCase().includes(term)
+            );
+            setFilteredTours(categoryTours);
+        } else {
+            setFilteredTours([]);
+        }
+    };
+
+    const handleSaveTours = async () => {
+        if (!selectedCategory) return;
+
+        try {
+            const originalTours = categories.find(c => c.id === selectedCategory.id)?.tours || [];
+
+            const originallyInCategory = originalTours.map(tour => tour.id);
+            const toursToConnect = selectedTours.filter(
+                (tourId) => !originallyInCategory.includes(tourId)
+            );
+            const toursToDisconnect = originallyInCategory.filter(
+                (tourId) => !selectedTours.includes(tourId)
+            );
+            const updatePromises = [
+                ...toursToConnect.map((tourId) =>
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`, {
+                        method: "PUT",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({categoryId: selectedCategory.id}),
+                    })
+                ),
+                ...toursToDisconnect.map((tourId) =>
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`, {
+                        method: "PUT",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({categoryId: null}),
+                    })
+                ),
+            ];
+            const responses = await Promise.all(updatePromises);
+
+            const allSuccessful = responses.every(response => response.ok);
+            if (!allSuccessful) {
+                throw new Error("Failed to update some tours.");
+            }
+            await fetchCategories();
+            await fetchTours();
+
+            toast({
+                title: "Tours Updated",
+                description: "Tours were successfully updated for the category.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+            onManageClose();
+        } catch (error) {
+            console.error("Error updating tours:", error);
+            toast({
+                title: "Error",
+                description: "Failed to update tours.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    };
+
     return (
         <DashboardLayout>
             <Box p={8}>
                 <Button colorScheme="blue" onClick={onOpen}>
                     Create Category
                 </Button>
-
                 <Modal isOpen={isOpen} onClose={onClose}>
                     <ModalOverlay/>
                     <ModalContent>
@@ -138,7 +280,9 @@ export default function CategoryManagement() {
                                     <FormLabel>Name</FormLabel>
                                     <Input
                                         value={newCategory.name}
-                                        onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
+                                        onChange={(e) =>
+                                            setNewCategory({...newCategory, name: e.target.value})
+                                        }
                                         placeholder="Enter Category Name"
                                     />
                                 </FormControl>
@@ -147,13 +291,17 @@ export default function CategoryManagement() {
                                     <FormLabel>Description</FormLabel>
                                     <Input
                                         value={newCategory.description}
-                                        onChange={(e) => setNewCategory({...newCategory, description: e.target.value})}
+                                        onChange={(e) =>
+                                            setNewCategory({
+                                                ...newCategory,
+                                                description: e.target.value,
+                                            })
+                                        }
                                         placeholder="Enter Category Description"
                                     />
                                 </FormControl>
                             </VStack>
                         </ModalBody>
-
                         <ModalFooter>
                             <HStack w="100%" justifyContent="space-between">
                                 <Button variant="outline" onClick={onClose}>
@@ -166,25 +314,90 @@ export default function CategoryManagement() {
                         </ModalFooter>
                     </ModalContent>
                 </Modal>
-
                 <VStack spacing={4} mt={6} align="stretch">
                     {categories.map((category) => (
-                        <Box key={category.id} p={4} borderWidth={1} borderRadius="md" display="flex"
-                             justifyContent="space-between">
+                        <Box
+                            key={category.id}
+                            p={4}
+                            borderWidth={1}
+                            borderRadius="md"
+                            display="flex"
+                            justifyContent="space-between"
+                        >
                             <VStack align="start">
                                 <Text fontWeight="bold">{category.name}</Text>
                                 <Text>{category.description}</Text>
                             </VStack>
-                            <Button
-                                colorScheme="red"
-                                leftIcon={<DeleteIcon/>}
-                                onClick={() => handleDeleteCategory(category.id)}
-                            >
-                                Delete
-                            </Button>
+                            <HStack>
+                                <Button
+                                    colorScheme="teal"
+                                    leftIcon={<SettingsIcon/>}
+                                    onClick={() => handleManageTours(category)}
+                                >
+                                    Manage Tours
+                                </Button>
+                                <Button
+                                    colorScheme="red"
+                                    leftIcon={<DeleteIcon/>}
+                                    onClick={() => handleDeleteCategory(category.id)}
+                                >
+                                    Delete
+                                </Button>
+                            </HStack>
                         </Box>
                     ))}
                 </VStack>
+                <Modal isOpen={isManageOpen} onClose={onManageClose} size="xl">
+                    <ModalOverlay/>
+                    <ModalContent>
+                        <ModalHeader>
+                            Manage Tours for {selectedCategory?.name}
+                        </ModalHeader>
+                        <ModalCloseButton/>
+                        <ModalBody>
+                            <FormControl mb={4}>
+                                <FormLabel>Search Tours</FormLabel>
+                                <InputGroup>
+                                    <InputLeftElement pointerEvents="none">
+                                        <SearchIcon color="gray.300"/>
+                                    </InputLeftElement>
+                                    <Input
+                                        value={searchTerm}
+                                        onChange={handleSearch}
+                                        placeholder="Search by name"
+                                    />
+                                </InputGroup>
+                            </FormControl>
+
+                            <CheckboxGroup
+                                value={selectedTours}
+                                onChange={(values: string[]) => setSelectedTours(values)}
+                            >
+                                <VStack align="start" maxH="400px" overflowY="auto">
+                                    {filteredTours.map((tour) => (
+                                        <HStack key={tour.id} spacing={4}>
+                                            <Image
+                                                boxSize="50px"
+                                                src={tour.imageUrl || "https://via.placeholder.com/50"}
+                                                alt={tour.name}
+                                                borderRadius="md"
+                                            />
+                                            <Checkbox value={tour.id}>{tour.name}</Checkbox>
+                                        </HStack>
+                                    ))}
+                                </VStack>
+                            </CheckboxGroup>
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button variant="outline" onClick={onManageClose}>
+                                Cancel
+                            </Button>
+                            <Button colorScheme="blue" onClick={handleSaveTours}>
+                                Save
+                            </Button>
+                        </ModalFooter>
+                    </ModalContent>
+                </Modal>
             </Box>
         </DashboardLayout>
     );

@@ -594,13 +594,13 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             }}
                         >
                             <HStack spacing={3}>
-                                <Avatar size="sm" src={selectedTenant?.image || "https://bit.ly/broken-link"}/>
+                                <Avatar size="sm" src={selectedTenant?.imageUrl || "https://bit.ly/broken-link"}/>
                                 <Box>
                                     <Text fontSize="sm" fontWeight="bold">
                                         {selectedTenant?.name || "No City Selected"}
                                     </Text>
                                     <Text fontSize="xs" color="gray.400">
-                                        {selectedTenant?.location || "No location provided"}
+                                        {selectedTenant?.description || "No location provided"}
                                     </Text>
                                 </Box>
                             </HStack>
@@ -618,7 +618,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                     onClick={() => handleSelectTenant(tenant)}
                                 >
                                     <HStack spacing={3}>
-                                        <Avatar size="sm" src={tenant.image}/>
+                                        <Avatar size="sm" src={tenant.imageUrl}/>
                                         <Box>
                                             <Text fontSize="sm" fontWeight="bold">
                                                 {tenant.name}

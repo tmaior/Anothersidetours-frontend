@@ -15,7 +15,7 @@ import {
     VStack,
 } from "@chakra-ui/react";
 import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
-import React from "react";
+import React, {useState} from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ProgressBar from "../../../components/ProgressBar";
 import {useGuest} from "../../../components/GuestContext";
@@ -46,7 +46,8 @@ export default function SchedulesAvailabilityPage() {
         setBringItems,
         setImagePreview,
         operationProcedures,
-        setOperationProcedures
+        setOperationProcedures,
+        tenantId
     } = useGuest();
     const router = useRouter();
 
@@ -63,6 +64,9 @@ export default function SchedulesAvailabilityPage() {
         setImagePreview(null)
         setOperationProcedures("");
     };
+
+    const [minPerEventLimit, setMinPerEventLimit] = useState(1);
+    const [maxPerEventLimit, setMaxPerEventLimit] = useState(0);
 
     const handleAddTimeRange = () => {
         setSchedule([
@@ -145,6 +149,9 @@ export default function SchedulesAvailabilityPage() {
                     price: Number(price),
                     guestLimit: Number(guestLimit),
                     StandardOperation: operationProcedures,
+                    minPerEventLimit: minPerEventLimit,
+                    maxPerEventLimit: maxPerEventLimit,
+                    tenantId: tenantId,
                 }),
             });
 
@@ -389,21 +396,21 @@ export default function SchedulesAvailabilityPage() {
                         <Text fontSize="lg" fontWeight="bold" mb={2}>
                             Guest Limits
                         </Text>
-                        <FormControl>
+                        <FormControl isRequired>
                             <FormLabel>Min Per Event Limit</FormLabel>
                             <Input
                                 type="number"
-                                value={guestLimit}
-                                onChange={(e) => setGuestLimit(Number(e.target.value))}
+                                value={minPerEventLimit}
+                                onChange={(e) => setMinPerEventLimit(Number(e.target.value))}
                             />
                         </FormControl>
                         <Spacer marginTop={"20px"} />
-                        <FormControl>
+                        <FormControl isRequired>
                             <FormLabel>Max Per Event Limit</FormLabel>
                             <Input
                                 type="number"
-                                value={guestLimit}
-                                onChange={(e) => setGuestLimit(Number(e.target.value))}
+                                value={maxPerEventLimit}
+                                onChange={(e) => setMaxPerEventLimit(Number(e.target.value))}
                             />
                         </FormControl>
                     </Box>

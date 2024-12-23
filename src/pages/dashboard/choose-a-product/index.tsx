@@ -109,7 +109,7 @@ export default function ToursPage() {
                                             {tour.name}
                                         </Heading>
                                         <Text color="gray.600">
-                                            {`$${tour.pricePerHour} / hour`}
+                                            {`$${tour.price} / hour`}
                                         </Text>
                                     </Box>
                                 </Flex>

@@ -23,40 +23,39 @@ import {
 } from "@chakra-ui/react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ReservationItem from "../../../components/ReservationItem";
-import {SearchIcon} from "@chakra-ui/icons";
-import {useEffect, useState} from "react";
-import {useRouter} from "next/router";
+import { SearchIcon } from "@chakra-ui/icons";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import ReservationDetail from "../reservation-details";
-import {useGuest} from "../../../components/GuestContext";
+import { useGuest } from "../../../components/GuestContext";
 
 export default function Dashboard() {
-
     const [searchTerm, setSearchTerm] = useState("");
     const [loadedDates, setLoadedDates] = useState([]);
     const [activeNote, setActiveNote] = useState(null);
-    const {tenantId} = useGuest();
+    const { tenantId } = useGuest();
     const [reservations, setReservations] = useState([]);
 
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [isDetailVisible, setIsDetailVisible] = useState(false);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [userDetails, setUserDetails] = useState({});
 
-    const {isOpen, onOpen, onClose} = useDisclosure();
+    const { isOpen, onOpen, onClose } = useDisclosure();
     const router = useRouter();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isLoading, setIsLoading] = useState(true);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [selectedDate, setSelectedDate] = useState<string>("");
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [selectedDate, setSelectedDate] = useState("");
 
-    const filteredReservations = reservations.filter((reservation) => {
-        const reservationDate = new Date(reservation.date).getTime();
-        const selected = new Date(selectedDate).getTime();
-        return reservationDate >= selected;
-    });
+    const filteredReservations = reservations.filter((reservation) =>
+        loadedDates.includes(reservation.date)
+    );
 
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSelectedDate(e.target.value);
+        const newDate = e.target.value;
+        setSelectedDate(newDate);
+        setLoadedDates([newDate]);
     };
 
     useEffect(() => {
@@ -84,10 +83,14 @@ export default function Dashboard() {
                                 );
                                 if (userResponse.ok) {
                                     const userData = await userResponse.json();
-                                    return {...reservation, user: userData};
+                                    setUserDetails((prev) => ({
+                                        ...prev,
+                                        [reservation.user_id]: userData,
+                                    }));
+                                    return { ...reservation, user: userData };
                                 }
                             } else {
-                                return {...reservation, user: userDetails[reservation.user_id]};
+                                return { ...reservation, user: userDetails[reservation.user_id] };
                             }
                         }
                         return reservation;
@@ -127,62 +130,68 @@ export default function Dashboard() {
                     reservedSummary: string;
                     reservations: ReservationItem[];
                 }
+                const groupedReservations: Record<string, Reservation> = reservationsWithUserDetails.reduce(
+                    (acc, reservation) => {
+                        const date = new Date(reservation.reservation_date).toISOString().split("T")[0];
 
-                const groupedReservations: Record<string, Reservation> = reservationsWithUserDetails.reduce((acc, reservation) => {
-                    const date = new Date(reservation.reservation_date).toLocaleDateString("en-US", {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                    });
+                        if (!acc[date]) {
+                            const dayName = new Date(reservation.reservation_date).toLocaleDateString("en-US", {
+                                weekday: "long",
+                            });
+                            acc[date] = {
+                                date: date,
+                                day: dayName,
+                                availableSummary: "∞ Available",
+                                reservedSummary: `${reservation.guestQuantity} Reserved`,
+                                reservations: [],
+                            };
+                        }
 
-                    if (!acc[date]) {
-                        acc[date] = {
-                            date: date,
-                            day: new Date(reservation.reservation_date).toLocaleDateString("en-US", {weekday: 'long'}),
-                            availableSummary: "∞ Available",
-                            reservedSummary: `${reservation.guestQuantity} Reserved`,
-                            reservations: [],
-                        };
-                    }
-
-                    acc[date].reservations.push({
-                        guestQuantity: reservation.guestQuantity,
-                        time: new Date(reservation.reservation_date).toLocaleTimeString("en-US", {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            timeZone: "UTC"
-                        }),
-                        dateFormatted: new Date(reservation.reservation_date).toLocaleDateString("en-US", {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                        }),
-                        title: reservation.tour.name,
-                        available: "∞",
-                        reservedDetails: `${reservation.guestQuantity} Reserved`,
-                        statusColor: reservation.status === "PENDING" ? "red.500" : "green.500",
-                        capacity: `${reservation.guestQuantity}/∞`,
-                        guide: reservation.tour.StandardOperation || "No Guide",
-                        hasNotes: reservation.notes.length > 0,
-                        id: reservation.id,
-                        email: reservation.tour.email,
-                        phone:reservation.tour.phone ||"N/A",
-                        imageUrl: reservation.tour.imageUrl || "/images/default-tour.png",
-                        user: reservation.user
-                    });
-
-                    return acc;
-                }, {});
+                        acc[date].reservations.push({
+                            guestQuantity: reservation.guestQuantity,
+                            time: new Date(reservation.reservation_date).toLocaleTimeString("en-US", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                timeZone: "UTC",
+                            }),
+                            dateFormatted: new Date(reservation.reservation_date).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                            }),
+                            title: reservation.tour.name,
+                            available: "∞",
+                            reservedDetails: `${reservation.guestQuantity} Reserved`,
+                            statusColor: reservation.status === "PENDING" ? "red.500" : "green.500",
+                            capacity: `${reservation.guestQuantity}/∞`,
+                            guide: reservation.tour.StandardOperation || "No Guide",
+                            hasNotes: reservation.notes.length > 0,
+                            id: reservation.id,
+                            email: reservation.tour.email,
+                            phone: reservation.tour.phone || "N/A",
+                            imageUrl: reservation.tour.imageUrl || "/images/default-tour.png",
+                            user: reservation.user,
+                        });
+                        return acc;
+                    },
+                    {}
+                );
 
                 const transformedReservations = Object.values(groupedReservations);
 
                 setReservations(transformedReservations);
 
-                if (transformedReservations.length > 0) {
-                    const firstAvailableDate = new Date(transformedReservations[0].date);
-                    const formattedDate = firstAvailableDate.toISOString().split('T')[0];
-                    setSelectedDate(formattedDate);
-                    setLoadedDates([formattedDate]);
+                const today = new Date();
+                const todayISO = today.toISOString().split("T")[0];
+
+                const futureReservations = transformedReservations.filter(
+                    (res) => res.date >= todayISO
+                );
+
+                if (futureReservations.length > 0) {
+                    const initialDate = futureReservations[0].date;
+                    setSelectedDate(initialDate);
+                    setLoadedDates([initialDate]);
                 }
             } catch (error) {
                 console.error("Error fetching reservations:", error);
@@ -193,7 +202,6 @@ export default function Dashboard() {
 
         fetchReservations();
     }, [tenantId]);
-
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -215,49 +223,39 @@ export default function Dashboard() {
         return reservations.filter((reservation) => {
             const { guide, email, phone, id, user } = reservation;
 
-            const matchesReservation = (
+            const matchesReservation =
                 (guide && guide.toLowerCase().includes(lowercasedSearchTerm)) ||
                 (email && email.toLowerCase().includes(lowercasedSearchTerm)) ||
                 (phone && phone.toLowerCase().includes(lowercasedSearchTerm)) ||
-                (id && id.toLowerCase().includes(lowercasedSearchTerm))
-            );
+                (id && id.toLowerCase().includes(lowercasedSearchTerm));
 
-            const matchesUser = user && (
-                (user.name && user.name.toLowerCase().includes(lowercasedSearchTerm)) ||
-                (user.email && user.email.toLowerCase().includes(lowercasedSearchTerm)) ||
-                (user.phone && user.phone.toLowerCase().includes(lowercasedSearchTerm))
-            );
+            const matchesUser =
+                user &&
+                ((user.name && user.name.toLowerCase().includes(lowercasedSearchTerm)) ||
+                    (user.email && user.email.toLowerCase().includes(lowercasedSearchTerm)) ||
+                    (user.phone && user.phone.toLowerCase().includes(lowercasedSearchTerm)));
 
             return matchesReservation || matchesUser;
         });
     };
 
     const getNextDateWithReservations = () => {
-        const today = new Date();
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const todayISO = today.toISOString().split("T")[0];
-
-        for (const reservation of reservations) {
-            const reservationDate = new Date(`${reservation.date} ${new Date().getFullYear()}`).toISOString().split("T")[0];
-            if (!loadedDates.includes(reservationDate)) {
-                return reservationDate;
-            }
+        const lastLoadedDate = loadedDates[loadedDates.length - 1];
+        const nextDateIndex = reservations.findIndex((res) => res.date === lastLoadedDate) + 1;
+        if (nextDateIndex < reservations.length) {
+            return reservations[nextDateIndex].date;
         }
         return null;
     };
 
-    useEffect(() => {
-        const initialDate = getNextDateWithReservations();
-        if (initialDate) {
-            setSelectedDate(initialDate);
-            setLoadedDates([initialDate]);
-        }
-    }, []);
-
     const handleLoadMore = () => {
         const nextDate = getNextDateWithReservations();
         if (nextDate) {
-            setLoadedDates((prev) => [...prev, nextDate]);
+            setIsLoadingMore(true);
+            setTimeout(() => {
+                setLoadedDates((prev) => [...prev, nextDate]);
+                setIsLoadingMore(false);
+            }, 500);
         }
     };
 

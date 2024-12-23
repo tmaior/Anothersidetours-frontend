@@ -61,9 +61,12 @@ const ReservationItem = ({
                     onClick={() => onSelectReservation(item)}
                 >
                     <HStack spacing={3}>
-                        <Box minWidth="70px">
+                        <Box minWidth="40px" textAlign="center">
                             <Text fontWeight="medium" fontSize="sm" color="gray.600">
-                                {item.time}
+                                {item.time.split(' ')[0]}
+                            </Text>
+                            <Text fontWeight="light" fontSize="xs" color="gray.500" mt="-1">
+                                {item.time.split(' ')[1]}
                             </Text>
                         </Box>
                         <Image
@@ -74,13 +77,17 @@ const ReservationItem = ({
                         />
                     </HStack>
                     <Box flex="1" ml={4}>
-                        <Text fontWeight="semibold" fontSize="sm">
-                            {item.title}
-                        </Text>
-                        <HStack spacing={3} fontSize="xs" color="gray.500">
-                            <Text>{item.available}</Text>
-                            <Text>{item.reservedDetails}</Text>
-                        </HStack>
+                        {!isCompactView && (
+                            <Text fontWeight="semibold" fontSize="sm">
+                                {item.title}
+                            </Text>
+                        )}
+                        {!isCompactView && (
+                            <HStack spacing={3} fontSize="xs" color="gray.500">
+                                <Text>{item.available}</Text>
+                                <Text>{item.reservedDetails}</Text>
+                            </HStack>
+                        )}
                     </Box>
 
                     {!isCompactView && (

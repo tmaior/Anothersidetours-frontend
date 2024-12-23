@@ -17,6 +17,7 @@ import {
 import { DeleteIcon } from "@chakra-ui/icons";
 import DashboardLayout from "../../../components/DashboardLayout";
 import { useRouter } from "next/router";
+import {useGuest} from "../../../components/GuestContext";
 
 export default function AddonContentPage() {
     const router = useRouter();
@@ -43,6 +44,7 @@ export default function AddonContentPage() {
         price: false,
         type: false,
     });
+    const {tenantId } = useGuest();
 
     useEffect(() => {
         async function fetchData() {
@@ -100,11 +102,17 @@ export default function AddonContentPage() {
             ? `${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`
             : `${process.env.NEXT_PUBLIC_API_URL}/addons`;
 
+        const payload = {
+            ...formData,
+            price: parseFloat(formData.price.toString()) || 0,
+            tenantId,
+        };
+
         try {
             const response = await fetch(endpoint, {
                 method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) {

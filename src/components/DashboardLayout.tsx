@@ -2,6 +2,7 @@ import {
     Avatar,
     Box,
     Button,
+    Flex,
     HStack,
     Image,
     Input,
@@ -20,6 +21,7 @@ import {
     Text,
     Textarea,
     useDisclosure,
+    useToast,
     VStack
 } from "@chakra-ui/react";
 import {useRouter} from "next/router";
@@ -40,18 +42,38 @@ import {useGuest} from "./GuestContext";
 export default function DashboardLayout({children}: { children: React.ReactNode }) {
     const router = useRouter();
     const {isOpen, onOpen, onClose} = useDisclosure();
-    const {tenantId, setTenantId} = useGuest();
+    const {tenantId, setTenantId,} = useGuest();
     const [tenants, setTenants] = useState([]);
     const [selectedTenant, setSelectedTenant] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [noTenants, setNoTenants] = useState(false);
+    const toast = useToast();
 
     useEffect(() => {
+
+        if (noTenants) {
+            setIsLoading(false);
+            return;
+        }
+
         if (!tenants.length || !tenantId) {
             setIsLoading(true);
             fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`)
                 .then((response) => response.json())
                 .then((data) => {
                     setTenants(data);
+
+                    if (data.length === 0) {
+                        setNoTenants(true);
+                        toast({
+                            title: "No City found",
+                            description: "Please create a City to proceed.",
+                            status: "warning",
+                            duration: 5000,
+                            isClosable: true,
+                        });
+                        return;
+                    }
                     if (!tenantId && data.length > 0) {
                         const defaultTenant = data[0];
                         setSelectedTenant(defaultTenant);
@@ -76,23 +98,55 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
 
     const [newTenant, setNewTenant] = useState({title: "", description: "", image: null});
 
-    const handleAddTenant = () => {
-        const newId = tenants.length + 1;
-        const newTenantObj = {
-            id: newId,
-            name: newTenant.title,
-            location: newTenant.description || "No location provided",
-            image: newTenant.image ? URL.createObjectURL(newTenant.image) : "https://bit.ly/broken-link"
-        };
-        setTenants((prev) => [...prev, newTenantObj]);
-        setNewTenant({title: "", description: "", image: null});
-        onClose();
+    const handleAddTenant = async () => {
+        const formData = new FormData();
+        formData.append('name', newTenant.title);
+        formData.append('description', newTenant.description);
+        if (selectedImage) {
+            formData.append('image', selectedImage);
+        }
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                const createdTenant = await response.json();
+                setTenants((prev) => [...prev, createdTenant]);
+                setNewTenant({title: "", description: "", image: null});
+                setSelectedImage(null);
+                setPreviewUrl(null);
+                onClose();
+            } else {
+                console.error("Failed to create tenant");
+            }
+        } catch (error) {
+            console.error("Error creating tenant:", error);
+        }
     };
 
     const handleSelectTenant = (tenant) => {
         setSelectedTenant(tenant);
         setTenantId(tenant.id);
         localStorage.setItem("selectedTenant", JSON.stringify(tenant));
+    };
+
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedImage(file);
+            setPreviewUrl(URL.createObjectURL(file));
+        }
+    };
+
+    const removeImage = () => {
+        setSelectedImage(null);
+        setPreviewUrl(null);
     };
 
     return (
@@ -519,94 +573,94 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
 
                 <Box mt="auto" p={4} marginLeft={"-6"} w={"273px"}>
                     {/*{!isLoading && selectedTenant && (*/}
-                        <Menu placement="right-start" offset={[0, 0]} closeOnSelect={false}>
-                            <MenuButton
-                                color="white"
-                                variant="ghost"
-                                as={Button}
-                                borderRadius="md"
-                                w="100%"
-                                h="50px"
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="flex-start"
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <Avatar size="sm" src={selectedTenant?.image || "https://bit.ly/broken-link"}/>
-                                    <Box>
-                                        <Text fontSize="sm" fontWeight="bold">
-                                            {selectedTenant?.name || "No City Selected"}
-                                        </Text>
-                                        <Text fontSize="xs" color="gray.400">
-                                            {selectedTenant?.location || "No location provided"}
-                                        </Text>
-                                    </Box>
-                                </HStack>
-                            </MenuButton>
-                            <MenuList minW="300px" bg="#222324" p={0}>
-                                {tenants.map((tenant) => (
-                                    <MenuItem
-                                        key={tenant.id}
-                                        bg="#222324"
-                                        color="white"
-                                        _hover={{
-                                            background: "rgba(255, 255, 255, 0.1)",
-                                            transition: "background 0.2s ease-in-out",
-                                        }}
-                                        onClick={() => handleSelectTenant(tenant)}
-                                    >
-                                        <HStack spacing={3}>
-                                            <Avatar size="sm" src={tenant.image}/>
-                                            <Box>
-                                                <Text fontSize="sm" fontWeight="bold">
-                                                    {tenant.name}
-                                                </Text>
-                                                <Text fontSize="xs" color="gray.400">
-                                                    {tenant.location}
-                                                </Text>
-                                            </Box>
-                                        </HStack>
-                                    </MenuItem>
-                                ))}
-                                <MenuDivider borderColor="#333" bg="#222324"/>
-                                <MenuItem bg="#222324" color={"white"} _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}>Privacy Policy</MenuItem>
-                                <MenuItem bg="#222324" color={"white"} _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}>Support</MenuItem>
-                                <MenuItem bg="#222324" color={"white"} _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}>Help Center</MenuItem>
-                                <MenuDivider borderColor="#333"/>
-                                {/*<MenuItem bg="#222324" color={"white"} _hover={{*/}
-                                {/*    background: "rgba(255, 255, 255, 0.1)",*/}
-                                {/*    transition: "background 0.2s ease-in-out",*/}
-                                {/*}}>Another Side Of San Diego Tours</MenuItem>*/}
-                                <MenuItem bg="#222324" color={"white"} _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}>Logout</MenuItem>
-                                <MenuDivider borderColor="#333"/>
-                                <MenuItem bg="#222324" color={"white"} icon={<AiOutlinePlus/>} _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }} onClick={onOpen}>
-                                    Add New City
+                    <Menu placement="right-start" offset={[0, 0]} closeOnSelect={false}>
+                        <MenuButton
+                            color="white"
+                            variant="ghost"
+                            as={Button}
+                            borderRadius="md"
+                            w="100%"
+                            h="50px"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="flex-start"
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                        >
+                            <HStack spacing={3}>
+                                <Avatar size="sm" src={selectedTenant?.image || "https://bit.ly/broken-link"}/>
+                                <Box>
+                                    <Text fontSize="sm" fontWeight="bold">
+                                        {selectedTenant?.name || "No City Selected"}
+                                    </Text>
+                                    <Text fontSize="xs" color="gray.400">
+                                        {selectedTenant?.location || "No location provided"}
+                                    </Text>
+                                </Box>
+                            </HStack>
+                        </MenuButton>
+                        <MenuList minW="300px" bg="#222324" p={0}>
+                            {tenants.map((tenant) => (
+                                <MenuItem
+                                    key={tenant.id}
+                                    bg="#222324"
+                                    color="white"
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    onClick={() => handleSelectTenant(tenant)}
+                                >
+                                    <HStack spacing={3}>
+                                        <Avatar size="sm" src={tenant.image}/>
+                                        <Box>
+                                            <Text fontSize="sm" fontWeight="bold">
+                                                {tenant.name}
+                                            </Text>
+                                            <Text fontSize="xs" color="gray.400">
+                                                {tenant.location}
+                                            </Text>
+                                        </Box>
+                                    </HStack>
                                 </MenuItem>
-                            </MenuList>
-                        </Menu>
+                            ))}
+                            <MenuDivider borderColor="#333" bg="#222324"/>
+                            <MenuItem bg="#222324" color={"white"} _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}>Privacy Policy</MenuItem>
+                            <MenuItem bg="#222324" color={"white"} _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}>Support</MenuItem>
+                            <MenuItem bg="#222324" color={"white"} _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}>Help Center</MenuItem>
+                            <MenuDivider borderColor="#333"/>
+                            {/*<MenuItem bg="#222324" color={"white"} _hover={{*/}
+                            {/*    background: "rgba(255, 255, 255, 0.1)",*/}
+                            {/*    transition: "background 0.2s ease-in-out",*/}
+                            {/*}}>Another Side Of San Diego Tours</MenuItem>*/}
+                            <MenuItem bg="#222324" color={"white"} _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}>Logout</MenuItem>
+                            <MenuDivider borderColor="#333"/>
+                            <MenuItem bg="#222324" color={"white"} icon={<AiOutlinePlus/>} _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }} onClick={onOpen}>
+                                Add New City
+                            </MenuItem>
+                        </MenuList>
+                    </Menu>
                     {/*)}*/}
                 </Box>
             </Box>
@@ -640,16 +694,50 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                     setNewTenant((prev) => ({...prev, description: e.target.value}))
                                 }
                             />
-                            <Input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) =>
-                                    setNewTenant((prev) => ({
-                                        ...prev,
-                                        image: e.target.files?.[0] || null,
-                                    }))
-                                }
-                            />
+                            <VStack spacing={4} align="stretch">
+                                <HStack spacing={4}>
+                                    <Button
+                                        as="label"
+                                        htmlFor="file-upload"
+                                        cursor="pointer"
+                                        colorScheme="blue"
+                                        h={"32px"}
+                                    >
+                                        Choose File
+                                    </Button>
+                                    <Input
+                                        id="file-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        display="none"
+                                        onChange={handleFileChange}
+                                    />
+                                    {selectedImage && (
+                                        <Button
+                                            colorScheme="red"
+                                            size="sm"
+                                            onClick={removeImage}
+                                        >
+                                            Remove Image
+                                        </Button>
+                                    )}
+                                </HStack>
+
+                                {previewUrl && (
+                                    <Flex direction="column" align="center" mt={4}>
+                                        <Image
+                                            src={previewUrl}
+                                            alt="Preview"
+                                            boxSize="150px"
+                                            objectFit="cover"
+                                            borderRadius="md"
+                                        />
+                                        <Text mt={2}>{selectedImage?.name}</Text>
+                                    </Flex>
+                                )}
+
+                                {!selectedImage && <Text>No file chosen</Text>}
+                            </VStack>
                         </VStack>
                     </ModalBody>
                     <ModalFooter>
@@ -657,7 +745,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             colorScheme="blue"
                             mr={3}
                             onClick={handleAddTenant}
-                            isDisabled={!newTenant.title || !newTenant.image}
+                            isDisabled={!newTenant.title || !selectedImage}
                         >
                             Save
                         </Button>

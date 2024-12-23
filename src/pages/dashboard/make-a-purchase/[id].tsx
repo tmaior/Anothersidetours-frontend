@@ -1,5 +1,7 @@
 import React, {useEffect, useState} from 'react'
 import {
+    Alert,
+    AlertIcon,
     Box,
     Button,
     Divider,
@@ -13,10 +15,12 @@ import {
     Spinner,
     Switch,
     Text,
+    useToast,
     VStack,
 } from '@chakra-ui/react'
 import DashboardLayout from "../../../components/DashboardLayout";
 import {useRouter} from "next/router";
+import {CardElement, useElements, useStripe} from '@stripe/react-stripe-js';
 
 interface AddOn {
     id: string;
@@ -34,73 +38,60 @@ interface SelectedAddOn {
 }
 
 const PurchasePage = () => {
+    const router = useRouter();
+    const {id} = router.query;
 
-    const [quantity, setQuantity] = useState(2)
-    const [date, setDate] = useState('2024-12-20')
-    const [time, setTime] = useState('08:00')
-    const [pickUpAddOn, setPickUpAddOn] = useState(0)
-    const [bookingFeePercent, setBookingFeePercent] = useState(0)
-    const [gratuity, setGratuity] = useState('')
-    const [paymentWorkflow, setPaymentWorkflow] = useState("Now")
-    const [paymentMethod, setPaymentMethod] = useState("Credit Card")
-    const [cardNumber, setCardNumber] = useState("")
-    const [doNotCharge, setDoNotCharge] = useState(false)
-    const [internalNotesEnabled, setInternalNotesEnabled] = useState(true)
-    const [purchaseTags, setPurchaseTags] = useState("")
-    const [purchaseNote, setPurchaseNote] = useState("")
+    const stripe = useStripe();
+    const elements = useElements();
 
-    const isCreditCardMethod = paymentMethod === "Credit Card"
-    const isCreditCardRequired = isCreditCardMethod && !doNotCharge && cardNumber.trim() === ""
+    const [tour, setTour] = useState<any>(null);
+    const [addons, setAddons] = useState<AddOn[]>([]);
+    const [selectedAddOns, setSelectedAddOns] = useState<SelectedAddOn[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [loadingAddons, setLoadingAddons] = useState(true);
 
-    const [privateTourAddOn, setPrivateTourAddOn] = useState(0);
-    const [bookingFee, setBookingFee] = useState(false)
+    const [schedules, setSchedules] = useState<{ value: string; label: string }[]>([]);
+    const [loadingSchedules, setLoadingSchedules] = useState(true);
 
-    const basePricePerGuest = 149
-    const totalBase = quantity * basePricePerGuest
-    const totalAddOns = pickUpAddOn * 50 + privateTourAddOn * 50
-    const gratuityAmount = gratuity !== '' ? parseFloat(gratuity) : 0
-    const grandTotal = totalBase + totalAddOns + gratuityAmount
-    const feeAmount = bookingFee ? totalBase * 0.06 : 0
+    const [quantity, setQuantity] = useState(2);
+    const [date, setDate] = useState('2024-12-20');
+    const [time, setTime] = useState('08:00');
 
-    const [customLineItems, setCustomLineItems] = useState(false)
-    const [emailEnabled, setEmailEnabled] = useState(true)
-    const [phoneEnabled, setPhoneEnabled] = useState(true)
-    const [organizerAttending, setOrganizerAttending] = useState(true)
-    const [mainAttendeeIndex, setMainAttendeeIndex] = useState(0)
+    const [organizerName, setOrganizerName] = useState("");
+    const [emailEnabled, setEmailEnabled] = useState(true);
+    const [organizerEmail, setOrganizerEmail] = useState("");
+    const [phoneEnabled, setPhoneEnabled] = useState(true);
+    const [organizerPhone, setOrganizerPhone] = useState("");
+    const [organizerAttending, setOrganizerAttending] = useState(true);
+
     const [attendees, setAttendees] = useState([
         {name: "Guests #1", info: ""},
         {name: "Guests #2", info: ""}
-    ])
-    const [addons, setAddons] = useState<AddOn[]>([]);
-    const selects = addons.filter((addon) => addon.type === 'SELECT');
-    const checkboxes = addons.filter((addon) => addon.type === 'CHECKBOX');
-    const orderedAddons = [...selects, ...checkboxes];
-    const [loadingAddons, setLoadingAddons] = useState(true);
+    ]);
+    const [mainAttendeeIndex, setMainAttendeeIndex] = useState(0);
 
-    const [selectedAddOns, setSelectedAddOns] = useState<SelectedAddOn[]>([]);
+    const [doNotCharge, setDoNotCharge] = useState(false);
 
-    const handleNameChange = (index, newName) => {
-        const updated = [...attendees]
-        updated[index].name = newName
-        setAttendees(updated)
-    }
+    const [bookingFee, setBookingFee] = useState(false);
+    const [gratuity, setGratuity] = useState('');
 
-    const handleInfoChange = (index, newInfo) => {
-        const updated = [...attendees]
-        updated[index].info = newInfo
-        setAttendees(updated)
-    }
+    const [internalNotesEnabled, setInternalNotesEnabled] = useState(true);
+    const [purchaseTags, setPurchaseTags] = useState("");
+    const [purchaseNote, setPurchaseNote] = useState("");
+    const [customLineItems, setCustomLineItems] = useState(false);
 
-    const router = useRouter();
-    const {id} = router.query;
-    const [tour, setTour] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [schedules, setSchedules] = useState([]);
-    const [loadingSchedules, setLoadingSchedules] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [pickUpAddOn, setPickUpAddOn] = useState(0);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [privateTourAddOn, setPrivateTourAddOn] = useState(0);
+    const toast = useToast();
+
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchTour = async () => {
             try {
+                if (!id) return;
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`);
                 if (!res.ok) throw new Error('Tour not found');
                 const data = await res.json();
@@ -111,10 +102,7 @@ const PurchasePage = () => {
                 setLoading(false);
             }
         };
-
-        if (id) {
-            fetchTour();
-        }
+        fetchTour();
     }, [id]);
 
     useEffect(() => {
@@ -144,19 +132,26 @@ const PurchasePage = () => {
     useEffect(() => {
         const fetchSchedules = async () => {
             if (!id) return;
-
             try {
                 const res = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${id}`
                 );
                 const data = await res.json();
 
-                const formattedSchedules = data.map((time) => {
-                    const datetime = `2024-12-20 ${time}`;
-                    const dateObj = new Date(datetime);
+                const formattedSchedules = data.map((timeStr: string) => {
+                    let dateObj: Date;
+                    const testDate = `2024-12-20 ${timeStr}`;
+                    dateObj = new Date(testDate);
+
+                    if (isNaN(dateObj.getTime())) {
+                        return {
+                            value: timeStr,
+                            label: timeStr,
+                        };
+                    }
 
                     return {
-                        value: time,
+                        value: timeStr,
                         label: dateObj.toLocaleTimeString('en-US', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -164,7 +159,6 @@ const PurchasePage = () => {
                         }),
                     };
                 });
-
                 setSchedules(formattedSchedules);
                 setLoadingSchedules(false);
             } catch (error) {
@@ -176,44 +170,11 @@ const PurchasePage = () => {
         fetchSchedules();
     }, [id]);
 
-    if (loading) {
-        return (
-            <DashboardLayout>
-                <Box p={8} textAlign="center">
-                    <Spinner size="xl"/>
-                    <Text mt={4}>Loading tour details...</Text>
-                </Box>
-            </DashboardLayout>
-        );
-    }
-
-    if (!tour) {
-        return (
-            <DashboardLayout>
-                <Box p={8} textAlign="center">
-                    <Heading size="lg">Tour Not Found</Heading>
-                    <Text>Please try selecting another tour.</Text>
-                </Box>
-            </DashboardLayout>
-        );
-    }
-
-    const dynamicAddOnsPrice = selectedAddOns.reduce((acc, selected) => {
-        const addonInfo = addons.find((a) => a.id === selected.addOnId);
-        if (!addonInfo) return acc;
-        if (addonInfo.type === 'CHECKBOX') {
-            return selected.checked ? acc + addonInfo.price : acc;
-        }
-        if (addonInfo.type === 'SELECT') {
-            return acc + addonInfo.price * selected.quantity;
-        }
-        return acc;
-    }, 0);
-
-    const basePrice = tour.price || basePricePerGuest
-    const totalBaseFinal = quantity * basePrice
-    const gratuityAmountFinal = gratuity !== '' ? parseFloat(gratuity) : 0
-    const grandTotalFinal = totalBaseFinal + dynamicAddOnsPrice + gratuityAmountFinal
+    const handleInfoChange = (index: number, newInfo: string) => {
+        const updated = [...attendees];
+        updated[index].info = newInfo;
+        setAttendees(updated);
+    };
 
     const incrementAddon = (addonId: string) => {
         setSelectedAddOns((prev) =>
@@ -245,11 +206,230 @@ const PurchasePage = () => {
         );
     };
 
+    const basePricePerGuest = 149;
+    const basePrice = tour?.price || basePricePerGuest;
+    const totalBase = quantity * basePrice;
+
+    const dynamicAddOnsPrice = selectedAddOns.reduce((acc, selected) => {
+        const addonInfo = addons.find((a) => a.id === selected.addOnId);
+        if (!addonInfo) return acc;
+
+        if (addonInfo.type === 'CHECKBOX') {
+            return selected.checked ? acc + addonInfo.price : acc;
+        }
+        if (addonInfo.type === 'SELECT') {
+            return acc + addonInfo.price * selected.quantity;
+        }
+        return acc;
+    }, 0);
+
+    const totalManualAddOns = pickUpAddOn * 50 + privateTourAddOn * 50;
+
+    const gratuityAmount = gratuity !== '' ? parseFloat(gratuity) : 0;
+
+    const feeAmount = bookingFee ? totalBase * 0.06 : 0;
+    const grandTotalFinal = totalBase + dynamicAddOnsPrice + totalManualAddOns + gratuityAmount + feeAmount;
+    const combineDateAndTime = (dateStr: string, timeStr: string): string => {
+        const [year, month, day] = dateStr.split("-").map(Number);
+
+        const amPmMatch = timeStr.match(/(AM|PM)$/i);
+
+        let hour = 0;
+        let minute = 0;
+
+        if (amPmMatch) {
+            const meridian = amPmMatch[1].toUpperCase();
+            const timeWithoutAmPm = timeStr.replace(/(AM|PM)/i, '').trim();
+            const [hStr, mStr] = timeWithoutAmPm.split(":");
+            hour = parseInt(hStr, 10);
+            minute = parseInt(mStr, 10);
+
+            if (meridian === "PM" && hour < 12) {
+                hour += 12;
+            } else if (meridian === "AM" && hour === 12) {
+                hour = 0;
+            }
+        } else {
+            const [hStr, mStr] = timeStr.split(":");
+            hour = parseInt(hStr, 10);
+            minute = parseInt(mStr, 10);
+        }
+
+        const finalDate = new Date(year, (month - 1), day, hour, minute);
+        return finalDate.toISOString();
+    };
+    const handleCreateReservationAndPay = async () => {
+        if (!stripe || !elements) {
+            alert("Stripe has not yet been loaded.");
+            return;
+        }
+
+        let reservationId: string | null = null;
+        let userId: string | null = null;
+
+        try {
+            const userPayload = {
+                name: organizerName,
+                email: emailEnabled ? organizerEmail : "",
+                phone: phoneEnabled ? organizerPhone : "",
+                selectedDate: combineDateAndTime(date, time),
+                selectedTime: time,
+                guestQuantity: quantity,
+                statusCheckout: "PENDING",
+            };
+
+            const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(userPayload),
+            });
+
+            if (!userResponse.ok) {
+                throw new Error("Failed to create user.");
+            }
+
+            const userResult = await userResponse.json();
+            userId = userResult.id;
+            const updateUserResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({statusCheckout: "COMPLETED"}),
+            });
+
+            if (!updateUserResponse.ok) {
+                throw new Error("Failed to update user status.");
+            }
+
+            const reservationDateTime = combineDateAndTime(date, time);
+
+            const reservationData = {
+                tourId: id,
+                userId: userId,
+                reservation_date: reservationDateTime,
+                addons: selectedAddOns.map((sel) => ({
+                    addonId: sel.addOnId,
+                    quantity: sel.checked ? 1 : sel.quantity,
+                })),
+                total_price: grandTotalFinal,
+                guestQuantity: quantity,
+                status: "PENDING",
+
+                purchaseTags,
+                purchaseNote,
+            };
+
+            const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(reservationData),
+            });
+
+            if (!reservationResponse.ok) {
+                throw new Error("Failed to create reservation.");
+            }
+
+            const reservationResult = await reservationResponse.json();
+            reservationId = reservationResult.id;
+            console.log("Reservation created with ID:", reservationId);
+
+            if (!doNotCharge) {
+                const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({reservationId}),
+                });
+
+                if (!setupIntentRes.ok) {
+                    throw new Error("Failed to create SetupIntent.");
+                }
+
+                const {clientSecret} = await setupIntentRes.json();
+
+                const cardElement = elements.getElement(CardElement);
+                if (!cardElement) {
+                    throw new Error("CardElement is not available.");
+                }
+
+                const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
+                    payment_method: {
+                        card: cardElement,
+                        billing_details: {
+                            name: organizerName || "Guest Organizer",
+                            email: emailEnabled ? organizerEmail : "",
+                        },
+                    },
+                });
+
+                if (paymentMethodResponse.error) {
+                    throw new Error(paymentMethodResponse.error.message);
+                }
+
+                const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
+
+                const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({paymentMethodId, reservationId}),
+                });
+
+                if (!savePMRes.ok) {
+                    throw new Error("Failed to save PaymentMethod.");
+                }
+
+                toast({
+                    title: "Reservation Complete!",
+                    description: "Your reservation and payment were successful.",
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
+                });
+                setTimeout(() => {
+                    router.push("/dashboard/reservation");
+                }, 1000);
+            } else {
+                alert("Reservation created without immediate charge (Do Not Charge).");
+            }
+
+        } catch (error) {
+            console.error("Error creating reservation/payment:", error);
+            if (error instanceof Error) {
+                setErrorMessage(error.message);
+            } else {
+                setErrorMessage("An unexpected error has occurred.");
+            }
+        }
+    };
+
+    if (loading) {
+        return (
+            <DashboardLayout>
+                <Box p={8} textAlign="center">
+                    <Spinner size="xl"/>
+                    <Text mt={4}>Loading tour details...</Text>
+                </Box>
+            </DashboardLayout>
+        );
+    }
+
+    if (!tour) {
+        return (
+            <DashboardLayout>
+                <Box p={8} textAlign="center">
+                    <Heading size="lg">Tour Not Found</Heading>
+                    <Text>Please try selecting another tour.</Text>
+                </Box>
+            </DashboardLayout>
+        );
+    }
+
     return (
         <DashboardLayout>
             <Box p={8}>
                 <Heading size="lg" mb={6}>Make a Purchase</Heading>
                 <Flex direction={{base: 'column', md: 'row'}} gap={8}>
+
                     <Box flex="1" bg="gray.50" p={6} borderRadius="md" boxShadow="sm">
                         <FormControl mb={4}>
                             <FormLabel>Quantity</FormLabel>
@@ -270,21 +450,29 @@ const PurchasePage = () => {
                                 <Text>Guests</Text>
                             </HStack>
                         </FormControl>
+
                         <FormControl mb={4} w={"150px"}>
                             <FormLabel>Date</FormLabel>
-                            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)}/>
+                            <Input
+                                type="date"
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                            />
                         </FormControl>
+
                         <FormControl mb={4}>
                             <FormLabel>Time</FormLabel>
-                            {schedules.length > 0 ? (
+                            {loadingSchedules ? (
+                                <Spinner size="sm"/>
+                            ) : schedules.length > 0 ? (
                                 <Select
                                     placeholder="Select time"
                                     value={time}
                                     onChange={(e) => setTime(e.target.value)}
                                 >
-                                    {schedules.map((schedule, index) => (
-                                        <option key={index} value={schedule.value}>
-                                            {schedule.label}
+                                    {schedules.map((s, i) => (
+                                        <option key={i} value={s.value}>
+                                            {s.label}
                                         </option>
                                     ))}
                                 </Select>
@@ -292,56 +480,52 @@ const PurchasePage = () => {
                                 <Text>No schedules available</Text>
                             )}
                         </FormControl>
+
                         <Heading size="md" mt={8} mb={4}>Add-ons</Heading>
-                        {!loadingAddons && (
-                            <>
-                                {(() => {
-                                    const selects = addons.filter((addon) => addon.type === 'SELECT');
-                                    const checkboxes = addons.filter((addon) => addon.type === 'CHECKBOX');
-                                    const orderedAddons = [...selects, ...checkboxes];
+                        {!loadingAddons && addons.map((addon) => {
+                            const selectedState = selectedAddOns.find((s) => s.addOnId === addon.id);
+                            if (!selectedState) return null;
 
-                                    return orderedAddons.map((addon) => {
-                                        const selectedState = selectedAddOns.find((s) => s.addOnId === addon.id);
-                                        if (!selectedState) return null;
+                            return (
+                                <Box key={addon.id} mb={4}>
+                                    <HStack justify="space-between">
+                                        <Text>
+                                            {addon.label} (US${addon.price})
+                                        </Text>
+                                        {addon.type === 'CHECKBOX' && (
+                                            <Switch
+                                                isChecked={selectedState.checked}
+                                                onChange={(e) => toggleCheckboxAddon(addon.id, e.target.checked)}
+                                                colorScheme="blue"
+                                            />
+                                        )}
+                                        {addon.type === 'SELECT' && (
+                                            <HStack>
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => decrementAddon(addon.id)}
+                                                >
+                                                    -
+                                                </Button>
+                                                <Text>{selectedState.quantity}</Text>
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => incrementAddon(addon.id)}
+                                                >
+                                                    +
+                                                </Button>
+                                            </HStack>
+                                        )}
+                                    </HStack>
+                                    {addon.description && (
+                                        <Text fontSize="sm" color="gray.600">
+                                            {addon.description}
+                                        </Text>
+                                    )}
+                                </Box>
+                            );
+                        })}
 
-                                        return (
-                                            <Box key={addon.id} mb={4}>
-                                                <HStack justify="space-between">
-                                                    <Text>
-                                                        {addon.label} (US${addon.price})
-                                                    </Text>
-                                                    {addon.type === 'CHECKBOX' && (
-                                                        <Switch
-                                                            isChecked={selectedState.checked}
-                                                            onChange={(e) => toggleCheckboxAddon(addon.id, e.target.checked)}
-                                                            colorScheme="blue"
-                                                        />
-                                                    )}
-                                                    {addon.type === 'SELECT' && (
-                                                        <HStack>
-                                                            <Button variant="outline"
-                                                                    onClick={() => decrementAddon(addon.id)}>
-                                                                -
-                                                            </Button>
-                                                            <Text>{selectedState.quantity}</Text>
-                                                            <Button variant="outline"
-                                                                    onClick={() => incrementAddon(addon.id)}>
-                                                                +
-                                                            </Button>
-                                                        </HStack>
-                                                    )}
-                                                </HStack>
-                                                {addon.description && (
-                                                    <Text fontSize="sm" color="gray.600">
-                                                        {addon.description}
-                                                    </Text>
-                                                )}
-                                            </Box>
-                                        );
-                                    });
-                                })()}
-                            </>
-                        )}
                         <HStack justify="space-between" mb={4}>
                             <Text>6% Booking Fee</Text>
                             <Switch
@@ -350,6 +534,7 @@ const PurchasePage = () => {
                                 colorScheme="blue"
                             />
                         </HStack>
+
                         <FormControl mb={4}>
                             <FormLabel>Gratuity (optional)</FormLabel>
                             <Select
@@ -358,11 +543,12 @@ const PurchasePage = () => {
                                 onChange={(e) => setGratuity(e.target.value)}
                             >
                                 <option value="0">0%</option>
-                                <option value={(totalBaseFinal * 0.10).toFixed(2)}>10%</option>
-                                <option value={(totalBaseFinal * 0.15).toFixed(2)}>15%</option>
-                                <option value={(totalBaseFinal * 0.20).toFixed(2)}>20%</option>
+                                <option value={(totalBase * 0.10).toFixed(2)}>10%</option>
+                                <option value={(totalBase * 0.15).toFixed(2)}>15%</option>
+                                <option value={(totalBase * 0.20).toFixed(2)}>20%</option>
                             </Select>
                         </FormControl>
+
                         <FormControl display="flex" alignItems="center" mb={4}>
                             <FormLabel mb="0" fontWeight="medium">
                                 Custom Line Items
@@ -374,21 +560,20 @@ const PurchasePage = () => {
                                 ml={4}
                             />
                         </FormControl>
+
                         <Divider my={6}/>
+
                         <Heading size="md" mb={4}>Organizer Details</Heading>
-                        <HStack mb={4}>
-                            <FormControl>
-                                <FormLabel>Name</FormLabel>
-                                <Select defaultValue="Guests #1">
-                                    <option>Guests #1</option>
-                                    <option>Guests #2</option>
-                                    <option>Guests #3</option>
-                                </Select>
-                            </FormControl>
-                            <Button variant="outline" colorScheme="blue" alignSelf="flex-end" mt="auto">
-                                Search Customers
-                            </Button>
-                        </HStack>
+
+                        <FormControl mb={4}>
+                            <FormLabel>Organizer Name</FormLabel>
+                            <Input
+                                placeholder="John Doe"
+                                value={organizerName}
+                                onChange={(e) => setOrganizerName(e.target.value)}
+                            />
+                        </FormControl>
+
                         <FormControl mb={4}>
                             <HStack justify="space-between">
                                 <HStack>
@@ -402,9 +587,15 @@ const PurchasePage = () => {
                                 {emailEnabled && <Text color="red.500" fontSize="xl">•</Text>}
                             </HStack>
                             {emailEnabled && (
-                                <Input placeholder="Email" mt={2}/>
+                                <Input
+                                    placeholder="Email"
+                                    mt={2}
+                                    value={organizerEmail}
+                                    onChange={(e) => setOrganizerEmail(e.target.value)}
+                                />
                             )}
                         </FormControl>
+
                         <FormControl mb={4}>
                             <HStack justify="space-between">
                                 <HStack>
@@ -418,9 +609,15 @@ const PurchasePage = () => {
                                 {phoneEnabled && <Text color="red.500" fontSize="xl">•</Text>}
                             </HStack>
                             {phoneEnabled && (
-                                <Input placeholder="Phone Number" mt={2}/>
+                                <Input
+                                    placeholder="(999) 999-9999"
+                                    mt={2}
+                                    value={organizerPhone}
+                                    onChange={(e) => setOrganizerPhone(e.target.value)}
+                                />
                             )}
                         </FormControl>
+
                         <FormControl mb={4}>
                             <HStack justify="space-between">
                                 <Text fontWeight="medium">Organizer is attending</Text>
@@ -431,7 +628,9 @@ const PurchasePage = () => {
                                 />
                             </HStack>
                         </FormControl>
+
                         <Divider my={6}/>
+
                         <Heading size="md" mb={4}>Attendee Info</Heading>
                         {attendees.map((attendee, i) => (
                             <Box key={i} borderWidth="1px" borderRadius="md" p={4} mb={4}>
@@ -448,8 +647,7 @@ const PurchasePage = () => {
                                     >
                                         🏳
                                     </Button>
-
-                                    <Text fontWeight="medium">Guests</Text>
+                                    <Text fontWeight="medium">{attendee.name}</Text>
                                     <Input
                                         placeholder={`Guests #${i + 1}`}
                                         value={attendee.info}
@@ -460,34 +658,66 @@ const PurchasePage = () => {
                                 </HStack>
                             </Box>
                         ))}
+
                         <Heading size="md" mb={4}>Payment</Heading>
-                        {isCreditCardMethod && (
-                            <FormControl display="flex" alignItems="center" mb={4}>
-                                <Switch
-                                    isChecked={doNotCharge}
-                                    onChange={(e) => setDoNotCharge(e.target.checked)}
-                                    colorScheme="blue"
-                                    mr={2}
-                                />
-                                <FormLabel mb="0">Do Not Charge Card Now</FormLabel>
-                            </FormControl>
-                        )}
-                        {isCreditCardMethod && !doNotCharge && (
+
+                        <FormControl display="flex" alignItems="center" mb={4}>
+                            <Switch
+                                isChecked={doNotCharge}
+                                onChange={(e) => setDoNotCharge(e.target.checked)}
+                                colorScheme="blue"
+                                mr={2}
+                            />
+                            <FormLabel mb="0">Do Not Charge Card Now</FormLabel>
+                        </FormControl>
+
+                        {!doNotCharge && (
                             <Box mb={4}>
-                                {isCreditCardRequired && (
-                                    <Text color="red.500" mb={1}>
-                                        Credit Card is required
-                                    </Text>
+                                <Text mb={2}>Card Details</Text>
+                                <div style={{
+                                    border: '1px solid #9E9E9E',
+                                    paddingBottom: '8px',
+                                    marginBottom: '16px',
+                                    padding: '4px 8px',
+                                    width: '100%',
+                                    borderRadius: '4px'
+                                }}>
+                                    <CardElement
+                                        options={{
+                                            hidePostalCode: true,
+                                            style: {
+                                                base: {
+                                                    iconColor: '#0c0e0e',
+                                                    color: '#000',
+                                                    fontWeight: '500',
+                                                    fontFamily: 'Arial, sans-serif',
+                                                    fontSize: '16px',
+                                                    fontSmoothing: 'antialiased',
+                                                    '::placeholder': {
+                                                        color: '#aab7c4',
+                                                    },
+                                                },
+                                                invalid: {
+                                                    color: '#9e2146',
+                                                    iconColor: '#fa755a',
+                                                },
+                                            },
+                                        }}
+                                    />
+                                </div>
+                                {errorMessage && (
+                                    <Box mt={2}>
+                                        <Alert status="error">
+                                            <AlertIcon/>
+                                            {errorMessage}
+                                        </Alert>
+                                    </Box>
                                 )}
-                                <Input
-                                    placeholder="Número do cartão"
-                                    value={cardNumber}
-                                    onChange={(e) => setCardNumber(e.target.value)}
-                                    borderColor={isCreditCardRequired ? "red.500" : "gray.200"}
-                                />
                             </Box>
                         )}
+
                         <Divider my={6}/>
+
                         <FormControl display="flex" alignItems="center" mb={4}>
                             <Text mr={4} fontWeight="medium">Internal Notes</Text>
                             <Switch
@@ -496,6 +726,7 @@ const PurchasePage = () => {
                                 colorScheme="blue"
                             />
                         </FormControl>
+
                         {internalNotesEnabled && (
                             <VStack align="stretch" spacing={4} mb={4}>
                                 <FormControl>
@@ -516,12 +747,19 @@ const PurchasePage = () => {
                                 </FormControl>
                             </VStack>
                         )}
+
                         <Divider my={6}/>
+
                         <HStack justify="space-between">
                             <Button variant="outline">Cancel</Button>
                             <HStack spacing={4}>
                                 <Button variant="outline">Add Another Product</Button>
-                                <Button colorScheme="green">US${grandTotalFinal.toFixed(2)}</Button>
+                                <Button
+                                    colorScheme="green"
+                                    onClick={handleCreateReservationAndPay}
+                                >
+                                    Pay US${grandTotalFinal.toFixed(2)}
+                                </Button>
                             </HStack>
                         </HStack>
                     </Box>
@@ -534,7 +772,7 @@ const PurchasePage = () => {
                                 {date} - {time}
                             </Text>
                             <Text mt={2}>
-                                Guests ({quantity} × US${basePrice}) = US${totalBaseFinal.toFixed(2)}
+                                Guests ({quantity} × US${basePrice}) = US${(quantity * basePrice).toFixed(2)}
                             </Text>
                         </Box>
                         <Divider mb={4}/>

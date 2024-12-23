@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, {useEffect, useState} from 'react'
 import {
     Box,
     Button,
@@ -16,7 +16,7 @@ import {
     VStack,
 } from '@chakra-ui/react'
 import DashboardLayout from "../../../components/DashboardLayout";
-import { useRouter } from "next/router";
+import {useRouter} from "next/router";
 
 const PurchasePage = () => {
 
@@ -53,8 +53,8 @@ const PurchasePage = () => {
     const [organizerAttending, setOrganizerAttending] = useState(true)
     const [mainAttendeeIndex, setMainAttendeeIndex] = useState(0)
     const [attendees, setAttendees] = useState([
-        { name: "Guests #1", info: "" },
-        { name: "Guests #2", info: "" }
+        {name: "Guests #1", info: ""},
+        {name: "Guests #2", info: ""}
     ])
 
     const handleNameChange = (index, newName) => {
@@ -70,9 +70,11 @@ const PurchasePage = () => {
     }
 
     const router = useRouter();
-    const { id } = router.query;
+    const {id} = router.query;
     const [tour, setTour] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [schedules, setSchedules] = useState([]);
+    const [loadingSchedules, setLoadingSchedules] = useState(true);
 
     useEffect(() => {
         const fetchTour = async () => {
@@ -93,11 +95,46 @@ const PurchasePage = () => {
         }
     }, [id]);
 
+    useEffect(() => {
+        const fetchSchedules = async () => {
+            if (!id) return;
+
+            try {
+                const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${id}`
+                );
+                const data = await res.json();
+
+                const formattedSchedules = data.map((time) => {
+                    const datetime = `2024-12-20 ${time}`;
+                    const dateObj = new Date(datetime);
+
+                    return {
+                        value: time,
+                        label: dateObj.toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true,
+                        }),
+                    };
+                });
+
+                setSchedules(formattedSchedules);
+                setLoadingSchedules(false);
+            } catch (error) {
+                console.error('Failed to fetch schedules:', error);
+                setLoadingSchedules(false);
+            }
+        };
+
+        fetchSchedules();
+    }, [id]);
+
     if (loading) {
         return (
             <DashboardLayout>
                 <Box p={8} textAlign="center">
-                    <Spinner size="xl" />
+                    <Spinner size="xl"/>
                     <Text mt={4}>Loading tour details...</Text>
                 </Box>
             </DashboardLayout>
@@ -125,7 +162,7 @@ const PurchasePage = () => {
         <DashboardLayout>
             <Box p={8}>
                 <Heading size="lg" mb={6}>Make a Purchase</Heading>
-                <Flex direction={{ base: 'column', md: 'row' }} gap={8}>
+                <Flex direction={{base: 'column', md: 'row'}} gap={8}>
                     <Box flex="1" bg="gray.50" p={6} borderRadius="md" boxShadow="sm">
                         <FormControl mb={4}>
                             <FormLabel>Quantity</FormLabel>
@@ -148,15 +185,25 @@ const PurchasePage = () => {
                         </FormControl>
                         <FormControl mb={4} w={"150px"}>
                             <FormLabel>Date</FormLabel>
-                            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)}/>
                         </FormControl>
                         <FormControl mb={4}>
                             <FormLabel>Time</FormLabel>
-                            <Select value={time} onChange={(e) => setTime(e.target.value)}>
-                                <option value="08:00">8:00 AM</option>
-                                <option value="09:00">9:00 AM</option>
-                                <option value="10:00">10:00 AM</option>
-                            </Select>
+                            {schedules.length > 0 ? (
+                                <Select
+                                    placeholder="Select time"
+                                    value={time}
+                                    onChange={(e) => setTime(e.target.value)}
+                                >
+                                    {schedules.map((schedule, index) => (
+                                        <option key={index} value={schedule.value}>
+                                            {schedule.label}
+                                        </option>
+                                    ))}
+                                </Select>
+                            ) : (
+                                <Text>No schedules available</Text>
+                            )}
                         </FormControl>
                         <Heading size="md" mt={8} mb={4}>Add-ons</Heading>
                         <HStack justify="space-between" mb={4}>
@@ -227,7 +274,7 @@ const PurchasePage = () => {
                                 ml={4}
                             />
                         </FormControl>
-                        <Divider my={6} />
+                        <Divider my={6}/>
                         <Heading size="md" mb={4}>Organizer Details</Heading>
                         <HStack mb={4}>
                             <FormControl>
@@ -255,7 +302,7 @@ const PurchasePage = () => {
                                 {emailEnabled && <Text color="red.500" fontSize="xl">•</Text>}
                             </HStack>
                             {emailEnabled && (
-                                <Input placeholder="Email" mt={2} />
+                                <Input placeholder="Email" mt={2}/>
                             )}
                         </FormControl>
                         <FormControl mb={4}>
@@ -271,7 +318,7 @@ const PurchasePage = () => {
                                 {phoneEnabled && <Text color="red.500" fontSize="xl">•</Text>}
                             </HStack>
                             {phoneEnabled && (
-                                <Input placeholder="Phone Number" mt={2} />
+                                <Input placeholder="Phone Number" mt={2}/>
                             )}
                         </FormControl>
                         <FormControl mb={4}>
@@ -284,7 +331,7 @@ const PurchasePage = () => {
                                 />
                             </HStack>
                         </FormControl>
-                        <Divider my={6} />
+                        <Divider my={6}/>
                         <Heading size="md" mb={4}>Attendee Info</Heading>
                         {attendees.map((attendee, i) => (
                             <Box key={i} borderWidth="1px" borderRadius="md" p={4} mb={4}>
@@ -340,7 +387,7 @@ const PurchasePage = () => {
                                 />
                             </Box>
                         )}
-                        <Divider my={6} />
+                        <Divider my={6}/>
                         <FormControl display="flex" alignItems="center" mb={4}>
                             <Text mr={4} fontWeight="medium">Internal Notes</Text>
                             <Switch
@@ -369,7 +416,7 @@ const PurchasePage = () => {
                                 </FormControl>
                             </VStack>
                         )}
-                        <Divider my={6} />
+                        <Divider my={6}/>
                         <HStack justify="space-between">
                             <Button variant="outline">Cancel</Button>
                             <HStack spacing={4}>
@@ -379,7 +426,7 @@ const PurchasePage = () => {
                         </HStack>
                     </Box>
 
-                    <Box w={{ base: "100%", md: "400px" }} bg="white" p={6} borderRadius="md" boxShadow="sm">
+                    <Box w={{base: "100%", md: "400px"}} bg="white" p={6} borderRadius="md" boxShadow="sm">
                         <Heading size="md" mb={4}>Purchase Summary</Heading>
                         <Box bg="blue.50" p={4} borderRadius="md" mb={4}>
                             <Text fontWeight="bold">{tour.name}</Text>
@@ -390,14 +437,14 @@ const PurchasePage = () => {
                                 Guests ({quantity} × US${basePrice}) = US${totalBaseFinal.toFixed(2)}
                             </Text>
                         </Box>
-                        <Divider mb={4} />
+                        <Divider mb={4}/>
                         <Text fontWeight="bold" mb={2}>Grand Total</Text>
                         <Text fontSize="xl" mb={4}>US${grandTotalFinal.toFixed(2)}</Text>
 
                         <FormControl mb={4}>
                             <FormLabel>Code</FormLabel>
                             <HStack>
-                                <Input placeholder="Enter code" />
+                                <Input placeholder="Enter code"/>
                                 <Button>Apply Code</Button>
                             </HStack>
                         </FormControl>

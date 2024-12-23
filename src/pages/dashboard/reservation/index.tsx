@@ -41,10 +41,12 @@ export default function Dashboard() {
 
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [isDetailVisible, setIsDetailVisible] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [userDetails, setUserDetails] = useState({});
 
     const {isOpen, onOpen, onClose} = useDisclosure();
     const router = useRouter();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -82,7 +84,41 @@ export default function Dashboard() {
                     })
                 );
 
-                const groupedReservations = reservationsWithUserDetails.reduce((acc, reservation) => {
+                reservationsWithUserDetails.sort((a, b) => {
+                    return new Date(a.reservation_date).getTime() - new Date(b.reservation_date).getTime();
+                });
+
+                interface ReservationItem {
+                    guestQuantity: number;
+                    time: string;
+                    dateFormatted: string;
+                    title: string;
+                    available: string;
+                    reservedDetails: string;
+                    statusColor: string;
+                    capacity: string;
+                    guide: string;
+                    hasNotes: boolean;
+                    id: string;
+                    email: string;
+                    phone: string;
+                    imageUrl: string;
+                    user?: {
+                        name: string;
+                        phone: string;
+                        email: string;
+                    };
+                }
+
+                interface Reservation {
+                    date: string;
+                    day: string;
+                    availableSummary: string;
+                    reservedSummary: string;
+                    reservations: ReservationItem[];
+                }
+
+                const groupedReservations: Record<string, Reservation> = reservationsWithUserDetails.reduce((acc, reservation) => {
                     const date = new Date(reservation.reservation_date).toLocaleDateString("en-US", {
                         year: 'numeric',
                         month: 'short',
@@ -130,6 +166,13 @@ export default function Dashboard() {
                 const transformedReservations = Object.values(groupedReservations);
 
                 setReservations(transformedReservations);
+
+                if (transformedReservations.length > 0) {
+                    const firstAvailableDate = new Date(transformedReservations[0].date);
+                    const formattedDate = firstAvailableDate.toISOString().split('T')[0];
+                    setSelectedDate(formattedDate);
+                    setLoadedDates([formattedDate]);
+                }
             } catch (error) {
                 console.error("Error fetching reservations:", error);
             } finally {
@@ -170,6 +213,7 @@ export default function Dashboard() {
 
     const getNextDateWithReservations = () => {
         const today = new Date();
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const todayISO = today.toISOString().split("T")[0];
 
         for (const reservation of reservations) {
@@ -264,7 +308,13 @@ export default function Dashboard() {
                 </Button>
             </HStack>
             <HStack spacing={2} mb={4} align="center" marginTop={"10px"}>
-                <Input type="date" defaultValue="2024-12-13" size="sm" width="130px"/>
+                <Input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    size="sm"
+                    width="130px"
+                />
                 <Select placeholder="Reserved" size="sm" width="120px">
                     <option value="reserved">Reserved</option>
                     <option value="not_reserved">Not Reserved</option>

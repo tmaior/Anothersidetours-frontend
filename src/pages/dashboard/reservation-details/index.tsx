@@ -22,8 +22,7 @@ import {
     AccordionItem,
     AccordionPanel,
 } from "@chakra-ui/react";
-import { ChevronDownIcon } from "@chakra-ui/icons";
-import { FiCalendar } from "react-icons/fi";
+import {FiCalendar, FiWatch} from "react-icons/fi";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 
 export default function ReservationDetail({ reservation, onCloseDetail }) {
@@ -34,6 +33,7 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
             </Box>
         );
     }
+    const { user } = reservation;
 
     return (
         <Box p={4}>
@@ -47,21 +47,21 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
                 Voltar
             </Button>
             <Flex alignItems="center" justifyContent="space-between" mb={4}>
-                <HStack spacing={4}>
-                    <Text fontSize="xl" fontWeight="bold">
-                        Filtros (exemplo)
-                    </Text>
-                    <Menu>
-                        <MenuButton as={Button} variant="outline" size="sm" rightIcon={<ChevronDownIcon />}>
-                            Products: All
-                        </MenuButton>
-                        <MenuList>
-                            <MenuItem>All</MenuItem>
-                            <MenuItem>Product A</MenuItem>
-                            <MenuItem>Product B</MenuItem>
-                        </MenuList>
-                    </Menu>
-                </HStack>
+                {/*<HStack spacing={4}>*/}
+                {/*    <Text fontSize="xl" fontWeight="bold">*/}
+                {/*        Filtros (exemplo)*/}
+                {/*    </Text>*/}
+                {/*    <Menu>*/}
+                {/*        <MenuButton as={Button} variant="outline" size="sm" rightIcon={<ChevronDownIcon />}>*/}
+                {/*            Products: All*/}
+                {/*        </MenuButton>*/}
+                {/*        <MenuList>*/}
+                {/*            <MenuItem>All</MenuItem>*/}
+                {/*            <MenuItem>Product A</MenuItem>*/}
+                {/*            <MenuItem>Product B</MenuItem>*/}
+                {/*        </MenuList>*/}
+                {/*    </Menu>*/}
+                {/*</HStack>*/}
             </Flex>
             <HStack alignItems="flex-start" justifyContent="space-between">
                 <HStack alignItems="flex-start">
@@ -79,6 +79,10 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
                         <Text fontSize="xl" fontWeight="bold">{reservation.title}</Text>
                         <HStack spacing={2}>
                             <Icon as={FiCalendar} color="gray.500" />
+                            <Text fontSize="sm" color="gray.600">
+                                {reservation.dateFormatted}
+                            </Text>
+                            <Icon as={FiWatch} color="gray.500" />
                             <Text fontSize="sm" color="gray.600">
                                 {reservation.time}
                             </Text>
@@ -145,8 +149,8 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
                                     </AccordionItem>
                                 </Accordion>
                             </Td>
-                            <Td>-</Td>
-                            <Td>2 Guests</Td>
+                            <Td>{user?.name || 'N/A'}</Td>
+                            <Td>{reservation.guestQuantity}</Td>
                             <Td>0</Td>
                             <Td>
                                 0 Purchase Notes<br />
@@ -158,12 +162,8 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
                             </Td>
                             <Td> - </Td>
                             <Td> - </Td>
-                            <Td>
-                                <Text color="blue.600" as="a" href="tel:+13133103813">-</Text>
-                            </Td>
-                            <Td>
-                                <Text color="blue.600" as="a" href="mailto:michael@example.com">-</Text>
-                            </Td>
+                            <Td>{user?.phone || 'N/A'}</Td>
+                            <Td>{user?.email || 'N/A'}</Td>
                         </Tr>
                     </Tbody>
                 </Table>

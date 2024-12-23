@@ -27,385 +27,119 @@ import {SearchIcon} from "@chakra-ui/icons";
 import {useEffect, useState} from "react";
 import {useRouter} from "next/router";
 import ReservationDetail from "../reservation-details";
+import {useGuest} from "../../../components/GuestContext";
 
 export default function Dashboard() {
-    const reservations = [
-        {
-            date: "13 Dec",
-            day: "Friday",
-            availableSummary: "0 Available",
-            reservedSummary: "7 Reserved",
-            reservations: [
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "298 Available",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "1",
-                    email: "ben.huss@example.com",
-                    phone: "123-456-7890",
-                },
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "∞",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "2",
-                    email: "good.huss@example.com",
-                    phone: "7890-123-456",
-                },
-                {
-                    time: "3:00 PM",
-                    imageUrl: "/images/beverly-tour.png",
-                    title: "The Beverly Hills Tour",
-                    available: 150,
-                    reservedDetails: 0 + " Reserved",
-                    statusColor: "green.500",
-                    capacity: "1/3",
-                    guide: "Anna Smith",
-                    hasNotes: false,
-                    id: "3",
-                    email: "Anna@example.com",
-                    phone: "456-7890-123",
-                },
-
-
-            ]
-        },
-        {
-            date: "23 Dec",
-            day: "Friday",
-            availableSummary: "0 Available",
-            reservedSummary: "7 Reserved",
-            reservations: [
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "298 Available",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "1",
-                    email: "ben.huss@example.com",
-                    phone: "123-456-7890",
-                },
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "∞",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "2",
-                    email: "good.huss@example.com",
-                    phone: "7890-123-456",
-                },
-                {
-                    time: "3:00 PM",
-                    imageUrl: "/images/beverly-tour.png",
-                    title: "The Beverly Hills Tour",
-                    available: 150,
-                    reservedDetails: 0 + " Reserved",
-                    statusColor: "green.500",
-                    capacity: "1/3",
-                    guide: "Anna Smith",
-                    hasNotes: false,
-                    id: "3",
-                    email: "Anna@example.com",
-                    phone: "456-7890-123",
-                },
-
-
-            ]
-        },
-        {
-            date: "30 Dec",
-            day: "Friday",
-            availableSummary: "0 Available",
-            reservedSummary: "7 Reserved",
-            reservations: [
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "298 Available",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "1",
-                    email: "ben.huss@example.com",
-                    phone: "123-456-7890",
-                },
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "∞",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "2",
-                    email: "good.huss@example.com",
-                    phone: "7890-123-456",
-                },
-                {
-                    time: "3:00 PM",
-                    imageUrl: "/images/beverly-tour.png",
-                    title: "The Beverly Hills Tour",
-                    available: 150,
-                    reservedDetails: 0 + " Reserved",
-                    statusColor: "green.500",
-                    capacity: "1/3",
-                    guide: "Anna Smith",
-                    hasNotes: false,
-                    id: "3",
-                    email: "Anna@example.com",
-                    phone: "456-7890-123",
-                },
-
-
-            ]
-        },
-        {
-            date: "06 Jan",
-            day: "Friday",
-            availableSummary: "0 Available",
-            reservedSummary: "7 Reserved",
-            reservations: [
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "298 Available",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "1",
-                    email: "ben.huss@example.com",
-                    phone: "123-456-7890",
-                },
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "∞",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "2",
-                    email: "good.huss@example.com",
-                    phone: "7890-123-456",
-                },
-                {
-                    time: "3:00 PM",
-                    imageUrl: "/images/beverly-tour.png",
-                    title: "The Beverly Hills Tour",
-                    available: 150,
-                    reservedDetails: 0 + " Reserved",
-                    statusColor: "green.500",
-                    capacity: "1/3",
-                    guide: "Anna Smith",
-                    hasNotes: false,
-                    id: "3",
-                    email: "Anna@example.com",
-                    phone: "456-7890-123",
-                },
-
-
-            ]
-        },
-        {
-            date: "13 Jan",
-            day: "Friday",
-            availableSummary: "0 Available",
-            reservedSummary: "7 Reserved",
-            reservations: [
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "298 Available",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "1",
-                    email: "ben.huss@example.com",
-                    phone: "123-456-7890",
-                },
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "∞",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "2",
-                    email: "good.huss@example.com",
-                    phone: "7890-123-456",
-                },
-                {
-                    time: "3:00 PM",
-                    imageUrl: "/images/beverly-tour.png",
-                    title: "The Beverly Hills Tour",
-                    available: 150,
-                    reservedDetails: 0 + " Reserved",
-                    statusColor: "green.500",
-                    capacity: "1/3",
-                    guide: "Anna Smith",
-                    hasNotes: false,
-                    id: "3",
-                    email: "Anna@example.com",
-                    phone: "456-7890-123",
-                },
-
-
-            ]
-        },
-        {
-            date: "20 Jan",
-            day: "Friday",
-            availableSummary: "0 Available",
-            reservedSummary: "7 Reserved",
-            reservations: [
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "298 Available",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "1",
-                    email: "ben.huss@example.com",
-                    phone: "123-456-7890",
-                },
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "∞",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "2",
-                    email: "good.huss@example.com",
-                    phone: "7890-123-456",
-                },
-                {
-                    time: "3:00 PM",
-                    imageUrl: "/images/beverly-tour.png",
-                    title: "The Beverly Hills Tour",
-                    available: 150,
-                    reservedDetails: 0 + " Reserved",
-                    statusColor: "green.500",
-                    capacity: "1/3",
-                    guide: "Anna Smith",
-                    hasNotes: false,
-                    id: "3",
-                    email: "Anna@example.com",
-                    phone: "456-7890-123",
-                },
-
-
-            ]
-        },
-        {
-            date: "27 Jan",
-            day: "Friday",
-            availableSummary: "0 Available",
-            reservedSummary: "7 Reserved",
-            reservations: [
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "298 Available",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "1",
-                    email: "ben.huss@example.com",
-                    phone: "123-456-7890",
-                },
-                {
-                    time: "1:00 PM",
-                    imageUrl: "/images/los-angeles-tour.png",
-                    title: "The Los Angeles Tour",
-                    available: "∞",
-                    reservedDetails: 2 + " Reserved",
-                    statusColor: "red.500",
-                    capacity: "0/2",
-                    guide: "Ben Huss...",
-                    hasNotes: true,
-                    id: "2",
-                    email: "good.huss@example.com",
-                    phone: "7890-123-456",
-                },
-                {
-                    time: "3:00 PM",
-                    imageUrl: "/images/beverly-tour.png",
-                    title: "The Beverly Hills Tour",
-                    available: 150,
-                    reservedDetails: 0 + " Reserved",
-                    statusColor: "green.500",
-                    capacity: "1/3",
-                    guide: "Anna Smith",
-                    hasNotes: false,
-                    id: "abc-defg-hijklm",
-                    email: "teste123@example.com",
-                    phone: "951",
-                },
-            ]
-        }
-
-    ];
 
     const [searchTerm, setSearchTerm] = useState("");
     const [loadedDates, setLoadedDates] = useState([]);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [selectedDate, setSelectedDate] = useState("");
     const [activeNote, setActiveNote] = useState(null);
+    const {tenantId} = useGuest();
+    const [reservations, setReservations] = useState([]);
 
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [isDetailVisible, setIsDetailVisible] = useState(false);
+    const [userDetails, setUserDetails] = useState({});
 
     const {isOpen, onOpen, onClose} = useDisclosure();
     const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchReservations = async () => {
+            if (!tenantId) return;
+            setIsLoading(true);
+
+            try {
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/byTenantId/${tenantId}`
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch reservations");
+                }
+
+                const data = await response.json();
+
+                const reservationsWithUserDetails = await Promise.all(
+                    data.map(async (reservation) => {
+                        if (reservation.user_id) {
+                            if (!userDetails[reservation.user_id]) {
+                                const userResponse = await fetch(
+                                    `${process.env.NEXT_PUBLIC_API_URL}/users/${reservation.user_id}`
+                                );
+                                if (userResponse.ok) {
+                                    const userData = await userResponse.json();
+                                    return {...reservation, user: userData};
+                                }
+                            } else {
+                                return {...reservation, user: userDetails[reservation.user_id]};
+                            }
+                        }
+                        return reservation;
+                    })
+                );
+
+                const groupedReservations = reservationsWithUserDetails.reduce((acc, reservation) => {
+                    const date = new Date(reservation.reservation_date).toLocaleDateString("en-US", {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                    });
+
+                    if (!acc[date]) {
+                        acc[date] = {
+                            date: date,
+                            day: new Date(reservation.reservation_date).toLocaleDateString("en-US", {weekday: 'long'}),
+                            availableSummary: "∞ Available",
+                            reservedSummary: `${reservation.guestQuantity} Reserved`,
+                            reservations: [],
+                        };
+                    }
+
+                    acc[date].reservations.push({
+                        guestQuantity: reservation.guestQuantity,
+                        time: new Date(reservation.reservation_date).toLocaleTimeString("en-US", {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                        }),
+                        dateFormatted: new Date(reservation.reservation_date).toLocaleDateString("en-US", {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                        }),
+                        title: reservation.tour.name,
+                        available: "∞",
+                        reservedDetails: `${reservation.guestQuantity} Reserved`,
+                        statusColor: reservation.status === "PENDING" ? "red.500" : "green.500",
+                        capacity: `${reservation.guestQuantity}/∞`,
+                        guide: reservation.tour.StandardOperation || "No Guide",
+                        hasNotes: reservation.notes.length > 0,
+                        id: reservation.id,
+                        email: reservation.tour.name + "@example.com",
+                        phone: "N/A",
+                        imageUrl: reservation.tour.imageUrl || "/images/default-tour.png",
+                        user: reservation.user
+                    });
+
+                    return acc;
+                }, {});
+
+                const transformedReservations = Object.values(groupedReservations);
+
+                setReservations(transformedReservations);
+            } catch (error) {
+                console.error("Error fetching reservations:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchReservations();
+    }, [tenantId]);
+
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -558,29 +292,19 @@ export default function Dashboard() {
 
                         <Divider orientation='horizontal' width="100%"/>
                         <VStack spacing={6} align="stretch" marginTop={"10px"}>
-                            {reservations
-                                .filter((data) =>
-                                    loadedDates.includes(
-                                        new Date(`${data.date} ${new Date().getFullYear()}`).toISOString().split("T")[0]
-                                    )
-                                )
-                                .map((data) => ({
-                                    ...data,
-                                    reservations: filterReservations(data.reservations),
-                                }))
-                                .map((data, index) => (
-                                    <ReservationItem
-                                        key={index}
-                                        date={data.date}
-                                        day={data.day}
-                                        availableSummary={data.availableSummary}
-                                        reservedSummary={data.reservedSummary}
-                                        reservations={data.reservations}
-                                        onNoteClick={openNoteModal}
-                                        onSelectReservation={handleSelectReservation}
-                                        isCompactView={isDetailVisible}
-                                    />
-                                ))}
+                            {reservations.map((data, index) => (
+                                <ReservationItem
+                                    key={index}
+                                    date={data.date}
+                                    day={data.day}
+                                    availableSummary={data.availableSummary}
+                                    reservedSummary={data.reservedSummary}
+                                    reservations={filterReservations(data.reservations)}
+                                    onNoteClick={openNoteModal}
+                                    onSelectReservation={handleSelectReservation}
+                                    isCompactView={isDetailVisible}
+                                />
+                            ))}
                         </VStack>
                         <Box textAlign="center" mt={6}>
                             <Button variant="outline" size="sm" onClick={handleLoadMore}>

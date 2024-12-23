@@ -195,14 +195,12 @@ export default function CategoryManagement() {
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const term = e.target.value.toLowerCase();
         setSearchTerm(term);
-        if (selectedCategory) {
-            const categoryTours = selectedCategory.tours.filter((tour) =>
+        const filtered = allTours.filter(
+            (tour) =>
+                (!tour.categoryId || tour.categoryId === selectedCategory?.id) &&
                 tour.name.toLowerCase().includes(term)
-            );
-            setFilteredTours(categoryTours);
-        } else {
-            setFilteredTours([]);
-        }
+        );
+        setFilteredTours(filtered);
     };
 
     const handleSaveTours = async () => {

@@ -1,4 +1,10 @@
 import {
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogContent,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogOverlay,
     Badge,
     Box,
     Button,
@@ -14,14 +20,14 @@ import {
     InputGroup,
     InputLeftElement,
     Text,
+    useClipboard,
     useColorModeValue,
     useToast,
-    useClipboard,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import {useEffect, useRef, useState} from "react";
+import {useRouter} from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
-import { EditIcon, SearchIcon, ViewIcon } from "@chakra-ui/icons";
+import {DeleteIcon, EditIcon, SearchIcon, ViewIcon} from "@chakra-ui/icons";
 import {useGuest} from "../../../components/GuestContext";
 
 export default function ListTours() {
@@ -32,8 +38,11 @@ export default function ListTours() {
     const [tourIdToShow, setTourIdToShow] = useState(null);
     const toast = useToast();
     const router = useRouter();
-    const { hasCopied, onCopy } = useClipboard(tourIdToShow);
+    const {hasCopied, onCopy} = useClipboard(tourIdToShow);
     const {tenantId} = useGuest();
+    const [selectedTourId, setSelectedTourId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const cancelRef = useRef(null);
 
     useEffect(() => {
         async function fetchData() {
@@ -73,24 +82,69 @@ export default function ListTours() {
         router.push(`/dashboard/edit-tour/${tourId}`);
     };
 
+    const handleDeleteClick = (tourId) => {
+        setSelectedTourId(tourId);
+        setIsDeleting(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!selectedTourId) return;
+
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/tours/${selectedTourId}`,
+                {
+                    method: "DELETE",
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to delete tour");
+            }
+
+            setTours((prev) =>
+                prev.filter((tour) => tour.id !== selectedTourId)
+            );
+            toast({
+                title: "Tour Deleted",
+                description: "The tour has been successfully deleted.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error deleting tour:", error);
+            toast({
+                title: "Error",
+                description: "Failed to delete the tour. Please try again.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        } finally {
+            setIsDeleting(false);
+            setSelectedTourId(null);
+        }
+    };
+
     const handleView = (tourId) => {
         setTourIdToShow((prevId) => (prevId === tourId ? null : tourId));
     };
 
     return (
         <DashboardLayout>
-            <Box p={2}>
+            <Box p={2} width={"1300px"}>
                 <HStack mb={4} spacing={4}>
                     <Text fontSize="2xl" fontWeight="medium" textAlign="center">
                         Products
                     </Text>
                     <Center height="50px">
-                        <Divider orientation="vertical" borderWidth="1px" />
+                        <Divider orientation="vertical" borderWidth="1px"/>
                     </Center>
                     <HStack>
-                        <InputGroup>
+                        <InputGroup w={"1000px"}>
                             <InputLeftElement pointerEvents="none">
-                                <SearchIcon color="gray.400" />
+                                <SearchIcon color="gray.400"/>
                             </InputLeftElement>
                             <Input
                                 placeholder="Search by name"
@@ -102,6 +156,7 @@ export default function ListTours() {
                         </InputGroup>
                     </HStack>
                     <Button
+                        w={"200px"}
                         colorScheme="blue"
                         onClick={() => router.push("/dashboard/create-tours")}
                     >
@@ -109,15 +164,9 @@ export default function ListTours() {
                     </Button>
                 </HStack>
 
-                <Divider orientation="horizontal" borderWidth="1px" color={"black"} />
+                <Divider orientation="horizontal" borderWidth="1px" color={"black"}/>
 
-                <Grid
-                    templateColumns="repeat(2, 1fr)"
-                    gap={6}
-                    justifyContent="center"
-                    mt={4}
-                    marginTop={"60px"}
-                >
+                <Grid templateColumns="repeat(2, 1fr)" gap={6} mt={4}>
                     {filteredTours.map((tour) => (
                         <GridItem
                             key={tour.id}
@@ -125,76 +174,93 @@ export default function ListTours() {
                             bg="gray.50"
                             borderRadius="lg"
                             boxShadow="lg"
+                            display="flex"
+                            flexDirection="column"
+                            justifyContent="flex-start"
+                            minHeight="170px"
                             position="relative"
                         >
+                            <HStack position="absolute" top={4} right={4} spacing={2}>
+                                <IconButton
+                                    aria-label="View Tour ID"
+                                    icon={<ViewIcon/>}
+                                    colorScheme="gray"
+                                    size="sm"
+                                    onClick={() => handleView(tour.id)}
+                                />
+                                <IconButton
+                                    aria-label="Edit"
+                                    icon={<EditIcon/>}
+                                    colorScheme="blue"
+                                    size="sm"
+                                    onClick={() => handleEdit(tour.id)}
+                                />
+                                <IconButton
+                                    aria-label="Delete"
+                                    icon={<DeleteIcon/>}
+                                    colorScheme="red"
+                                    size="sm"
+                                    onClick={() => handleDeleteClick(tour.id)}
+                                />
+                            </HStack>
+
+                            {tourIdToShow === tour.id && (
+                                <Text fontSize="sm" color="gray.500" fontWeight="medium" mb={2}>
+                                    ID: {tour.id}
+                                    <Button size="sm" variant="link" onClick={onCopy} ml={2}>
+                                        {hasCopied ? "Copied" : "Copy"}
+                                    </Button>
+                                </Text>
+                            )}
                             <HStack spacing={4} align="start">
                                 <Image
                                     src={tour.imageUrl || "https://via.placeholder.com/150x100"}
                                     alt={tour.name}
                                     boxSize="150px"
                                     borderRadius="md"
-                                    objectFit="cover"
                                 />
-                                <Box flex="1" position="relative">
-                                    {tourIdToShow === tour.id && (
-                                        <Text
-                                            fontSize="sm"
-                                            color="gray.500"
-                                            position="absolute"
-                                            top="-3px"
-                                            left="0"
-                                            zIndex="1"
-                                        >
-                                            ID: {tour.id}
-                                            <Button
-                                                size="sm"
-                                                variant="link"
-                                                onClick={onCopy}
-                                                ml={2}
-                                            >
-                                                {hasCopied ? "Copied" : "Copy"}
-                                            </Button>
-                                        </Text>
-                                    )}
-                                    <HStack justify="space-between" mt={4}>
-                                        <Heading fontSize="lg" noOfLines={1} maxW="200px">
-                                            {tour.name}
-                                        </Heading>
-                                        <Box display="flex" alignItems="center">
-                                            <IconButton
-                                                aria-label="Edit"
-                                                icon={<EditIcon />}
-                                                colorScheme="blue"
-                                                size="sm"
-                                                variant="ghost"
-                                                _hover={{ display: "block" }}
-                                                display="none"
-                                                onClick={() => handleEdit(tour.id)}
-                                            />
-                                            <IconButton
-                                                aria-label="More options"
-                                                icon={<ViewIcon />}
-                                                size="sm"
-                                                variant="ghost"
-                                                _hover={{ display: "block" }}
-                                                display="block"
-                                                onClick={() => handleView(tour.id)}
-                                            />
-                                        </Box>
-                                    </HStack>
-                                    <Text mt={2} color="gray.600" noOfLines={2} maxW="300px">
-                                        {tour.description}
-                                    </Text>
+                                <Box flex="1">
+                                    <Heading fontSize="lg" noOfLines={1}>
+                                        {tour.name}
+                                    </Heading>
+                                    <Text mt={2}>{tour.description}</Text>
 
-                                    <HStack mt={2} justify="space-between">
-                                        {tour.isPrivate && <Badge colorScheme="yellow">Private</Badge>}
-                                        {tour.isHidden && <Badge colorScheme="gray">Hidden</Badge>}
+                                    <HStack mt={2}>
+                                        {tour.isPrivate && (
+                                            <Badge colorScheme="yellow">Private</Badge>
+                                        )}
+                                        {tour.isHidden && (
+                                            <Badge colorScheme="gray">Hidden</Badge>
+                                        )}
                                     </HStack>
                                 </Box>
                             </HStack>
                         </GridItem>
                     ))}
                 </Grid>
+
+                <AlertDialog
+                    isOpen={isDeleting}
+                    leastDestructiveRef={cancelRef}
+                    onClose={() => setIsDeleting(false)}
+                >
+                    <AlertDialogOverlay>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>Confirm Delete</AlertDialogHeader>
+                            <AlertDialogBody>
+                                Are you sure you want to delete this tour?
+                            </AlertDialogBody>
+                            <AlertDialogFooter>
+                                <Button ref={cancelRef} onClick={() => setIsDeleting(false)}>
+                                    Cancel
+                                </Button>
+                                <Button colorScheme="red" onClick={handleConfirmDelete} ml={3}>
+                                    Delete
+                                </Button>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialogOverlay>
+                </AlertDialog>
             </Box>
         </DashboardLayout>
     );

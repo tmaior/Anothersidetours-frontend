@@ -4,6 +4,7 @@ import {
     Button,
     FormControl,
     FormLabel,
+    HStack,
     Input,
     Modal,
     ModalBody,
@@ -154,12 +155,14 @@ export default function CategoryManagement() {
                         </ModalBody>
 
                         <ModalFooter>
-                            <Button variant="outline" onClick={onClose}>
-                                Cancel
-                            </Button>
-                            <Button colorScheme="blue" onClick={handleCreateCategory}>
-                                Create Category
-                            </Button>
+                            <HStack w="100%" justifyContent="space-between">
+                                <Button variant="outline" onClick={onClose}>
+                                    Cancel
+                                </Button>
+                                <Button colorScheme="blue" onClick={handleCreateCategory}>
+                                    Create Category
+                                </Button>
+                            </HStack>
                         </ModalFooter>
                     </ModalContent>
                 </Modal>

@@ -33,8 +33,6 @@ export default function Dashboard() {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [loadedDates, setLoadedDates] = useState([]);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [selectedDate, setSelectedDate] = useState("");
     const [activeNote, setActiveNote] = useState(null);
     const {tenantId} = useGuest();
     const [reservations, setReservations] = useState([]);
@@ -48,6 +46,18 @@ export default function Dashboard() {
     const router = useRouter();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isLoading, setIsLoading] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [selectedDate, setSelectedDate] = useState<string>("");
+
+    const filteredReservations = reservations.filter((reservation) => {
+        const reservationDate = new Date(reservation.date).getTime();
+        const selected = new Date(selectedDate).getTime();
+        return reservationDate >= selected;
+    });
+
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSelectedDate(e.target.value);
+    };
 
     useEffect(() => {
         const fetchReservations = async () => {
@@ -140,6 +150,7 @@ export default function Dashboard() {
                         time: new Date(reservation.reservation_date).toLocaleTimeString("en-US", {
                             hour: '2-digit',
                             minute: '2-digit',
+                            timeZone: "UTC"
                         }),
                         dateFormatted: new Date(reservation.reservation_date).toLocaleDateString("en-US", {
                             year: 'numeric',
@@ -154,8 +165,8 @@ export default function Dashboard() {
                         guide: reservation.tour.StandardOperation || "No Guide",
                         hasNotes: reservation.notes.length > 0,
                         id: reservation.id,
-                        email: reservation.tour.name + "@example.com",
-                        phone: "N/A",
+                        email: reservation.tour.email,
+                        phone:reservation.tour.phone ||"N/A",
                         imageUrl: reservation.tour.imageUrl || "/images/default-tour.png",
                         user: reservation.user
                     });
@@ -311,7 +322,7 @@ export default function Dashboard() {
                 <Input
                     type="date"
                     value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
+                    onChange={handleDateChange}
                     size="sm"
                     width="130px"
                 />
@@ -342,7 +353,7 @@ export default function Dashboard() {
 
                         <Divider orientation='horizontal' width="100%"/>
                         <VStack spacing={6} align="stretch" marginTop={"10px"}>
-                            {reservations.map((data, index) => (
+                            {filteredReservations.map((data, index) => (
                                 <ReservationItem
                                     key={index}
                                     date={data.date}

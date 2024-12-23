@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import { useState, useEffect } from 'react';
 import {
     Box,
     Divider,
@@ -7,49 +7,57 @@ import {
     HStack,
     Image,
     Input,
-    InputGroup, InputLeftElement,
+    InputGroup,
+    InputLeftElement,
     SimpleGrid,
-    Text
+    Text,
+    Spinner,
 } from '@chakra-ui/react';
-import DashboardLayout from "../../../components/DashboardLayout";
-import {SearchIcon} from "@chakra-ui/icons";
-
-const toursData = [
-    {
-        id: 1,
-        name: 'Beyond The Billboards: Hollywood Sign Hike',
-        pricePerHour: 149,
-        imageUrl: 'https://via.placeholder.com/150'
-    },
-    {
-        id: 2,
-        name: 'Step On Guide Service',
-        pricePerHour: 249,
-        imageUrl: 'https://via.placeholder.com/150'
-    },
-    {
-        id: 3,
-        name: 'The Beverly Hills & West Hollywood E-Bike Tour',
-        pricePerHour: 149,
-        imageUrl: 'https://via.placeholder.com/150'
-    },
-    {
-        id: 4,
-        name: 'The Amazing Chase Beverly Hills',
-        pricePerHour: 169,
-        imageUrl: 'https://via.placeholder.com/150'
-    },
-];
+import DashboardLayout from '../../../components/DashboardLayout';
+import { SearchIcon } from '@chakra-ui/icons';
+import Link from 'next/link';
+import { useGuest } from '../../../components/GuestContext';
 
 export default function ToursPage() {
+    const { tenantId } = useGuest();
+    const [tours, setTours] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
-    const filteredTours = toursData.filter((tour) => {
+    useEffect(() => {
+        const fetchTours = async () => {
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`);
+                const data = await res.json();
+                setTours(data);
+                setLoading(false);
+            } catch (error) {
+                console.error('Failed to fetch tours:', error);
+                setLoading(false);
+            }
+        };
+
+        if (tenantId) {
+            fetchTours();
+        }
+    }, [tenantId]);
+
+    const filteredTours = tours.filter((tour) => {
         const normalizedTourName = tour.name.toLowerCase().trim();
         const normalizedSearch = searchTerm.toLowerCase().trim();
-
         return normalizedTourName.includes(normalizedSearch);
     });
+
+    if (loading) {
+        return (
+            <DashboardLayout>
+                <Box p={8} textAlign="center">
+                    <Spinner size="xl" />
+                    <Text mt={4}>Loading tours...</Text>
+                </Box>
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout>
@@ -60,7 +68,7 @@ export default function ToursPage() {
                     </Heading>
                     <InputGroup>
                         <InputLeftElement pointerEvents="none" marginTop={"20px"}>
-                            <SearchIcon color="gray.400"/>
+                            <SearchIcon color="gray.400" />
                         </InputLeftElement>
                         <Input
                             marginTop={"20px"}
@@ -72,39 +80,41 @@ export default function ToursPage() {
                         />
                     </InputGroup>
                 </HStack>
-                <Divider/>
+                <Divider />
                 <Text fontSize={"lg"} fontWeight={"bold"}>
                     Products
                 </Text>
 
                 <SimpleGrid columns={[1, 2, 3]} spacing={6} marginTop={"30px"}>
                     {filteredTours.map((tour) => (
-                        <Box
-                            key={tour.id}
-                            borderWidth="1px"
-                            borderRadius="md"
-                            overflow="hidden"
-                            p={4}
-                            _hover={{boxShadow: 'md'}}
-                        >
-                            <Flex align="center">
-                                <Image
-                                    src={tour.imageUrl}
-                                    alt={tour.name}
-                                    boxSize="70px"
-                                    objectFit="cover"
-                                    borderRadius="md"
-                                />
-                                <Box ml={4}>
-                                    <Heading as="h2" size="sm" mb={1}>
-                                        {tour.name}
-                                    </Heading>
-                                    <Text color="gray.600">
-                                        {`A partir de $${tour.pricePerHour} / hora`}
-                                    </Text>
-                                </Box>
-                            </Flex>
-                        </Box>
+                        <Link href={`/dashboard/make-a-purchase/${tour.id}`} key={tour.id} passHref>
+                            <Box
+                                key={tour.id}
+                                borderWidth="1px"
+                                borderRadius="md"
+                                overflow="hidden"
+                                p={4}
+                                _hover={{ boxShadow: 'md', cursor: 'pointer' }}
+                            >
+                                <Flex align="center">
+                                    <Image
+                                        src={tour.imageUrl}
+                                        alt={tour.name}
+                                        boxSize="70px"
+                                        objectFit="cover"
+                                        borderRadius="md"
+                                    />
+                                    <Box ml={4}>
+                                        <Heading as="h2" size="sm" mb={1}>
+                                            {tour.name}
+                                        </Heading>
+                                        <Text color="gray.600">
+                                            {`$${tour.pricePerHour} / hour`}
+                                        </Text>
+                                    </Box>
+                                </Flex>
+                            </Box>
+                        </Link>
                     ))}
                 </SimpleGrid>
 

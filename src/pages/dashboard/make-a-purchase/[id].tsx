@@ -18,13 +18,27 @@ import {
 import DashboardLayout from "../../../components/DashboardLayout";
 import {useRouter} from "next/router";
 
+interface AddOn {
+    id: string;
+    tourId: string;
+    label: string;
+    description: string;
+    type: 'CHECKBOX' | 'SELECT';
+    price: number;
+}
+
+interface SelectedAddOn {
+    addOnId: string;
+    quantity: number;
+    checked: boolean;
+}
+
 const PurchasePage = () => {
 
     const [quantity, setQuantity] = useState(2)
     const [date, setDate] = useState('2024-12-20')
     const [time, setTime] = useState('08:00')
     const [pickUpAddOn, setPickUpAddOn] = useState(0)
-    const [privateTourAddOn, setPrivateTourAddOn] = useState(0)
     const [bookingFeePercent, setBookingFeePercent] = useState(0)
     const [gratuity, setGratuity] = useState('')
     const [paymentWorkflow, setPaymentWorkflow] = useState("Now")
@@ -38,6 +52,7 @@ const PurchasePage = () => {
     const isCreditCardMethod = paymentMethod === "Credit Card"
     const isCreditCardRequired = isCreditCardMethod && !doNotCharge && cardNumber.trim() === ""
 
+    const [privateTourAddOn, setPrivateTourAddOn] = useState(0);
     const [bookingFee, setBookingFee] = useState(false)
 
     const basePricePerGuest = 149
@@ -56,6 +71,13 @@ const PurchasePage = () => {
         {name: "Guests #1", info: ""},
         {name: "Guests #2", info: ""}
     ])
+    const [addons, setAddons] = useState<AddOn[]>([]);
+    const selects = addons.filter((addon) => addon.type === 'SELECT');
+    const checkboxes = addons.filter((addon) => addon.type === 'CHECKBOX');
+    const orderedAddons = [...selects, ...checkboxes];
+    const [loadingAddons, setLoadingAddons] = useState(true);
+
+    const [selectedAddOns, setSelectedAddOns] = useState<SelectedAddOn[]>([]);
 
     const handleNameChange = (index, newName) => {
         const updated = [...attendees]
@@ -93,6 +115,30 @@ const PurchasePage = () => {
         if (id) {
             fetchTour();
         }
+    }, [id]);
+
+    useEffect(() => {
+        const fetchAddOns = async () => {
+            try {
+                if (!id) return;
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${id}`);
+                const data = await res.json();
+                setAddons(data);
+
+                const initSelected = data.map((addon: AddOn) => ({
+                    addOnId: addon.id,
+                    quantity: 0,
+                    checked: false
+                }));
+                setSelectedAddOns(initSelected);
+
+                setLoadingAddons(false);
+            } catch (error) {
+                console.error('Failed to fetch addons:', error);
+                setLoadingAddons(false);
+            }
+        };
+        fetchAddOns();
     }, [id]);
 
     useEffect(() => {
@@ -152,11 +198,52 @@ const PurchasePage = () => {
         );
     }
 
+    const dynamicAddOnsPrice = selectedAddOns.reduce((acc, selected) => {
+        const addonInfo = addons.find((a) => a.id === selected.addOnId);
+        if (!addonInfo) return acc;
+        if (addonInfo.type === 'CHECKBOX') {
+            return selected.checked ? acc + addonInfo.price : acc;
+        }
+        if (addonInfo.type === 'SELECT') {
+            return acc + addonInfo.price * selected.quantity;
+        }
+        return acc;
+    }, 0);
+
     const basePrice = tour.price || basePricePerGuest
     const totalBaseFinal = quantity * basePrice
-    const totalAddOnsFinal = pickUpAddOn * 50 + privateTourAddOn * 50
     const gratuityAmountFinal = gratuity !== '' ? parseFloat(gratuity) : 0
-    const grandTotalFinal = totalBaseFinal + totalAddOnsFinal + gratuityAmountFinal
+    const grandTotalFinal = totalBaseFinal + dynamicAddOnsPrice + gratuityAmountFinal
+
+    const incrementAddon = (addonId: string) => {
+        setSelectedAddOns((prev) =>
+            prev.map((sel) =>
+                sel.addOnId === addonId
+                    ? {...sel, quantity: sel.quantity + 1}
+                    : sel
+            )
+        );
+    };
+
+    const decrementAddon = (addonId: string) => {
+        setSelectedAddOns((prev) =>
+            prev.map((sel) =>
+                sel.addOnId === addonId
+                    ? {...sel, quantity: sel.quantity > 0 ? sel.quantity - 1 : 0}
+                    : sel
+            )
+        );
+    };
+
+    const toggleCheckboxAddon = (addonId: string, newValue: boolean) => {
+        setSelectedAddOns((prev) =>
+            prev.map((sel) =>
+                sel.addOnId === addonId
+                    ? {...sel, checked: newValue}
+                    : sel
+            )
+        );
+    };
 
     return (
         <DashboardLayout>
@@ -206,42 +293,55 @@ const PurchasePage = () => {
                             )}
                         </FormControl>
                         <Heading size="md" mt={8} mb={4}>Add-ons</Heading>
-                        <HStack justify="space-between" mb={4}>
-                            <Text>Add A Pick-Up and Drop Off for The Hike? (US$50,00)</Text>
-                            <HStack>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setPickUpAddOn(pickUpAddOn > 0 ? pickUpAddOn - 1 : 0)}
-                                >
-                                    -
-                                </Button>
-                                <Text>{pickUpAddOn}</Text>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setPickUpAddOn(pickUpAddOn + 1)}
-                                >
-                                    +
-                                </Button>
-                            </HStack>
-                        </HStack>
-                        <HStack justify="space-between" mb={4}>
-                            <Text>Private Tour? (US$50,00)</Text>
-                            <HStack>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setPrivateTourAddOn(privateTourAddOn > 0 ? privateTourAddOn - 1 : 0)}
-                                >
-                                    -
-                                </Button>
-                                <Text>{privateTourAddOn}</Text>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setPrivateTourAddOn(privateTourAddOn + 1)}
-                                >
-                                    +
-                                </Button>
-                            </HStack>
-                        </HStack>
+                        {!loadingAddons && (
+                            <>
+                                {(() => {
+                                    const selects = addons.filter((addon) => addon.type === 'SELECT');
+                                    const checkboxes = addons.filter((addon) => addon.type === 'CHECKBOX');
+                                    const orderedAddons = [...selects, ...checkboxes];
+
+                                    return orderedAddons.map((addon) => {
+                                        const selectedState = selectedAddOns.find((s) => s.addOnId === addon.id);
+                                        if (!selectedState) return null;
+
+                                        return (
+                                            <Box key={addon.id} mb={4}>
+                                                <HStack justify="space-between">
+                                                    <Text>
+                                                        {addon.label} (US${addon.price})
+                                                    </Text>
+                                                    {addon.type === 'CHECKBOX' && (
+                                                        <Switch
+                                                            isChecked={selectedState.checked}
+                                                            onChange={(e) => toggleCheckboxAddon(addon.id, e.target.checked)}
+                                                            colorScheme="blue"
+                                                        />
+                                                    )}
+                                                    {addon.type === 'SELECT' && (
+                                                        <HStack>
+                                                            <Button variant="outline"
+                                                                    onClick={() => decrementAddon(addon.id)}>
+                                                                -
+                                                            </Button>
+                                                            <Text>{selectedState.quantity}</Text>
+                                                            <Button variant="outline"
+                                                                    onClick={() => incrementAddon(addon.id)}>
+                                                                +
+                                                            </Button>
+                                                        </HStack>
+                                                    )}
+                                                </HStack>
+                                                {addon.description && (
+                                                    <Text fontSize="sm" color="gray.600">
+                                                        {addon.description}
+                                                    </Text>
+                                                )}
+                                            </Box>
+                                        );
+                                    });
+                                })()}
+                            </>
+                        )}
                         <HStack justify="space-between" mb={4}>
                             <Text>6% Booking Fee</Text>
                             <Switch

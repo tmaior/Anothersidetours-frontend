@@ -210,15 +210,25 @@ export default function Dashboard() {
 
     const filterReservations = (reservations) => {
         if (!searchTerm) return reservations;
+        const lowercasedSearchTerm = searchTerm.toLowerCase();
+
         return reservations.filter((reservation) => {
-            const {guide, email, phone, id} = reservation;
-            const lowercasedSearchTerm = searchTerm.toLowerCase();
-            return (
+            const { guide, email, phone, id, user } = reservation;
+
+            const matchesReservation = (
                 (guide && guide.toLowerCase().includes(lowercasedSearchTerm)) ||
                 (email && email.toLowerCase().includes(lowercasedSearchTerm)) ||
                 (phone && phone.toLowerCase().includes(lowercasedSearchTerm)) ||
                 (id && id.toLowerCase().includes(lowercasedSearchTerm))
             );
+
+            const matchesUser = user && (
+                (user.name && user.name.toLowerCase().includes(lowercasedSearchTerm)) ||
+                (user.email && user.email.toLowerCase().includes(lowercasedSearchTerm)) ||
+                (user.phone && user.phone.toLowerCase().includes(lowercasedSearchTerm))
+            );
+
+            return matchesReservation || matchesUser;
         });
     };
 

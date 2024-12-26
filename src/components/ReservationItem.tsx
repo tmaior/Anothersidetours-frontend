@@ -1,21 +1,21 @@
 import {
     Box,
     Button,
-    Checkbox,
     Flex,
     HStack,
     IconButton,
     Image,
-    Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader,
-    ModalOverlay,
+    Menu,
+    MenuButton, MenuItem,
+    MenuList,
     Text,
-    useDisclosure,
     VStack,
 } from "@chakra-ui/react";
 import { BsSticky, BsThreeDots } from "react-icons/bs";
 import { FaPencilAlt } from "react-icons/fa";
 import React, { useState } from "react";
 import { AiOutlineCompass } from "react-icons/ai";
+import ManageGuidesModal from "./ManageGuidesModal";
 
 const ReservationItem = ({
                              date,
@@ -27,20 +27,12 @@ const ReservationItem = ({
                              onSelectReservation,
                              isCompactView,
                          }) => {
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const [isGuideModalOpen, setGuideModalOpen] = useState(false);
     const [selectedGuide, setSelectedGuide] = useState<string>("");
-    const guides = [
-        "AJ West",
-        "Ben Hussock",
-        "Jeff Mirkin",
-        "Jose Oyola",
-        "Kenneth Lippman",
-        "Luce Metrius",
-    ];
 
-    const handleGuideSelection = (guide: string) => {
-        setSelectedGuide(guide);
-        onClose();
+    const handleOpenGuideModal = (e) => {
+        e.stopPropagation();
+        setGuideModalOpen(true);
     };
 
     return (
@@ -71,9 +63,10 @@ const ReservationItem = ({
                         </Box>
                         <Image
                             src={item.imageUrl}
-                            boxSize="40px"
+                            boxSize="70px"
                             borderRadius="md"
                             alt="Tour Icon"
+                            objectFit="fill"
                         />
                     </HStack>
                     <Box flex="1" ml={4}>
@@ -114,16 +107,21 @@ const ReservationItem = ({
                                         fontSize="xs"
                                         color="green.600"
                                         textAlign="center"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onOpen();
-                                        }}
+                                        onClick={handleOpenGuideModal}
                                         cursor="pointer"
                                         _hover={{ color: "blue.500" }}
                                     >
                                         {selectedGuide || item.guide || "No guide available"}
                                     </Text>
                                 </Flex>
+                                <ManageGuidesModal
+                                    isOpen={isGuideModalOpen}
+                                    onClose={() => setGuideModalOpen(false)}
+                                    onSelectGuide={(guideName) => {
+                                        setSelectedGuide(guideName);
+                                        setGuideModalOpen(false);
+                                    }}
+                                />
                                 <Flex align="center" justify="center">
                                     {item.hasNotes ? (
                                         <IconButton
@@ -142,13 +140,23 @@ const ReservationItem = ({
                                     )}
                                 </Flex>
                             </Flex>
-                            <IconButton
-                                icon={<BsThreeDots />}
-                                variant="ghost"
-                                aria-label="Options"
-                                size="sm"
-                                onClick={(e) => e.stopPropagation()}
-                            />
+                            <Menu>
+                                <MenuButton
+                                    as={IconButton}
+                                    icon={<BsThreeDots />}
+                                    variant="ghost"
+                                    aria-label="Options"
+                                    size="sm"
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                                <MenuList>
+                                    <MenuItem>Download</MenuItem>
+                                    <MenuItem>Create a Copy</MenuItem>
+                                    <MenuItem>Mark as Draft</MenuItem>
+                                    <MenuItem>Delete</MenuItem>
+                                    <MenuItem>Attend a Workshop</MenuItem>
+                                </MenuList>
+                            </Menu>
                             <Button
                                 variant="outline"
                                 colorScheme="green"
@@ -161,32 +169,6 @@ const ReservationItem = ({
                     )}
                 </Flex>
             ))}
-
-            <Modal isOpen={isOpen} onClose={onClose}>
-                <ModalOverlay />
-                <ModalContent>
-                    <ModalHeader>Assign Guide</ModalHeader>
-                    <ModalCloseButton />
-                    <ModalBody>
-                        {guides.map((guide) => (
-                            <HStack key={guide} spacing={4} align="center">
-                                <Checkbox
-                                    isChecked={selectedGuide === guide}
-                                    onChange={() => handleGuideSelection(guide)}
-                                />
-                                <Text>{guide}</Text>
-                            </HStack>
-                        ))}
-                    </ModalBody>
-
-                    <ModalFooter>
-                        <Button colorScheme="blue" mr={3} onClick={onClose}>
-                            Save Changes
-                        </Button>
-                        <Button variant="ghost" onClick={onClose}>Cancel</Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
         </VStack>
     );
 };

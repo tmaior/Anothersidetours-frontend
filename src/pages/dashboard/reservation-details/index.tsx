@@ -16,12 +16,21 @@ import {
     AccordionButton,
     AccordionIcon,
     AccordionItem,
-    AccordionPanel,
+    AccordionPanel, Divider,
 } from "@chakra-ui/react";
 import {FiCalendar, FiWatch} from "react-icons/fi";
-import { ArrowBackIcon } from "@chakra-ui/icons";
+import {ArrowBackIcon} from "@chakra-ui/icons";
+import React, {useState} from "react";
+import ManageGuidesModal from "../../../components/ManageGuidesModal";
+import {CiSquarePlus} from "react-icons/ci";
+import NotesSection from "../../../components/NotesSection";
+import {FaRegTimesCircle} from "react-icons/fa";
+import {AiOutlineCompass} from "react-icons/ai";
 
 export default function ReservationDetail({ reservation, onCloseDetail }) {
+    const [isGuideModalOpen, setGuideModalOpen] = useState(false);
+    const [selectedGuide, setSelectedGuide] = useState([]);
+
     if (!reservation) {
         return (
             <Box p={4}>
@@ -32,8 +41,10 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
     const { user } = reservation;
 
     return (
-        <Box p={4}>
+        <Box p={4} overflowX="hidden">
+            <Divider marginTop={"-15px"} maxW={"100%"}/>
             <Button
+                marginTop={"15px"}
                 leftIcon={<ArrowBackIcon />}
                 variant="outline"
                 size="sm"
@@ -61,14 +72,14 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
             </Flex>
             <HStack alignItems="flex-start" justifyContent="space-between">
                 <HStack alignItems="flex-start">
-                    <Box boxSize="80px">
+                    <Box boxSize="130px">
                         <Image
                             src={reservation.imageUrl || "https://via.placeholder.com/80"}
                             alt="Event Image"
                             borderRadius="md"
-                            width="80px"
-                            height="80px"
-                            objectFit="cover"
+                            width="130px"
+                            height="130px"
+                            objectFit="contain"
                         />
                     </Box>
                     <Box>
@@ -91,32 +102,53 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
                 <Button size="sm" colorScheme="red">Reject</Button>
                 <Button size="sm" variant="outline">Message</Button>
                 <Button size="sm" variant="outline">Change Arrival</Button>
-                <Button size="sm" variant="outline">Cancel Reservations</Button>
+                <Button size="sm" variant="outline"
+                        color={"red.500"}>
+                    <FaRegTimesCircle style={{ marginRight: '8px' }} />
+                    Cancel Reservations
+                </Button>
                 <Button size="sm" variant="outline">Email Roster</Button>
                 <Button size="sm" variant="outline">Export Roster</Button>
-                <Button size="sm" colorScheme="green">Purchase</Button>
+                <Button size="sm" variant="outline" color={"green"}> + Purchase</Button>
             </HStack>
             <HStack spacing={8} mt={4}>
-                <Box>
-                    <Text fontSize="sm" fontWeight="bold">Guide</Text>
-                    <Text fontSize="sm" color="green.500">
-                        {reservation.guide}
+                <Box mt={6}>
+                    <HStack spacing={2}>
+                        <AiOutlineCompass />
+                        <Text fontSize="xl" fontWeight="bold">Guide</Text>
+                    </HStack>
+                    <Text fontSize="sm" color="black.500">
+                        {selectedGuide.length > 0 ? selectedGuide.join(', ') : reservation.guide}
                     </Text>
-                    <Button variant="link" size="xs">Manage Guides</Button>
+
+                    <Button
+                        variant="link"
+                        size="xs"
+                        onClick={() => setGuideModalOpen(true)}
+                        color="black"
+                        fontWeight={"bold"}
+                    >
+                        <CiSquarePlus size={"17px"}/>
+                        Manage Guides
+                    </Button>
                 </Box>
+                <ManageGuidesModal
+                    isOpen={isGuideModalOpen}
+                    onClose={() => setGuideModalOpen(false)}
+                    onSelectGuide={(guideName) => {
+                        setSelectedGuide(guideName);
+                        setGuideModalOpen(false);
+                    }}
+                />
             </HStack>
 
-            <Box mt={6} borderTop="1px solid" borderColor="gray.200" pt={4}>
-                <HStack justifyContent="space-between">
-                    <Text fontSize="lg" fontWeight="bold">Event Notes</Text>
-                    <Button size="sm">Add Note</Button>
-                </HStack>
-                <Text fontSize="sm" color="gray.500" mt={2}>
-                    No notes added yet.
-                </Text>
-            </Box>
+            <NotesSection
+                notes={[
+                    { title: "Guest Arrival", content: "Guests will arrive at 10 AM." },
+                ]}
+            />
 
-            <Box mt={6}>
+            <Box mt={6} maxW="100%" overflowX="auto">
                 <Text fontSize="lg" fontWeight="bold" mb={4}>Guests</Text>
                 <Table size="sm" variant="simple">
                     <Thead>

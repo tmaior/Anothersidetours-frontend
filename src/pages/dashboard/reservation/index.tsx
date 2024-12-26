@@ -312,20 +312,7 @@ export default function Dashboard() {
                 </HStack>
                 <Spacer/>
             </Flex>
-            <HStack spacing={4} mb={4}>
-                <Text fontSize="sm" color="gray.600">
-                    Filters:
-                </Text>
-                <Button variant="outline" size="sm">
-                    Products: All
-                </Button>
-                <Button variant="outline" size="sm">
-                    Equipment: All
-                </Button>
-                <Button variant="outline" size="sm">
-                    Guides: All
-                </Button>
-            </HStack>
+            <Divider/>
             <HStack spacing={2} mb={4} align="center" marginTop={"10px"}>
                 <Input
                     type="date"
@@ -347,7 +334,22 @@ export default function Dashboard() {
                     Sync Calendar
                 </Button>
             </HStack>
-            <Flex height="calc(100vh - 80px)">
+            <Divider/>
+            <HStack spacing={4} mb={4} marginTop={"10px"}>
+                <Text fontSize="sm" color="gray.600">
+                    Filters:
+                </Text>
+                <Button variant="outline" size="sm">
+                    Products: All
+                </Button>
+                <Button variant="outline" size="sm">
+                    Equipment: All
+                </Button>
+                <Button variant="outline" size="sm">
+                    Guides: All
+                </Button>
+            </HStack>
+            <Flex height="calc(100vh - 80px)" ml={"-40px"}>
                 <Box
                     w={isDetailVisible ? "15%" : "100%"}
                     overflowY="auto"

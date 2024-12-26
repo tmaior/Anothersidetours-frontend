@@ -402,6 +402,10 @@ const PurchasePage = () => {
         }
     };
 
+    const handleCancel = () => {
+        router.push('/dashboard/reservation');
+    };
+
     if (loading) {
         return (
             <DashboardLayout>
@@ -751,7 +755,7 @@ const PurchasePage = () => {
                         <Divider my={6}/>
 
                         <HStack justify="space-between">
-                            <Button variant="outline">Cancel</Button>
+                            <Button variant="outline" onClick={handleCancel}>Cancel</Button>
                             <HStack spacing={4}>
                                 <Button variant="outline">Add Another Product</Button>
                                 <Button

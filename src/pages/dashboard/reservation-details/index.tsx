@@ -5,10 +5,6 @@ import {
     HStack,
     Icon,
     Image,
-    Menu,
-    MenuButton,
-    MenuItem,
-    MenuList,
     Table,
     Tbody,
     Td,
@@ -29,7 +25,7 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
     if (!reservation) {
         return (
             <Box p={4}>
-                <Text>Nenhuma reserva selecionada. Selecione um item na lista ao lado.</Text>
+                <Text>No reservation selected. Select an item from the list below.</Text>
             </Box>
         );
     }
@@ -44,7 +40,7 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
                 mb={4}
                 onClick={onCloseDetail}
             >
-                Voltar
+                Back
             </Button>
             <Flex alignItems="center" justifyContent="space-between" mb={4}>
                 {/*<HStack spacing={4}>*/}
@@ -91,6 +87,8 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
                 </HStack>
             </HStack>
             <HStack spacing={4} mt={4}>
+                <Button size="sm" colorScheme="green">Accept</Button>
+                <Button size="sm" colorScheme="red">Reject</Button>
                 <Button size="sm" variant="outline">Message</Button>
                 <Button size="sm" variant="outline">Change Arrival</Button>
                 <Button size="sm" variant="outline">Cancel Reservations</Button>

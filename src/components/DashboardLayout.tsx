@@ -150,7 +150,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     };
 
     return (
-        <Box display="flex" minH="100vh">
+        <Box display="flex" minH="100vh" >
             <Box
                 as="nav"
                 width="250px"
@@ -571,7 +571,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     </Text>
                 </VStack>
 
-                <Box mt="auto" p={4} marginLeft={"-6"} w={"273px"}>
+                <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"}>
                     {/*{!isLoading && selectedTenant && (*/}
                     <Menu placement="right-start" offset={[0, 0]} closeOnSelect={false}>
                         <MenuButton
@@ -605,7 +605,9 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                 </Box>
                             </HStack>
                         </MenuButton>
-                        <MenuList minW="300px" bg="#222324" p={0}>
+                        <MenuList minW="300px" bg="#222324"
+                                  maxH="calc(100vh - 120px)"
+                                  overflowY="auto">
                             {tenants.map((tenant) => (
                                 <MenuItem
                                     key={tenant.id}

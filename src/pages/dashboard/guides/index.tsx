@@ -1,6 +1,6 @@
 import {Box, Heading, VStack, Button, Divider, Flex} from "@chakra-ui/react";
 import { useState } from "react";
-import GuideItem from "../../components/GuideItem";
+import GuideItem from "../../../components/GuideItem";
 
 interface Guide {
     id: number;

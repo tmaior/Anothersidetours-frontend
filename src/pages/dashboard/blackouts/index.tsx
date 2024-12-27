@@ -26,8 +26,9 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
 import DashboardLayout from "../../../components/DashboardLayout";
+import withAuth from "../../../utils/withAuth";
 
-export default function BlackoutDatesManagement() {
+function BlackoutDatesManagement() {
     const [blackoutDates, setBlackoutDates] = useState([]);
     const [categories, setCategories] = useState([]);
     const [newBlackoutDate, setNewBlackoutDate] = useState({
@@ -120,7 +121,7 @@ export default function BlackoutDatesManagement() {
     };
 
     const handleCreateBlackoutDate = async () => {
-        const { name, startDate, endDate, noEnd, isGlobal, categoryId, timeRanges } = newBlackoutDate;
+        const {name, startDate, endDate, noEnd, isGlobal, categoryId, timeRanges} = newBlackoutDate;
 
         if (!name) {
             toast({
@@ -255,7 +256,7 @@ export default function BlackoutDatesManagement() {
                                             {date.startDate && (
                                                 <Text>
                                                     <strong>Start Date:</strong>{" "}
-                                                    {new Date(date.startDate).toLocaleDateString('en-GB', { timeZone: 'UTC' })}
+                                                    {new Date(date.startDate).toLocaleDateString('en-GB', {timeZone: 'UTC'})}
                                                 </Text>
                                             )}
                                             {date.endDate ? (
@@ -355,7 +356,7 @@ export default function BlackoutDatesManagement() {
                                                     }))
                                                 }
                                                 dateFormat="dd/MM/yyyy"
-                                                customInput={<Input />}
+                                                customInput={<Input/>}
                                             />
                                         </Box>
                                         <Box>
@@ -370,7 +371,7 @@ export default function BlackoutDatesManagement() {
                                                     }))
                                                 }
                                                 dateFormat="dd/MM/yyyy"
-                                                customInput={<Input />}
+                                                customInput={<Input/>}
                                                 isClearable
                                             />
                                         </Box>
@@ -426,7 +427,7 @@ export default function BlackoutDatesManagement() {
                                                         setNewBlackoutDate((prev) => {
                                                             const updatedRanges = [...prev.timeRanges];
                                                             updatedRanges[index].startTime = time;
-                                                            return { ...prev, timeRanges: updatedRanges };
+                                                            return {...prev, timeRanges: updatedRanges};
                                                         })
                                                     }
                                                     showTimeSelect
@@ -434,7 +435,7 @@ export default function BlackoutDatesManagement() {
                                                     timeIntervals={30}
                                                     timeCaption="Start Time"
                                                     dateFormat="hh:mm aa"
-                                                    customInput={<Input />}
+                                                    customInput={<Input/>}
                                                 />
                                                 <DatePicker
                                                     selected={range.endTime}
@@ -442,7 +443,7 @@ export default function BlackoutDatesManagement() {
                                                         setNewBlackoutDate((prev) => {
                                                             const updatedRanges = [...prev.timeRanges];
                                                             updatedRanges[index].endTime = time;
-                                                            return { ...prev, timeRanges: updatedRanges };
+                                                            return {...prev, timeRanges: updatedRanges};
                                                         })
                                                     }
                                                     showTimeSelect
@@ -450,10 +451,10 @@ export default function BlackoutDatesManagement() {
                                                     timeIntervals={30}
                                                     timeCaption="End Time"
                                                     dateFormat="hh:mm aa"
-                                                    customInput={<Input />}
+                                                    customInput={<Input/>}
                                                 />
                                                 <IconButton
-                                                    icon={<DeleteIcon />}
+                                                    icon={<DeleteIcon/>}
                                                     colorScheme="red"
                                                     onClick={() => handleRemoveTimeRange(index)}
                                                     aria-label="Remove time range"
@@ -461,7 +462,7 @@ export default function BlackoutDatesManagement() {
                                             </HStack>
                                         ))}
                                         <Button
-                                            leftIcon={<AddIcon />}
+                                            leftIcon={<AddIcon/>}
                                             colorScheme="blue"
                                             onClick={handleAddTimeRange}
                                         >
@@ -482,3 +483,5 @@ export default function BlackoutDatesManagement() {
         </DashboardLayout>
     );
 }
+
+export default withAuth(BlackoutDatesManagement);

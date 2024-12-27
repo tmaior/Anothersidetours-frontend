@@ -8,6 +8,7 @@ import {
     FormLabel,
     FormErrorMessage,
     VStack,
+    Text,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { useRouter } from "next/router";
@@ -17,13 +18,14 @@ export default function Login() {
 
     const [formData, setFormData] = useState({ email: "", password: "" });
     const [errors, setErrors] = useState({ email: false, password: false });
+    const [apiError, setApiError] = useState("");
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const newErrors = {
@@ -33,7 +35,26 @@ export default function Login() {
         setErrors(newErrors);
 
         if (!newErrors.email && !newErrors.password) {
-            router.push("/");
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employee/login`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem("user", JSON.stringify(data.employee));
+                    router.push("/dashboard/reservation");
+                } else {
+                    setApiError(data.message || "Invalid credentials");
+                }
+            } catch {
+                setApiError("Failed to connect to the server");
+            }
         }
     };
 
@@ -84,6 +105,13 @@ export default function Login() {
                                 </FormErrorMessage>
                             )}
                         </FormControl>
+
+                        {apiError && (
+                            <Text color="red.500" fontSize="sm" mt={2}>
+                                {apiError}
+                            </Text>
+                        )}
+
                         <Button colorScheme="blue" type="submit" width="full" mt={4}>
                             Login
                         </Button>

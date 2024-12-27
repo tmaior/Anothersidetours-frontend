@@ -14,8 +14,9 @@ import {
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
+import withAuth from "../../../utils/withAuth";
 
-export default function ListAddons() {
+function ListAddons() {
     const bgColor = useColorModeValue("white", "gray.800");
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
     const [addons, setAddons] = useState([]);
@@ -163,3 +164,4 @@ export default function ListAddons() {
         </DashboardLayout>
     );
 }
+export default withAuth(ListAddons);

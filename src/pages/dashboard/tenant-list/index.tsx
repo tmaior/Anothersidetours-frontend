@@ -1,28 +1,29 @@
 import {
     Box,
-    VStack,
-    HStack,
-    Input,
     Button,
-    Text,
     Checkbox,
     Flex,
+    HStack,
+    Input,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+    Text,
     useColorModeValue,
     useToast,
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
-    ModalCloseButton,
+    VStack,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import {useEffect, useState} from "react";
+import {useRouter} from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
 import CreateTenantModal from "../tenant";
+import withAuth from "../../../utils/withAuth";
 
-export default function ListTenants() {
+function ListTenants() {
     const bgColor = useColorModeValue("white", "gray.800");
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
     const [tenants, setTenants] = useState([]);
@@ -54,6 +55,7 @@ export default function ListTenants() {
                 });
             }
         }
+
         fetchTenants();
     }, [toast]);
 
@@ -116,8 +118,8 @@ export default function ListTenants() {
                     `${process.env.NEXT_PUBLIC_API_URL}/tenants/${selectedTenant}`,
                     {
                         method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ name: tenantName }),
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({name: tenantName}),
                     }
                 );
 
@@ -125,7 +127,7 @@ export default function ListTenants() {
                     // const updatedTenant = await response.json();
                     setTenants((prev) =>
                         prev.map((tenant) =>
-                            tenant.id === selectedTenant ? { ...tenant, name: tenantName } : tenant
+                            tenant.id === selectedTenant ? {...tenant, name: tenantName} : tenant
                         )
                     );
                     setIsEditModalOpen(false);
@@ -221,10 +223,10 @@ export default function ListTenants() {
                 addTenantToList={addTenantToList}
             />
             <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
-                <ModalOverlay />
+                <ModalOverlay/>
                 <ModalContent>
                     <ModalHeader>Edit Tenant</ModalHeader>
-                    <ModalCloseButton />
+                    <ModalCloseButton/>
                     <ModalBody>
                         <Input
                             placeholder="Edit Tenant Name"
@@ -245,3 +247,5 @@ export default function ListTenants() {
         </DashboardLayout>
     );
 }
+
+export default withAuth(ListTenants);

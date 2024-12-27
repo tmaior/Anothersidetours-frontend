@@ -1,6 +1,7 @@
-import {Box, Heading, VStack, Button, Divider, Flex} from "@chakra-ui/react";
-import { useState } from "react";
+import {Box, Button, Divider, Flex, Heading, VStack} from "@chakra-ui/react";
+import {useState} from "react";
 import GuideItem from "../../../components/GuideItem";
+import withAuth from "../../../utils/withAuth";
 
 interface Guide {
     id: number;
@@ -9,11 +10,11 @@ interface Guide {
     initials: string;
 }
 
-export default function GuidesPage() {
+function GuidesPage() {
     const [guides, setGuides] = useState<Guide[]>([
-        { id: 1, name: "AJ West", status: "Confirmed", initials: "AW" },
-        { id: 2, name: "Ben Hussock", status: "Confirmed", initials: "BH" },
-        { id: 3, name: "Jeff Mirkin", status: "Confirmed", initials: "JM" },
+        {id: 1, name: "AJ West", status: "Confirmed", initials: "AW"},
+        {id: 2, name: "Ben Hussock", status: "Confirmed", initials: "BH"},
+        {id: 3, name: "Jeff Mirkin", status: "Confirmed", initials: "JM"},
     ]);
 
     const handleEdit = (id: number) => {
@@ -55,3 +56,5 @@ export default function GuidesPage() {
         </Box>
     );
 }
+
+export default withAuth(GuidesPage);

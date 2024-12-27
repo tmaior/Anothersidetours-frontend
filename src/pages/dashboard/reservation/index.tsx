@@ -23,24 +23,25 @@ import {
 } from "@chakra-ui/react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ReservationItem from "../../../components/ReservationItem";
-import { SearchIcon } from "@chakra-ui/icons";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import {SearchIcon} from "@chakra-ui/icons";
+import {useEffect, useState} from "react";
+import {useRouter} from "next/router";
 import ReservationDetail from "../reservation-details";
-import { useGuest } from "../../../components/GuestContext";
+import {useGuest} from "../../../components/GuestContext";
+import withAuth from "../../../utils/withAuth";
 
-export default function Dashboard() {
+function Dashboard() {
     const [searchTerm, setSearchTerm] = useState("");
     const [loadedDates, setLoadedDates] = useState([]);
     const [activeNote, setActiveNote] = useState(null);
-    const { tenantId } = useGuest();
+    const {tenantId} = useGuest();
     const [reservations, setReservations] = useState([]);
 
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [isDetailVisible, setIsDetailVisible] = useState(false);
     const [userDetails, setUserDetails] = useState({});
 
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const {isOpen, onOpen, onClose} = useDisclosure();
     const router = useRouter();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isLoading, setIsLoading] = useState(true);
@@ -87,10 +88,10 @@ export default function Dashboard() {
                                         ...prev,
                                         [reservation.user_id]: userData,
                                     }));
-                                    return { ...reservation, user: userData };
+                                    return {...reservation, user: userData};
                                 }
                             } else {
-                                return { ...reservation, user: userDetails[reservation.user_id] };
+                                return {...reservation, user: userDetails[reservation.user_id]};
                             }
                         }
                         return reservation;
@@ -221,7 +222,7 @@ export default function Dashboard() {
         const lowercasedSearchTerm = searchTerm.toLowerCase();
 
         return reservations.filter((reservation) => {
-            const { guide, email, phone, id, user } = reservation;
+            const {guide, email, phone, id, user} = reservation;
 
             const matchesReservation =
                 (guide && guide.toLowerCase().includes(lowercasedSearchTerm)) ||
@@ -416,3 +417,5 @@ export default function Dashboard() {
         </DashboardLayout>
     );
 }
+
+export default withAuth(Dashboard);

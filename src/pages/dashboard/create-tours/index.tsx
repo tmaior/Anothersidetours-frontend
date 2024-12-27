@@ -22,6 +22,7 @@ import DashboardLayout from "../../../components/DashboardLayout";
 import ProgressBar from "../../../components/ProgressBar";
 import {useRouter} from "next/router";
 import {useGuest} from "../../../components/GuestContext";
+import withAuth from "../../../utils/withAuth";
 
 interface TourFormProps {
     isEditing?: boolean;
@@ -30,7 +31,7 @@ interface TourFormProps {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function DescriptionContentPage({isEditing, tourId, initialData}: TourFormProps) {
+function DescriptionContentPage({isEditing, tourId, initialData}: TourFormProps) {
     const [newIncludedItem, setNewIncludedItem] = useState("");
     const [newBringItem, setNewBringItem] = useState("");
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -458,3 +459,5 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
         </DashboardLayout>
     );
 }
+
+export default withAuth(DescriptionContentPage);

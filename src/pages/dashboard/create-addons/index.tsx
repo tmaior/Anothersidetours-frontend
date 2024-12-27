@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from "react";
 import {
     Box,
     Button,
@@ -8,22 +8,23 @@ import {
     Input,
     Select,
     Switch,
-    Textarea,
     Text,
-    VStack,
+    Textarea,
     useDisclosure,
     useToast,
+    VStack,
 } from "@chakra-ui/react";
-import { DeleteIcon } from "@chakra-ui/icons";
+import {DeleteIcon} from "@chakra-ui/icons";
 import DashboardLayout from "../../../components/DashboardLayout";
-import { useRouter } from "next/router";
+import {useRouter} from "next/router";
 import {useGuest} from "../../../components/GuestContext";
+import withAuth from "../../../utils/withAuth";
 
-export default function AddonContentPage() {
+function AddonContentPage() {
     const router = useRouter();
-    const { addonId } = router.query;
+    const {addonId} = router.query;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const {isOpen, onOpen, onClose} = useDisclosure();
     const toast = useToast();
     const [price, setPrice] = useState<number>(0);
 
@@ -44,7 +45,7 @@ export default function AddonContentPage() {
         price: false,
         type: false,
     });
-    const {tenantId } = useGuest();
+    const {tenantId} = useGuest();
 
     useEffect(() => {
         async function fetchData() {
@@ -68,6 +69,7 @@ export default function AddonContentPage() {
             const toursData = await toursRes.json();
             setTours(toursData);
         }
+
         fetchData();
     }, [addonId]);
 
@@ -77,8 +79,8 @@ export default function AddonContentPage() {
             setPrice(numericValue);
         }
 
-        setFormData({ ...formData, [field]: value });
-        setErrors({ ...errors, [field]: value === "" || (field === "price" && typeof value === "number" && value <= 0) });
+        setFormData({...formData, [field]: value});
+        setErrors({...errors, [field]: value === "" || (field === "price" && typeof value === "number" && value <= 0)});
     };
 
     const validateForm = () => {
@@ -111,7 +113,7 @@ export default function AddonContentPage() {
         try {
             const response = await fetch(endpoint, {
                 method,
-                headers: { "Content-Type": "application/json" },
+                headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(payload),
             });
 
@@ -261,11 +263,12 @@ export default function AddonContentPage() {
 
                     <HStack justify="space-between" mt={6}>
                         {isEditing && (
-                            <Button colorScheme="red" onClick={handleRemoveAddon} leftIcon={<DeleteIcon />}>
+                            <Button colorScheme="red" onClick={handleRemoveAddon} leftIcon={<DeleteIcon/>}>
                                 Remove Add-On
                             </Button>
                         )}
-                        <Button variant="outline" colorScheme="gray" onClick={() => router.push("/dashboard/list-addons")}>
+                        <Button variant="outline" colorScheme="gray"
+                                onClick={() => router.push("/dashboard/list-addons")}>
                             Cancel
                         </Button>
                         <Button colorScheme="blue" onClick={handleSubmit}>
@@ -277,3 +280,5 @@ export default function AddonContentPage() {
         </DashboardLayout>
     );
 }
+
+export default withAuth(AddonContentPage);

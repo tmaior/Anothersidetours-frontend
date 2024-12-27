@@ -29,8 +29,9 @@ import {useRouter} from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
 import {DeleteIcon, EditIcon, SearchIcon, ViewIcon} from "@chakra-ui/icons";
 import {useGuest} from "../../../components/GuestContext";
+import withAuth from "../../../utils/withAuth";
 
-export default function ListTours() {
+function ListTours() {
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
     const [tours, setTours] = useState([]);
     const [filteredTours, setFilteredTours] = useState([]);
@@ -265,3 +266,4 @@ export default function ListTours() {
         </DashboardLayout>
     );
 }
+export default withAuth(ListTours);

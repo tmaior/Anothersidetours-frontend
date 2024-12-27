@@ -2,8 +2,9 @@ import {Box, Button, Divider, Flex, FormControl, FormLabel, Heading, HStack, Inp
 import PhotoUpload from "../../../components/PhotoUpload";
 import DashboardLayout from "../../../components/DashboardLayout";
 import {useEffect, useState} from "react";
+import withAuth from "../../../utils/withAuth";
 
-export default function GuideForm() {
+function GuideForm() {
 
     const [sidebarWidth, setSidebarWidth] = useState(250);
 
@@ -82,3 +83,5 @@ export default function GuideForm() {
         </DashboardLayout>
     );
 }
+
+export default withAuth(GuideForm);

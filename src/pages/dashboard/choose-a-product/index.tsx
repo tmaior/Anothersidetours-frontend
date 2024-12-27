@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import {useEffect, useState} from 'react';
 import {
     Box,
     Divider,
@@ -10,16 +10,17 @@ import {
     InputGroup,
     InputLeftElement,
     SimpleGrid,
-    Text,
     Spinner,
+    Text,
 } from '@chakra-ui/react';
 import DashboardLayout from '../../../components/DashboardLayout';
-import { SearchIcon } from '@chakra-ui/icons';
+import {SearchIcon} from '@chakra-ui/icons';
 import Link from 'next/link';
-import { useGuest } from '../../../components/GuestContext';
+import {useGuest} from '../../../components/GuestContext';
+import withAuth from "../../../utils/withAuth";
 
-export default function ToursPage() {
-    const { tenantId } = useGuest();
+function ToursPage() {
+    const {tenantId} = useGuest();
     const [tours, setTours] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -52,7 +53,7 @@ export default function ToursPage() {
         return (
             <DashboardLayout>
                 <Box p={8} textAlign="center">
-                    <Spinner size="xl" />
+                    <Spinner size="xl"/>
                     <Text mt={4}>Loading tours...</Text>
                 </Box>
             </DashboardLayout>
@@ -68,7 +69,7 @@ export default function ToursPage() {
                     </Heading>
                     <InputGroup>
                         <InputLeftElement pointerEvents="none" marginTop={"20px"}>
-                            <SearchIcon color="gray.400" />
+                            <SearchIcon color="gray.400"/>
                         </InputLeftElement>
                         <Input
                             marginTop={"20px"}
@@ -80,7 +81,7 @@ export default function ToursPage() {
                         />
                     </InputGroup>
                 </HStack>
-                <Divider />
+                <Divider/>
                 <Text fontSize={"lg"} fontWeight={"bold"}>
                     Products
                 </Text>
@@ -94,7 +95,7 @@ export default function ToursPage() {
                                 borderRadius="md"
                                 overflow="hidden"
                                 p={4}
-                                _hover={{ boxShadow: 'md', cursor: 'pointer' }}
+                                _hover={{boxShadow: 'md', cursor: 'pointer'}}
                             >
                                 <Flex align="center">
                                     <Image
@@ -127,3 +128,5 @@ export default function ToursPage() {
         </DashboardLayout>
     );
 }
+
+export default withAuth(ToursPage);

@@ -1,7 +1,8 @@
 import {Box, Flex, Heading, Image, Text, VStack} from "@chakra-ui/react";
 import DashboardLayout from "../../../components/DashboardLayout";
+import withAuth from "../../../utils/withAuth";
 
-export default function Home() {
+function Home() {
     const tours = [
         // {
         //     id: 1,
@@ -55,3 +56,5 @@ export default function Home() {
         </DashboardLayout>
     );
 }
+
+export default withAuth(Home);

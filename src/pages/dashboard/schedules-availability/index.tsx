@@ -8,7 +8,8 @@ import {
     HStack,
     IconButton,
     Input,
-    Select, Spacer,
+    Select,
+    Spacer,
     Switch,
     Text,
     useToast,
@@ -20,8 +21,9 @@ import DashboardLayout from "../../../components/DashboardLayout";
 import ProgressBar from "../../../components/ProgressBar";
 import {useGuest} from "../../../components/GuestContext";
 import {useRouter} from "next/router";
+import withAuth from "../../../utils/withAuth";
 
-export default function SchedulesAvailabilityPage() {
+function SchedulesAvailabilityPage() {
     const {
         schedule,
         setSchedule,
@@ -71,7 +73,7 @@ export default function SchedulesAvailabilityPage() {
     const handleAddTimeRange = () => {
         setSchedule([
             ...schedule,
-            { startTime: "08:00", startPeriod: "AM", endTime: "06:00", endPeriod: "PM" },
+            {startTime: "08:00", startPeriod: "AM", endTime: "06:00", endPeriod: "PM"},
         ]);
     };
     const toast = useToast();
@@ -95,7 +97,7 @@ export default function SchedulesAvailabilityPage() {
             let [hours, minutes] = time.split(":").map(Number);
             if (period === "PM" && hours < 12) hours += 12;
             if (period === "AM" && hours === 12) hours = 0;
-            return { hours, minutes };
+            return {hours, minutes};
         };
 
         const formatTime = (hours, minutes) => {
@@ -109,7 +111,7 @@ export default function SchedulesAvailabilityPage() {
         const end = convertTo24Hour(endTime, endPeriod);
 
         const timeSlots = [];
-        let current = { ...start };
+        let current = {...start};
 
         while (
             current.hours < end.hours ||
@@ -173,7 +175,7 @@ export default function SchedulesAvailabilityPage() {
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ timeSlots: expandedTimeSlots }),
+                    body: JSON.stringify({timeSlots: expandedTimeSlots}),
                 }
             );
 
@@ -189,7 +191,7 @@ export default function SchedulesAvailabilityPage() {
                             headers: {
                                 "Content-Type": "application/json",
                             },
-                            body: JSON.stringify({ tourId: tourId, item }),
+                            body: JSON.stringify({tourId: tourId, item}),
                         })
                     )
                 );
@@ -203,7 +205,7 @@ export default function SchedulesAvailabilityPage() {
                             headers: {
                                 "Content-Type": "application/json",
                             },
-                            body: JSON.stringify({ tourId: tourId, item }),
+                            body: JSON.stringify({tourId: tourId, item}),
                         })
                     )
                 );
@@ -404,7 +406,7 @@ export default function SchedulesAvailabilityPage() {
                                 onChange={(e) => setMinPerEventLimit(Number(e.target.value))}
                             />
                         </FormControl>
-                        <Spacer marginTop={"20px"} />
+                        <Spacer marginTop={"20px"}/>
                         <FormControl isRequired>
                             <FormLabel>Max Per Event Limit</FormLabel>
                             <Input
@@ -428,3 +430,5 @@ export default function SchedulesAvailabilityPage() {
         </DashboardLayout>
     );
 }
+
+export default withAuth(SchedulesAvailabilityPage);

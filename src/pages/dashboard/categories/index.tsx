@@ -25,6 +25,7 @@ import {
 } from "@chakra-ui/react";
 import {DeleteIcon, SearchIcon, SettingsIcon} from "@chakra-ui/icons";
 import DashboardLayout from "../../../components/DashboardLayout";
+import withAuth from "../../../utils/withAuth";
 
 interface Category {
     id: string;
@@ -40,7 +41,7 @@ interface Tour {
     categoryId?: string | null;
 }
 
-export default function CategoryManagement() {
+function CategoryManagement() {
     const [newCategory, setNewCategory] = useState({name: "", description: ""});
     const [categories, setCategories] = useState<Category[]>([]);
     const [filteredTours, setFilteredTours] = useState<Tour[]>([]);
@@ -400,3 +401,4 @@ export default function CategoryManagement() {
         </DashboardLayout>
     );
 }
+export default withAuth(CategoryManagement);

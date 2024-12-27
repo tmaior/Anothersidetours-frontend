@@ -1,20 +1,21 @@
 import {
-    VStack,
-    Input,
     Button,
+    Input,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
     useColorModeValue,
     useToast,
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
-    ModalCloseButton,
+    VStack,
 } from "@chakra-ui/react";
-import React, { useState } from "react";
+import React, {useState} from "react";
+import withAuth from "../../../utils/withAuth";
 
-export default function CreateTenantModal({ isOpen, onClose, addTenantToList }) {
+function CreateTenantModal({isOpen, onClose, addTenantToList}) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const bgColor = useColorModeValue("white", "gray.800");
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
@@ -57,7 +58,7 @@ export default function CreateTenantModal({ isOpen, onClose, addTenantToList }) 
                 isClosable: true,
             });
 
-            setFormData({ name: "" });
+            setFormData({name: ""});
             onClose();
         } catch (error) {
             console.error("Error creating tenant:", error);
@@ -73,10 +74,10 @@ export default function CreateTenantModal({ isOpen, onClose, addTenantToList }) 
 
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
-            <ModalOverlay />
+            <ModalOverlay/>
             <ModalContent>
                 <ModalHeader>Create Tenant</ModalHeader>
-                <ModalCloseButton />
+                <ModalCloseButton/>
                 <ModalBody>
                     <VStack spacing={4} align="stretch">
                         <Input
@@ -97,3 +98,5 @@ export default function CreateTenantModal({ isOpen, onClose, addTenantToList }) 
         </Modal>
     );
 }
+
+export default withAuth(CreateTenantModal);

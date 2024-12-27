@@ -66,7 +66,7 @@ interface GuestContextType {
     imageUrl: string | null;
     setImageUrl: React.Dispatch<React.SetStateAction<string | null>>;
     price: number;
-    setPrice: React.Dispatch<React.SetStateAction<number>>;
+    setPrice: (price: number) => void;
 }
 
 const GuestContext = createContext<GuestContextType | undefined>(undefined);
@@ -87,7 +87,7 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [phone, setPhone] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
-    const [tenantId, setTenantId] = useState("68b9cae6-3ef2-47d9-9af0-1afb23e2be2f");
+    const [tenantId, setTenantId] = useState<string | null>(null);
     const [tourId, setTourId] = useState("");
     const [userId, setUserId] = useState("");
     const [detailedAddons, setDetailedAddons] = useState([]);

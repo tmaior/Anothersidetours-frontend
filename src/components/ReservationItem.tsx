@@ -46,12 +46,14 @@ const ReservationItem = ({
         setSelectedGuideIds(guideIds);
         setSelectedGuideNames(selectedGuides.map((guide) => guide.name).join(", "));
 
-        if (reservationId && guideIds.length > 0) {
+        if (reservationId) {
             try {
                 await assignGuides(reservationId, guideIds);
                 toast({
-                    title: "Guides Assigned",
-                    description: "Guides successfully assigned to reservation",
+                    title: guideIds.length > 0 ? "Guides Assigned" : "Guides Removed",
+                    description: guideIds.length > 0
+                        ? "Guides successfully assigned to reservation"
+                        : "All guides removed from reservation",
                     status: "success",
                     duration: 3000,
                     isClosable: true,
@@ -59,7 +61,7 @@ const ReservationItem = ({
             } catch {
                 toast({
                     title: "Error",
-                    description: "Failed to assign guides",
+                    description: "Failed to update guides",
                     status: "error",
                     duration: 3000,
                     isClosable: true,

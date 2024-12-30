@@ -131,6 +131,7 @@ function Dashboard() {
                     reservedSummary: string;
                     reservations: ReservationItem[];
                 }
+
                 const groupedReservations: Record<string, Reservation> = reservationsWithUserDetails.reduce(
                     (acc, reservation) => {
                         const date = new Date(reservation.reservation_date).toISOString().split("T")[0];

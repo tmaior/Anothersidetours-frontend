@@ -17,7 +17,8 @@ import {
     Text,
     Th,
     Thead,
-    Tr, useToast,
+    Tr,
+    useToast,
 } from "@chakra-ui/react";
 import {FiCalendar, FiWatch} from "react-icons/fi";
 import {ArrowBackIcon} from "@chakra-ui/icons";
@@ -35,7 +36,7 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
     const [selectedGuide, setSelectedGuide] = useState([]);
     const {guidesList, loadingGuides} = useGuides();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { assignGuides, isAssigning } = useGuideAssignment();
+    const {assignGuides, isAssigning} = useGuideAssignment();
     const toast = useToast();
 
     const displayGuideText = () => {
@@ -54,22 +55,13 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
     const handleSaveGuides = async (guides) => {
         const guideIds = guides.map((guide) => guide.id);
 
-        if (guideIds.length === 0) {
-            toast({
-                title: "No guides selected",
-                description: "Please select at least one guide.",
-                status: "warning",
-                duration: 3000,
-                isClosable: true,
-            });
-            return;
-        }
-
         try {
             await assignGuides(reservation.id, guideIds);
             toast({
-                title: "Guides Assigned",
-                description: "Guides successfully assigned to reservation",
+                title: "Guides Updated",
+                description: guideIds.length > 0
+                    ? "Guides successfully assigned to reservation"
+                    : "All guides removed from reservation",
                 status: "success",
                 duration: 3000,
                 isClosable: true,
@@ -77,7 +69,7 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
         } catch {
             toast({
                 title: "Error",
-                description: "Failed to assign guides",
+                description: "Failed to update guides",
                 status: "error",
                 duration: 3000,
                 isClosable: true,

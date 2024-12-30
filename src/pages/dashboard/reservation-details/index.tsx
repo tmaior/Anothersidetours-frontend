@@ -1,6 +1,12 @@
 import {
+    Accordion,
+    AccordionButton,
+    AccordionIcon,
+    AccordionItem,
+    AccordionPanel,
     Box,
     Button,
+    Divider,
     Flex,
     HStack,
     Icon,
@@ -12,40 +18,21 @@ import {
     Th,
     Thead,
     Tr,
-    Accordion,
-    AccordionButton,
-    AccordionIcon,
-    AccordionItem,
-    AccordionPanel, Divider,
 } from "@chakra-ui/react";
 import {FiCalendar, FiWatch} from "react-icons/fi";
 import {ArrowBackIcon} from "@chakra-ui/icons";
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import ManageGuidesModal from "../../../components/ManageGuidesModal";
 import {CiSquarePlus} from "react-icons/ci";
 import NotesSection from "../../../components/NotesSection";
 import {FaRegTimesCircle} from "react-icons/fa";
 import {AiOutlineCompass} from "react-icons/ai";
-import axios from "axios";
+import {useGuides} from "../../../hooks/useGuides";
 
-export default function ReservationDetail({ reservation, onCloseDetail }) {
+export default function ReservationDetail({reservation, onCloseDetail}) {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
     const [selectedGuide, setSelectedGuide] = useState([]);
-    const [guidesList, setGuidesList] = useState<string[]>([]);
-    const [loadingGuides, setLoadingGuides] = useState(true);
-
-    useEffect(() => {
-        axios
-            .get(`${process.env.NEXT_PUBLIC_API_URL}/guides`)
-            .then((response) => {
-                const guideNames = response.data.map((guide) => guide.name);
-                setGuidesList(guideNames);
-            })
-            .catch((error) => {
-                console.error("Failed to fetch guides", error);
-            })
-            .finally(() => setLoadingGuides(false));
-    }, []);
+    const {guidesList, loadingGuides} = useGuides();
 
     const displayGuideText = () => {
         if (loadingGuides) {
@@ -64,14 +51,14 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
             </Box>
         );
     }
-    const { user } = reservation;
+    const {user} = reservation;
 
     return (
         <Box p={4} overflowX="hidden">
             <Divider marginTop={"-15px"} maxW={"100%"}/>
             <Button
                 marginTop={"15px"}
-                leftIcon={<ArrowBackIcon />}
+                leftIcon={<ArrowBackIcon/>}
                 variant="outline"
                 size="sm"
                 mb={4}
@@ -111,11 +98,11 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
                     <Box>
                         <Text fontSize="xl" fontWeight="bold">{reservation.title}</Text>
                         <HStack spacing={2}>
-                            <Icon as={FiCalendar} color="gray.500" />
+                            <Icon as={FiCalendar} color="gray.500"/>
                             <Text fontSize="sm" color="gray.600">
                                 {reservation.dateFormatted}
                             </Text>
-                            <Icon as={FiWatch} color="gray.500" />
+                            <Icon as={FiWatch} color="gray.500"/>
                             <Text fontSize="sm" color="gray.600">
                                 {reservation.time}
                             </Text>
@@ -130,7 +117,7 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
                 <Button size="sm" variant="outline">Change Arrival</Button>
                 <Button size="sm" variant="outline"
                         color={"red.500"}>
-                    <FaRegTimesCircle style={{ marginRight: '8px' }} />
+                    <FaRegTimesCircle style={{marginRight: '8px'}}/>
                     Cancel Reservations
                 </Button>
                 <Button size="sm" variant="outline">Email Roster</Button>
@@ -140,7 +127,7 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
             <HStack spacing={8} mt={4}>
                 <Box mt={6}>
                     <HStack spacing={2}>
-                        <AiOutlineCompass />
+                        <AiOutlineCompass/>
                         <Text fontSize="xl" fontWeight="bold">Guide</Text>
                     </HStack>
                     <Text fontSize="sm" color="black.500">
@@ -170,7 +157,7 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
 
             <NotesSection
                 notes={[
-                    { title: "Guest Arrival", content: "Guests will arrive at 10 AM." },
+                    {title: "Guest Arrival", content: "Guests will arrive at 10 AM."},
                 ]}
             />
 
@@ -197,7 +184,7 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
                                 <Accordion allowToggle>
                                     <AccordionItem border="none">
                                         <AccordionButton p={0}>
-                                            <AccordionIcon />
+                                            <AccordionIcon/>
                                         </AccordionButton>
                                         <AccordionPanel>
                                             Informações adicionais...
@@ -209,7 +196,7 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
                             <Td>{reservation.guestQuantity}</Td>
                             <Td>0</Td>
                             <Td>
-                                0 Purchase Notes<br />
+                                0 Purchase Notes<br/>
                                 0 Customer Notes
                             </Td>
                             <Td>

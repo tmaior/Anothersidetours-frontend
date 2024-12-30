@@ -14,10 +14,10 @@ import {
 } from "@chakra-ui/react";
 import {BsSticky, BsThreeDots} from "react-icons/bs";
 import {FaPencilAlt} from "react-icons/fa";
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {AiOutlineCompass} from "react-icons/ai";
 import ManageGuidesModal from "./ManageGuidesModal";
-import axios from "axios";
+import {useGuides} from "../hooks/useGuides";
 
 const ReservationItem = ({
                              date,
@@ -31,25 +31,10 @@ const ReservationItem = ({
                          }) => {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
     const [selectedGuide, setSelectedGuide] = useState<string>("");
-    const [guidesList, setGuidesList] = useState<string[]>([]);
-    const [loadingGuides, setLoadingGuides] = useState(true);
+    const { guidesList, loadingGuides } = useGuides();
 
-    useEffect(() => {
-        axios
-            .get(`${process.env.NEXT_PUBLIC_API_URL}/guides`)
-            .then((response) => {
-                const guideNames = response.data.map((guide) => guide.name);
-                setGuidesList(guideNames);
-            })
-            .catch((error) => {
-                console.error("Failed to fetch guides", error);
-            })
-            .finally(() => setLoadingGuides(false));
-    }, []);
-
-    const handleGuideSelection = (selectedGuides: string[], guideList: string[]) => {
+    const handleGuideSelection = (selectedGuides: string[]) => {
         setSelectedGuide(selectedGuides.length > 0 ? selectedGuides.join(", ") : "No Guide selected");
-        setGuidesList(guideList);
     };
 
     const displayGuideText = () => {
@@ -149,8 +134,8 @@ const ReservationItem = ({
                                 <ManageGuidesModal
                                     isOpen={isGuideModalOpen}
                                     onClose={() => setGuideModalOpen(false)}
-                                    onSelectGuide={(selectedGuides, guideList) => {
-                                        handleGuideSelection(selectedGuides, guideList);
+                                    onSelectGuide={(selectedGuides) => {
+                                        handleGuideSelection(selectedGuides);
                                     }}
                                 />
                                 <Flex align="center" justify="center">

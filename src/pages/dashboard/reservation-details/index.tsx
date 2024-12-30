@@ -20,16 +20,42 @@ import {
 } from "@chakra-ui/react";
 import {FiCalendar, FiWatch} from "react-icons/fi";
 import {ArrowBackIcon} from "@chakra-ui/icons";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import ManageGuidesModal from "../../../components/ManageGuidesModal";
 import {CiSquarePlus} from "react-icons/ci";
 import NotesSection from "../../../components/NotesSection";
 import {FaRegTimesCircle} from "react-icons/fa";
 import {AiOutlineCompass} from "react-icons/ai";
+import axios from "axios";
 
 export default function ReservationDetail({ reservation, onCloseDetail }) {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
     const [selectedGuide, setSelectedGuide] = useState([]);
+    const [guidesList, setGuidesList] = useState<string[]>([]);
+    const [loadingGuides, setLoadingGuides] = useState(true);
+
+    useEffect(() => {
+        axios
+            .get(`${process.env.NEXT_PUBLIC_API_URL}/guides`)
+            .then((response) => {
+                const guideNames = response.data.map((guide) => guide.name);
+                setGuidesList(guideNames);
+            })
+            .catch((error) => {
+                console.error("Failed to fetch guides", error);
+            })
+            .finally(() => setLoadingGuides(false));
+    }, []);
+
+    const displayGuideText = () => {
+        if (loadingGuides) {
+            return "Loading guides...";
+        }
+        if (guidesList.length === 0) {
+            return "No Guide available";
+        }
+        return selectedGuide.length > 0 ? selectedGuide.join(", ") : "No Guide selected";
+    };
 
     if (!reservation) {
         return (
@@ -118,7 +144,7 @@ export default function ReservationDetail({ reservation, onCloseDetail }) {
                         <Text fontSize="xl" fontWeight="bold">Guide</Text>
                     </HStack>
                     <Text fontSize="sm" color="black.500">
-                        {selectedGuide.length > 0 ? selectedGuide.join(', ') : reservation.guide}
+                        {displayGuideText()}
                     </Text>
 
                     <Button

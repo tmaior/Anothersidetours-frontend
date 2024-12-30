@@ -6,16 +6,18 @@ import {
     IconButton,
     Image,
     Menu,
-    MenuButton, MenuItem,
+    MenuButton,
+    MenuItem,
     MenuList,
     Text,
     VStack,
 } from "@chakra-ui/react";
-import { BsSticky, BsThreeDots } from "react-icons/bs";
-import { FaPencilAlt } from "react-icons/fa";
-import React, { useState } from "react";
-import { AiOutlineCompass } from "react-icons/ai";
+import {BsSticky, BsThreeDots} from "react-icons/bs";
+import {FaPencilAlt} from "react-icons/fa";
+import React, {useEffect, useState} from "react";
+import {AiOutlineCompass} from "react-icons/ai";
 import ManageGuidesModal from "./ManageGuidesModal";
+import axios from "axios";
 
 const ReservationItem = ({
                              date,
@@ -29,6 +31,36 @@ const ReservationItem = ({
                          }) => {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
     const [selectedGuide, setSelectedGuide] = useState<string>("");
+    const [guidesList, setGuidesList] = useState<string[]>([]);
+    const [loadingGuides, setLoadingGuides] = useState(true);
+
+    useEffect(() => {
+        axios
+            .get(`${process.env.NEXT_PUBLIC_API_URL}/guides`)
+            .then((response) => {
+                const guideNames = response.data.map((guide) => guide.name);
+                setGuidesList(guideNames);
+            })
+            .catch((error) => {
+                console.error("Failed to fetch guides", error);
+            })
+            .finally(() => setLoadingGuides(false));
+    }, []);
+
+    const handleGuideSelection = (selectedGuides: string[], guideList: string[]) => {
+        setSelectedGuide(selectedGuides.length > 0 ? selectedGuides.join(", ") : "No Guide selected");
+        setGuidesList(guideList);
+    };
+
+    const displayGuideText = () => {
+        if (loadingGuides) {
+            return "Loading guides...";
+        }
+        if (guidesList.length === 0) {
+            return "No Guide available";
+        }
+        return selectedGuide || "No Guide selected";
+    };
 
     const handleOpenGuideModal = (e) => {
         e.stopPropagation();
@@ -85,7 +117,7 @@ const ReservationItem = ({
 
                     {!isCompactView && (
                         <HStack spacing={4} align="center">
-                            <Box boxSize="8px" borderRadius="full" bg={item.statusColor} />
+                            <Box boxSize="8px" borderRadius="full" bg={item.statusColor}/>
                             <Flex
                                 w={"900px"}
                                 display="flex"
@@ -101,7 +133,7 @@ const ReservationItem = ({
                                     <Text fontSize="xs">{item.capacity}</Text>
                                 </HStack>
                                 <Flex justify="center" align="center" flex="1">
-                                    <AiOutlineCompass />
+                                    <AiOutlineCompass/>
                                     <Text
                                         marginLeft={"5px"}
                                         fontSize="xs"
@@ -109,23 +141,22 @@ const ReservationItem = ({
                                         textAlign="center"
                                         onClick={handleOpenGuideModal}
                                         cursor="pointer"
-                                        _hover={{ color: "blue.500" }}
+                                        _hover={{color: "blue.500"}}
                                     >
-                                        {selectedGuide || item.guide || "No guide available"}
+                                        {displayGuideText()}
                                     </Text>
                                 </Flex>
                                 <ManageGuidesModal
                                     isOpen={isGuideModalOpen}
                                     onClose={() => setGuideModalOpen(false)}
-                                    onSelectGuide={(guideName) => {
-                                        setSelectedGuide(guideName);
-                                        setGuideModalOpen(false);
+                                    onSelectGuide={(selectedGuides, guideList) => {
+                                        handleGuideSelection(selectedGuides, guideList);
                                     }}
                                 />
                                 <Flex align="center" justify="center">
                                     {item.hasNotes ? (
                                         <IconButton
-                                            icon={<BsSticky />}
+                                            icon={<BsSticky/>}
                                             variant="ghost"
                                             aria-label="Notes"
                                             size="sm"
@@ -136,14 +167,14 @@ const ReservationItem = ({
                                             }}
                                         />
                                     ) : (
-                                        <Box width="20px" />
+                                        <Box width="20px"/>
                                     )}
                                 </Flex>
                             </Flex>
                             <Menu>
                                 <MenuButton
                                     as={IconButton}
-                                    icon={<BsThreeDots />}
+                                    icon={<BsThreeDots/>}
                                     variant="ghost"
                                     aria-label="Options"
                                     size="sm"

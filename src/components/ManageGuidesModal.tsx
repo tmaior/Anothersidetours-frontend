@@ -18,7 +18,7 @@ import {
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide, reservationId }) => {
+const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedGuides, setSelectedGuides] = useState([]);
     const [guides, setGuides] = useState([]);
@@ -56,9 +56,7 @@ const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide, reservationId }) =>
     };
 
     const handleSave = () => {
-        if (selectedGuides.length > 0) {
-            onSelectGuide(selectedGuides);
-        }
+        onSelectGuide(selectedGuides, guides.map((guide) => guide.name));
         onClose();
     };
 

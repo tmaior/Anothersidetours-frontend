@@ -183,8 +183,7 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
                         setSelectedGuide(selected);
                         setGuideModalOpen(false);
                         handleSaveGuides(selected);
-                    }}
-                />
+                    }} reservationId={reservation.id}                />
             </HStack>
 
             <NotesSection

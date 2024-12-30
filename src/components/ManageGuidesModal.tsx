@@ -1,24 +1,24 @@
 import {
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalCloseButton,
-    ModalBody,
-    ModalFooter,
     Button,
-    VStack,
-    HStack,
     Checkbox,
-    Input,
-    Text,
     Divider,
+    HStack,
+    Input,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+    Text,
     useToast,
+    VStack,
 } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
+import {useEffect, useState} from "react";
 import axios from "axios";
 
-const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide }) => {
+const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedGuides, setSelectedGuides] = useState([]);
     const [guides, setGuides] = useState([]);
@@ -28,10 +28,19 @@ const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide }) => {
     useEffect(() => {
         if (isOpen) {
             setLoading(true);
-            axios
-                .get(`${process.env.NEXT_PUBLIC_API_URL}/guides`)
-                .then((response) => {
-                    setGuides(response.data);
+
+            const fetchGuides = axios.get(`${process.env.NEXT_PUBLIC_API_URL}/guides`);
+
+            const fetchAssignedGuides = axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservationId}/guides`
+            );
+
+            Promise.all([fetchGuides, fetchAssignedGuides])
+                .then(([guidesResponse, assignedResponse]) => {
+                    setGuides(guidesResponse.data);
+
+                    const assignedGuideNames = assignedResponse.data.map((item) => item.guide.name);
+                    setSelectedGuides(assignedGuideNames);
                 })
                 .catch((error) => {
                     console.error("Failed to fetch guides", error);
@@ -45,7 +54,7 @@ const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide }) => {
                 })
                 .finally(() => setLoading(false));
         }
-    }, [isOpen]);
+    }, [isOpen, reservationId]);
 
     const toggleGuide = (guideName) => {
         if (selectedGuides.includes(guideName)) {
@@ -58,7 +67,7 @@ const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide }) => {
     const handleSave = () => {
         const selectedGuidesWithIds = selectedGuides.map((name) => {
             const guide = guides.find((g) => g.name === name);
-            return guide ? { id: guide.id, name: guide.name } : null;
+            return guide ? {id: guide.id, name: guide.name} : null;
         }).filter(Boolean);
         onSelectGuide(selectedGuidesWithIds);
         onClose();
@@ -70,10 +79,10 @@ const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide }) => {
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="md">
-            <ModalOverlay />
+            <ModalOverlay/>
             <ModalContent>
                 <ModalHeader>Assign Guides</ModalHeader>
-                <ModalCloseButton />
+                <ModalCloseButton/>
                 <ModalBody>
                     <VStack align="stretch" spacing={4}>
                         <Input
@@ -82,7 +91,7 @@ const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide }) => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                             size="md"
                         />
-                        <Divider />
+                        <Divider/>
                         {loading ? (
                             <Text>Loading guides...</Text>
                         ) : filteredGuides.length > 0 ? (

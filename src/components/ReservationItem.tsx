@@ -174,8 +174,7 @@ const ReservationItem = ({
                                 <ManageGuidesModal
                                     isOpen={isGuideModalOpen}
                                     onClose={() => setGuideModalOpen(false)}
-                                    onSelectGuide={handleGuideSelection}
-                                />
+                                    onSelectGuide={handleGuideSelection} reservationId={reservationId}                                />
                                 <Flex align="center" justify="center">
                                     {item.hasNotes ? (
                                         <IconButton

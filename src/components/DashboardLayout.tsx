@@ -27,7 +27,7 @@ import {
 import {useRouter} from "next/router";
 import React, {useEffect, useState} from "react";
 import {SlCalender} from "react-icons/sl";
-import {FaBoxArchive} from "react-icons/fa6";
+import {FaBoxArchive, FaUsersGear} from "react-icons/fa6";
 import {MdAddchart, MdOutlineCategory} from "react-icons/md";
 import {GoPeople} from "react-icons/go";
 import {IoClipboardOutline} from "react-icons/io5";
@@ -486,6 +486,35 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
+                        onClick={() => router.push("/dashboard/guides")}
+                    >
+                        <Button
+                            marginLeft={"-5"}
+                            marginTop={"-30px"}
+                            justifyContent="flex-start"
+                            color="white"
+                            variant="ghost"
+                            w="230px"
+                            background={router.pathname === "/dashboard/guides" ? "blue.500" : "transparent"}
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                        >
+                            <HStack spacing={3}>
+                                <FaUsersGear />
+                                <Text>Guides</Text>
+                            </HStack>
+                        </Button>
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
                         onClick={() => router.push("/dashboard/list-addons")}
                     >
                         <Button
@@ -747,7 +776,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             colorScheme="blue"
                             mr={3}
                             onClick={handleAddTenant}
-                            isDisabled={!newTenant.title || !selectedImage}
+                            isDisabled={!newTenant.title}
                         >
                             Save
                         </Button>

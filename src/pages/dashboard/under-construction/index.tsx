@@ -24,8 +24,8 @@ function Home() {
                 <Flex direction="column" alignItems="center" mb={6} marginTop={"-5"}>
                     <Image
                         src="/assets/under.jpg"
-                        alt="Construction Image"
                         mb={4}
+                        alt="Construction Image"
                         objectFit="contain"
                         maxWidth="95%"
                         height="auto"

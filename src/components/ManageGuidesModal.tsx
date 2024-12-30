@@ -13,21 +13,39 @@ import {
     Input,
     Text,
     Divider,
+    useToast,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
-const guidesData = [
-    { name: "Claudiney", available: false },
-    { name: "Ben Parker ", available: true },
-    { name: "jeff bezos", available: false },
-    { name: "Ozymandias", available: false },
-    { name: "teste", available: true },
-    { name: "Peter Parker", available: true },
-];
-
-const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide }) => {
+const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide, reservationId }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedGuides, setSelectedGuides] = useState([]);
+    const [guides, setGuides] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const toast = useToast();
+
+    useEffect(() => {
+        if (isOpen) {
+            setLoading(true);
+            axios
+                .get(`${process.env.NEXT_PUBLIC_API_URL}/guides`)
+                .then((response) => {
+                    setGuides(response.data);
+                })
+                .catch((error) => {
+                    console.error("Failed to fetch guides", error);
+                    toast({
+                        title: "Error",
+                        description: "Failed to load guides",
+                        status: "error",
+                        duration: 3000,
+                        isClosable: true,
+                    });
+                })
+                .finally(() => setLoading(false));
+        }
+    }, [isOpen]);
 
     const toggleGuide = (guideName) => {
         if (selectedGuides.includes(guideName)) {
@@ -44,7 +62,7 @@ const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide }) => {
         onClose();
     };
 
-    const filteredGuides = guidesData.filter((guide) =>
+    const filteredGuides = guides.filter((guide) =>
         guide.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -63,24 +81,30 @@ const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide }) => {
                             size="md"
                         />
                         <Divider />
-                        {filteredGuides.map((guide) => (
-                            <HStack key={guide.name} justify="space-between" width="100%">
-                                <Checkbox
-                                    isChecked={selectedGuides.includes(guide.name)}
-                                    onChange={() => toggleGuide(guide.name)}
-                                    isDisabled={!guide.available}
-                                >
-                                    <Text
-                                        color={guide.available ? "black" : "gray.400"}
-                                    >{`${guide.name} ${
-                                        !guide.available ? "(unavailable)" : ""
-                                    }`}</Text>
-                                </Checkbox>
-                                {selectedGuides.includes(guide.name) && (
-                                    <Text color="green.500">✔</Text>
-                                )}
-                            </HStack>
-                        ))}
+                        {loading ? (
+                            <Text>Loading guides...</Text>
+                        ) : filteredGuides.length > 0 ? (
+                            filteredGuides.map((guide) => (
+                                <HStack key={guide.name} justify="space-between" width="100%">
+                                    <Checkbox
+                                        isChecked={selectedGuides.includes(guide.name)}
+                                        onChange={() => toggleGuide(guide.name)}
+                                        isDisabled={!guide.available}
+                                    >
+                                        <Text
+                                            color={guide.available ? "black" : "gray.400"}
+                                        >
+                                            {`${guide.name} ${!guide.available ? "(unavailable)" : ""}`}
+                                        </Text>
+                                    </Checkbox>
+                                    {selectedGuides.includes(guide.name) && (
+                                        <Text color="green.500">✔</Text>
+                                    )}
+                                </HStack>
+                            ))
+                        ) : (
+                            <Text>No guide available</Text>
+                        )}
                     </VStack>
                 </ModalBody>
                 <ModalFooter>

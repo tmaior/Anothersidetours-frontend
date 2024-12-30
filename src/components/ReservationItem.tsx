@@ -10,6 +10,7 @@ import {
     MenuItem,
     MenuList,
     Text,
+    useToast,
     VStack,
 } from "@chakra-ui/react";
 import {BsSticky, BsThreeDots} from "react-icons/bs";
@@ -18,6 +19,7 @@ import React, {useState} from "react";
 import {AiOutlineCompass} from "react-icons/ai";
 import ManageGuidesModal from "./ManageGuidesModal";
 import {useGuides} from "../hooks/useGuides";
+import {useGuideAssignment} from "../hooks/useGuideAssignment";
 
 const ReservationItem = ({
                              date,
@@ -25,26 +27,51 @@ const ReservationItem = ({
                              availableSummary,
                              reservedSummary,
                              reservations,
+                             reservationId,
                              onNoteClick,
                              onSelectReservation,
                              isCompactView,
                          }) => {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
-    const [selectedGuide, setSelectedGuide] = useState<string>("");
-    const { guidesList, loadingGuides } = useGuides();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [selectedGuideIds, setSelectedGuideIds] = useState<string[]>([]);
+    const {guidesList, loadingGuides} = useGuides();
+    const [selectedGuideNames, setSelectedGuideNames] = useState<string>("");
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const {assignGuides, isAssigning,} = useGuideAssignment();
+    const toast = useToast();
 
-    const handleGuideSelection = (selectedGuides: string[]) => {
-        setSelectedGuide(selectedGuides.length > 0 ? selectedGuides.join(", ") : "No Guide selected");
+    const handleGuideSelection = async (selectedGuides: { id: string; name: string }[]) => {
+        const guideIds = selectedGuides.map((guide) => guide.id);
+        setSelectedGuideIds(guideIds);
+        setSelectedGuideNames(selectedGuides.map((guide) => guide.name).join(", "));
+
+        if (reservationId && guideIds.length > 0) {
+            try {
+                await assignGuides(reservationId, guideIds);
+                toast({
+                    title: "Guides Assigned",
+                    description: "Guides successfully assigned to reservation",
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            } catch {
+                toast({
+                    title: "Error",
+                    description: "Failed to assign guides",
+                    status: "error",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            }
+        }
     };
 
     const displayGuideText = () => {
-        if (loadingGuides) {
-            return "Loading guides...";
-        }
-        if (guidesList.length === 0) {
-            return "No Guide available";
-        }
-        return selectedGuide || "No Guide selected";
+        if (loadingGuides) return "Loading guides...";
+        if (guidesList.length === 0) return "No Guide available";
+        return selectedGuideNames || "No Guide selected";
     };
 
     const handleOpenGuideModal = (e) => {
@@ -134,9 +161,7 @@ const ReservationItem = ({
                                 <ManageGuidesModal
                                     isOpen={isGuideModalOpen}
                                     onClose={() => setGuideModalOpen(false)}
-                                    onSelectGuide={(selectedGuides) => {
-                                        handleGuideSelection(selectedGuides);
-                                    }}
+                                    onSelectGuide={handleGuideSelection}
                                 />
                                 <Flex align="center" justify="center">
                                     {item.hasNotes ? (

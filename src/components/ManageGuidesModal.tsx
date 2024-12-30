@@ -56,7 +56,11 @@ const ManageGuidesModal = ({ isOpen, onClose, onSelectGuide }) => {
     };
 
     const handleSave = () => {
-        onSelectGuide(selectedGuides, guides.map((guide) => guide.name));
+        const selectedGuidesWithIds = selectedGuides.map((name) => {
+            const guide = guides.find((g) => g.name === name);
+            return guide ? { id: guide.id, name: guide.name } : null;
+        }).filter(Boolean);
+        onSelectGuide(selectedGuidesWithIds);
         onClose();
     };
 

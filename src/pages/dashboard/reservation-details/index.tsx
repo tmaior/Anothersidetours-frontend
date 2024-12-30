@@ -17,7 +17,7 @@ import {
     Text,
     Th,
     Thead,
-    Tr,
+    Tr, useToast,
 } from "@chakra-ui/react";
 import {FiCalendar, FiWatch} from "react-icons/fi";
 import {ArrowBackIcon} from "@chakra-ui/icons";
@@ -28,11 +28,15 @@ import NotesSection from "../../../components/NotesSection";
 import {FaRegTimesCircle} from "react-icons/fa";
 import {AiOutlineCompass} from "react-icons/ai";
 import {useGuides} from "../../../hooks/useGuides";
+import {useGuideAssignment} from "../../../hooks/useGuideAssignment";
 
 export default function ReservationDetail({reservation, onCloseDetail}) {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
     const [selectedGuide, setSelectedGuide] = useState([]);
     const {guidesList, loadingGuides} = useGuides();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { assignGuides, isAssigning } = useGuideAssignment();
+    const toast = useToast();
 
     const displayGuideText = () => {
         if (loadingGuides) {
@@ -41,8 +45,46 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
         if (guidesList.length === 0) {
             return "No Guide available";
         }
-        return selectedGuide.length > 0 ? selectedGuide.join(", ") : "No Guide selected";
+        if (selectedGuide.length > 0) {
+            return selectedGuide.map((guide) => guide.name).join(", ");
+        }
+        return "No Guide selected";
     };
+
+    const handleSaveGuides = async (guides) => {
+        const guideIds = guides.map((guide) => guide.id);
+
+        if (guideIds.length === 0) {
+            toast({
+                title: "No guides selected",
+                description: "Please select at least one guide.",
+                status: "warning",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        try {
+            await assignGuides(reservation.id, guideIds);
+            toast({
+                title: "Guides Assigned",
+                description: "Guides successfully assigned to reservation",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch {
+            toast({
+                title: "Error",
+                description: "Failed to assign guides",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    };
+
 
     if (!reservation) {
         return (
@@ -148,9 +190,10 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
                 <ManageGuidesModal
                     isOpen={isGuideModalOpen}
                     onClose={() => setGuideModalOpen(false)}
-                    onSelectGuide={(guideName) => {
-                        setSelectedGuide(guideName);
+                    onSelectGuide={(selected) => {
+                        setSelectedGuide(selected);
                         setGuideModalOpen(false);
+                        handleSaveGuides(selected);
                     }}
                 />
             </HStack>

@@ -366,7 +366,8 @@ function Dashboard() {
                         <VStack spacing={6} align="stretch" marginTop={"10px"}>
                             {filteredReservations.map((data, index) => (
                                 <ReservationItem
-                                    key={index}
+                                    key={data.reservations[0]?.id || index}
+                                    reservationId={data.reservations[0]?.id}
                                     date={data.date}
                                     day={data.day}
                                     availableSummary={data.availableSummary}

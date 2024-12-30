@@ -30,26 +30,23 @@ import {FaRegTimesCircle} from "react-icons/fa";
 import {AiOutlineCompass} from "react-icons/ai";
 import {useGuides} from "../../../hooks/useGuides";
 import {useGuideAssignment} from "../../../hooks/useGuideAssignment";
+import {useReservationGuides} from "../../../hooks/useReservationGuides";
 
 export default function ReservationDetail({reservation, onCloseDetail}) {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [selectedGuide, setSelectedGuide] = useState([]);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {guidesList, loadingGuides} = useGuides();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {assignGuides, isAssigning} = useGuideAssignment();
     const toast = useToast();
+    const {guides, loading} = useReservationGuides(reservation?.id);
 
     const displayGuideText = () => {
-        if (loadingGuides) {
-            return "Loading guides...";
-        }
-        if (guidesList.length === 0) {
-            return "No Guide available";
-        }
-        if (selectedGuide.length > 0) {
-            return selectedGuide.map((guide) => guide.name).join(", ");
-        }
-        return "No Guide selected";
+        if (loading) return "Loading guides...";
+        if (guides.length === 0) return "No Guide assigned";
+        return guides.map((guide) => guide.name).join(", ");
     };
 
     const handleSaveGuides = async (guides) => {

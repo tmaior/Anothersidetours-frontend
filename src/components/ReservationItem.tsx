@@ -15,11 +15,12 @@ import {
 } from "@chakra-ui/react";
 import {BsSticky, BsThreeDots} from "react-icons/bs";
 import {FaPencilAlt} from "react-icons/fa";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {AiOutlineCompass} from "react-icons/ai";
 import ManageGuidesModal from "./ManageGuidesModal";
 import {useGuides} from "../hooks/useGuides";
 import {useGuideAssignment} from "../hooks/useGuideAssignment";
+import {useReservationGuides} from "../hooks/useReservationGuides";
 
 const ReservationItem = ({
                              date,
@@ -40,6 +41,16 @@ const ReservationItem = ({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {assignGuides, isAssigning,} = useGuideAssignment();
     const toast = useToast();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const {guides, loading} = useReservationGuides(reservationId);
+
+    useEffect(() => {
+        if (guides.length > 0) {
+            const guideNames = guides.map((guide) => guide.name).join(", ");
+            setSelectedGuideNames(guideNames);
+            setSelectedGuideIds(guides.map((guide) => guide.id));
+        }
+    }, [guides]);
 
     const handleGuideSelection = async (selectedGuides: { id: string; name: string }[]) => {
         const guideIds = selectedGuides.map((guide) => guide.id);

@@ -116,6 +116,7 @@ function Dashboard() {
                     id: string;
                     email: string;
                     phone: string;
+                    status: string;
                     imageUrl: string;
                     user?: {
                         name: string;
@@ -173,6 +174,7 @@ function Dashboard() {
                             phone: reservation.tour.phone || "N/A",
                             imageUrl: reservation.tour.imageUrl || "/images/default-tour.png",
                             user: reservation.user,
+                            status: reservation.status
                         });
                         return acc;
                     },
@@ -392,6 +394,7 @@ function Dashboard() {
                         <ReservationDetail
                             reservation={selectedReservation}
                             onCloseDetail={handleCloseDetail}
+                            setReservations={reservations}
                         />
                     </Box>
                 )}

@@ -22,7 +22,7 @@ import {
 } from "@chakra-ui/react";
 import {FiCalendar, FiWatch} from "react-icons/fi";
 import {ArrowBackIcon} from "@chakra-ui/icons";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import ManageGuidesModal from "../../../components/ManageGuidesModal";
 import {CiSquarePlus} from "react-icons/ci";
 import NotesSection from "../../../components/NotesSection";
@@ -32,7 +32,7 @@ import {useGuides} from "../../../hooks/useGuides";
 import {useGuideAssignment} from "../../../hooks/useGuideAssignment";
 import {useReservationGuides} from "../../../hooks/useReservationGuides";
 
-export default function ReservationDetail({reservation, onCloseDetail}) {
+export default function ReservationDetail({reservation, onCloseDetail, setReservations}) {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [selectedGuide, setSelectedGuide] = useState([]);
@@ -42,6 +42,11 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
     const {assignGuides, isAssigning} = useGuideAssignment();
     const toast = useToast();
     const {guides, loading} = useReservationGuides(reservation?.id);
+    const [currentStatus, setCurrentStatus] = useState(reservation?.status);
+
+    useEffect(() => {
+        setCurrentStatus(reservation?.status);
+    }, [reservation]);
 
     const displayGuideText = () => {
         if (loading) return "Loading guides...";
@@ -83,6 +88,89 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
         );
     }
     const {user} = reservation;
+
+    const handleAccept = async () => {
+        try {
+            const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/confirm-payment`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    email: reservation.user?.email,
+                    paymentMethodId: reservation.paymentMethodId,
+                    amount: reservation.total_price * 100,
+                    currency: "usd",
+                }),
+            });
+
+            if (!paymentResponse.ok) throw new Error("Failed to confirm payment");
+
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservation.id}`, {
+                method: "PUT",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({status: "ACCEPTED"}),
+            });
+
+            setCurrentStatus("ACCEPTED");
+            setReservations((prev) => prev.map((res) =>
+                res.id === reservation.id ? {...res, status: "ACCEPTED"} : res
+            ));
+
+            toast({
+                title: "Reservation Accepted",
+                description: "The reservation has been accepted and payment confirmed.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error confirming payment:", error);
+            toast({
+                title: "Error",
+                description: "Failed to accept reservation.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
+    const confirmReject = async () => {
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/invalidate-payment-method`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({paymentMethodId: reservation.paymentMethodId}),
+            });
+
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservation.id}`, {
+                method: "PUT",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({status: "REJECTED"}),
+            });
+
+            setCurrentStatus("REJECTED");
+            setReservations((prev) => prev.map((res) =>
+                res.id === reservation.id ? {...res, status: "REJECTED"} : res
+            ));
+
+            toast({
+                title: "Reservation Rejected",
+                description: "The reservation has been rejected.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error rejecting reservation:", error);
+            toast({
+                title: "Error",
+                description: "Failed to reject reservation.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
 
     return (
         <Box p={4} overflowX="hidden">
@@ -142,8 +230,22 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
                 </HStack>
             </HStack>
             <HStack spacing={4} mt={4}>
-                <Button size="sm" colorScheme="green">Accept</Button>
-                <Button size="sm" colorScheme="red">Reject</Button>
+                <Button
+                    size="sm"
+                    colorScheme="green"
+                    onClick={handleAccept}
+                    isDisabled={currentStatus !== "PENDING"}
+                >
+                    Accept
+                </Button>
+                <Button
+                    size="sm"
+                    colorScheme="red"
+                    onClick={confirmReject}
+                    isDisabled={currentStatus !== "PENDING"}
+                >
+                    Reject
+                </Button>
                 <Button size="sm" variant="outline">Message</Button>
                 <Button size="sm" variant="outline">Change Arrival</Button>
                 <Button size="sm" variant="outline"
@@ -205,6 +307,7 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
                             <Th>Vouchers</Th>
                             <Th>Phone</Th>
                             <Th>Email</Th>
+                            <Th>Status</Th>
                         </Tr>
                     </Thead>
                     <Tbody>
@@ -236,13 +339,16 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
                             <Td> - </Td>
                             <Td>{user?.phone || 'N/A'}</Td>
                             <Td>{user?.email || 'N/A'}</Td>
+                            <Td color={currentStatus === "REJECTED" ? "red.500" : currentStatus === "ACCEPTED" ? "green.500" : "black"}>
+                                {currentStatus}
+                            </Td>
                         </Tr>
                     </Tbody>
                 </Table>
 
-                <HStack justifyContent="space-between" mt={4}>
-                    <Text fontSize="sm" color="gray.500">Status: Checkout</Text>
-                </HStack>
+                {/*<HStack justifyContent="space-between" mt={4}>*/}
+                {/*    <Text fontSize="sm" color="gray.500">Status: Checkout</Text>*/}
+                {/*</HStack>*/}
             </Box>
         </Box>
     );

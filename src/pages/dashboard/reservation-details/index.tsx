@@ -42,7 +42,6 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
     const {assignGuides, isAssigning} = useGuideAssignment();
     const toast = useToast();
     const {guides, loading} = useReservationGuides(reservation?.id);
-    const [notes, setNotes] = useState([]);
 
     const displayGuideText = () => {
         if (loading) return "Loading guides...";
@@ -84,10 +83,6 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
         );
     }
     const {user} = reservation;
-
-    const addNote = (newNote) => {
-        setNotes([...notes, newNote]);
-    };
 
     return (
         <Box p={4} overflowX="hidden">
@@ -188,10 +183,12 @@ export default function ReservationDetail({reservation, onCloseDetail}) {
                         setSelectedGuide(selected);
                         setGuideModalOpen(false);
                         handleSaveGuides(selected);
-                    }} reservationId={reservation.id}                />
+                    }} reservationId={reservation.id}/>
             </HStack>
 
-            <NotesSection notes={notes} addNote={addNote} reservationId={reservation.id} />
+            <NotesSection
+                reservationId={reservation.id}
+            />
 
             <Box mt={6} maxW="100%" overflowX="auto">
                 <Text fontSize="lg" fontWeight="bold" mb={4}>Guests</Text>

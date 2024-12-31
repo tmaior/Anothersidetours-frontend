@@ -23,34 +23,28 @@ import {
     useToast
 } from "@chakra-ui/react";
 import {AddIcon} from "@chakra-ui/icons";
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 
-export default function NotesSection({reservationId, notes: initialNotes = []}) {
+export default function NotesSection({reservationId}) {
     const {isOpen, onOpen, onClose} = useDisclosure();
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
-    const [notes, setNotes] = useState(initialNotes);
+    const [notes, setNotes] = useState([]);
     const toast = useToast();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [localNotes, setLocalNotes] = useState(notes);
 
-    const fetchNotes = async () => {
+    const fetchNotes = useCallback(async () => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${reservationId}`);
             const data = await response.json();
-            setLocalNotes(data);
+            setNotes(data);
         } catch (error) {
             console.error("Error fetching notes:", error);
         }
-    };
+    }, [reservationId]);
 
     useEffect(() => {
-        if (reservationId) {
-            fetchNotes();
-        } else {
-            setLocalNotes(notes);
-        }
-    }, [reservationId, notes]);
+        fetchNotes();
+    }, [fetchNotes, reservationId]);
 
     const handleAddNote = async () => {
         if (title.trim() && content.trim()) {
@@ -66,7 +60,9 @@ export default function NotesSection({reservationId, notes: initialNotes = []}) 
                     }),
                 });
 
-                if (!response.ok) throw new Error("Failed to add note");
+                if (!response.ok) {
+                    throw new Error("Failed to add note");
+                }
 
                 const createdNote = await response.json();
                 setNotes((prevNotes) => [...prevNotes, createdNote]);

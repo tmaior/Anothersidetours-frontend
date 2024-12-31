@@ -150,7 +150,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     };
 
     return (
-        <Box display="flex" minH="100vh" >
+        <Box display="flex" minH="100vh">
             <Box
                 as="nav"
                 width="250px"
@@ -506,7 +506,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             }}
                         >
                             <HStack spacing={3}>
-                                <FaUsersGear />
+                                <FaUsersGear/>
                                 <Text>Guides</Text>
                             </HStack>
                         </Button>
@@ -679,10 +679,20 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             {/*    background: "rgba(255, 255, 255, 0.1)",*/}
                             {/*    transition: "background 0.2s ease-in-out",*/}
                             {/*}}>Another Side Of San Diego Tours</MenuItem>*/}
-                            <MenuItem bg="#222324" color={"white"} _hover={{
-                                background: "rgba(255, 255, 255, 0.1)",
-                                transition: "background 0.2s ease-in-out",
-                            }}>Logout</MenuItem>
+                            <MenuItem
+                                bg="#222324"
+                                color={"white"}
+                                _hover={{
+                                    background: "rgba(255, 255, 255, 0.1)",
+                                    transition: "background 0.2s ease-in-out",
+                                }}
+                                onClick={() => {
+                                    localStorage.removeItem("user");
+                                    router.push("/login");
+                                }}
+                            >
+                                Logout
+                            </MenuItem>
                             <MenuDivider borderColor="#333"/>
                             <MenuItem bg="#222324" color={"white"} icon={<AiOutlinePlus/>} _hover={{
                                 background: "rgba(255, 255, 255, 0.1)",

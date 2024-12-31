@@ -1,29 +1,106 @@
 import {
+    Accordion,
+    AccordionButton,
+    AccordionIcon,
+    AccordionItem,
+    AccordionPanel,
     Box,
     Button,
+    FormControl,
+    FormLabel,
     HStack,
+    Input,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
     Text,
-    Accordion,
-    AccordionItem,
-    AccordionButton,
-    AccordionPanel,
-    AccordionIcon,
+    Textarea,
+    useDisclosure,
+    useToast
 } from "@chakra-ui/react";
 import {AddIcon} from "@chakra-ui/icons";
-import React from "react";
+import React, {useEffect, useState} from "react";
 
-export default function NotesSection({ notes }) {
+export default function NotesSection({reservationId, notes: initialNotes = []}) {
+    const {isOpen, onOpen, onClose} = useDisclosure();
+    const [title, setTitle] = useState("");
+    const [content, setContent] = useState("");
+    const [notes, setNotes] = useState(initialNotes);
+    const toast = useToast();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [localNotes, setLocalNotes] = useState(notes);
+
+    const fetchNotes = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${reservationId}`);
+            const data = await response.json();
+            setLocalNotes(data);
+        } catch (error) {
+            console.error("Error fetching notes:", error);
+        }
+    };
+
+    useEffect(() => {
+        if (reservationId) {
+            fetchNotes();
+        } else {
+            setLocalNotes(notes);
+        }
+    }, [reservationId, notes]);
+
+    const handleAddNote = async () => {
+        if (title.trim() && content.trim()) {
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        reservationId,
+                        description: content,
+                    }),
+                });
+
+                if (!response.ok) throw new Error("Failed to add note");
+
+                const createdNote = await response.json();
+                setNotes((prevNotes) => [...prevNotes, createdNote]);
+                setTitle("");
+                setContent("");
+                onClose();
+
+                toast({
+                    title: "Note Added",
+                    description: "Note has been added successfully.",
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            } catch (error) {
+                console.error("Error adding note:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to add note.",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
+        }
+    };
+
     return (
         <Box mt={6} pt={4} w={"300px"}>
             <Accordion allowToggle>
                 <AccordionItem border="none">
                     <HStack>
                         <h2>
-                            <AccordionButton
-                                _hover={{
-                                    backgroundColor: "transparent"
-                                }}
-                            >
+                            <AccordionButton _hover={{backgroundColor: "transparent"}}>
                                 <Box as="span" flex="1" textAlign="left">
                                     <Text fontSize="lg" fontWeight="bold">Event Notes</Text>
                                 </Box>
@@ -34,18 +111,18 @@ export default function NotesSection({ notes }) {
                             size="sm"
                             variant="outline"
                             leftIcon={<AddIcon boxSize={3}/>}
+                            onClick={onOpen}
                         >
                             Add Note
                         </Button>
-
                     </HStack>
                     <AccordionPanel pb={4}>
                         {notes.length > 0 ? (
                             notes.map((note, index) => (
                                 <Box key={index} mb={4}>
-                                    <Text fontSize="sm" fontWeight="medium">{note.title}</Text>
+                                    <Text fontSize="sm" fontWeight="medium">{note.title || 'Note'}</Text>
                                     <Text fontSize="sm" color="gray.600" mt={1}>
-                                        {note.content}
+                                        {note.description}
                                     </Text>
                                 </Box>
                             ))
@@ -55,6 +132,38 @@ export default function NotesSection({ notes }) {
                     </AccordionPanel>
                 </AccordionItem>
             </Accordion>
+
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay/>
+                <ModalContent>
+                    <ModalHeader>Add New Note</ModalHeader>
+                    <ModalCloseButton/>
+                    <ModalBody>
+                        <FormControl mb={4}>
+                            <FormLabel>Title</FormLabel>
+                            <Input
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Enter note title"
+                            />
+                        </FormControl>
+                        <FormControl>
+                            <FormLabel>Content</FormLabel>
+                            <Textarea
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                placeholder="Enter note content"
+                            />
+                        </FormControl>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button colorScheme="blue" mr={3} onClick={handleAddNote}>
+                            Save
+                        </Button>
+                        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </Box>
     );
 }

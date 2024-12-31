@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
 import withAuth from "../../../utils/withAuth";
+import {useGuest} from "../../../components/GuestContext";
 
 function ListAddons() {
     const bgColor = useColorModeValue("white", "gray.800");
@@ -25,12 +26,13 @@ function ListAddons() {
     const [filterTenant, setFilterTenant] = useState("");
     const toast = useToast();
     const router = useRouter();
+    const {tenantId} = useGuest();
 
     useEffect(() => {
         async function fetchData() {
             try {
                 const [addonsRes, tenantsRes] = await Promise.all([
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons`),
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTenantId/${tenantId}`),
                     fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`),
                 ]);
 
@@ -54,7 +56,7 @@ function ListAddons() {
         }
 
         fetchData();
-    }, [toast]);
+    }, [tenantId, toast]);
 
     const handleDelete = async () => {
         if (selectedAddon) {

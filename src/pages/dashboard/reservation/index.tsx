@@ -117,6 +117,8 @@ function Dashboard() {
                     email: string;
                     phone: string;
                     status: string;
+                    paymentMethodId: string;
+                    total_price: number;
                     imageUrl: string;
                     user?: {
                         name: string;
@@ -174,7 +176,9 @@ function Dashboard() {
                             phone: reservation.tour.phone || "N/A",
                             imageUrl: reservation.tour.imageUrl || "/images/default-tour.png",
                             user: reservation.user,
-                            status: reservation.status
+                            status: reservation.status,
+                            paymentMethodId: reservation.paymentMethodId,
+                            total_price: reservation.total_price
                         });
                         return acc;
                     },
@@ -394,7 +398,7 @@ function Dashboard() {
                         <ReservationDetail
                             reservation={selectedReservation}
                             onCloseDetail={handleCloseDetail}
-                            setReservations={reservations}
+                            setReservations={setReservations}
                         />
                     </Box>
                 )}

@@ -90,6 +90,35 @@ export default function NotesSection({reservationId}) {
         }
     };
 
+    const handleRemoveNote = async (noteId) => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${noteId}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) throw new Error("Failed to delete note");
+
+            setNotes((prevNotes) => prevNotes.filter((note) => note.id !== noteId));
+
+            toast({
+                title: "Note Removed",
+                description: "Note has been removed successfully.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error removing note:", error);
+            toast({
+                title: "Error",
+                description: "Failed to remove note.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
     return (
         <Box mt={6} pt={4} w={"300px"}>
             <Accordion allowToggle>
@@ -115,12 +144,21 @@ export default function NotesSection({reservationId}) {
                     <AccordionPanel pb={4}>
                         {notes.length > 0 ? (
                             notes.map((note, index) => (
-                                <Box key={index} mb={4}>
-                                    <Text fontSize="sm" fontWeight="medium">{note.title || 'Note'}</Text>
-                                    <Text fontSize="sm" color="gray.600" mt={1}>
-                                        {note.description}
-                                    </Text>
-                                </Box>
+                                <HStack key={index} justify="space-between" mb={4}>
+                                    <Box>
+                                        <Text fontSize="sm" fontWeight="medium">{note.title || 'Note'}</Text>
+                                        <Text fontSize="sm" color="gray.600" mt={1}>
+                                            {note.description}
+                                        </Text>
+                                    </Box>
+                                    <Button
+                                        size="xs"
+                                        colorScheme="red"
+                                        onClick={() => handleRemoveNote(note.id)}
+                                    >
+                                        Remove
+                                    </Button>
+                                </HStack>
                             ))
                         ) : (
                             <Text fontSize="sm" color="gray.500">No Event Notes</Text>

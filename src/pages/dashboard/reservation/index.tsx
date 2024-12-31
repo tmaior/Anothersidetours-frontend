@@ -402,11 +402,13 @@ function Dashboard() {
                     <ModalHeader>Notes</ModalHeader>
                     <ModalCloseButton/>
                     <ModalBody>
-                        {activeNote ? (
-                            <>
-                                <Text fontWeight="bold">{activeNote.title}</Text>
-                                <Text>{activeNote.notes}</Text>
-                            </>
+                        {activeNote && activeNote.length > 0 ? (
+                            activeNote.map((note, index) => (
+                                <Box key={index} mb={4}>
+                                    <Text fontWeight="bold">{note.title || 'Untitled'}</Text>
+                                    <Text>{note.description || 'No description available'}</Text>
+                                </Box>
+                            ))
                         ) : (
                             <Text>No notes available</Text>
                         )}

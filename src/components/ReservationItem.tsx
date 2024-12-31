@@ -52,6 +52,23 @@ const ReservationItem = ({
         }
     }, [guides]);
 
+    const handleNoteClick = async (item) => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${item.id}`);
+            const data = await response.json();
+            onNoteClick(data);
+        } catch (error) {
+            console.error("Error fetching notes:", error);
+            toast({
+                title: "Error",
+                description: "Failed to load notes.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    };
+
     const handleGuideSelection = async (selectedGuides: { id: string; name: string }[]) => {
         const guideIds = selectedGuides.map((guide) => guide.id);
         setSelectedGuideIds(guideIds);
@@ -174,7 +191,8 @@ const ReservationItem = ({
                                 <ManageGuidesModal
                                     isOpen={isGuideModalOpen}
                                     onClose={() => setGuideModalOpen(false)}
-                                    onSelectGuide={handleGuideSelection} reservationId={reservationId}                                />
+                                    onSelectGuide={handleGuideSelection} reservationId={reservationId}
+                                />
                                 <Flex align="center" justify="center">
                                     {item.hasNotes ? (
                                         <IconButton
@@ -185,7 +203,7 @@ const ReservationItem = ({
                                             color="orange.500"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                onNoteClick(item);
+                                                handleNoteClick(item);
                                             }}
                                         />
                                     ) : (

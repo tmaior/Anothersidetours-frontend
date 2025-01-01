@@ -13,40 +13,49 @@ import {
 } from "@chakra-ui/react";
 import PhotoUpload from "../../../components/PhotoUpload";
 import DashboardLayout from "../../../components/DashboardLayout";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import withAuth from "../../../utils/withAuth";
-import {useRouter} from "next/router";
+import { useRouter } from "next/router";
 import axios from "axios";
 
-
 function GuideForm() {
-
-    const [sidebarWidth, setSidebarWidth] = useState(250);
     const router = useRouter();
+    const { id } = router.query;
     const [formData, setFormData] = useState({
         name: "",
         email: "",
         phone: "",
         bio: "",
     });
-
-    useEffect(() => {
-        const handleResize = () => {
-            const sidebar = document.getElementById("dashboard-sidebar");
-            if (sidebar) {
-                setSidebarWidth(sidebar.offsetWidth);
-            }
-        };
-        handleResize();
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
-
     const [loading, setLoading] = useState(false);
     const toast = useToast();
+    const [isEditing, setIsEditing] = useState(false);
+
+    useEffect(() => {
+        if (id && id !== "new") {
+            setIsEditing(true);
+            const fetchGuide = async () => {
+                try {
+                    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/guides/${id}`);
+                    setFormData(response.data);
+                } catch {
+                    toast({
+                        title: "Error",
+                        description: "Failed to fetch guide data.",
+                        status: "error",
+                        duration: 3000,
+                        isClosable: true,
+                    });
+                }
+            };
+            fetchGuide();
+        } else {
+            setIsEditing(false);
+        }
+    }, [id, toast]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const {name, value} = e.target;
+        const { name, value } = e.target;
         setFormData((prev) => ({
             ...prev,
             [name]: value,
@@ -67,19 +76,30 @@ function GuideForm() {
 
         try {
             setLoading(true);
-            await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/guides`, formData);
-            toast({
-                title: "Guide Created",
-                description: "The guide was successfully created.",
-                status: "success",
-                duration: 3000,
-                isClosable: true,
-            });
+            if (isEditing) {
+                await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/guides/${id}`, formData);
+                toast({
+                    title: "Guide Updated",
+                    description: "The guide was successfully updated.",
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            } else {
+                await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/guides`, formData);
+                toast({
+                    title: "Guide Created",
+                    description: "The guide was successfully created.",
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            }
             router.push("/dashboard/guides");
         } catch {
             toast({
                 title: "Error",
-                description: "Failed to create guide.",
+                description: "Failed to save guide.",
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -97,12 +117,10 @@ function GuideForm() {
         <DashboardLayout>
             <Box p={8} maxW="800px" mx="auto">
                 <Heading size="lg" mb={6}>
-                    <Box as="span" fontWeight="medium" color="gray.500">
-                        Guide Management
-                    </Box>
+                    {isEditing ? "Edit Guide" : "New Guide"}
                 </Heading>
 
-                <Divider mb={8}/>
+                <Divider mb={8} />
 
                 <Box>
                     <Heading size="md" mb={6}>
@@ -151,28 +169,16 @@ function GuideForm() {
                         />
                     </FormControl>
                 </Box>
+
                 <Box mb={8}>
-                    <PhotoUpload/>
+                    <PhotoUpload />
                 </Box>
                 <Divider marginBottom={"10px"}/>
-                <Flex
-                    as="footer"
-                    position="fixed"
-                    bottom="0"
-                    bg="white"
-                    py={4}
-                    px={8}
-                    boxShadow="0 -2px 10px rgba(0, 0, 0, 0.1)"
-                    justifyContent="center"
-                    borderTop="1px solid #E2E8F0"
-                    left={`${sidebarWidth}px`}
-                    width={`calc(100% - ${sidebarWidth}px)`}
-                >
+                <Flex justifyContent="center" mt={8}>
                     <HStack spacing={4}>
-                        <Button colorScheme="blue"
-                                onClick={handleSave}
-                                isLoading={loading}
-                        >Save</Button>
+                        <Button colorScheme="blue" onClick={handleSave} isLoading={loading}>
+                            {isEditing ? "Update" : "Save"}
+                        </Button>
                         <Button variant="outline" onClick={handleCancel}>Cancel</Button>
                     </HStack>
                 </Flex>

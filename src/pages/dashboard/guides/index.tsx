@@ -38,7 +38,7 @@ function GuidesPage() {
     }, []);
 
     const handleEdit = (id: number) => {
-        console.log("Edit", id);
+        router.push(`/dashboard/new-guide/${id}`);
     };
 
     const handleDelete = async (id: number) => {
@@ -64,7 +64,7 @@ function GuidesPage() {
     };
 
     const handleAdd = () => {
-        router.push("/dashboard/new-guide");
+        router.push("/dashboard/new-guide/new");
     };
 
     return (

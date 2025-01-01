@@ -357,7 +357,7 @@ function Dashboard() {
                     Guides: All
                 </Button>
             </HStack>
-            <Flex height="calc(100vh - 80px)" ml={"-40px"}>
+            <Flex maxHeight="calc(100vh - 80px)" overflowY="auto" ml={"-40px"}>
                 <Box
                     w={isDetailVisible ? "15%" : "100%"}
                     overflowY="auto"

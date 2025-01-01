@@ -600,7 +600,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     </Text>
                 </VStack>
 
-                <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"}>
+                <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"} marginTop={"20px"}>
                     {/*{!isLoading && selectedTenant && (*/}
                     <Menu placement="right-start" offset={[0, 0]} closeOnSelect={false}>
                         <MenuButton

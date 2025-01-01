@@ -5,14 +5,14 @@ import {
     Flex,
     Heading,
     HStack,
-    Select,
+    Input,
     Text,
-    VStack,
     useColorModeValue,
     useToast,
+    VStack,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import {useEffect, useState} from "react";
+import {useRouter} from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
 import withAuth from "../../../utils/withAuth";
 import {useGuest} from "../../../components/GuestContext";
@@ -21,9 +21,9 @@ function ListAddons() {
     const bgColor = useColorModeValue("white", "gray.800");
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
     const [addons, setAddons] = useState([]);
+    const [filteredAddons, setFilteredAddons] = useState([]);
     const [selectedAddon, setSelectedAddon] = useState(null);
-    const [tenants, setTenants] = useState([]);
-    const [filterTenant, setFilterTenant] = useState("");
+    const [searchTerm, setSearchTerm] = useState("");
     const toast = useToast();
     const router = useRouter();
     const {tenantId} = useGuest();
@@ -31,23 +31,17 @@ function ListAddons() {
     useEffect(() => {
         async function fetchData() {
             try {
-                const [addonsRes, tenantsRes] = await Promise.all([
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTenantId/${tenantId}`),
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`),
-                ]);
-
-                const [addonsData, tenantsData] = await Promise.all([
-                    addonsRes.json(),
-                    tenantsRes.json(),
-                ]);
-
+                const addonsRes = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/addons/byTenantId/${tenantId}`
+                );
+                const addonsData = await addonsRes.json();
                 setAddons(addonsData);
-                setTenants(tenantsData);
+                setFilteredAddons(addonsData);
             } catch (error) {
-                console.error("Error fetching data:", error);
+                console.error("Error fetching addons:", error);
                 toast({
                     title: "Error",
-                    description: "Failed to load addons or tenants.",
+                    description: "Failed to load addons.",
                     status: "error",
                     duration: 5000,
                     isClosable: true,
@@ -58,12 +52,21 @@ function ListAddons() {
         fetchData();
     }, [tenantId, toast]);
 
+    const handleSearch = (e) => {
+        const value = e.target.value.toLowerCase();
+        setSearchTerm(value);
+        const filtered = addons.filter((addon) =>
+            addon.label.toLowerCase().includes(value)
+        );
+        setFilteredAddons(filtered);
+    };
+
     const handleDelete = async () => {
         if (selectedAddon) {
             try {
                 const response = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/addons/${selectedAddon}`,
-                    { method: "DELETE" }
+                    {method: "DELETE"}
                 );
 
                 if (!response.ok) {
@@ -71,6 +74,9 @@ function ListAddons() {
                 }
 
                 setAddons(addons.filter((addon) => addon.id !== selectedAddon));
+                setFilteredAddons(
+                    filteredAddons.filter((addon) => addon.id !== selectedAddon)
+                );
                 setSelectedAddon(null);
                 toast({
                     title: "Add-on Deleted",
@@ -96,7 +102,7 @@ function ListAddons() {
         if (selectedAddon) {
             router.push({
                 pathname: "/dashboard/create-addons",
-                query: { addonId: selectedAddon },
+                query: {addonId: selectedAddon},
             });
         }
     };
@@ -104,18 +110,13 @@ function ListAddons() {
     return (
         <DashboardLayout>
             <Box bg={bgColor} p={8} borderRadius="md">
-                <HStack mb={4}>
-                    <Select
-                        placeholder="Filter by Tenant"
+                <HStack mb={4} spacing={4}>
+                    <Input
+                        placeholder="Search Add-ons"
                         bg={inputBgColor}
-                        onChange={(e) => setFilterTenant(e.target.value)}
-                    >
-                        {tenants.map((tenant) => (
-                            <option key={tenant.id} value={tenant.id}>
-                                {tenant.name}
-                            </option>
-                        ))}
-                    </Select>
+                        value={searchTerm}
+                        onChange={handleSearch}
+                    />
                     <Button
                         colorScheme="blue"
                         onClick={() => router.push("/dashboard/create-addons")}
@@ -124,9 +125,8 @@ function ListAddons() {
                     </Button>
                 </HStack>
                 <VStack spacing={4} align="stretch">
-                    {addons
-                        .filter((addon) => !filterTenant || addon.tenantId === filterTenant)
-                        .map((addon) => (
+                    {filteredAddons.length > 0 ? (
+                        filteredAddons.map((addon) => (
                             <Flex
                                 key={addon.id}
                                 p={4}
@@ -138,27 +138,49 @@ function ListAddons() {
                             >
                                 <Checkbox
                                     isChecked={selectedAddon === addon.id}
-                                    onChange={() => setSelectedAddon(selectedAddon === addon.id ? null : addon.id)}
+                                    onChange={() =>
+                                        setSelectedAddon(
+                                            selectedAddon === addon.id ? null : addon.id
+                                        )
+                                    }
                                     mr={4}
                                 />
                                 <Box flex="1">
                                     <Heading fontSize="md" color="white" mb={2}>
                                         {addon.label}
                                     </Heading>
-                                    <Text color="gray.400" mb={1}>{addon.description}</Text>
                                     <Text color="gray.400" mb={1}>
-                                        Type: {addon.type === "CHECKBOX" ? "Unique" : "Quantity"}
+                                        {addon.description}
                                     </Text>
-                                    <Text color="gray.400">Price: ${addon.price.toFixed(2)}</Text>
+                                    <Text color="gray.400" mb={1}>
+                                        Type:{" "}
+                                        {addon.type === "CHECKBOX"
+                                            ? "Unique"
+                                            : "Quantity"}
+                                    </Text>
+                                    <Text color="gray.400">
+                                        Price: ${addon.price.toFixed(2)}
+                                    </Text>
                                 </Box>
                             </Flex>
-                        ))}
+                        ))
+                    ) : (
+                        <Text color="gray.500">No add-ons found.</Text>
+                    )}
                 </VStack>
                 <HStack mt={4}>
-                    <Button colorScheme="blue" onClick={handleEdit} isDisabled={!selectedAddon}>
+                    <Button
+                        colorScheme="blue"
+                        onClick={handleEdit}
+                        isDisabled={!selectedAddon}
+                    >
                         Edit
                     </Button>
-                    <Button colorScheme="red" onClick={handleDelete} isDisabled={!selectedAddon}>
+                    <Button
+                        colorScheme="red"
+                        onClick={handleDelete}
+                        isDisabled={!selectedAddon}
+                    >
                         Delete
                     </Button>
                 </HStack>
@@ -166,4 +188,5 @@ function ListAddons() {
         </DashboardLayout>
     );
 }
+
 export default withAuth(ListAddons);

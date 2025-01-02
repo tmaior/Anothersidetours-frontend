@@ -191,16 +191,25 @@ function ListTours() {
                                 />
                                 <IconButton
                                     aria-label="Edit"
-                                    icon={<EditIcon/>}
-                                    colorScheme="blue"
-                                    size="sm"
+                                    icon={<EditIcon boxSize={3}/>}
+                                    variant="outline"
+                                    w="50px"
+                                    h="30px"
+                                    _hover={{
+                                        borderColor: "black",
+                                    }}
                                     onClick={() => handleEdit(tour.id)}
                                 />
                                 <IconButton
                                     aria-label="Delete"
-                                    icon={<DeleteIcon/>}
-                                    colorScheme="red"
-                                    size="sm"
+                                    icon={<DeleteIcon boxSize={3}/>}
+                                    variant="outline"
+                                    w="50px"
+                                    h="30px"
+                                    ml={2}
+                                    _hover={{
+                                        borderColor: "black",
+                                    }}
                                     onClick={() => handleDeleteClick(tour.id)}
                                 />
                             </HStack>
@@ -220,11 +229,13 @@ function ListTours() {
                                     boxSize="150px"
                                     borderRadius="md"
                                 />
-                                <Box flex="1">
+                                <Box flex="1" maxWidth="600px">
                                     <Heading fontSize="lg" noOfLines={1}>
                                         {tour.name}
                                     </Heading>
-                                    <Text mt={2}>{tour.description}</Text>
+                                    <Text mt={2} noOfLines={3}>
+                                        {tour.description}
+                                    </Text>
 
                                     <HStack mt={2}>
                                         {tour.isPrivate && (
@@ -266,4 +277,5 @@ function ListTours() {
         </DashboardLayout>
     );
 }
+
 export default withAuth(ListTours);

@@ -54,7 +54,7 @@ export default function Navbar({title, description}:NavbarProps) {
                     <Text fontSize="md">
                         <span>⏱ 4 hours</span> <br/>
                     </Text>
-                    <Text mt={4}>
+                    <Text mt={4} noOfLines={5}>
                         {description}
                     </Text>
 

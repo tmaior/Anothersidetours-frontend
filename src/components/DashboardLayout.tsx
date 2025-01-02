@@ -622,13 +622,23 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                 color: "white",
                             }}
                         >
-                            <HStack spacing={3}>
-                                <Avatar size="sm" src={selectedTenant?.imageUrl || "https://bit.ly/broken-link"}/>
-                                <Box>
-                                    <Text fontSize="sm" fontWeight="bold">
+                            <HStack spacing={3} alignItems="center">
+                                <Avatar size="sm" src={selectedTenant?.imageUrl || "https://bit.ly/broken-link"} />
+                                <Box overflow="hidden">
+                                    <Text
+                                        fontSize="sm"
+                                        fontWeight="bold"
+                                        isTruncated
+                                        maxWidth="200px"
+                                    >
                                         {selectedTenant?.name || "No City Selected"}
                                     </Text>
-                                    <Text fontSize="xs" color="gray.400">
+                                    <Text
+                                        fontSize="xs"
+                                        color="gray.400"
+                                        isTruncated
+                                        maxWidth="200px"
+                                    >
                                         {selectedTenant?.description || "No location provided"}
                                     </Text>
                                 </Box>

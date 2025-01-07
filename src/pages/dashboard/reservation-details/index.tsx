@@ -18,6 +18,7 @@ import {
     Th,
     Thead,
     Tr,
+    useDisclosure,
     useToast,
 } from "@chakra-ui/react";
 import {FiCalendar, FiWatch} from "react-icons/fi";
@@ -31,6 +32,8 @@ import {AiOutlineCompass} from "react-icons/ai";
 import {useGuides} from "../../../hooks/useGuides";
 import {useGuideAssignment} from "../../../hooks/useGuideAssignment";
 import {useReservationGuides} from "../../../hooks/useReservationGuides";
+import CancelConfirmationModal from "../../../components/CancelConfirmationModal";
+import BookingCancellationModal from "../../../components/BookingCancellationModal";
 
 export default function ReservationDetail({reservation, onCloseDetail, setReservations}) {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
@@ -43,6 +46,23 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
     const toast = useToast();
     const {guides, loading} = useReservationGuides(reservation?.id);
     const [currentStatus, setCurrentStatus] = useState(reservation?.status);
+
+    const {
+        isOpen: isConfirmOpen,
+        onOpen: onConfirmOpen,
+        onClose: onConfirmClose,
+    } = useDisclosure();
+
+    const {
+        isOpen: isCancelOpen,
+        onOpen: onCancelOpen,
+        onClose: onCancelClose,
+    } = useDisclosure();
+
+    const handleConfirmCancel = () => {
+        onConfirmClose();
+        onCancelOpen();
+    };
 
     useEffect(() => {
         setCurrentStatus(reservation?.status);
@@ -249,7 +269,9 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                 <Button size="sm" variant="outline">Message</Button>
                 <Button size="sm" variant="outline">Change Arrival</Button>
                 <Button size="sm" variant="outline"
-                        color={"red.500"}>
+                        color={"red.500"}
+                        onClick={onConfirmOpen}
+                >
                     <FaRegTimesCircle style={{marginRight: '8px'}}/>
                     Cancel Reservations
                 </Button>
@@ -257,6 +279,20 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                 <Button size="sm" variant="outline">Export Roster</Button>
                 <Button size="sm" variant="outline" color={"green"}> + Purchase</Button>
             </HStack>
+
+            <CancelConfirmationModal
+                isOpen={isConfirmOpen}
+                onClose={onConfirmClose}
+                onConfirm={handleConfirmCancel}
+                booking={reservation}
+            />
+
+            <BookingCancellationModal
+                isOpen={isCancelOpen}
+                onClose={onCancelClose}
+                booking={reservation}
+            />
+
             <HStack spacing={8} mt={4}>
                 <Box mt={6}>
                     <HStack spacing={2}>

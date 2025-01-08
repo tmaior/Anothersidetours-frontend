@@ -85,8 +85,13 @@ const PurchasePage = () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [privateTourAddOn, setPrivateTourAddOn] = useState(0);
     const toast = useToast();
-
+    const [finalPrice, setFinalPrice] = useState(298);
+    const [voucherDiscount, setVoucherDiscount] = useState(0);
+    const [voucherCode, setVoucherCode] = useState('');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [voucherValid, setVoucherValid] = useState(false);
+    const [voucherError, setVoucherError] = useState('');
+    const [appliedVoucherCode, setAppliedVoucherCode] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchTour = async () => {
@@ -104,6 +109,12 @@ const PurchasePage = () => {
         };
         fetchTour();
     }, [id]);
+
+    useEffect(() => {
+        const total = quantity * basePricePerGuest;
+        const discountedTotal = total - voucherDiscount;
+        setFinalPrice(discountedTotal > 0 ? discountedTotal : 0);
+    }, [voucherDiscount, quantity]);
 
     useEffect(() => {
         const fetchAddOns = async () => {
@@ -258,6 +269,7 @@ const PurchasePage = () => {
         const finalDate = new Date(year, (month - 1), day, hour, minute);
         return finalDate.toISOString();
     };
+    const totalWithDiscount = Math.max(grandTotalFinal - voucherDiscount, 0);
     const handleCreateReservationAndPay = async () => {
         if (!stripe || !elements) {
             alert("Stripe has not yet been loaded.");
@@ -378,6 +390,32 @@ const PurchasePage = () => {
                     throw new Error("Failed to save PaymentMethod.");
                 }
 
+                if (voucherValid && appliedVoucherCode) {
+                    const redeemResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/redeem`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            code: appliedVoucherCode,
+                            reservationId: reservationResult.id,
+                        }),
+                    });
+
+                    if (redeemResponse.ok) {
+                        toast({
+                            title: 'Voucher Redeemed',
+                            description: 'The voucher has been successfully redeemed.',
+                            status: 'success',
+                            duration: 4000,
+                            isClosable: true,
+                        });
+                        setAppliedVoucherCode("")
+                    } else {
+                        throw new Error('Failed to redeem voucher');
+                    }
+                }
+
                 toast({
                     title: "Reservation Complete!",
                     description: "Your reservation and payment were successful.",
@@ -404,6 +442,49 @@ const PurchasePage = () => {
 
     const handleCancel = () => {
         router.push('/dashboard/reservation');
+    };
+
+    const handleValidateVoucher = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/validate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({code: voucherCode}),
+            });
+
+            const data = await response.json();
+
+            if (data.isValid) {
+                setVoucherDiscount(data.amount);
+                setVoucherValid(true);
+                setVoucherError('');
+                setAppliedVoucherCode(voucherCode);
+                setVoucherCode('');
+                toast({
+                    title: 'Voucher Applied',
+                    description: `Discount of $${data.amount} applied successfully!`,
+                    status: 'success',
+                    duration: 3000,
+                    isClosable: true,
+                });
+            } else {
+                setVoucherValid(false);
+                setVoucherDiscount(0);
+                setVoucherError(data.message || 'Invalid voucher');
+                toast({
+                    title: 'Invalid Voucher',
+                    description: data.message || 'Voucher cannot be applied.',
+                    status: 'error',
+                    duration: 3000,
+                    isClosable: true,
+                });
+            }
+        } catch (error) {
+            console.error('Failed to validate voucher:', error);
+            setVoucherError('Failed to validate voucher.');
+        }
     };
 
     if (loading) {
@@ -761,8 +842,9 @@ const PurchasePage = () => {
                                 <Button
                                     colorScheme="green"
                                     onClick={handleCreateReservationAndPay}
+                                    loadingText="Processing"
                                 >
-                                    Pay US${grandTotalFinal.toFixed(2)}
+                                    Pay US${totalWithDiscount.toFixed(2)}
                                 </Button>
                             </HStack>
                         </HStack>
@@ -779,16 +861,28 @@ const PurchasePage = () => {
                                 Guests ({quantity} × US${basePrice}) = US${(quantity * basePrice).toFixed(2)}
                             </Text>
                         </Box>
+                        {voucherDiscount > 0 && (
+                            <Box bg="green.50" p={4} borderRadius="md" mb={4}>
+                                <Text fontWeight="bold" color="green.600">
+                                    Discount Applied
+                                </Text>
+                                <Text>- ${voucherDiscount.toFixed(2)}</Text>
+                            </Box>
+                        )}
                         <Divider mb={4}/>
                         <Text fontWeight="bold" mb={2}>Grand Total</Text>
-                        <Text fontSize="xl" mb={4}>US${grandTotalFinal.toFixed(2)}</Text>
+                        <Text fontSize="xl" mb={4}>US${totalWithDiscount.toFixed(2)}</Text>
 
                         <FormControl mb={4}>
                             <FormLabel>Code</FormLabel>
                             <HStack>
-                                <Input placeholder="Enter code"/>
-                                <Button>Apply Code</Button>
+                                <Input
+                                    value={voucherCode}
+                                    onChange={(e) => setVoucherCode(e.target.value)}
+                                    placeholder="Enter code"/>
+                                <Button onClick={handleValidateVoucher}>Apply Code</Button>
                             </HStack>
+                            {voucherError && <Text color="red.500">{voucherError}</Text>}
                         </FormControl>
                     </Box>
                 </Flex>

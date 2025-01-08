@@ -20,9 +20,9 @@ const CancelConfirmationModal = ({booking, isOpen, onClose, onConfirm}) => {
                     <Box bg="blue.50" p={4} borderRadius="md">
                         <Text>
                             Are you sure you want to cancel <strong>{booking.title}</strong>{" "}
-                            on <strong>{booking.date}</strong> at{" "}
-                            <strong>{booking.time}</strong> for{" "}
-                            <strong>{booking.clientName}</strong>?
+                            on <strong>{booking.dateFormatted}</strong>{" "}
+                            at <strong>{booking.time}</strong> for{" "}
+                            <strong>{booking.user.name}</strong>?
                         </Text>
                     </Box>
                 </ModalBody>

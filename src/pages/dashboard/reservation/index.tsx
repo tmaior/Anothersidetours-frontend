@@ -120,6 +120,7 @@ function Dashboard() {
                     paymentMethodId: string;
                     total_price: number;
                     imageUrl: string;
+                    paymentIntentId: string;
                     user?: {
                         name: string;
                         phone: string;
@@ -178,7 +179,8 @@ function Dashboard() {
                             user: reservation.user,
                             status: reservation.status,
                             paymentMethodId: reservation.paymentMethodId,
-                            total_price: reservation.total_price
+                            total_price: reservation.total_price,
+                            paymentIntentId: reservation.paymentIntentId
                         });
                         return acc;
                     },

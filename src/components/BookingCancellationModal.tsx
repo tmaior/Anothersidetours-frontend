@@ -12,16 +12,91 @@ import {
     ModalFooter,
     ModalHeader,
     ModalOverlay,
-    Select,
     Text,
     Textarea,
-    VStack,
+    useToast,
+    VStack
 } from "@chakra-ui/react";
 import {useState} from "react";
 
 const BookingCancellationModal = ({booking, isOpen, onClose}) => {
-    const [amount, setAmount] = useState(booking.total || 298);
+    const [setAmount] = useState(booking.total_price || 298);
     const [method, setMethod] = useState("other");
+    const toast = useToast();
+
+    const handleSaveChanges = async () => {
+        try {
+            if (method === "cash") {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/refund`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        paymentIntentId: booking.paymentIntentId,
+                        amount: booking.total_price * 100,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    toast({
+                        title: "Refund Successful",
+                        description: "The amount has been refunded to the card.",
+                        status: "success",
+                        duration: 4000,
+                        isClosable: true,
+                    });
+                } else {
+                    throw new Error(data.message || "Refund failed");
+                }
+            } else if (method === "store") {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/generate`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        amount: booking.total_price,
+                        originReservationId: booking.id,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    toast({
+                        title: "Store Credit Issued",
+                        description: `Voucher ${data.voucher.code} created successfully.`,
+                        status: "success",
+                        duration: 4000,
+                        isClosable: true,
+                    });
+                } else {
+                    throw new Error(data.message || "Failed to generate voucher");
+                }
+            } else {
+                toast({
+                    title: "No Action",
+                    description: "Please select a payment method.",
+                    status: "warning",
+                    duration: 4000,
+                    isClosable: true,
+                });
+            }
+
+            onClose();
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: error.message || "An error occurred.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="5xl">
@@ -49,7 +124,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose}) => {
                                                 {booking.title || "Beyond The Billboards: Hollywood Sign Hike"}
                                             </Text>
                                             <Text>
-                                                {booking.date || "Thu January 2, 2025"} at{" "}
+                                                {booking.dateFormatted || "Thu January 2, 2025"} at{" "}
                                                 {booking.time || "10:00 AM"}
                                             </Text>
                                         </VStack>
@@ -60,11 +135,11 @@ const BookingCancellationModal = ({booking, isOpen, onClose}) => {
                                     <Text mb={2}>Amount</Text>
                                     <Input
                                         type="number"
-                                        value={amount}
+                                        value={booking.total_price}
                                         onChange={(e) => setAmount(e.target.value)}
                                     />
                                     <Text fontSize="sm" mt={1}>
-                                        up to ${booking.total || 298}
+                                        up to ${booking.total_price || 298}
                                     </Text>
                                 </Box>
 
@@ -92,14 +167,14 @@ const BookingCancellationModal = ({booking, isOpen, onClose}) => {
                                     </HStack>
                                 </Box>
 
-                                <Box w="full">
-                                    <Text mb={2}>Reason</Text>
-                                    <Select>
-                                        <option>Reduce Booking Value and Return Payment</option>
-                                        <option>Reschedule</option>
-                                        <option>Other</option>
-                                    </Select>
-                                </Box>
+                                {/*<Box w="full">*/}
+                                {/*    <Text mb={2}>Reason</Text>*/}
+                                {/*    <Select>*/}
+                                {/*        <option>Reduce Booking Value and Return Payment</option>*/}
+                                {/*        <option>Reschedule</option>*/}
+                                {/*        <option>Other</option>*/}
+                                {/*    </Select>*/}
+                                {/*</Box>*/}
 
                                 <Box w="full">
                                     <Text mb={2}>Comment</Text>
@@ -121,11 +196,11 @@ const BookingCancellationModal = ({booking, isOpen, onClose}) => {
                                     <VStack align="stretch" spacing={3}>
                                         <HStack justifyContent="space-between">
                                             <Text>Guests (${149} x 2)</Text>
-                                            <Text>$298</Text>
+                                            <Text>${booking.total_price}</Text>
                                         </HStack>
                                         <HStack justifyContent="space-between">
                                             <Text>Cancellation:</Text>
-                                            <Text>-$298</Text>
+                                            <Text>-${booking.total_price}</Text>
                                         </HStack>
                                     </VStack>
                                     <Divider/>
@@ -139,7 +214,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose}) => {
                                                 Payment {booking.date || "01/02/2025"}:
                                             </Text>
                                             <Text fontWeight="bold">
-                                                ${amount}
+                                                ${booking.total_price}
                                             </Text>
                                         </HStack>
 
@@ -148,7 +223,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose}) => {
                                                 Return Payment {booking.date || "01/02/2025"}:
                                             </Text>
                                             <Text fontWeight="bold" color="blue.500">
-                                                -${amount}
+                                                -${booking.total_price}
                                             </Text>
                                         </HStack>
                                     </VStack>
@@ -166,7 +241,8 @@ const BookingCancellationModal = ({booking, isOpen, onClose}) => {
                     <HStack>
                         <Checkbox>Notify Customer</Checkbox>
                         <Button onClick={onClose}>Skip</Button>
-                        <Button colorScheme="blue">Save Changes</Button>
+                        <Button colorScheme="blue" onClick={handleSaveChanges}>
+                            Save Changes</Button>
                     </HStack>
                 </ModalFooter>
             </ModalContent>

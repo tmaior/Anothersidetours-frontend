@@ -26,46 +26,6 @@ import {AiOutlineMail} from "react-icons/ai";
 import {BsBox2} from "react-icons/bs";
 import {PiPencilSimpleLineDuotone} from "react-icons/pi";
 
-const initialPurchases = [
-    {name: 'Matthew Prue', date: 'Jan 14', guests: 8, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Deanne Tallon', date: 'Jan 7', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-    {name: 'Kathleen Davis', date: 'Feb 8', guests: 2, avatarUrl: 'https://via.placeholder.com/40'},
-];
-
-
-const fetchMorePurchases = (startIndex: number, limit: number) => {
-    const morePurchases = [];
-    for (let i = startIndex; i < startIndex + limit; i++) {
-        morePurchases.push({
-            name: `Guest ${i + 1}`,
-            date: 'Mar 10',
-            guests: Math.floor(Math.random() * 5) + 1,
-            avatarUrl: 'https://via.placeholder.com/40'
-        });
-    }
-    return morePurchases;
-};
-
 const GuestItem = ({name, date, guests, avatarUrl}) => (
     <HStack
         p={3}
@@ -82,50 +42,88 @@ const GuestItem = ({name, date, guests, avatarUrl}) => (
                 borderRadius="md"
             />
             <VStack align="start" spacing={0}>
-                <Text fontWeight="bold">{name}</Text>
+                <Text fontWeight="bold" fontSize={"sm"}>{name}</Text>
                 <Text fontSize="sm">⦿ {guests} Guests</Text>
             </VStack>
         </HStack>
-        <Text fontSize="sm" color="gray.500">{date}</Text>
+        <Text fontSize="xs" color="gray.500">{date}</Text>
     </HStack>
 );
 
 const PurchaseList = () => {
-    const [displayedPurchases, setDisplayedPurchases] = useState(initialPurchases);
+    const [reservations, setReservations] = useState([]);
+    const [displayedReservations, setDisplayedReservations] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const containerRef = useRef<HTMLDivElement>(null);
+    const PAGE_LIMIT = 10;
+
+    useEffect(() => {
+        const fetchReservations = async () => {
+            setIsLoading(true);
+            try {
+                const response = await fetch(
+                    "http://localhost:9000/reservations/with-users/byTenantId/3d259f0d-33ea-4aef-b430-3aed2c35aa37"
+                );
+                const data = await response.json();
+                setReservations(data);
+                setDisplayedReservations(data.slice(0, PAGE_LIMIT));
+            } catch (error) {
+                console.error("Error fetching reservations:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchReservations();
+    }, []);
 
     const handleScroll = () => {
         const container = containerRef.current;
+
         if (container) {
-            const isAtBottom = container.scrollHeight - container.scrollTop === container.clientHeight;
+            const isAtBottom =
+                container.scrollHeight - container.scrollTop === container.clientHeight;
+
             if (isAtBottom && !isLoading && hasMore) {
-                loadMore();
+                loadMoreReservations();
             }
         }
     };
 
-    const loadMore = () => {
+    const loadMoreReservations = () => {
         setIsLoading(true);
+
         setTimeout(() => {
-            const newItems = fetchMorePurchases(displayedPurchases.length, 5);
-            if (newItems.length === 0) {
+            const currentLength = displayedReservations.length;
+            const nextReservations = reservations.slice(
+                currentLength,
+                currentLength + PAGE_LIMIT
+            );
+
+            if (nextReservations.length === 0) {
                 setHasMore(false);
             } else {
-                setDisplayedPurchases((prev) => [...prev, ...newItems]);
+                setDisplayedReservations((prev) => [...prev, ...nextReservations]);
             }
+
             setIsLoading(false);
-        }, 1000);
+        }, 500);
+    };
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('en-US', {month: 'short', day: '2-digit'}).format(date);
     };
 
     useEffect(() => {
         const container = containerRef.current;
         if (container) {
-            container.addEventListener('scroll', handleScroll);
+            container.addEventListener("scroll", handleScroll);
         }
-        return () => container?.removeEventListener('scroll', handleScroll);
-    }, [isLoading]);
+        return () => {
+            container?.removeEventListener("scroll", handleScroll);
+        };
+    }, [displayedReservations, hasMore, isLoading]);
 
     return (
         <VStack
@@ -138,6 +136,7 @@ const PurchaseList = () => {
             height="calc(100vh - 100px)"
             w={"300px"}
             p={4}
+            onScroll={handleScroll}
             overflowY="auto"
             css={{
                 '&::-webkit-scrollbar': {
@@ -163,8 +162,14 @@ const PurchaseList = () => {
                 }
             }}
         >
-            {displayedPurchases.map((purchase, index) => (
-                <GuestItem key={index} {...purchase} />
+            {displayedReservations.map((purchase, index) => (
+                <GuestItem
+                    key={index}
+                    name={purchase.user?.name || 'Unknown'}
+                    avatarUrl={purchase.tour.imageUrl || 'https://via.placeholder.com/50'}
+                    guests={purchase.guestQuantity || 'N/A'}
+                    date={formatDate(purchase.reservation_date)}
+                />
             ))}
             {isLoading && (
                 <CircularProgress
@@ -174,7 +179,11 @@ const PurchaseList = () => {
                     color="blue.500"
                 />
             )}
-            {!hasMore && <Text fontSize="sm" color="gray.500">No more items to load</Text>}
+            {!hasMore && (
+                <Text fontSize="sm" color="gray.500">
+                    No more items to load
+                </Text>
+            )}
         </VStack>
     );
 };

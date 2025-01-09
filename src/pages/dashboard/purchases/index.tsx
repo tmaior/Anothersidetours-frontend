@@ -178,12 +178,12 @@ const PurchaseDetails = () => (
     <VStack>
         <Box
             position="relative"
-            width="130%"
+            width="175%"
             maxWidth="none"
             borderRadius="lg"
             overflowY="auto"
-            marginTop={"-400px"}
-            marginLeft="30%"
+            marginTop={"-5px"}
+            marginLeft={"10px"}
         >
             <img
                 src="https://via.placeholder.com/1000x300"
@@ -215,7 +215,7 @@ const PurchaseDetails = () => (
             </Box>
         </Box>
 
-        <Box flex="1" p={6} marginTop={"-50px"} marginLeft={"-250px"}>
+        <Box flex="1" p={6} marginTop={"-50px"} marginLeft={"-280px"}>
             <HStack spacing={6} mt={6} wrap="nowrap">
                 <Link style={{whiteSpace: "nowrap"}}>Arrival</Link>
                 <Link style={{whiteSpace: "nowrap"}}>Guests</Link>
@@ -226,7 +226,7 @@ const PurchaseDetails = () => (
                 <Link style={{whiteSpace: "nowrap"}}>Resend Gratuity Notification</Link>
                 <Link style={{whiteSpace: "nowrap"}}>Resend Waiver Email</Link>
             </HStack>
-            <Box mt={8} marginLeft={"-30px"}>
+            <Box mt={8} marginLeft={"-30px"} marginTop={"50px"}>
 
                 <Text fontSize="2xl" fontWeight="bold">Reservation Confirmation</Text>
                 <Badge colorScheme="green" mt={2}><CheckCircleIcon/> Confirmed</Badge>
@@ -245,7 +245,7 @@ const PurchaseDetails = () => (
 );
 
 const PaymentSummary = () => (
-    <Box bg="gray.50" borderRadius="md" boxShadow="sm" width="200%" marginTop={"-230px"} marginLeft={"300px"}>
+    <Box bg="gray.100" borderRadius="md" boxShadow="sm" width="150%" marginTop={"-270px"} marginLeft={"200px"} padding={"20px"}>
         <Text fontSize="xl" fontWeight="bold">Purchase Summary</Text>
         <VStack spacing={4} align="stretch" mt={4}>
             <HStack justifyContent="space-between">
@@ -330,9 +330,10 @@ const PurchasesPage = () => (
                 </HStack>
                 <Spacer/>
             </Flex>
-            <Divider/>
             <HStack height="100vh" width="100%">
-                <PurchaseList/>
+                <Box>
+                    <PurchaseList/>
+                </Box>
                 <Box
                     flex="1"
                     height="100%"
@@ -353,15 +354,23 @@ const PurchasesPage = () => (
                         },
                     }}
                 >
-                    <Box marginTop="400px" padding="20px">
+                    <Box
+                        padding="20px"
+                        marginBottom="20px"
+                        maxWidth="800px"
+                        mx="auto"
+                    >
                         <PurchaseDetails/>
                     </Box>
-                    <Box marginLeft="500px" w={"200px"}>
+                    <Box
+                        padding="20px"
+                        maxWidth="400px"
+                        mx="auto"
+                    >
                         <PaymentSummary/>
                     </Box>
                 </Box>
             </HStack>
-
         </DashboardLayout>
     </Box>
 );

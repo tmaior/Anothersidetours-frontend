@@ -19,6 +19,12 @@ import {
 } from '@chakra-ui/react';
 import {CheckCircleIcon, EmailIcon, PhoneIcon, SearchIcon} from '@chakra-ui/icons';
 import DashboardLayout from "../../../components/DashboardLayout";
+import {CiCalendar, CiLocationArrow1} from "react-icons/ci";
+import {IoPersonOutline} from "react-icons/io5";
+import {RiRefund2Line} from "react-icons/ri";
+import {AiOutlineMail} from "react-icons/ai";
+import {BsBox2} from "react-icons/bs";
+import {PiPencilSimpleLineDuotone} from "react-icons/pi";
 
 const initialPurchases = [
     {name: 'Matthew Prue', date: 'Jan 14', guests: 8, avatarUrl: 'https://via.placeholder.com/40'},
@@ -215,16 +221,40 @@ const PurchaseDetails = () => (
             </Box>
         </Box>
 
-        <Box flex="1" p={6} marginTop={"-50px"} marginLeft={"-280px"}>
+        <Box flex="1" p={6} marginTop={"-50px"} marginLeft={"-70px"}>
             <HStack spacing={6} mt={6} wrap="nowrap">
-                <Link style={{whiteSpace: "nowrap"}}>Arrival</Link>
-                <Link style={{whiteSpace: "nowrap"}}>Guests</Link>
-                <Link style={{whiteSpace: "nowrap"}}>Add-ons</Link>
-                <Link style={{whiteSpace: "nowrap"}}>Refund</Link>
-                <Link style={{whiteSpace: "nowrap"}}>Message Guests</Link>
-                <Link style={{whiteSpace: "nowrap"}}>Resend Confirmation</Link>
-                <Link style={{whiteSpace: "nowrap"}}>Resend Gratuity Notification</Link>
-                <Link style={{whiteSpace: "nowrap"}}>Resend Waiver Email</Link>
+                <HStack>
+                    <CiCalendar size={18}/>
+                    <Link style={{whiteSpace: "nowrap"}}>Arrival</Link>
+                </HStack>
+                <HStack>
+                    <IoPersonOutline size={18}/>
+                    <Link style={{whiteSpace: "nowrap"}}>Guests</Link>
+                </HStack>
+                <HStack>
+                    <BsBox2 size={15}/>
+                    <Link style={{whiteSpace: "nowrap"}}>Add-ons</Link>
+                </HStack>
+                <HStack>
+                    <RiRefund2Line size={18}/>
+                    <Link style={{whiteSpace: "nowrap"}}>Refund</Link>
+                </HStack>
+                <HStack>
+                    <CiLocationArrow1 size={18}/>
+                    <Link style={{whiteSpace: "nowrap"}}>Message Guests</Link>
+                </HStack>
+                <HStack>
+                    <AiOutlineMail size={18}/>
+                    <Link style={{whiteSpace: "nowrap"}}>Resend Confirmation</Link>
+                </HStack>
+                <HStack>
+                    <AiOutlineMail size={18}/>
+                    <Link style={{whiteSpace: "nowrap"}}>Resend Gratuity Notification</Link>
+                </HStack>
+                <HStack>
+                    <PiPencilSimpleLineDuotone size={18}/>
+                    <Link style={{whiteSpace: "nowrap"}}>Resend Waiver Email</Link>
+                </HStack>
             </HStack>
             <Box mt={8} marginLeft={"-30px"} marginTop={"50px"}>
 
@@ -245,7 +275,8 @@ const PurchaseDetails = () => (
 );
 
 const PaymentSummary = () => (
-    <Box bg="gray.100" borderRadius="md" boxShadow="sm" width="150%" marginTop={"-270px"} marginLeft={"200px"} padding={"20px"}>
+    <Box bg="gray.100" borderRadius="md" boxShadow="sm" width="150%" marginTop={"-270px"} marginLeft={"200px"}
+         padding={"20px"}>
         <Text fontSize="xl" fontWeight="bold">Purchase Summary</Text>
         <VStack spacing={4} align="stretch" mt={4}>
             <HStack justifyContent="space-between">

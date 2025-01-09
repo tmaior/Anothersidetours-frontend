@@ -123,12 +123,13 @@ const PurchaseList = () => {
 
     return (
         <VStack
-            marginLeft={"-50px"}
+            marginTop={"-100px"}
+            marginLeft={"-40px"}
             ref={containerRef}
             spacing={4}
             width="30%"
             borderRight="1px solid #E2E8F0"
-            height="100vh"
+            height="calc(100vh - 100px)"
             w={"300px"}
             p={4}
             overflowY="auto"
@@ -332,10 +333,8 @@ const PurchasesPage = () => (
             <Divider/>
             <HStack height="100vh" width="100%">
                 <PurchaseList/>
-                <HStack>
-                    <PurchaseDetails/>
-                    <PaymentSummary/>
-                </HStack>
+                <PurchaseDetails/>
+                <PaymentSummary/>
             </HStack>
         </DashboardLayout>
     </Box>

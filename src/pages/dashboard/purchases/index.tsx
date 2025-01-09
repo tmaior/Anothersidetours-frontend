@@ -19,7 +19,7 @@ import {
 } from '@chakra-ui/react';
 import {CheckCircleIcon, EmailIcon, PhoneIcon, SearchIcon} from '@chakra-ui/icons';
 import DashboardLayout from "../../../components/DashboardLayout";
-import {CiCalendar, CiLocationArrow1} from "react-icons/ci";
+import {CiCalendar, CiClock2, CiLocationArrow1} from "react-icons/ci";
 import {IoPersonOutline} from "react-icons/io5";
 import {RiRefund2Line} from "react-icons/ri";
 import {AiOutlineMail} from "react-icons/ai";
@@ -192,12 +192,13 @@ const PurchaseDetails = () => (
             marginLeft={"10px"}
         >
             <img
-                src="https://via.placeholder.com/1000x300"
+                // src="https://via.placeholder.com/1000x300"
                 alt="Tour"
                 style={{
                     width: "100%",
                     height: "200px",
                     objectFit: "cover",
+                    backgroundColor: "gray.300",
                 }}
             />
             <Box
@@ -215,8 +216,14 @@ const PurchaseDetails = () => (
             >
                 <Text fontSize="xl" fontWeight="bold">The Beverly Hills Segway Tour</Text>
                 <HStack>
-                    <Text>📅 January 14, 2025</Text>
-                    <Text>⏰ 2:00 PM</Text>
+                    <HStack>
+                        <CiCalendar size={18}/>
+                        <Text> January 14, 2025</Text>
+                    </HStack>
+                    <HStack>
+                        <CiClock2/>
+                        <Text> 2:00 PM</Text>
+                    </HStack>
                 </HStack>
             </Box>
         </Box>

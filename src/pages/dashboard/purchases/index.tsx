@@ -245,7 +245,7 @@ const PurchaseDetails = () => (
 );
 
 const PaymentSummary = () => (
-    <Box bg="gray.50" p={6} borderRadius="md" boxShadow="sm" width="30%" marginTop={"100px"} marginLeft={"-300px"}>
+    <Box bg="gray.50" borderRadius="md" boxShadow="sm" width="200%">
         <Text fontSize="xl" fontWeight="bold">Purchase Summary</Text>
         <VStack spacing={4} align="stretch" mt={4}>
             <HStack justifyContent="space-between">
@@ -333,9 +333,14 @@ const PurchasesPage = () => (
             <Divider/>
             <HStack height="100vh" width="100%">
                 <PurchaseList/>
-                <PurchaseDetails/>
-                <PaymentSummary/>
+                <Box marginTop={"-20px"}>
+                    <PurchaseDetails/>
+                </Box>
+                <Box marginLeft={"-200px"}>
+                    <PaymentSummary/>
+                </Box>
             </HStack>
+
         </DashboardLayout>
     </Box>
 );

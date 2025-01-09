@@ -215,7 +215,7 @@ const PurchaseDetails = () => (
             </Box>
         </Box>
 
-        <Box flex="1" p={6} marginTop={"-50px"}>
+        <Box flex="1" p={6} marginTop={"-50px"} marginLeft={"-250px"}>
             <HStack spacing={6} mt={6} wrap="nowrap">
                 <Link style={{whiteSpace: "nowrap"}}>Arrival</Link>
                 <Link style={{whiteSpace: "nowrap"}}>Guests</Link>
@@ -226,8 +226,8 @@ const PurchaseDetails = () => (
                 <Link style={{whiteSpace: "nowrap"}}>Resend Gratuity Notification</Link>
                 <Link style={{whiteSpace: "nowrap"}}>Resend Waiver Email</Link>
             </HStack>
+            <Box mt={8} marginLeft={"-30px"}>
 
-            <Box mt={8}>
                 <Text fontSize="2xl" fontWeight="bold">Reservation Confirmation</Text>
                 <Badge colorScheme="green" mt={2}><CheckCircleIcon/> Confirmed</Badge>
 
@@ -245,7 +245,7 @@ const PurchaseDetails = () => (
 );
 
 const PaymentSummary = () => (
-    <Box bg="gray.50" borderRadius="md" boxShadow="sm" width="200%">
+    <Box bg="gray.50" borderRadius="md" boxShadow="sm" width="200%" marginTop={"-230px"} marginLeft={"300px"}>
         <Text fontSize="xl" fontWeight="bold">Purchase Summary</Text>
         <VStack spacing={4} align="stretch" mt={4}>
             <HStack justifyContent="space-between">
@@ -333,11 +333,32 @@ const PurchasesPage = () => (
             <Divider/>
             <HStack height="100vh" width="100%">
                 <PurchaseList/>
-                <Box marginTop={"-20px"}>
-                    <PurchaseDetails/>
-                </Box>
-                <Box marginLeft={"-200px"}>
-                    <PaymentSummary/>
+                <Box
+                    flex="1"
+                    height="100%"
+                    overflowY="auto"
+                    css={{
+                        '&::-webkit-scrollbar': {
+                            width: '6px',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                            background: 'rgba(0, 0, 0, 0.3)',
+                            borderRadius: '10px',
+                        },
+                        '&::-webkit-scrollbar-thumb:hover': {
+                            background: 'rgba(0, 0, 0, 0.5)',
+                        },
+                        '&::-webkit-scrollbar-track': {
+                            background: 'transparent',
+                        },
+                    }}
+                >
+                    <Box marginTop="400px" padding="20px">
+                        <PurchaseDetails/>
+                    </Box>
+                    <Box marginLeft="500px" w={"200px"}>
+                        <PaymentSummary/>
+                    </Box>
                 </Box>
             </HStack>
 

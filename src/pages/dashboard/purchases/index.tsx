@@ -25,6 +25,7 @@ import {RiRefund2Line} from "react-icons/ri";
 import {AiOutlineMail} from "react-icons/ai";
 import {BsBox2} from "react-icons/bs";
 import {PiPencilSimpleLineDuotone} from "react-icons/pi";
+import {useRouter} from "next/router";
 
 type GuestItemProps = {
     name: string;
@@ -374,6 +375,7 @@ const PaymentSummary = ({reservation}) => {
 };
 
 const PurchasesPage = () => {
+    const router = useRouter();
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -409,6 +411,10 @@ const PurchasesPage = () => {
             </Center>
         );
     }
+
+    const handlePurchaseClick = () => {
+        router.push("/dashboard/choose-a-product");
+    };
 
     return (
         <Box
@@ -451,7 +457,7 @@ const PurchasesPage = () => {
                             w={"200px"}
                             border={"none"}
                             borderRadius={"4px"}
-                            // onClick={handlePurchaseClick}
+                            onClick={handlePurchaseClick}
                         >
                             Make a Purchase
                         </Button>

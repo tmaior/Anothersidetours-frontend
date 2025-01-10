@@ -17,15 +17,17 @@ import {
     Text,
     VStack
 } from '@chakra-ui/react';
-import {CheckCircleIcon, EmailIcon, PhoneIcon, SearchIcon} from '@chakra-ui/icons';
+import {CheckCircleIcon, SearchIcon} from '@chakra-ui/icons';
 import DashboardLayout from "../../../components/DashboardLayout";
 import {CiCalendar, CiClock2, CiLocationArrow1} from "react-icons/ci";
 import {IoPersonOutline} from "react-icons/io5";
 import {RiRefund2Line} from "react-icons/ri";
 import {AiOutlineMail} from "react-icons/ai";
-import {BsBox2} from "react-icons/bs";
+import {BsBox2, BsTelephone} from "react-icons/bs";
 import {PiPencilSimpleLineDuotone} from "react-icons/pi";
 import {useRouter} from "next/router";
+import {HiOutlineMail} from "react-icons/hi";
+import {RxPerson} from "react-icons/rx";
 
 type GuestItemProps = {
     name: string;
@@ -327,9 +329,9 @@ const PurchaseDetails = ({reservation}) => {
                     <Box mt={6}>
                         <Text fontWeight="bold">Contact Information</Text>
                         <VStack align="start" spacing={1}>
-                            <HStack><Text>👤 {reservation.user.name}</Text></HStack>
-                            <HStack><EmailIcon/> <Text>{reservation.user.email}</Text></HStack>
-                            <HStack><PhoneIcon/> <Text>{reservation.user.phone}</Text></HStack>
+                            <HStack><RxPerson/><Text>{reservation.user.name}</Text></HStack>
+                            <HStack><HiOutlineMail/> <Text>{reservation.user.email}</Text></HStack>
+                            <HStack><BsTelephone/> <Text>{reservation.user.phone}</Text></HStack>
                         </VStack>
                     </Box>
                 </Box>

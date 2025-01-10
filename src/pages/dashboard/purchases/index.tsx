@@ -204,6 +204,16 @@ const PurchaseList = ({onSelectReservation, selectedReservation}) => {
 
 const PurchaseDetails = ({reservation}) => {
 
+    const formatDate = (dateString: string): string => {
+        const options: Intl.DateTimeFormatOptions = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        };
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', options);
+    };
+
     return (
         <VStack>
             <Box
@@ -216,7 +226,7 @@ const PurchaseDetails = ({reservation}) => {
                 marginLeft={"10px"}
             >
                 <img
-                    src={reservation.tour.imageUrl ||"https://via.placeholder.com/1000x300"}
+                    src={reservation.tour.imageUrl || "https://via.placeholder.com/1000x300"}
                     alt={reservation.tour.name}
                     style={{
                         width: "100%",
@@ -238,15 +248,29 @@ const PurchaseDetails = ({reservation}) => {
                     alignItems="start"
                     p={4}
                 >
-                    <Text fontSize="xl" fontWeight="bold">The Beverly Hills Segway Tour</Text>
+                    <Text
+                        fontSize="xl"
+                        fontWeight="bold"
+                        textShadow="0px 0px 4px black"
+                    >
+                        {reservation.tour.name}
+                    </Text>
                     <HStack>
                         <HStack>
                             <CiCalendar size={18}/>
-                            <Text> January 14, 2025</Text>
+                            <Text
+                                textShadow="0px 0px 4px black"
+                            >
+                                {formatDate(reservation.user.selectedDate)}
+                            </Text>
                         </HStack>
                         <HStack>
                             <CiClock2/>
-                            <Text> 2:00 PM</Text>
+                            <Text
+                                textShadow="0px 0px 4px black"
+                            >
+                                {reservation.user.selectedTime}
+                            </Text>
                         </HStack>
                     </HStack>
                 </Box>
@@ -295,9 +319,9 @@ const PurchaseDetails = ({reservation}) => {
                     <Box mt={6}>
                         <Text fontWeight="bold">Contact Information</Text>
                         <VStack align="start" spacing={1}>
-                            <HStack><Text>👤 Matthew Prue</Text></HStack>
-                            <HStack><EmailIcon/> <Text>matthew.prue@owenscorning.com</Text></HStack>
-                            <HStack><PhoneIcon/> <Text>(805) 310-6256</Text></HStack>
+                            <HStack><Text>👤 {reservation.user.name}</Text></HStack>
+                            <HStack><EmailIcon/> <Text>{reservation.user.email}</Text></HStack>
+                            <HStack><PhoneIcon/> <Text>{reservation.user.phone}</Text></HStack>
                         </VStack>
                     </Box>
                 </Box>
@@ -319,7 +343,7 @@ const PaymentSummary = ({reservation}) => {
                     <Text>$71.52</Text>
                 </HStack>
                 <HStack justifyContent="space-between">
-                    <Text>Guests (149 x 8)</Text>
+                    <Text>Guests (${reservation.tour.price} x {reservation.guestQuantity})</Text>
                     <Text>${reservation.total_price}</Text>
                 </HStack>
                 <HStack justifyContent="space-between">
@@ -329,7 +353,7 @@ const PaymentSummary = ({reservation}) => {
                 <Divider/>
                 <HStack justifyContent="space-between">
                     <Text fontWeight="bold">Total</Text>
-                    <Text fontWeight="bold">$1,478.08</Text>
+                    <Text fontWeight="bold">${reservation.total_price}</Text>
                 </HStack>
                 <Button size={"sm"} mt={1} w="70px">Modify</Button>
             </VStack>
@@ -342,7 +366,7 @@ const PaymentSummary = ({reservation}) => {
                 </HStack>
                 <HStack justifyContent="space-between">
                     <Text>Paid</Text>
-                    <Text fontWeight="bold">$1,478.08</Text>
+                    <Text fontWeight="bold">${reservation.total_price}</Text>
                 </HStack>
             </Box>
         </Box>
@@ -381,7 +405,7 @@ const PurchasesPage = () => {
     if (isLoading) {
         return (
             <Center width="100vw" height="100vh">
-                <CircularProgress isIndeterminate color="blue.500" />
+                <CircularProgress isIndeterminate color="blue.500"/>
             </Center>
         );
     }

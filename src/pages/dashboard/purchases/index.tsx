@@ -103,6 +103,8 @@ const PurchaseList = ({onSelectReservation, selectedReservation}) => {
     };
 
     const loadMoreReservations = () => {
+        if (!hasMore || isLoading) return;
+
         setIsLoading(true);
 
         setTimeout(() => {
@@ -115,7 +117,12 @@ const PurchaseList = ({onSelectReservation, selectedReservation}) => {
             if (nextReservations.length === 0) {
                 setHasMore(false);
             } else {
-                setDisplayedReservations((prev) => [...prev, ...nextReservations]);
+                setDisplayedReservations((prev) => [
+                    ...prev,
+                    ...nextReservations.filter(
+                        (newItem) => !prev.some((existingItem) => existingItem.id === newItem.id)
+                    ),
+                ]);
             }
 
             setIsLoading(false);
@@ -174,9 +181,9 @@ const PurchaseList = ({onSelectReservation, selectedReservation}) => {
                 }
             }}
         >
-            {displayedReservations.map((purchase, index) => (
+            {displayedReservations.map((purchase) => (
                 <GuestItem
-                    key={index}
+                    key={purchase.id}
                     name={purchase.user?.name || 'Unknown'}
                     avatarUrl={purchase.tour.imageUrl || 'https://via.placeholder.com/50'}
                     guests={purchase.guestQuantity || 'N/A'}

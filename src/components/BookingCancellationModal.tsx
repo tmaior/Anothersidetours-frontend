@@ -110,11 +110,11 @@ const BookingCancellationModal = ({booking, isOpen, onClose}) => {
                         <HStack align="start" spacing={10}>
                             <VStack align="start" spacing={5} flex="2.5">
                                 <Box w="full" p={4} borderWidth="1px" borderRadius="md" bg="gray.100">
-                                    <Text fontWeight="bold">{booking.clientName || "BOB"}</Text>
+                                    <Text fontWeight="bold">{booking.user.name || "John Doe"}</Text>
                                     <Divider/>
                                     <HStack marginTop={"5px"}>
                                         <Image
-                                            src={"https://via.placeholder.com/150x100"}
+                                            src={booking.imageUrl || "https://via.placeholder.com/150x100"}
                                             // alt={tour.name}
                                             boxSize="70px"
                                             borderRadius="md"

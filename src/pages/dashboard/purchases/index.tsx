@@ -64,7 +64,7 @@ const GuestItem: React.FC<GuestItemProps> = ({name, date, guests, avatarUrl, onC
     </HStack>
 );
 
-const PurchaseList = ({onSelectReservation, selectedReservation}) => {
+const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm }) => {
     const [reservations, setReservations] = useState([]);
     const [displayedReservations, setDisplayedReservations] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -90,6 +90,15 @@ const PurchaseList = ({onSelectReservation, selectedReservation}) => {
         };
         fetchReservations();
     }, []);
+
+    const filteredDisplayedReservations = displayedReservations.filter((reservation) => {
+        const user = reservation.user || {};
+        return (
+            user.name?.toLowerCase().includes(searchTerm) ||
+            user.email?.toLowerCase().includes(searchTerm) ||
+            user.phone?.toLowerCase().includes(searchTerm)
+        );
+    });
 
     const handleScroll = () => {
         const container = containerRef.current;
@@ -183,7 +192,7 @@ const PurchaseList = ({onSelectReservation, selectedReservation}) => {
                 }
             }}
         >
-            {displayedReservations.map((purchase) => (
+            {filteredDisplayedReservations.map((purchase) => (
                 <GuestItem
                     key={purchase.id}
                     name={purchase.user?.name || 'Unknown'}
@@ -387,9 +396,14 @@ const PurchasesPage = () => {
     const router = useRouter();
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const handleSelectReservation = (reservation) => {
         setSelectedReservation(reservation);
+    };
+
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value.toLowerCase());
     };
 
     useEffect(() => {
@@ -454,8 +468,8 @@ const PurchasesPage = () => {
                                 focusBorderColor="transparent"
                                 w={"1250px"}
                                 _placeholder={{fontSize: "lg"}}
-                                // value={searchTerm}
-                                // onChange={handleSearch}
+                                value={searchTerm}
+                                onChange={handleSearch}
                             />
                         </InputGroup>
                         <Button
@@ -477,6 +491,7 @@ const PurchasesPage = () => {
                     <Box>
                         <PurchaseList onSelectReservation={handleSelectReservation}
                                       selectedReservation={selectedReservation}
+                                      searchTerm={searchTerm}
                         />
                     </Box>
                     <Box

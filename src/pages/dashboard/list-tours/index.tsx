@@ -66,8 +66,10 @@ function ListTours() {
             }
         }
 
-        fetchData();
-    }, [toast]);
+        if (tenantId) {
+            fetchData();
+        }
+    }, [tenantId, toast]);
 
     useEffect(() => {
         let filtered = tours;

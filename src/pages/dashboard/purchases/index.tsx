@@ -28,6 +28,7 @@ import {PiPencilSimpleLineDuotone} from "react-icons/pi";
 import {useRouter} from "next/router";
 import {HiOutlineMail} from "react-icons/hi";
 import {RxPerson} from "react-icons/rx";
+import {useGuest} from "../../../components/GuestContext";
 
 type GuestItemProps = {
     name: string;
@@ -64,20 +65,21 @@ const GuestItem: React.FC<GuestItemProps> = ({name, date, guests, avatarUrl, onC
     </HStack>
 );
 
-const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm }) => {
+const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) => {
     const [reservations, setReservations] = useState([]);
     const [displayedReservations, setDisplayedReservations] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const containerRef = useRef<HTMLDivElement>(null);
     const PAGE_LIMIT = 10;
+    const {tenantId} = useGuest();
 
     useEffect(() => {
         const fetchReservations = async () => {
             setIsLoading(true);
             try {
                 const response = await fetch(
-                    "http://localhost:9000/reservations/with-users/byTenantId/3d259f0d-33ea-4aef-b430-3aed2c35aa37"
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/with-users/byTenantId/${tenantId}`
                 );
                 const data = await response.json();
                 setReservations(data);
@@ -88,8 +90,10 @@ const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm }) =
                 setIsLoading(false);
             }
         };
-        fetchReservations();
-    }, []);
+        if (tenantId) {
+            fetchReservations();
+        }
+    }, [tenantId,]);
 
     const filteredDisplayedReservations = displayedReservations.filter((reservation) => {
         const user = reservation.user || {};
@@ -397,6 +401,7 @@ const PurchasesPage = () => {
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const {tenantId} = useGuest();
 
     const handleSelectReservation = (reservation) => {
         setSelectedReservation(reservation);
@@ -410,7 +415,7 @@ const PurchasesPage = () => {
         const fetchReservations = async () => {
             try {
                 const response = await fetch(
-                    "http://localhost:9000/reservations/with-users/byTenantId/3d259f0d-33ea-4aef-b430-3aed2c35aa37"
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/with-users/byTenantId/${tenantId}`
                 );
                 const data = await response.json();
 
@@ -424,8 +429,10 @@ const PurchasesPage = () => {
             }
         };
 
-        fetchReservations();
-    }, [selectedReservation]);
+        if (tenantId) {
+            fetchReservations();
+        }
+    }, [tenantId,selectedReservation]);
 
     if (isLoading) {
         return (

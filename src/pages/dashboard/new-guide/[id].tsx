@@ -13,14 +13,15 @@ import {
 } from "@chakra-ui/react";
 import PhotoUpload from "../../../components/PhotoUpload";
 import DashboardLayout from "../../../components/DashboardLayout";
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 import withAuth from "../../../utils/withAuth";
-import { useRouter } from "next/router";
+import {useRouter} from "next/router";
 import axios from "axios";
+import {useGuest} from "../../../components/GuestContext";
 
 function GuideForm() {
     const router = useRouter();
-    const { id } = router.query;
+    const {id} = router.query;
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -30,6 +31,7 @@ function GuideForm() {
     const [loading, setLoading] = useState(false);
     const toast = useToast();
     const [isEditing, setIsEditing] = useState(false);
+    const {tenantId} = useGuest();
 
     useEffect(() => {
         if (id && id !== "new") {
@@ -55,7 +57,7 @@ function GuideForm() {
     }, [id, toast]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
+        const {name, value} = e.target;
         setFormData((prev) => ({
             ...prev,
             [name]: value,
@@ -86,7 +88,10 @@ function GuideForm() {
                     isClosable: true,
                 });
             } else {
-                await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/guides`, formData);
+                await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/guides`, {
+                    ...formData,
+                    tenantId,
+                });
                 toast({
                     title: "Guide Created",
                     description: "The guide was successfully created.",
@@ -120,7 +125,7 @@ function GuideForm() {
                     {isEditing ? "Edit Guide" : "New Guide"}
                 </Heading>
 
-                <Divider mb={8} />
+                <Divider mb={8}/>
 
                 <Box>
                     <Heading size="md" mb={6}>
@@ -171,7 +176,7 @@ function GuideForm() {
                 </Box>
 
                 <Box mb={8}>
-                    <PhotoUpload />
+                    <PhotoUpload/>
                 </Box>
                 <Divider marginBottom={"10px"}/>
                 <Flex justifyContent="center" mt={8}>

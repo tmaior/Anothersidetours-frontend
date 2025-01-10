@@ -27,6 +27,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
 import DashboardLayout from "../../../components/DashboardLayout";
 import withAuth from "../../../utils/withAuth";
+import {useGuest} from "../../../components/GuestContext";
 
 function BlackoutDatesManagement() {
     const [blackoutDates, setBlackoutDates] = useState([]);
@@ -42,13 +43,14 @@ function BlackoutDatesManagement() {
     });
     const {isOpen, onOpen, onClose} = useDisclosure();
     const toast = useToast();
+    const {tenantId} = useGuest();
 
     useEffect(() => {
         async function fetchData() {
             try {
                 const [blackoutResponse, categoryResponse] = await Promise.all([
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates`),
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`),
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/byTenantId/${tenantId}`),
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/byTenantId/${tenantId}`),
                 ]);
                 const [blackoutData, categoryData] = await Promise.all([
                     blackoutResponse.json(),
@@ -67,8 +69,11 @@ function BlackoutDatesManagement() {
                 });
             }
         }
-        fetchData();
-    }, [toast]);
+
+        if (tenantId) {
+            fetchData();
+        }
+    }, [tenantId, toast]);
 
     const handleAddTimeRange = () => {
         setNewBlackoutDate((prev) => ({
@@ -171,6 +176,7 @@ function BlackoutDatesManagement() {
             reason: "Blackout date for specific period",
             tourId: "",
             categoryId: isGlobal ? null : categoryId,
+            tenantId: tenantId
         };
 
         if (!noEnd && utcEndDate) {

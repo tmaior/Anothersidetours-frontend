@@ -26,6 +26,7 @@ import {
 import {DeleteIcon, SearchIcon, SettingsIcon} from "@chakra-ui/icons";
 import DashboardLayout from "../../../components/DashboardLayout";
 import withAuth from "../../../utils/withAuth";
+import {useGuest} from "../../../components/GuestContext";
 
 interface Category {
     id: string;
@@ -42,7 +43,8 @@ interface Tour {
 }
 
 function CategoryManagement() {
-    const [newCategory, setNewCategory] = useState({name: "", description: ""});
+    const {tenantId} = useGuest();
+    const [newCategory, setNewCategory] = useState({name: "", description: "", tenantId: null});
     const [categories, setCategories] = useState<Category[]>([]);
     const [filteredTours, setFilteredTours] = useState<Tour[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
@@ -58,9 +60,18 @@ function CategoryManagement() {
     } = useDisclosure();
     const toast = useToast();
 
-    const fetchCategories = async () => {
+    useEffect(() => {
+        if (tenantId) {
+            setNewCategory((prev) => ({
+                ...prev,
+                tenantId: tenantId,
+            }));
+        }
+    }, [tenantId]);
+
+    const fetchCategories = async (tenantId) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/byTenantId/${tenantId}`);
             if (!response.ok) throw new Error("Failed to fetch categories");
             const data = await response.json();
             setCategories(data);
@@ -76,9 +87,9 @@ function CategoryManagement() {
         }
     };
 
-    const fetchTours = async () => {
+    const fetchTours = async (tenantId) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`);
             if (!response.ok) throw new Error("Failed to fetch tours");
             const data = await response.json();
             setAllTours(data);
@@ -95,9 +106,10 @@ function CategoryManagement() {
     };
 
     useEffect(() => {
-        fetchCategories();
-        fetchTours();
-    }, []);
+        if (!tenantId) return;
+        fetchCategories(tenantId);
+        fetchTours(tenantId);
+    }, [tenantId]);
 
     const handleCreateCategory = async () => {
         if (!newCategory.name) {
@@ -125,7 +137,7 @@ function CategoryManagement() {
 
             const createdCategory = await response.json();
             setCategories((prev) => [...prev, createdCategory]);
-            setNewCategory({name: "", description: ""});
+            setNewCategory({name: "", description: "", tenantId: tenantId});
 
             toast({
                 title: "Category Created",
@@ -239,8 +251,8 @@ function CategoryManagement() {
             if (!allSuccessful) {
                 throw new Error("Failed to update some tours.");
             }
-            await fetchCategories();
-            await fetchTours();
+            await fetchCategories(tenantId);
+            await fetchTours(tenantId);
 
             toast({
                 title: "Tours Updated",

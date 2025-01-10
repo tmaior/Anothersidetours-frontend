@@ -5,6 +5,7 @@ import withAuth from "../../../utils/withAuth";
 import DashboardLayout from "../../../components/DashboardLayout";
 import {useRouter} from "next/router";
 import axios from "axios";
+import {useGuest} from "../../../components/GuestContext";
 
 interface Guide {
     id: number;
@@ -21,11 +22,12 @@ function GuidesPage() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [error, setError] = useState<string | null>(null);
     const toast = useToast();
+    const {tenantId} = useGuest();
 
     useEffect(() => {
         const fetchGuides = async () => {
             try {
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/guides`);
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/guides/byTenant/${tenantId}`);
                 setGuides(response.data);
             } catch {
                 setError("Failed to load guides.");
@@ -33,9 +35,10 @@ function GuidesPage() {
                 setLoading(false);
             }
         };
-
-        fetchGuides();
-    }, []);
+        if (tenantId) {
+            fetchGuides();
+        }
+    }, [tenantId]);
 
     const handleEdit = (id: number) => {
         router.push(`/dashboard/new-guide/${id}`);

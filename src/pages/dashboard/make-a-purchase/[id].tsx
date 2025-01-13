@@ -324,7 +324,7 @@ const PurchasePage = () => {
                     addonId: sel.addOnId,
                     quantity: sel.checked ? 1 : sel.quantity,
                 })),
-                total_price: grandTotalFinal,
+                total_price: totalWithDiscount,
                 guestQuantity: quantity,
                 status: "PENDING",
 

@@ -1,19 +1,5 @@
-import {
-    Box,
-    Button,
-    Flex,
-    HStack,
-    IconButton,
-    Image,
-    Menu,
-    MenuButton,
-    MenuItem,
-    MenuList,
-    Text,
-    useToast,
-    VStack,
-} from "@chakra-ui/react";
-import {BsSticky, BsThreeDots} from "react-icons/bs";
+import {Box, Button, Flex, HStack, IconButton, Image, Text, useToast, VStack,} from "@chakra-ui/react";
+import {BsSticky} from "react-icons/bs";
 import {FaPencilAlt} from "react-icons/fa";
 import React, {useEffect, useState} from "react";
 import {AiOutlineCompass} from "react-icons/ai";
@@ -21,6 +7,7 @@ import ManageGuidesModal from "./ManageGuidesModal";
 import {useGuides} from "../hooks/useGuides";
 import {useGuideAssignment} from "../hooks/useGuideAssignment";
 import {useReservationGuides} from "../hooks/useReservationGuides";
+import DashBoardMenu from "./DashboardMenuList";
 
 const ReservationItem = ({
                              date,
@@ -211,23 +198,7 @@ const ReservationItem = ({
                                     )}
                                 </Flex>
                             </Flex>
-                            <Menu>
-                                <MenuButton
-                                    as={IconButton}
-                                    icon={<BsThreeDots/>}
-                                    variant="ghost"
-                                    aria-label="Options"
-                                    size="sm"
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                                <MenuList>
-                                    <MenuItem>Download</MenuItem>
-                                    <MenuItem>Create a Copy</MenuItem>
-                                    <MenuItem>Mark as Draft</MenuItem>
-                                    <MenuItem>Delete</MenuItem>
-                                    <MenuItem>Attend a Workshop</MenuItem>
-                                </MenuList>
-                            </Menu>
+                            <DashBoardMenu reservation={item}/>
                             <Button
                                 variant="outline"
                                 colorScheme="green"

@@ -2,22 +2,24 @@ import React from "react";
 import {
     Button,
     Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
     ModalBody,
+    ModalContent,
     ModalFooter,
+    ModalHeader,
+    ModalOverlay,
     Text,
     useToast,
 } from "@chakra-ui/react";
+import {useGuideAssignment} from "../hooks/useGuideAssignment";
 
-const ConfirmUnassignModal = ({ isOpen, onClose, reservation, onConfirm }) => {
+const ConfirmUnassignModal = ({isOpen, onClose, reservation, onConfirm}) => {
     const toast = useToast();
+
+    const {assignGuides} = useGuideAssignment();
 
     const handleConfirm = async () => {
         try {
-            const guideIds = [];
-            await onConfirm(reservation.id, guideIds);
+            await assignGuides(reservation.id, []);
             toast({
                 title: "Success",
                 description: "All guides have been unassigned from the reservation.",
@@ -25,6 +27,7 @@ const ConfirmUnassignModal = ({ isOpen, onClose, reservation, onConfirm }) => {
                 duration: 3000,
                 isClosable: true,
             });
+            onConfirm();
             onClose();
         } catch (error) {
             console.error("Error unassigning guides:", error);

@@ -4,7 +4,7 @@ import {BsThreeDots} from "react-icons/bs";
 import ConfirmUnassignModal from "./ConfirmUnassignModal";
 import {useGuideAssignment} from "../hooks/useGuideAssignment";
 
-const DashBoardMenu = ({reservation}) => {
+const DashBoardMenu = ({reservation, fetchReservations}) => {
     const [isUnassignModalOpen, setUnassignModalOpen] = useState(false);
 
     const formatDate = (date: string | Date | undefined): string => {
@@ -22,12 +22,13 @@ const DashBoardMenu = ({reservation}) => {
         return `${month}/${day}/${year}`;
     };
 
-    const {removeGuides} = useGuideAssignment();
+    const {assignGuides} = useGuideAssignment();
 
     const handleUnassignGuides = async (reservationId, guideIds) => {
         try {
-            await removeGuides(reservationId, guideIds);
+            await assignGuides(reservationId, guideIds);
             console.log(`Successfully removed guides from reservation ID: ${reservationId}`);
+            fetchReservations();
         } catch (error) {
             console.error("Error removing guides:", error);
         }
@@ -98,7 +99,7 @@ const DashBoardMenu = ({reservation}) => {
                 isOpen={isUnassignModalOpen}
                 onClose={() => setUnassignModalOpen(false)}
                 reservation={reservation}
-                onConfirm={handleUnassignGuides}
+                onConfirm={() => handleUnassignGuides(reservation.id, [])}
             />
         </>
     );

@@ -3,9 +3,11 @@ import {Box, IconButton, Image, Menu, MenuButton, MenuItem, MenuList, Stack, Tex
 import {BsThreeDots} from "react-icons/bs";
 import ConfirmUnassignModal from "./ConfirmUnassignModal";
 import {useGuideAssignment} from "../hooks/useGuideAssignment";
+import ManageGuidesModal from "./ManageGuidesModal";
 
 const DashBoardMenu = ({reservation}) => {
     const [isUnassignModalOpen, setUnassignModalOpen] = useState(false);
+    const [isAssignModalOpen, setAssignModalOpen] = useState(false);
 
     const formatDate = (date: string | Date | undefined): string => {
         if (!date) return "Invalid Date";
@@ -82,7 +84,14 @@ const DashBoardMenu = ({reservation}) => {
                     <MenuItem>Cancel Reservations</MenuItem>
                     <MenuItem>Roster</MenuItem>
                     <MenuItem>Adjust Capacity</MenuItem>
-                    <MenuItem>Assign Guides</MenuItem>
+                    <MenuItem
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setAssignModalOpen(true);
+                        }}
+                    >
+                        Assign Guides
+                    </MenuItem>
                     <MenuItem
                         onClick={(e) => {
                             e.stopPropagation();
@@ -99,6 +108,15 @@ const DashBoardMenu = ({reservation}) => {
                 onClose={() => setUnassignModalOpen(false)}
                 reservation={reservation}
                 onConfirm={() => handleUnassignGuides(reservation.id, [])}
+            />
+
+            <ManageGuidesModal
+                isOpen={isAssignModalOpen}
+                onClose={() => setAssignModalOpen(false)}
+                onSelectGuide={(selectedGuides) => {
+                    console.log("Selected guides:", selectedGuides);
+                }}
+                reservationId={reservation.id}
             />
         </>
     );

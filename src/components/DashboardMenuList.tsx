@@ -4,10 +4,14 @@ import {BsThreeDots} from "react-icons/bs";
 import ConfirmUnassignModal from "./ConfirmUnassignModal";
 import {useGuideAssignment} from "../hooks/useGuideAssignment";
 import ManageGuidesModal from "./ManageGuidesModal";
+import CancelConfirmationModal from "./CancelConfirmationModal";
+import BookingCancellationModal from "./BookingCancellationModal";
 
 const DashBoardMenu = ({reservation}) => {
     const [isUnassignModalOpen, setUnassignModalOpen] = useState(false);
     const [isAssignModalOpen, setAssignModalOpen] = useState(false);
+    const [isCancelConfirmationOpen, setCancelConfirmationOpen] = useState(false);
+    const [isBookingCancellationOpen, setBookingCancellationOpen] = useState(false);
 
     const formatDate = (date: string | Date | undefined): string => {
         if (!date) return "Invalid Date";
@@ -32,6 +36,16 @@ const DashBoardMenu = ({reservation}) => {
             console.log(`Successfully removed guides from reservation ID: ${reservationId}`);
         } catch (error) {
             console.error("Error removing guides:", error);
+        }
+    };
+
+    const handleCancelReservation = async () => {
+        try {
+            console.log("Reservation canceled:", reservation.id);
+            setCancelConfirmationOpen(false);
+            setBookingCancellationOpen(true);
+        } catch (error) {
+            console.error("Error canceling reservation:", error);
         }
     };
 
@@ -81,7 +95,14 @@ const DashBoardMenu = ({reservation}) => {
                     <MenuItem>Send Message</MenuItem>
                     <MenuItem>Add Event Note</MenuItem>
                     <MenuItem>Change Arrival</MenuItem>
-                    <MenuItem>Cancel Reservations</MenuItem>
+                    <MenuItem
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setCancelConfirmationOpen(true);
+                        }}
+                    >
+                        Cancel Reservations
+                    </MenuItem>
                     <MenuItem>Roster</MenuItem>
                     <MenuItem>Adjust Capacity</MenuItem>
                     <MenuItem
@@ -117,6 +138,19 @@ const DashBoardMenu = ({reservation}) => {
                     console.log("Selected guides:", selectedGuides);
                 }}
                 reservationId={reservation.id}
+            />
+
+            <CancelConfirmationModal
+                booking={reservation}
+                isOpen={isCancelConfirmationOpen}
+                onClose={() => setCancelConfirmationOpen(false)}
+                onConfirm={handleCancelReservation}
+            />
+
+            <BookingCancellationModal
+                booking={reservation}
+                isOpen={isBookingCancellationOpen}
+                onClose={() => setBookingCancellationOpen(false)}
             />
         </>
     );

@@ -6,12 +6,14 @@ import {useGuideAssignment} from "../hooks/useGuideAssignment";
 import ManageGuidesModal from "./ManageGuidesModal";
 import CancelConfirmationModal from "./CancelConfirmationModal";
 import BookingCancellationModal from "./BookingCancellationModal";
+import SendMessageModal from "./SendMessageModal";
 
 const DashBoardMenu = ({reservation}) => {
     const [isUnassignModalOpen, setUnassignModalOpen] = useState(false);
     const [isAssignModalOpen, setAssignModalOpen] = useState(false);
     const [isCancelConfirmationOpen, setCancelConfirmationOpen] = useState(false);
     const [isBookingCancellationOpen, setBookingCancellationOpen] = useState(false);
+    const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
 
     const formatDate = (date: string | Date | undefined): string => {
         if (!date) return "Invalid Date";
@@ -92,7 +94,14 @@ const DashBoardMenu = ({reservation}) => {
                             </Box>
                         </Stack>
                     </Box>
-                    <MenuItem>Send Message</MenuItem>
+                    <MenuItem
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSendMessageModalOpen(true);
+                        }}
+                    >
+                        Send Message
+                    </MenuItem>
                     <MenuItem>Add Event Note</MenuItem>
                     <MenuItem>Change Arrival</MenuItem>
                     <MenuItem
@@ -151,6 +160,17 @@ const DashBoardMenu = ({reservation}) => {
                 booking={reservation}
                 isOpen={isBookingCancellationOpen}
                 onClose={() => setBookingCancellationOpen(false)}
+            />
+
+            <SendMessageModal
+                isOpen={isSendMessageModalOpen}
+                onClose={() => setSendMessageModalOpen(false)}
+                eventDetails={{
+                    title: reservation.title,
+                    date: reservation.dateFormatted,
+                    time: reservation.time,
+                    image: reservation.imageUrl
+                }}
             />
         </>
     );

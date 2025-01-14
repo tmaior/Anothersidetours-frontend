@@ -65,7 +65,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             const dayKey = format(day, 'yyyy-MM-dd');
             newMonthDayData[dayKey] = (
                 <span>
-                    <sup>$ </sup>{100 + originalPrice}
+                    <sup>$ </sup>{originalPrice}
                 </span>
             );
         });

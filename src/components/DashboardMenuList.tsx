@@ -7,6 +7,7 @@ import ManageGuidesModal from "./ManageGuidesModal";
 import CancelConfirmationModal from "./CancelConfirmationModal";
 import BookingCancellationModal from "./BookingCancellationModal";
 import SendMessageModal from "./SendMessageModal";
+import ChangeArrivalModal from "./ChangeArrivalModal";
 
 const DashBoardMenu = ({reservation}) => {
     const [isUnassignModalOpen, setUnassignModalOpen] = useState(false);
@@ -14,7 +15,7 @@ const DashBoardMenu = ({reservation}) => {
     const [isCancelConfirmationOpen, setCancelConfirmationOpen] = useState(false);
     const [isBookingCancellationOpen, setBookingCancellationOpen] = useState(false);
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
-
+    const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
     const formatDate = (date: string | Date | undefined): string => {
         if (!date) return "Invalid Date";
         let parsedDate: Date;
@@ -103,7 +104,12 @@ const DashBoardMenu = ({reservation}) => {
                         Send Message
                     </MenuItem>
                     <MenuItem>Add Event Note</MenuItem>
-                    <MenuItem>Change Arrival</MenuItem>
+                    <MenuItem
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setChangeArrivalOpen(true);
+                        }}
+                    >Change Arrival</MenuItem>
                     <MenuItem
                         onClick={(e) => {
                             e.stopPropagation();
@@ -171,6 +177,12 @@ const DashBoardMenu = ({reservation}) => {
                     time: reservation.time,
                     image: reservation.imageUrl
                 }}
+            />
+
+            <ChangeArrivalModal
+                booking={reservation}
+                isOpen={isChangeArrivalonOpen}
+                onClose={() => setChangeArrivalOpen(false)}
             />
         </>
     );

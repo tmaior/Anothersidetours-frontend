@@ -180,7 +180,8 @@ function Dashboard() {
                             status: reservation.status,
                             paymentMethodId: reservation.paymentMethodId,
                             total_price: reservation.total_price,
-                            paymentIntentId: reservation.paymentIntentId
+                            paymentIntentId: reservation.paymentIntentId,
+                            valuePerGuest: reservation.tour.price
                         });
                         return acc;
                     },

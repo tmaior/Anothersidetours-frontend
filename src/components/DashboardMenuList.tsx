@@ -8,6 +8,7 @@ import CancelConfirmationModal from "./CancelConfirmationModal";
 import BookingCancellationModal from "./BookingCancellationModal";
 import SendMessageModal from "./SendMessageModal";
 import ChangeArrivalModal from "./ChangeArrivalModal";
+import ChangeCapacityModal from "./ChangeCapacityModal";
 
 const DashBoardMenu = ({reservation}) => {
     const [isUnassignModalOpen, setUnassignModalOpen] = useState(false);
@@ -16,6 +17,7 @@ const DashBoardMenu = ({reservation}) => {
     const [isBookingCancellationOpen, setBookingCancellationOpen] = useState(false);
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
     const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
+    const [isChangeCapacityModalOpen, setChangeCapacityModalOpen] = useState(false);
     const formatDate = (date: string | Date | undefined): string => {
         if (!date) return "Invalid Date";
         let parsedDate: Date;
@@ -119,7 +121,12 @@ const DashBoardMenu = ({reservation}) => {
                         Cancel Reservations
                     </MenuItem>
                     <MenuItem>Roster</MenuItem>
-                    <MenuItem>Adjust Capacity</MenuItem>
+                    <MenuItem
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setChangeCapacityModalOpen(true);
+                        }}
+                    >Adjust Capacity</MenuItem>
                     <MenuItem
                         onClick={(e) => {
                             e.stopPropagation();
@@ -183,6 +190,12 @@ const DashBoardMenu = ({reservation}) => {
                 booking={reservation}
                 isOpen={isChangeArrivalonOpen}
                 onClose={() => setChangeArrivalOpen(false)}
+            />
+
+            <ChangeCapacityModal
+                isOpen={isChangeCapacityModalOpen}
+                onClose={() => setChangeCapacityModalOpen(false)}
+                eventDetails={reservation}
             />
         </>
     );

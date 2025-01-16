@@ -8,13 +8,6 @@ import {
     Input,
     InputGroup,
     InputLeftElement,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
     Select,
     Spacer,
     Text,
@@ -24,11 +17,12 @@ import {
 import DashboardLayout from "../../../components/DashboardLayout";
 import ReservationItem from "../../../components/ReservationItem";
 import {SearchIcon} from "@chakra-ui/icons";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {useRouter} from "next/router";
 import ReservationDetail from "../reservation-details";
 import {useGuest} from "../../../components/GuestContext";
 import withAuth from "../../../utils/withAuth";
+import NotesFromReservationModalicon from "../../../components/NotesFromReservationModalicon";
 
 function Dashboard() {
     const [searchTerm, setSearchTerm] = useState("");
@@ -48,6 +42,9 @@ function Dashboard() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [selectedDate, setSelectedDate] = useState("");
+    const [isNotesOpen, setNotesOpen] = useState(false);
+    const [notesReservationList, setNotesReservationList] = useState([]);
+
 
     const filteredReservations = reservations.filter((reservation) =>
         loadedDates.includes(reservation.date)
@@ -218,9 +215,12 @@ function Dashboard() {
         setSearchTerm(e.target.value);
     };
 
-    const openNoteModal = (note) => {
-        setActiveNote(note);
-        onOpen();
+    const openNoteModal = ({ notes, reservation }) => {
+        if (reservation) {
+            setSelectedReservation(reservation);
+            setNotesReservationList(notes || []);
+            setNotesOpen(true);
+        }
     };
 
     const handlePurchaseClick = () => {
@@ -383,7 +383,12 @@ function Dashboard() {
                                     availableSummary={data.availableSummary}
                                     reservedSummary={data.reservedSummary}
                                     reservations={filterReservations(data.reservations)}
-                                    onNoteClick={openNoteModal}
+                                    onNoteClick={(notes, reservationId) =>
+                                        openNoteModal({
+                                            notes,
+                                            reservation: data.reservations.find(reservation => reservation.id === reservationId),
+                                        })
+                                    }
                                     onSelectReservation={handleSelectReservation}
                                     isCompactView={isDetailVisible}
                                 />
@@ -406,28 +411,17 @@ function Dashboard() {
                     </Box>
                 )}
             </Flex>
-            <Modal isOpen={isOpen} onClose={onClose} size="3xl">
-                <ModalOverlay/>
-                <ModalContent h={"600px"}>
-                    <ModalHeader>Notes</ModalHeader>
-                    <ModalCloseButton/>
-                    <ModalBody>
-                        {activeNote && activeNote.length > 0 ? (
-                            activeNote.map((note, index) => (
-                                <Box key={index} mb={4}>
-                                    <Text fontWeight="bold">{note.title || 'Untitled'}</Text>
-                                    <Text>{note.description || 'No description available'}</Text>
-                                </Box>
-                            ))
-                        ) : (
-                            <Text>No notes available</Text>
-                        )}
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button onClick={onClose}>Close</Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
+
+            <NotesFromReservationModalicon
+                isOpen={isNotesOpen}
+                notes={notesReservationList}
+                reservation={selectedReservation}
+                onClose={() => {
+                    setNotesOpen(false);
+                    setSelectedReservation(null);
+                    setNotesReservationList([]);
+                }}
+            />
         </DashboardLayout>
     );
 }

@@ -43,7 +43,7 @@ const ReservationItem = ({
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${item.id}`);
             const data = await response.json();
-            onNoteClick(data);
+            onNoteClick(data, item.id);
         } catch (error) {
             console.error("Error fetching notes:", error);
             toast({

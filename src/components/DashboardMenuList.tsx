@@ -251,8 +251,7 @@ const DashBoardMenu = ({reservation}) => {
                 isOpen={isAddEventNoteModalOpen}
                 onClose={() => setAddEventNoteModalOpen(false)}
                 eventDetails={reservation}
-                onSave={handleSaveNote}
-            />
+                onSave={handleSaveNote} reservationId={reservation.id}/>
         </>
     );
 };

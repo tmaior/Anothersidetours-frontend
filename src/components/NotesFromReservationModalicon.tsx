@@ -14,6 +14,8 @@ import {
     Text,
     VStack,
 } from "@chakra-ui/react";
+import {CiCalendar} from "react-icons/ci";
+import {MdAccessTime} from "react-icons/md";
 
 interface Note {
     title?: string;
@@ -24,7 +26,7 @@ interface Reservation {
     notes?: Note[];
     imageUrl?: string;
     title?: string;
-    date?: string;
+    dateFormatted?: string;
     time?: string;
 }
 
@@ -36,7 +38,25 @@ interface NotesModalProps {
 }
 
 const NotesModal: React.FC<NotesModalProps> = ({isOpen, onClose, notes, reservation}) => {
-    const {imageUrl, title, date, time} = reservation || {};
+    const {imageUrl, title, dateFormatted, time} = reservation || {};
+    const formatDate = (date: string | Date | undefined): string => {
+        if (!date) return "Invalid Date";
+        let parsedDate: Date;
+        if (date instanceof Date) {
+            parsedDate = date;
+        } else {
+            parsedDate = new Date(date);
+        }
+        if (isNaN(parsedDate.getTime())) return "Invalid Date";
+
+        return parsedDate.toLocaleDateString("en-US", {
+            weekday: "short",
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+        });
+    };
+
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="3xl">
@@ -55,16 +75,26 @@ const NotesModal: React.FC<NotesModalProps> = ({isOpen, onClose, notes, reservat
                                 objectFit="fill"
                             />
                             <VStack align="start" spacing={1}>
-                                <Text fontWeight="bold">{title || "No Title"}</Text>
-                                <Text color="gray.600">{`${date || "No Date"} at ${time || "No Time"}`}</Text>
+                                <Text fontWeight="bold">{title}</Text>
+                                <HStack color="gray.600" fontSize="sm" spacing={4}>
+                                    <HStack spacing={1}>
+                                        <CiCalendar/>
+                                        <Text as="span">{formatDate(dateFormatted)}</Text>
+                                    </HStack>
+                                    <HStack spacing={1}>
+                                        <MdAccessTime/>
+                                        <Text as="span">{time}</Text>
+                                    </HStack>
+                                </HStack>
                             </VStack>
                         </HStack>
                     )}
+                    <Text fontWeight="bold">{"Purchase Notes"}</Text>
                     <VStack align="stretch" spacing={4}>
                         {notes.length > 0 ? (
                             notes.map((note, index) => (
                                 <Box key={index} p={4} bg="white" borderRadius="md" boxShadow="sm">
-                                    <Text fontWeight="bold">{note.title || "Untitled"}</Text>
+                                    {/*<Text fontWeight="bold">{note.title || "Untitled"}</Text>*/}
                                     <Text>{note.description || "No description available"}</Text>
                                 </Box>
                             ))

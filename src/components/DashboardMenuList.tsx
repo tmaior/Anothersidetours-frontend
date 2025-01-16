@@ -1,6 +1,6 @@
 import React, {useState} from "react";
-import {Box, IconButton, Image, Menu, MenuButton, MenuItem, MenuList, Stack, Text} from "@chakra-ui/react";
-import {BsThreeDots} from "react-icons/bs";
+import {Box, HStack, IconButton, Image, Menu, MenuButton, MenuItem, MenuList, Stack, Text} from "@chakra-ui/react";
+import {BsPersonX, BsThreeDots} from "react-icons/bs";
 import ConfirmUnassignModal from "./ConfirmUnassignModal";
 import {useGuideAssignment} from "../hooks/useGuideAssignment";
 import ManageGuidesModal from "./ManageGuidesModal";
@@ -9,6 +9,12 @@ import BookingCancellationModal from "./BookingCancellationModal";
 import SendMessageModal from "./SendMessageModal";
 import ChangeArrivalModal from "./ChangeArrivalModal";
 import ChangeCapacityModal from "./ChangeCapacityModal";
+import AddEventNoteModal from "./AddEventNoteModal";
+import {IoPersonAddOutline} from "react-icons/io5";
+import {MdOutlineCancel, MdOutlineReduceCapacity} from "react-icons/md";
+import {CiCalendar} from "react-icons/ci";
+import {CgNotes, CgPlayListAdd} from "react-icons/cg";
+import {FiSend} from "react-icons/fi";
 
 const DashBoardMenu = ({reservation}) => {
     const [isUnassignModalOpen, setUnassignModalOpen] = useState(false);
@@ -18,6 +24,7 @@ const DashBoardMenu = ({reservation}) => {
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
     const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
     const [isChangeCapacityModalOpen, setChangeCapacityModalOpen] = useState(false);
+    const [isAddEventNoteModalOpen, setAddEventNoteModalOpen] = useState(false);
     const formatDate = (date: string | Date | undefined): string => {
         if (!date) return "Invalid Date";
         let parsedDate: Date;
@@ -52,6 +59,10 @@ const DashBoardMenu = ({reservation}) => {
         } catch (error) {
             console.error("Error canceling reservation:", error);
         }
+    };
+
+    const handleSaveNote = (note) => {
+        console.log("Note Saved:", note);
     };
 
     return (
@@ -103,37 +114,72 @@ const DashBoardMenu = ({reservation}) => {
                             setSendMessageModalOpen(true);
                         }}
                     >
-                        Send Message
+                        <HStack spacing={2}>
+                            <FiSend/>
+                            <Text>Send Message</Text>
+                        </HStack>
                     </MenuItem>
-                    <MenuItem>Add Event Note</MenuItem>
+                    <MenuItem
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setAddEventNoteModalOpen(true);
+                        }}
+                    >
+                        <HStack spacing={2}>
+                            <CgPlayListAdd/>
+                            <Text>Add Event Note</Text>
+                        </HStack>
+                    </MenuItem>
                     <MenuItem
                         onClick={(e) => {
                             e.stopPropagation();
                             setChangeArrivalOpen(true);
                         }}
-                    >Change Arrival</MenuItem>
+                    >
+                        <HStack spacing={2}>
+                            <CiCalendar/>
+                            <Text>Change Arrival</Text>
+                        </HStack>
+                    </MenuItem>
                     <MenuItem
                         onClick={(e) => {
                             e.stopPropagation();
                             setCancelConfirmationOpen(true);
                         }}
                     >
-                        Cancel Reservations
+                        <HStack spacing={2}>
+                            <MdOutlineCancel/>
+                            <Text>Cancel Reservations</Text>
+                        </HStack>
                     </MenuItem>
-                    <MenuItem>Roster</MenuItem>
+                    <MenuItem
+                    >
+                        <HStack spacing={2}>
+                            <CgNotes/>
+                            <Text>Roster</Text>
+                        </HStack>
+                    </MenuItem>
                     <MenuItem
                         onClick={(e) => {
                             e.stopPropagation();
                             setChangeCapacityModalOpen(true);
                         }}
-                    >Adjust Capacity</MenuItem>
+                    >
+                        <HStack spacing={2}>
+                            <MdOutlineReduceCapacity/>
+                            <Text>Adjust Capacity</Text>
+                        </HStack>
+                    </MenuItem>
                     <MenuItem
                         onClick={(e) => {
                             e.stopPropagation();
                             setAssignModalOpen(true);
                         }}
                     >
-                        Assign Guides
+                        <HStack spacing={2}>
+                            <IoPersonAddOutline/>
+                            <Text>Assign Guides</Text>
+                        </HStack>
                     </MenuItem>
                     <MenuItem
                         onClick={(e) => {
@@ -141,7 +187,10 @@ const DashBoardMenu = ({reservation}) => {
                             setUnassignModalOpen(true);
                         }}
                     >
-                        Unassign Guides
+                        <HStack spacing={2}>
+                            <BsPersonX/>
+                            <Text>Unassign Guides Guides</Text>
+                        </HStack>
                     </MenuItem>
                 </MenuList>
             </Menu>
@@ -196,6 +245,13 @@ const DashBoardMenu = ({reservation}) => {
                 isOpen={isChangeCapacityModalOpen}
                 onClose={() => setChangeCapacityModalOpen(false)}
                 eventDetails={reservation}
+            />
+
+            <AddEventNoteModal
+                isOpen={isAddEventNoteModalOpen}
+                onClose={() => setAddEventNoteModalOpen(false)}
+                eventDetails={reservation}
+                onSave={handleSaveNote}
             />
         </>
     );

@@ -34,6 +34,8 @@ import {useGuideAssignment} from "../../../hooks/useGuideAssignment";
 import {useReservationGuides} from "../../../hooks/useReservationGuides";
 import CancelConfirmationModal from "../../../components/CancelConfirmationModal";
 import BookingCancellationModal from "../../../components/BookingCancellationModal";
+import ChangeArrivalModal from "../../../components/ChangeArrivalModal";
+import SendMessageModal from "../../../components/SendMessageModal";
 
 export default function ReservationDetail({reservation, onCloseDetail, setReservations}) {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
@@ -46,6 +48,8 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
     const toast = useToast();
     const {guides, loading} = useReservationGuides(reservation?.id);
     const [currentStatus, setCurrentStatus] = useState(reservation?.status);
+    const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
+    const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
 
     const {
         isOpen: isConfirmOpen,
@@ -266,8 +270,23 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                 >
                     Reject
                 </Button>
-                <Button size="sm" variant="outline">Message</Button>
-                <Button size="sm" variant="outline">Change Arrival</Button>
+                <Button size="sm" variant="outline"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSendMessageModalOpen(true);
+                        }}
+                >
+                    Message
+                </Button>
+                <Button size="sm" variant="outline"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setChangeArrivalOpen(true);
+                        }}
+                >
+                    Change Arrival
+                </Button>
+
                 <Button size="sm" variant="outline"
                         color={"red.500"}
                         onClick={onConfirmOpen}
@@ -291,6 +310,23 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                 isOpen={isCancelOpen}
                 onClose={onCancelClose}
                 booking={reservation}
+            />
+
+            <SendMessageModal
+                isOpen={isSendMessageModalOpen}
+                onClose={() => setSendMessageModalOpen(false)}
+                eventDetails={{
+                    title: reservation.title,
+                    date: reservation.dateFormatted,
+                    time: reservation.time,
+                    image: reservation.imageUrl
+                }}
+            />
+
+            <ChangeArrivalModal
+                booking={reservation}
+                isOpen={isChangeArrivalonOpen}
+                onClose={() => setChangeArrivalOpen(false)}
             />
 
             <HStack spacing={8} mt={4}>

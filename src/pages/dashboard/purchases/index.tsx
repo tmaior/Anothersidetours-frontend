@@ -29,6 +29,9 @@ import {useRouter} from "next/router";
 import {HiOutlineMail} from "react-icons/hi";
 import {RxPerson} from "react-icons/rx";
 import {useGuest} from "../../../components/GuestContext";
+import ChangeGuestQuantityModal from "../../../components/ChangeGuestQuantityModal";
+import ChangeArrivalModal from "../../../components/ChangeArrivalModal";
+import SendMessageModal from "../../../components/SendMessageModal";
 
 type GuestItemProps = {
     name: string;
@@ -236,6 +239,9 @@ const PurchaseDetails = ({reservation}) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', options);
     };
+    const [isChangeGuestQuantityModalOpen, setChangeGuestQuantityModalOpen] = useState(false);
+    const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
+    const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
 
     return (
         <VStack>
@@ -303,11 +309,26 @@ const PurchaseDetails = ({reservation}) => {
                 <HStack spacing={6} mt={6} wrap="nowrap">
                     <HStack>
                         <CiCalendar size={18}/>
-                        <Link style={{whiteSpace: "nowrap"}}>Arrival</Link>
+                        <Link style={{whiteSpace: "nowrap"}}
+                              onClick={(e) => {
+                                  e.stopPropagation();
+                                  setChangeArrivalOpen(true);
+                              }}
+                        >
+                            Arrival
+                        </Link>
                     </HStack>
                     <HStack>
                         <IoPersonOutline size={18}/>
-                        <Link style={{whiteSpace: "nowrap"}}>Guests</Link>
+                        <Link
+                            style={{whiteSpace: "nowrap"}}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setChangeGuestQuantityModalOpen(true);
+                            }}
+                        >
+                            Guests
+                        </Link>
                     </HStack>
                     <HStack>
                         <BsBox2 size={15}/>
@@ -319,7 +340,14 @@ const PurchaseDetails = ({reservation}) => {
                     </HStack>
                     <HStack>
                         <CiLocationArrow1 size={18}/>
-                        <Link style={{whiteSpace: "nowrap"}}>Message Guests</Link>
+                        <Link style={{whiteSpace: "nowrap"}}
+                              onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSendMessageModalOpen(true);
+                              }}
+                        >
+                            Message Guests
+                        </Link>
                     </HStack>
                     <HStack>
                         <AiOutlineMail size={18}/>
@@ -349,6 +377,28 @@ const PurchaseDetails = ({reservation}) => {
                     </Box>
                 </Box>
             </Box>
+
+            <ChangeGuestQuantityModal
+                isOpen={isChangeGuestQuantityModalOpen}
+                onClose={() => setChangeGuestQuantityModalOpen(false)}
+            />
+
+            <ChangeArrivalModal
+                booking={reservation}
+                isOpen={isChangeArrivalonOpen}
+                onClose={() => setChangeArrivalOpen(false)}
+            />
+
+            <SendMessageModal
+                isOpen={isSendMessageModalOpen}
+                onClose={() => setSendMessageModalOpen(false)}
+                eventDetails={{
+                    title: reservation.title,
+                    date: reservation.dateFormatted,
+                    time: reservation.time,
+                    image: reservation.imageUrl
+                }}
+            />
         </VStack>
     );
 };
@@ -432,7 +482,7 @@ const PurchasesPage = () => {
         if (tenantId) {
             fetchReservations();
         }
-    }, [tenantId,selectedReservation]);
+    }, [tenantId, selectedReservation]);
 
     if (isLoading) {
         return (

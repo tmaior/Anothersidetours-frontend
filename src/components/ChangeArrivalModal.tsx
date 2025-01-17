@@ -21,12 +21,14 @@ import {
 } from "@chakra-ui/react";
 import axios from "axios";
 import {CiSquarePlus} from "react-icons/ci";
+import DatePicker from "./TimePickerArrival";
 
 const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
     const [selectedDate, setSelectedDate] = useState(booking.date || "2025-01-14");
     const [selectedTime, setSelectedTime] = useState(booking.time || "11:00 AM");
     const [notifyCustomer, setNotifyCustomer] = useState(true);
     const [cardDetails, setCardDetails] = useState(null);
+    const [isDatePickerOpen, setDatePickerOpen] = useState(false);
 
 
     const handleSaveChanges = () => {
@@ -65,11 +67,13 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
                             <FormControl>
                                 <FormLabel>Date</FormLabel>
                                 <Input
-                                    type="date"
-                                    value={booking.selectedDate}
-                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                    type="text"
+                                    value={selectedDate}
+                                    onClick={() => setDatePickerOpen(true)}
                                     size="sm"
                                     w="200px"
+                                    readOnly
+                                    cursor="pointer"
                                 />
                             </FormControl>
                             <FormControl>
@@ -98,7 +102,6 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
                                 Add a new time
                             </Button>
                         </VStack>
-
                         <VStack
                             bg="gray.50"
                             p={6}
@@ -121,7 +124,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
                                 </Text>
                                 <VStack align="stretch" spacing={2}>
                                     <HStack justify="space-between">
-                                        <Text>{`Guests ($${booking.valuePerGuest.toFixed(2)} × ${booking.guestQuantity})`}</Text>
+                                        <Text>{`Guests ($${(booking.valuePerGuest || booking.tour?.price).toFixed(2)} × ${booking.guestQuantity})`}</Text>
                                         <Text>${parseFloat(booking.total_price).toFixed(2)}</Text>
                                     </HStack>
                                 </VStack>
@@ -180,6 +183,32 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
                     </HStack>
                 </ModalFooter>
             </ModalContent>
+
+            <Modal
+                isOpen={isDatePickerOpen}
+                onClose={() => setDatePickerOpen(false)}
+                size="md"
+                isCentered={false}
+                motionPreset="slideInBottom"
+            >
+                <ModalOverlay/>
+                <ModalContent
+                    mt="70px"
+                    ml="150px"
+                    position="absolute"
+                    w="500px"
+                >
+                    <ModalBody>
+                        <DatePicker
+                            prices={Array(31).fill(booking.valuePerGuest || booking.tour?.price || 0)}
+                            onDateSelect={(date) => {
+                                setSelectedDate(date.toISOString().split("T")[0]);
+                                setDatePickerOpen(false);
+                            }}
+                        />
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
         </Modal>
     );
 };

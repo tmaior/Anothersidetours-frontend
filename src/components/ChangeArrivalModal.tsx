@@ -25,7 +25,7 @@ import DatePicker from "./TimePickerArrival";
 import AddTimeSlotModal from "./AddTimeSlotModal";
 
 const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
-    const [selectedDate, setSelectedDate] = useState(booking.date || "2025-01-14");
+    const [selectedDate, setSelectedDate] = useState(booking.dateFormatted || "2025-01-14");
     const [selectedTime, setSelectedTime] = useState(booking.time || "11:00 AM");
     const [notifyCustomer, setNotifyCustomer] = useState(true);
     const [cardDetails, setCardDetails] = useState(null);
@@ -34,9 +34,6 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
     const [availableTimes, setAvailableTimes] = useState([]);
     const [schedules, setSchedules] = useState<{ value: string; label: string }[]>([]);
     const [loadingSchedules, setLoadingSchedules] = useState(true);
-
-    const handleSaveChanges = () => {
-    };
 
     const fetchSchedules = async () => {
         if (!booking.id) return;
@@ -114,6 +111,15 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
         setAvailableTimes((prev) => [...prev, formattedTimeslot]);
     };
 
+    const formatDateMMDDYYYY = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+        });
+    };
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="3xl">
             <ModalOverlay/>
@@ -128,7 +134,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
                                 <FormLabel>Date</FormLabel>
                                 <Input
                                     type="text"
-                                    value={selectedDate}
+                                    value={formatDateMMDDYYYY(selectedDate)}
                                     onClick={() => setDatePickerOpen(true)}
                                     size="sm"
                                     w="200px"
@@ -262,7 +268,8 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
                         <DatePicker
                             prices={Array(31).fill(booking.valuePerGuest || booking.tour?.price || 0)}
                             onDateSelect={(date) => {
-                                setSelectedDate(date.toISOString().split("T")[0]);
+                                const formattedDate = date.toISOString().split("T")[0];
+                                setSelectedDate(formattedDate);
                                 setDatePickerOpen(false);
                             }}
                         />

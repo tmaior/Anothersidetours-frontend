@@ -22,6 +22,7 @@ import {
 import axios from "axios";
 import {CiSquarePlus} from "react-icons/ci";
 import DatePicker from "./TimePickerArrival";
+import AddTimeSlotModal from "./AddTimeSlotModal";
 
 const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
     const [selectedDate, setSelectedDate] = useState(booking.date || "2025-01-14");
@@ -29,10 +30,56 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
     const [notifyCustomer, setNotifyCustomer] = useState(true);
     const [cardDetails, setCardDetails] = useState(null);
     const [isDatePickerOpen, setDatePickerOpen] = useState(false);
-
+    const [isTimeslotModalOpen, setTimeslotModalOpen] = useState(false);
+    const [availableTimes, setAvailableTimes] = useState([]);
+    const [schedules, setSchedules] = useState<{ value: string; label: string }[]>([]);
+    const [loadingSchedules, setLoadingSchedules] = useState(true);
 
     const handleSaveChanges = () => {
     };
+
+    const fetchSchedules = async () => {
+        if (!booking.id) return;
+        try {
+            const res = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/45ff048a-a6f4-480e-8c15-19f1994a2ea0`
+            );
+            const data = await res.json();
+
+            const formattedSchedules = data.map((timeStr: string) => {
+                let dateObj: Date;
+                const testDate = `2024-12-20 ${timeStr}`;
+                dateObj = new Date(testDate);
+
+                if (isNaN(dateObj.getTime())) {
+                    return {
+                        value: timeStr,
+                        label: timeStr,
+                    };
+                }
+
+                return {
+                    value: timeStr,
+                    label: dateObj.toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                    }),
+                };
+            });
+
+            setAvailableTimes(formattedSchedules);
+        } catch (error) {
+            console.error("Failed to fetch schedules:", error);
+            setLoadingSchedules(false);
+        }
+    };
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchSchedules();
+        }
+    }, [isOpen, selectedDate]);
 
     useEffect(() => {
         const fetchCardDetails = async () => {
@@ -52,6 +99,19 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-GB');
+    };
+
+    const handleAddTimeslot = (timeslot) => {
+        console.log("New timeslot created:", timeslot);
+        const formattedTimeslot = {
+            value: timeslot.time,
+            label: new Date(`2024-12-20 ${timeslot.time}`).toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+            }),
+        };
+        setAvailableTimes((prev) => [...prev, formattedTimeslot]);
     };
 
     return (
@@ -84,17 +144,17 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
                                     size="sm"
                                     w="200px"
                                 >
-                                    <option value="10:00 AM">10:00 AM</option>
-                                    <option value="11:00 AM">11:00 AM</option>
-                                    <option value="12:00 PM">12:00 PM</option>
-                                    <option value="1:00 PM">1:00 PM</option>
-                                    <option value="2:00 PM">2:00 PM</option>
+                                    {availableTimes.map((time) => (
+                                        <option key={time.value} value={time.value}>
+                                            {time.label}
+                                        </option>
+                                    ))}
                                 </Select>
                             </FormControl>
                             <Button
                                 variant="link"
                                 size="xs"
-                                onClick={() => setGuideModalOpen(true)}
+                                onClick={() => setTimeslotModalOpen(true)}
                                 color="black"
                                 fontWeight={"bold"}
                             >
@@ -209,6 +269,13 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
                     </ModalBody>
                 </ModalContent>
             </Modal>
+
+            <AddTimeSlotModal
+                booking={booking}
+                isOpen={isTimeslotModalOpen}
+                onClose={() => setTimeslotModalOpen(false)}
+                onCreate={handleAddTimeslot}
+            />
         </Modal>
     );
 };

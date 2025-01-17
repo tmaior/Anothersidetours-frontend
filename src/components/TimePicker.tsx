@@ -11,21 +11,21 @@ const TimePicker = ({onTimeSelect}) => {
 
     const handleHourSelect = (hour) => {
         setSelectedHour(hour);
-        if (selectedMinute) {
+        if (hour && selectedMinute && selectedPeriod) {
             onTimeSelect(`${hour}:${selectedMinute} ${selectedPeriod}`);
         }
     };
 
     const handleMinuteSelect = (minute) => {
         setSelectedMinute(minute);
-        if (selectedHour) {
+        if (selectedHour && minute && selectedPeriod) {
             onTimeSelect(`${selectedHour}:${minute} ${selectedPeriod}`);
         }
     };
 
     const handlePeriodSelect = (period) => {
         setSelectedPeriod(period);
-        if (selectedHour && selectedMinute) {
+        if (selectedHour && selectedMinute && period) {
             onTimeSelect(`${selectedHour}:${selectedMinute} ${period}`);
         }
     };

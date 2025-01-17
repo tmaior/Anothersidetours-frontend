@@ -25,7 +25,11 @@ import DatePicker from "./TimePickerArrival";
 import AddTimeSlotModal from "./AddTimeSlotModal";
 
 const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
-    const [selectedDate, setSelectedDate] = useState(booking.dateFormatted || "2025-01-14");
+    const [selectedDate, setSelectedDate] = useState(
+        booking.dateFormatted
+            ? parseToYYYYMMDD(booking.dateFormatted)
+            : "2025-01-14"
+    );
     const [selectedTime, setSelectedTime] = useState(booking.time || "11:00 AM");
     const [notifyCustomer, setNotifyCustomer] = useState(true);
     const [cardDetails, setCardDetails] = useState(null);
@@ -111,13 +115,73 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
         setAvailableTimes((prev) => [...prev, formattedTimeslot]);
     };
 
-    const formatDateMMDDYYYY = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-        });
+    function parseToYYYYMMDD(dateStr) {
+        const dateObj = new Date(dateStr);
+        if (isNaN(dateObj.getTime())) {
+            return "2025-01-14";
+        }
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const d = String(dateObj.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+    }
+
+    function formatDateMMMDDYYYY(yyyyMmDd) {
+        if (!yyyyMmDd || !yyyyMmDd.includes("-")) return "";
+        const [year, month, day] = yyyyMmDd.split("-");
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const monthIndex = Number(month) - 1;
+        return `${monthNames[monthIndex]} ${Number(day)}, ${year}`;
+    }
+
+    function combineDateAndTime(dateStr, timeStr) {
+        const [year, month, day] = dateStr.split('-');
+        const timeParts = timeStr.match(/(\d{1,2}):(\d{2})\s?([AP]M)?/);
+        if (!timeParts) throw new Error(`Invalid time format: ${timeStr}`);
+
+        let [_, hoursMatch, minutesMatch, meridianMatch] = timeParts;
+        let hours = parseInt(hoursMatch, 10);
+
+        if (meridianMatch) {
+            meridianMatch = meridianMatch.toUpperCase();
+            if (meridianMatch === 'PM' && hours < 12) {
+                hours += 12;
+            } else if (meridianMatch === 'AM' && hours === 12) {
+                hours = 0;
+            }
+        }
+
+        const finalDateTime = `${year}-${month}-${day} ${String(hours).padStart(2, '0')}:${minutesMatch}:00.000`;
+        return finalDateTime;
+    }
+
+    const handleSaveChanges = async () => {
+        if (!selectedDate || !selectedTime) {
+            console.error("Date or time is not selected.");
+            return;
+        }
+
+        try {
+
+            const combinedDateTime = combineDateAndTime(selectedDate, selectedTime);
+
+            console.log("Data+Hora final:", combinedDateTime);
+
+            const updates = {
+                reservation_date: combinedDateTime
+            };
+
+            const response = await axios.put(
+                `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`,
+                updates
+            );
+            console.log("Update successful:", response.data);
+        } catch (error) {
+            console.error("Error combining date and time:", error);
+        } finally {
+            onClose();
+        }
     };
 
     return (
@@ -134,7 +198,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
                                 <FormLabel>Date</FormLabel>
                                 <Input
                                     type="text"
-                                    value={formatDateMMDDYYYY(selectedDate)}
+                                    value={formatDateMMMDDYYYY(selectedDate)}
                                     onClick={() => setDatePickerOpen(true)}
                                     size="sm"
                                     w="200px"

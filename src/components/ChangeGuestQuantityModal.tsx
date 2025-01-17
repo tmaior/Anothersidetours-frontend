@@ -107,10 +107,10 @@ const ChangeGuestQuantityModal = ({isOpen, onClose}) => {
                                 Purchase Summary
                             </Text>
                             <VStack align="stretch" spacing={2} mb={4}>
-                                <Flex justify="space-between">
-                                    <Text>Additional Fee For Airport Pick-Up</Text>
-                                    <Text>$199.00</Text>
-                                </Flex>
+                                {/*<Flex justify="space-between">*/}
+                                {/*    <Text>Additional Fee For Airport Pick-Up</Text>*/}
+                                {/*    <Text>$199.00</Text>*/}
+                                {/*</Flex>*/}
                                 <Flex justify="space-between">
                                     <Text>Guests ($169.00 × {guestCount})</Text>
                                     <Text>${169 * guestCount}.00</Text>

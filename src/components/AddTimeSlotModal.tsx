@@ -41,21 +41,21 @@ const AddTimeSlotModal = ({isOpen, onClose, onCreate, booking}) => {
                 <ModalHeader>Add New Timeslot</ModalHeader>
                 <ModalCloseButton/>
                 <ModalBody>
-                    <FormControl mb={4}>
-                        <FormLabel>Date</FormLabel>
-                        <Input
-                            type="text"
-                            value={selectedDate.toLocaleDateString("en-US", {
-                                weekday: "short",
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                            })}
-                            readOnly
-                            onClick={() => setDatePickerOpen(true)}
-                            cursor="pointer"
-                        />
-                    </FormControl>
+                    {/*<FormControl mb={4}>*/}
+                    {/*    <FormLabel>Date</FormLabel>*/}
+                    {/*    <Input*/}
+                    {/*        type="text"*/}
+                    {/*        value={selectedDate.toLocaleDateString("en-US", {*/}
+                    {/*            weekday: "short",*/}
+                    {/*            year: "numeric",*/}
+                    {/*            month: "long",*/}
+                    {/*            day: "numeric",*/}
+                    {/*        })}*/}
+                    {/*        readOnly*/}
+                    {/*        onClick={() => setDatePickerOpen(true)}*/}
+                    {/*        cursor="pointer"*/}
+                    {/*    />*/}
+                    {/*</FormControl>*/}
                     <FormControl>
                         <FormLabel>Time</FormLabel>
                         <Input

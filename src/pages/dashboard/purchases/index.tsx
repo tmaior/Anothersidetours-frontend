@@ -264,45 +264,7 @@ const PurchaseDetails = ({reservation}) => {
                         backgroundColor: "gray.300",
                     }}
                 />
-                <Box
-                    position="absolute"
-                    top="0"
-                    left="0"
-                    width="100%"
-                    height="100%"
-                    color="white"
-                    display="flex"
-                    flexDirection="column"
-                    justifyContent="center"
-                    alignItems="start"
-                    p={4}
-                >
-                    <Text
-                        fontSize="xl"
-                        fontWeight="bold"
-                        textShadow="0px 0px 4px black"
-                    >
-                        {reservation.tour.name}
-                    </Text>
-                    <HStack>
-                        <HStack>
-                            <CiCalendar size={18}/>
-                            <Text
-                                textShadow="0px 0px 4px black"
-                            >
-                                {formatDate(reservation.user.selectedDate)}
-                            </Text>
-                        </HStack>
-                        <HStack>
-                            <CiClock2/>
-                            <Text
-                                textShadow="0px 0px 4px black"
-                            >
-                                {reservation.user.selectedTime}
-                            </Text>
-                        </HStack>
-                    </HStack>
-                </Box>
+
             </Box>
 
             <Box flex="1" p={6} marginTop={"-50px"} marginLeft={"-70px"}>
@@ -363,17 +325,46 @@ const PurchaseDetails = ({reservation}) => {
                     </HStack>
                 </HStack>
                 <Box mt={8} marginLeft={"-30px"} marginTop={"50px"}>
+                    <Text fontSize="xl" fontWeight="bold">
+                        {reservation.tour.name}
+                    </Text>
 
-                    <Text fontSize="2xl" fontWeight="bold">Reservation Confirmation</Text>
-                    <Badge colorScheme="green" mt={2}><CheckCircleIcon/> Confirmed</Badge>
+                    <HStack>
+                        <HStack>
+                            <CiCalendar size={18}/>
+                            <Text>{formatDate(reservation.user.selectedDate)}</Text>
+                        </HStack>
+                        <HStack>
+                            <CiClock2/>
+                            <Text>{reservation.user.selectedTime}</Text>
+                        </HStack>
+                    </HStack>
 
                     <Box mt={6}>
-                        <Text fontWeight="bold">Contact Information</Text>
-                        <VStack align="start" spacing={1}>
-                            <HStack><RxPerson/><Text>{reservation.user.name}</Text></HStack>
-                            <HStack><HiOutlineMail/> <Text>{reservation.user.email}</Text></HStack>
-                            <HStack><BsTelephone/> <Text>{reservation.user.phone}</Text></HStack>
-                        </VStack>
+                        <Text fontSize="2xl" fontWeight="bold">
+                            Reservation Confirmation
+                        </Text>
+                        <Badge colorScheme="green" mt={2}>
+                            <CheckCircleIcon/> Confirmed
+                        </Badge>
+
+                        <Box mt={6}>
+                            <Text fontWeight="bold">Contact Information</Text>
+                            <VStack align="start" spacing={1}>
+                                <HStack>
+                                    <RxPerson/>
+                                    <Text>{reservation.user.name}</Text>
+                                </HStack>
+                                <HStack>
+                                    <HiOutlineMail/>
+                                    <Text>{reservation.user.email}</Text>
+                                </HStack>
+                                <HStack>
+                                    <BsTelephone/>
+                                    <Text>{reservation.user.phone}</Text>
+                                </HStack>
+                            </VStack>
+                        </Box>
                     </Box>
                 </Box>
             </Box>

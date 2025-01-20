@@ -1,44 +1,59 @@
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import TourForm from "../create-tours";
+import React, {useEffect, useState} from "react";
+import {useRouter} from "next/router";
+import {useGuest} from "../../../components/GuestContext";
+import CreateToursPage from "../create-tours";
 
-export default function EditTour() {
+function EditTourPage() {
     const router = useRouter();
-    const { id } = router.query;
+    const {id} = router.query;
+
+    const {
+        setTitle,
+        setDescription,
+        setPrice,
+        setIncludedItems,
+        setBringItems,
+        setImagePreview,
+        setImageFile,
+        setSchedule,
+        setEventDuration,
+        setGuestLimit,
+        setEarlyArrival,
+        setOperationProcedures
+    } = useGuest();
+
     const [isLoading, setIsLoading] = useState(true);
-    const [tourData, setTourData] = useState(null);
 
     useEffect(() => {
-        if (id) {
-            (async () => {
-                try {
-                    const response = await fetch(
-                        `${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`
-                    );
-                    const data = await response.json();
-                    setTourData(data);
-                } catch (error) {
-                    console.error("Error fetching tour data:", error);
-                } finally {
-                    setIsLoading(false);
+        if (!id) return;
+
+        async function fetchTour() {
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`);
+                if (!res.ok) {
+                    throw new Error("Error when searching for tour");
                 }
-            })();
+                const data = await res.json();
+
+                setTitle(data.name || "");
+                setDescription(data.description || "");
+                setPrice(data.price || 0);
+                setImagePreview(data.imageUrl || null);
+                setOperationProcedures(data.StandardOperation || "");
+                setIsLoading(false);
+            } catch (error) {
+                console.error(error);
+            }
         }
+
+        fetchTour();
     }, [id]);
 
     if (isLoading) {
-        return <p>Loading...</p>;
+        return <div>Carregando dados...</div>;
     }
 
-    if (!tourData) {
-        return <p>Tour not found.</p>;
-    }
-
-    return (
-        <TourForm
-            isEditing={true}
-            tourId={id}
-            initialData={tourData}
-        />
-    );
+    return <CreateToursPage isEditing/>;
 }
+
+export default EditTourPage;

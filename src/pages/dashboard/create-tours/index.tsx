@@ -447,10 +447,12 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
 
 interface SchedulesAvailabilityStepProps {
     onBack: () => void;
+    isEditing?: boolean;
 }
 
 function SchedulesAvailabilityStep({
                                        onBack,
+                                       isEditing = false,
                                    }: SchedulesAvailabilityStepProps) {
     const router = useRouter();
 
@@ -562,8 +564,15 @@ function SchedulesAvailabilityStep({
 
     async function handleSaveTour() {
         try {
-            const tourResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`, {
-                method: "POST",
+            const method = isEditing ? "PUT" : "POST";
+            const {id} = router.query;
+
+            const url = isEditing
+                ? `${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`
+                : `${process.env.NEXT_PUBLIC_API_URL}/tours`;
+
+            const tourResponse = await fetch(url, {
+                method,
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -584,8 +593,9 @@ function SchedulesAvailabilityStep({
             if (!tourResponse.ok) {
                 throw new Error("Failed to create tour");
             }
-            const createdTour = await tourResponse.json();
-            const tourId = createdTour.id;
+
+            const savedTour = await tourResponse.json();
+            const tourId = savedTour.id;
 
             const expandedTimeSlots = schedule.flatMap((slot) =>
                 generateTimeSlots(slot.startTime, slot.startPeriod, slot.endTime, slot.endPeriod)
@@ -848,7 +858,7 @@ function SchedulesAvailabilityStep({
                             Back
                         </Button>
                         <Button colorScheme="blue" onClick={handleSaveTour}>
-                            Save
+                            {isEditing ? "Save Changes" : "Save"}
                         </Button>
                     </HStack>
                 </VStack>
@@ -857,8 +867,14 @@ function SchedulesAvailabilityStep({
     );
 }
 
-function CreateToursPage() {
+function CreateToursPage({isEditing = false}: { isEditing?: boolean }) {
     const [currentStep, setCurrentStep] = useState(1);
+
+    useEffect(() => {
+        if (!isEditing) {
+            resetFields();
+        }
+    }, [isEditing]);
 
     const {
         setSchedule,
@@ -915,9 +931,14 @@ function CreateToursPage() {
     if (currentStep === 1) {
         return <DescriptionContentStep onNext={() => setCurrentStep(2)}/>;
     } else {
-        return <SchedulesAvailabilityStep onBack={() => {
-            setCurrentStep(1);
-        }}/>
+        return (
+            <SchedulesAvailabilityStep
+                onBack={() => {
+                    setCurrentStep(1);
+                }}
+                isEditing={isEditing}
+            />
+        );
     }
 }
 

@@ -283,6 +283,7 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                             e.stopPropagation();
                             setChangeArrivalOpen(true);
                         }}
+                        isDisabled={currentStatus == "CANCELED" || currentStatus == "REJECTED"}
                 >
                     Change Arrival
                 </Button>
@@ -290,6 +291,7 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                 <Button size="sm" variant="outline"
                         color={"red.500"}
                         onClick={onConfirmOpen}
+                        isDisabled={currentStatus == "CANCELED" || currentStatus == "REJECTED"}
                 >
                     <FaRegTimesCircle style={{marginRight: '8px'}}/>
                     Cancel Reservations
@@ -310,6 +312,14 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                 isOpen={isCancelOpen}
                 onClose={onCancelClose}
                 booking={reservation}
+                onStatusChange={(newStatus) => {
+                    setCurrentStatus(newStatus);
+                    setReservations((prev) =>
+                        prev.map((res) =>
+                            res.id === reservation.id ? {...res, status: newStatus} : res
+                        )
+                    );
+                }}
             />
 
             <SendMessageModal
@@ -411,7 +421,10 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                             <Td> - </Td>
                             <Td>{user?.phone || 'N/A'}</Td>
                             <Td>{user?.email || 'N/A'}</Td>
-                            <Td color={currentStatus === "REJECTED" ? "red.500" : currentStatus === "ACCEPTED" ? "green.500" : "black"}>
+                            <Td color={currentStatus === "ACCEPTED" ? "green.500" : currentStatus === "PENDING" ? "black"
+                                : "red.500"
+                            }
+                            >
                                 {currentStatus}
                             </Td>
                         </Tr>

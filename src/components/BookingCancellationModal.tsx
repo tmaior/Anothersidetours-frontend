@@ -19,7 +19,7 @@ import {
 } from "@chakra-ui/react";
 import {useState} from "react";
 
-const BookingCancellationModal = ({booking, isOpen, onClose}) => {
+const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) => {
     const [setAmount] = useState(booking.total_price || 298);
     const [method, setMethod] = useState("other");
     const toast = useToast();
@@ -41,6 +41,13 @@ const BookingCancellationModal = ({booking, isOpen, onClose}) => {
                 const data = await response.json();
 
                 if (response.ok) {
+
+                    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
+                        method: "PUT",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({status: "CANCELED"}),
+                    });
+
                     toast({
                         title: "Refund Successful",
                         description: "The amount has been refunded to the card.",
@@ -50,6 +57,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose}) => {
                     });
                 } else {
                     throw new Error(data.message || "Refund failed");
+                }
+                if (onStatusChange) {
+                    onStatusChange("CANCELED");
                 }
             } else if (method === "store") {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/generate`, {
@@ -66,6 +76,17 @@ const BookingCancellationModal = ({booking, isOpen, onClose}) => {
                 const data = await response.json();
 
                 if (response.ok) {
+
+                    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
+                        method: "PUT",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({status: "CANCELED"}),
+                    });
+
+                    if (onStatusChange) {
+                        onStatusChange("CANCELED");
+                    }
+
                     toast({
                         title: "Store Credit Issued",
                         description: `Voucher ${data.voucher.code} created successfully.`,

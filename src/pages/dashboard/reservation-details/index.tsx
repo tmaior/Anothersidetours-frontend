@@ -135,9 +135,14 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
             });
 
             setCurrentStatus("ACCEPTED");
-            setReservations((prev) => prev.map((res) =>
-                res.id === reservation.id ? {...res, status: "ACCEPTED"} : res
-            ));
+            setReservations((prevDays) =>
+                prevDays.map((dayObj) => ({
+                    ...dayObj,
+                    reservations: dayObj.reservations.map((r) =>
+                        r.id === reservation.id ? {...r, status: "ACCEPTED"} : r
+                    ),
+                }))
+            );
 
             toast({
                 title: "Reservation Accepted",
@@ -173,9 +178,14 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
             });
 
             setCurrentStatus("REJECTED");
-            setReservations((prev) => prev.map((res) =>
-                res.id === reservation.id ? {...res, status: "REJECTED"} : res
-            ));
+            setReservations((prevDays) =>
+                prevDays.map((dayObj) => ({
+                    ...dayObj,
+                    reservations: dayObj.reservations.map((r) =>
+                        r.id === reservation.id ? {...r, status: "REJECTED"} : r
+                    ),
+                }))
+            );
 
             toast({
                 title: "Reservation Rejected",
@@ -314,10 +324,13 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                 booking={reservation}
                 onStatusChange={(newStatus) => {
                     setCurrentStatus(newStatus);
-                    setReservations((prev) =>
-                        prev.map((res) =>
-                            res.id === reservation.id ? {...res, status: newStatus} : res
-                        )
+                    setReservations((prevDays) =>
+                        prevDays.map((dayObj) => ({
+                            ...dayObj,
+                            reservations: dayObj.reservations.map((r) =>
+                                r.id === reservation.id ? {...r, status: newStatus} : r
+                            ),
+                        }))
                     );
                 }}
             />

@@ -15,7 +15,7 @@ export default function TimelinePage({reservationId}: { reservationId: string })
         async function fetchEvents() {
             try {
                 setLoading(true);
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/history/byReservation/8db96ccb-1fad-4313-9212-d42caa36365f`);
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/history/byReservation/${reservationId}`);
                 setEvents(response.data);
             } catch (err) {
                 setError(err.message || "Failed to fetch events");

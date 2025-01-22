@@ -2,6 +2,11 @@ import React, {useEffect, useState} from "react";
 import {Box, Flex, HStack, Spinner, StackDivider, Switch, Text, useColorModeValue, VStack} from "@chakra-ui/react";
 import {CheckCircleIcon, EmailIcon} from "@chakra-ui/icons";
 import axios from "axios";
+import {BsCashCoin} from "react-icons/bs";
+import {FaPlus, FaTimes} from "react-icons/fa";
+import {GrUpdate} from "react-icons/gr";
+import {TfiLayoutWidthDefaultAlt} from "react-icons/tfi";
+import {format} from "date-fns";
 
 export default function TimelinePage({reservationId}: { reservationId: string }) {
     const [events, setEvents] = useState([]);
@@ -81,19 +86,39 @@ export default function TimelinePage({reservationId}: { reservationId: string })
 
 
 function TimelineItem({event, isLast}: { event: any; isLast: boolean }) {
-    let icon = <EmailIcon/>;
-    if (event.title === "Payment") {
-        icon = <CheckCircleIcon color="green.400"/>;
+
+    function getEventIcon(title: string) {
+        switch (title.toLowerCase()) {
+            case "payment":
+                return <BsCashCoin color="green.400"/>;
+            case "reservation created":
+                return <FaPlus color="green.400"/>;
+            case "reservation confirmed":
+                return <CheckCircleIcon color="green.400"/>;
+            case "reservation cancelled":
+                return <FaTimes color="red.400"/>;
+            case "reservation updated":
+                return <GrUpdate color="red.400"/>;
+            case "email sent":
+                return <EmailIcon/>;
+            default:
+                return <TfiLayoutWidthDefaultAlt color="gray.400"/>;
+        }
     }
+
+    const icon = getEventIcon(event.eventTitle);
 
     return (
         <Flex position="relative" pb={4}>
             <Box minW="60px" textAlign="right" mr={4}>
-                <Text fontWeight="bold" fontSize="sm">
-                    {event.createdAt}
+                <Text fontSize="sm" color="gray.500">
+                    {format(new Date(event.createdAt), 'MMM')}
                 </Text>
-                <Text fontSize="xs" color="gray.500">
-                    {event.dayOfWeek}
+                <Text fontWeight="bold" fontSize="lg">
+                    {format(new Date(event.createdAt), 'd')}
+                </Text>
+                <Text fontSize="sm" color="gray.500">
+                    {format(new Date(event.createdAt), 'EEE')}
                 </Text>
             </Box>
 
@@ -123,7 +148,7 @@ function TimelineItem({event, isLast}: { event: any; isLast: boolean }) {
             </Box>
             <Box>
                 <Text fontSize="xs" color="gray.500" mb={1}>
-                    {event.createdAt}
+                    {format(new Date(event.createdAt), 'MMM d, hh:mm a')}
                 </Text>
                 <Text fontWeight="bold" mb={1}>
                     {event.eventTitle}

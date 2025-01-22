@@ -32,6 +32,7 @@ import {useGuest} from "../../../components/GuestContext";
 import ChangeGuestQuantityModal from "../../../components/ChangeGuestQuantityModal";
 import ChangeArrivalModal from "../../../components/ChangeArrivalModal";
 import SendMessageModal from "../../../components/SendMessageModal";
+import TimelinePage from "../../../components/TimelinePage";
 
 type GuestItemProps = {
     name: string;
@@ -577,7 +578,11 @@ const PurchasesPage = () => {
                         >
                             <PaymentSummary reservation={selectedReservation}/>
                         </Box>
+                        <Box flex="1" overflowY="auto" padding="20px" paddingBottom="50px">
+                            <TimelinePage reservationId={selectedReservation.id}/>
+                        </Box>
                     </Box>
+
                 </HStack>
             </DashboardLayout>
         </Box>

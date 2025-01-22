@@ -206,7 +206,14 @@ const DashBoardMenu = ({reservation}) => {
                 isOpen={isAssignModalOpen}
                 onClose={() => setAssignModalOpen(false)}
                 onSelectGuide={(selectedGuides) => {
-                    console.log("Selected guides:", selectedGuides);
+                    const guideIds = selectedGuides.map((guide) => guide.id);
+                    assignGuides(reservation.id, guideIds)
+                        .then(() => {
+                            console.log("Successfully assigned guides");
+                        })
+                        .catch((error) => {
+                            console.error("Failed to assign guides:", error);
+                        });
                 }}
                 reservationId={reservation.id}
             />
@@ -222,6 +229,7 @@ const DashBoardMenu = ({reservation}) => {
                 booking={reservation}
                 isOpen={isBookingCancellationOpen}
                 onClose={() => setBookingCancellationOpen(false)}
+                onStatusChange={undefined}
             />
 
             <SendMessageModal

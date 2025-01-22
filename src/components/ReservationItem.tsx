@@ -56,6 +56,38 @@ const ReservationItem = ({
         }
     };
 
+    useEffect(() => {
+        fetchGuidesForReservation();
+    }, [reservationId]);
+
+    const fetchGuidesForReservation = async () => {
+        if (reservationId) {
+            try {
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservationId}/guides`
+                );
+                if (response.ok) {
+                    const data = await response.json();
+                    const validGuides = data.filter((item) => item.guide?.name);
+                    const guideNames = validGuides.map((item) => item.guide.name).join(", ");
+                    setSelectedGuideNames(guideNames || "No guides assigned");
+                    setSelectedGuideIds(validGuides.map((item) => item.guideId));
+                } else {
+                    throw new Error("Failed to fetch guides");
+                }
+            } catch (error) {
+                console.error("Error fetching guides:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to fetch guides for the reservation.",
+                    status: "error",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            }
+        }
+    };
+
     const handleGuideSelection = async (selectedGuides: { id: string; name: string }[]) => {
         const guideIds = selectedGuides.map((guide) => guide.id);
         setSelectedGuideIds(guideIds);
@@ -73,6 +105,7 @@ const ReservationItem = ({
                     duration: 3000,
                     isClosable: true,
                 });
+                await fetchGuidesForReservation();
             } catch {
                 toast({
                     title: "Error",

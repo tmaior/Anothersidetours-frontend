@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {
     Box,
     Button,
@@ -6,7 +6,6 @@ import {
     Divider,
     Flex,
     HStack,
-    IconButton,
     Input,
     Modal,
     ModalBody,
@@ -17,22 +16,18 @@ import {
     ModalOverlay,
     Table,
     TableContainer,
-    Tbody,
-    Td,
     Text,
-    Th,
-    Thead,
-    Tr,
     VStack,
 } from "@chakra-ui/react";
-import {DeleteIcon, EditIcon} from "@chakra-ui/icons";
 
-const ChangeGuestQuantityModal = ({isOpen, onClose}) => {
-    const [guestCount, setGuestCount] = useState(2);
-    const guests = [
-        {id: 1, name: "Guest #1", demographic: "Guests"},
-        {id: 2, name: "Guest #2", demographic: "Guests"},
-    ];
+const ChangeGuestQuantityModal = ({isOpen, onClose, booking}) => {
+    const [guestCount, setGuestCount] = useState(booking.guestQuantity);
+
+    useEffect(() => {
+        if (isOpen) {
+            setGuestCount(booking.guestQuantity);
+        }
+    }, [isOpen, booking]);
 
     const handleIncrease = () => setGuestCount(guestCount + 1);
     const handleDecrease = () => {
@@ -71,33 +66,33 @@ const ChangeGuestQuantityModal = ({isOpen, onClose}) => {
                             </Flex>
                             <TableContainer>
                                 <Table variant="simple">
-                                    <Thead>
-                                        <Tr>
-                                            <Th>Name</Th>
-                                            <Th>Demographic</Th>
-                                            <Th/>
-                                        </Tr>
-                                    </Thead>
-                                    <Tbody>
-                                        {guests.map((guest) => (
-                                            <Tr key={guest.id}>
-                                                <Td>{guest.name}</Td>
-                                                <Td>
-                                                    <Flex align="center">
-                                                        <EditIcon mr={2}/>
-                                                        {guest.demographic}
-                                                    </Flex>
-                                                </Td>
-                                                <Td>
-                                                    <IconButton
-                                                        icon={<DeleteIcon/>}
-                                                        size="sm"
-                                                        aria-label="Delete Guest"
-                                                    />
-                                                </Td>
-                                            </Tr>
-                                        ))}
-                                    </Tbody>
+                                    {/*<Thead>*/}
+                                    {/*    <Tr>*/}
+                                    {/*        <Th>Name</Th>*/}
+                                    {/*        <Th>Demographic</Th>*/}
+                                    {/*        <Th/>*/}
+                                    {/*    </Tr>*/}
+                                    {/*</Thead>*/}
+                                    {/*<Tbody>*/}
+                                    {/*    {guests.map((guest) => (*/}
+                                    {/*        <Tr key={guest.id}>*/}
+                                    {/*            <Td>{guest.name}</Td>*/}
+                                    {/*            <Td>*/}
+                                    {/*                <Flex align="center">*/}
+                                    {/*                    <EditIcon mr={2}/>*/}
+                                    {/*                    {guest.demographic}*/}
+                                    {/*                </Flex>*/}
+                                    {/*            </Td>*/}
+                                    {/*            <Td>*/}
+                                    {/*                <IconButton*/}
+                                    {/*                    icon={<DeleteIcon/>}*/}
+                                    {/*                    size="sm"*/}
+                                    {/*                    aria-label="Delete Guest"*/}
+                                    {/*                />*/}
+                                    {/*            </Td>*/}
+                                    {/*        </Tr>*/}
+                                    {/*    ))}*/}
+                                    {/*</Tbody>*/}
                                 </Table>
                             </TableContainer>
                         </Box>
@@ -112,13 +107,17 @@ const ChangeGuestQuantityModal = ({isOpen, onClose}) => {
                                 {/*    <Text>$199.00</Text>*/}
                                 {/*</Flex>*/}
                                 <Flex justify="space-between">
-                                    <Text>Guests ($169.00 × {guestCount})</Text>
-                                    <Text>${169 * guestCount}.00</Text>
+                                    <Text>Guests (${booking.tour.price} x {guestCount})</Text>
+                                    <Text>${booking.tour.price * guestCount}.00</Text>
                                 </Flex>
+                                <HStack justifyContent="space-between">
+
+                                    {/*<Text>${reservation.total_price}</Text>*/}
+                                </HStack>
                                 <Divider/>
                                 <Flex justify="space-between" fontWeight="bold">
                                     <Text>Total</Text>
-                                    <Text>${199 + 169 * guestCount}.00</Text>
+                                    <Text>${booking.tour.price * guestCount}.00</Text>
                                 </Flex>
                             </VStack>
                             <Text fontSize="lg" fontWeight="bold" mb={4}>
@@ -131,7 +130,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose}) => {
                                 </Flex>
                                 <Flex justify="space-between">
                                     <Text>Paid</Text>
-                                    <Text>$537.00</Text>
+                                    <Text>${booking.total_price.toFixed(2)}</Text>
                                 </Flex>
                             </VStack>
                         </Box>

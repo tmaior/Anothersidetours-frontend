@@ -371,6 +371,7 @@ const PurchaseDetails = ({reservation}) => {
             </Box>
 
             <ChangeGuestQuantityModal
+                booking={reservation}
                 isOpen={isChangeGuestQuantityModalOpen}
                 onClose={() => setChangeGuestQuantityModalOpen(false)}
             />

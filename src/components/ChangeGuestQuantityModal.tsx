@@ -3,7 +3,6 @@ import {
     Box,
     Button,
     Checkbox,
-    Divider,
     Flex,
     HStack,
     Input,
@@ -18,9 +17,9 @@ import {
     TableContainer,
     Text,
     useToast,
-    VStack,
 } from "@chakra-ui/react";
 import axios from "axios";
+import PurchaseAndPaymentSummary from "./PurchaseAndPaymentSummary";
 
 const ChangeGuestQuantityModal = ({isOpen, onClose, booking}) => {
     const [guestCount, setGuestCount] = useState(booking.guestQuantity);
@@ -142,43 +141,11 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking}) => {
                             </TableContainer>
                         </Box>
 
-                        <Box flex="1">
-                            <Text fontSize="lg" fontWeight="bold" mb={4}>
-                                Purchase Summary
-                            </Text>
-                            <VStack align="stretch" spacing={2} mb={4}>
-                                {/*<Flex justify="space-between">*/}
-                                {/*    <Text>Additional Fee For Airport Pick-Up</Text>*/}
-                                {/*    <Text>$199.00</Text>*/}
-                                {/*</Flex>*/}
-                                <Flex justify="space-between">
-                                    <Text>Guests (${booking.tour.price} x {guestCount})</Text>
-                                    <Text>${booking.tour.price * guestCount}.00</Text>
-                                </Flex>
-                                <HStack justifyContent="space-between">
-
-                                    {/*<Text>${reservation.total_price}</Text>*/}
-                                </HStack>
-                                <Divider/>
-                                <Flex justify="space-between" fontWeight="bold">
-                                    <Text>Total</Text>
-                                    <Text>${booking.tour.price * guestCount}.00</Text>
-                                </Flex>
-                            </VStack>
-                            <Text fontSize="lg" fontWeight="bold" mb={4}>
-                                Payment Summary
-                            </Text>
-                            <VStack align="stretch">
-                                <Flex justify="space-between">
-                                    <Text>Payment</Text>
-                                    <Text>*1011 &nbsp; 01/16/2025</Text>
-                                </Flex>
-                                <Flex justify="space-between">
-                                    <Text>Paid</Text>
-                                    <Text>${booking.tour.price * guestCount}.00</Text>
-                                </Flex>
-                            </VStack>
-                        </Box>
+                        <HStack align="center">
+                            <PurchaseAndPaymentSummary
+                                booking={booking}
+                            />
+                        </HStack>
                     </Flex>
                 </ModalBody>
                 <ModalFooter>

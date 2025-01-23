@@ -388,7 +388,7 @@ const PurchaseDetails = ({reservation}) => {
                     title: reservation.title,
                     date: reservation.dateFormatted,
                     time: reservation.time,
-                    image: reservation.imageUrl
+                    image: reservation.tour.imageUrl
                 }}
             />
         </VStack>
@@ -397,24 +397,23 @@ const PurchaseDetails = ({reservation}) => {
 
 const PaymentSummary = ({reservation}) => {
 
-
     return (
         <Box bg="gray.100" borderRadius="md" boxShadow="sm" width="150%" marginTop={"-270px"} marginLeft={"200px"}
              padding={"20px"}>
             <Text fontSize="xl" fontWeight="bold">Purchase Summary</Text>
             <VStack spacing={4} align="stretch" mt={4}>
-                <HStack justifyContent="space-between">
-                    <Text>6% Booking Fee</Text>
-                    <Text>$71.52</Text>
-                </HStack>
+                {/*<HStack justifyContent="space-between">*/}
+                {/*    <Text>6% Booking Fee</Text>*/}
+                {/*    <Text>$71.52</Text>*/}
+                {/*</HStack>*/}
                 <HStack justifyContent="space-between">
                     <Text>Guests (${reservation.tour.price} x {reservation.guestQuantity})</Text>
                     <Text>${reservation.total_price}</Text>
                 </HStack>
-                <HStack justifyContent="space-between">
-                    <Text>Gratuity: 18%</Text>
-                    <Text>$214.56</Text>
-                </HStack>
+                {/*<HStack justifyContent="space-between">*/}
+                {/*    <Text>Gratuity: 18%</Text>*/}
+                {/*    <Text>$214.56</Text>*/}
+                {/*</HStack>*/}
                 <Divider/>
                 <HStack justifyContent="space-between">
                     <Text fontWeight="bold">Total</Text>

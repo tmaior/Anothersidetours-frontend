@@ -130,6 +130,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                 total_price: totalAmount,
                 guestQuantity,
                 status: "PENDING",
+                createdBy:"Client"
             };
 
             const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations`, {

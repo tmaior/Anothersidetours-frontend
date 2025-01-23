@@ -1,12 +1,12 @@
 import React, {useEffect, useState} from "react";
 import {Box, Flex, HStack, Spinner, StackDivider, Switch, Text, useColorModeValue, VStack} from "@chakra-ui/react";
-import {CheckCircleIcon, EmailIcon} from "@chakra-ui/icons";
+import {EmailIcon} from "@chakra-ui/icons";
 import axios from "axios";
-import {BsCashCoin} from "react-icons/bs";
-import {FaPlus, FaTimes} from "react-icons/fa";
+import {FaCheck, FaDollarSign, FaPlus, FaTimes} from "react-icons/fa";
 import {GrUpdate} from "react-icons/gr";
 import {TfiLayoutWidthDefaultAlt} from "react-icons/tfi";
 import {format} from "date-fns";
+import {MdDoNotDisturbOn} from "react-icons/md";
 
 export default function TimelinePage({reservationId}: { reservationId: string }) {
     const [events, setEvents] = useState([]);
@@ -88,15 +88,25 @@ export default function TimelinePage({reservationId}: { reservationId: string })
 function TimelineItem({event, isLast}: { event: any; isLast: boolean }) {
 
     function getEventIcon(title: string) {
+        if (event.status === "ACCEPTED") {
+            return <FaCheck color="green.400"/>;
+        }
+
+        if (event.status === "REJECTED") {
+            return <MdDoNotDisturbOn color="green.400"/>;
+        }
+
+        if (event.status === "CANCELED") {
+            return <FaTimes color="red.400"/>;
+        }
+
+        if (event.status === "PAYMENT") {
+            return <FaDollarSign color="red.400"/>;
+        }
+
         switch (title.toLowerCase()) {
-            case "payment":
-                return <BsCashCoin color="green.400"/>;
             case "reservation created":
                 return <FaPlus color="green.400"/>;
-            case "reservation confirmed":
-                return <CheckCircleIcon color="green.400"/>;
-            case "reservation cancelled":
-                return <FaTimes color="red.400"/>;
             case "reservation updated":
                 return <GrUpdate color="red.400"/>;
             case "email sent":
@@ -153,15 +163,27 @@ function TimelineItem({event, isLast}: { event: any; isLast: boolean }) {
                 <Text fontWeight="bold" mb={1}>
                     {event.eventTitle}
                 </Text>
+                {event.status.toLowerCase() === "created" && (
+                    <Text fontSize="sm" borderRadius="md" mb={1}>
+                        {event.createdBy}
+                    </Text>
+                )}
+                {(["paid", "created"].some(keyword => event.eventDescription.toLowerCase().includes(keyword)) && event.value != null) && (
+                    <Text fontSize="sm" borderRadius="md">
+                        ${Number(event.value).toFixed(2)}
+                    </Text>
+                )}
                 {event.to && (
                     <Text fontSize="sm" color="gray.600">
                         To: {event.to}
                     </Text>
                 )}
 
-                <Text fontSize="sm" bg="gray.100" p={2} borderRadius="md" mt={2}>
-                    {event.eventDescription}
-                </Text>
+                {event.status.toLowerCase() !== "created" && (
+                    <Text fontSize="sm" bg="gray.100" p={2} borderRadius="md" mt={2}>
+                        {event.eventDescription}
+                    </Text>
+                )}
             </Box>
         </Flex>
     );

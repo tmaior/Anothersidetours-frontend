@@ -326,7 +326,8 @@ const PurchasePage = () => {
                 })),
                 total_price: totalWithDiscount,
                 guestQuantity: quantity,
-                status: "PENDING",
+                status: "ACCEPTED",
+                createdBy: "Back Office",
 
                 purchaseTags,
                 purchaseNote,

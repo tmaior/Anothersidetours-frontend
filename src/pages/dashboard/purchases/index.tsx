@@ -1,6 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {
-    Badge,
     Box,
     Button,
     Center,
@@ -17,7 +16,7 @@ import {
     Text,
     VStack
 } from '@chakra-ui/react';
-import {CheckCircleIcon, SearchIcon} from '@chakra-ui/icons';
+import {SearchIcon} from '@chakra-ui/icons';
 import DashboardLayout from "../../../components/DashboardLayout";
 import {CiCalendar, CiClock2, CiLocationArrow1} from "react-icons/ci";
 import {IoPersonOutline} from "react-icons/io5";
@@ -33,6 +32,7 @@ import ChangeGuestQuantityModal from "../../../components/ChangeGuestQuantityMod
 import ChangeArrivalModal from "../../../components/ChangeArrivalModal";
 import SendMessageModal from "../../../components/SendMessageModal";
 import TimelinePage from "../../../components/TimelinePage";
+import StatusBadge from "../../../components/StatusBadge";
 
 type GuestItemProps = {
     name: string;
@@ -345,9 +345,7 @@ const PurchaseDetails = ({reservation}) => {
                         <Text fontSize="2xl" fontWeight="bold">
                             Reservation Confirmation
                         </Text>
-                        <Badge colorScheme="green" mt={2}>
-                            <CheckCircleIcon/> Confirmed
-                        </Badge>
+                        <StatusBadge status={reservation.status}/>
 
                         <Box mt={6}>
                             <Text fontWeight="bold">Contact Information</Text>

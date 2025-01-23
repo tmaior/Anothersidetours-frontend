@@ -17,8 +17,10 @@ import {
     Table,
     TableContainer,
     Text,
+    useToast,
     VStack,
 } from "@chakra-ui/react";
+import axios from "axios";
 
 const ChangeGuestQuantityModal = ({isOpen, onClose, booking}) => {
     const [guestCount, setGuestCount] = useState(booking.guestQuantity);
@@ -29,9 +31,52 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking}) => {
         }
     }, [isOpen, booking]);
 
+    const toast = useToast();
     const handleIncrease = () => setGuestCount(guestCount + 1);
     const handleDecrease = () => {
         if (guestCount > 1) setGuestCount(guestCount - 1);
+    };
+
+    const handleModify = async () => {
+        const updatedTotalPrice = booking.tour.price * guestCount;
+
+        if (booking.status === "CANCELED" || booking.status === "REJECTED") {
+            toast({
+                title: "Error",
+                description: "Cannot modify a reservation that is canceled or rejected.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        try {
+            await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
+                guestQuantity: guestCount,
+                total_price: updatedTotalPrice,
+                status: booking.status
+            });
+
+            toast({
+                title: "Success",
+                description: "Reservation updated successfully.",
+                status: "success",
+                duration: 5000,
+                isClosable: true,
+            });
+
+            onClose();
+        } catch (error) {
+            console.error("Failed to update reservation:", error);
+            toast({
+                title: "Error",
+                description: "Failed to update reservation. Please try again.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
     };
 
     return (
@@ -141,7 +186,9 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking}) => {
                     <Button variant="outline" mr={3} onClick={onClose}>
                         Cancel
                     </Button>
-                    <Button colorScheme="blue">Modify</Button>
+                    <Button colorScheme="blue" onClick={handleModify}>
+                        Modify
+                    </Button>
                 </ModalFooter>
             </ModalContent>
         </Modal>

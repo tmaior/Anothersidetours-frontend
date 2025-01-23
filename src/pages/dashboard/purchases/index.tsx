@@ -502,7 +502,8 @@ const PaymentSummary = ({reservation}) => {
                 {/*</HStack>*/}
                 <HStack justifyContent="space-between">
                     <Text>Guests (${reservation.tour.price} x {reservation.guestQuantity})</Text>
-                    <Text>${reservation.total_price}</Text>
+                    {/*<Text>${reservation.total_price}</Text>*/}
+                    <Text>${((reservation.valuePerGuest || reservation.tour?.price) * reservation.guestQuantity).toFixed(2)}</Text>
                 </HStack>
                 {/*<HStack justifyContent="space-between">*/}
                 {/*    <Text>Gratuity: 18%</Text>*/}
@@ -524,7 +525,7 @@ const PaymentSummary = ({reservation}) => {
                 )}
                 <HStack justifyContent="space-between">
                     <Text fontWeight="bold">Total</Text>
-                    <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
+                    <Text fontWeight="bold">${reservation.total_price}</Text>
                 </HStack>
                 <Button size={"sm"} mt={1} w="70px">Modify</Button>
             </VStack>
@@ -552,7 +553,7 @@ const PaymentSummary = ({reservation}) => {
                 </HStack>
                 <HStack justifyContent="space-between">
                     <Text>Paid</Text>
-                    <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
+                    <Text fontWeight="bold">${reservation.total_price}</Text>
                 </HStack>
             </Box>
         </Box>

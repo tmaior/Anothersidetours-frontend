@@ -35,6 +35,7 @@ import SendMessageModal from "../../../components/SendMessageModal";
 import TimelinePage from "../../../components/TimelinePage";
 import StatusBadge from "../../../components/StatusBadge";
 import axios from "axios";
+import ChangeAddOns from "../../../components/ChangeAddonsModal";
 
 type GuestItemProps = {
     name: string;
@@ -245,6 +246,7 @@ const PurchaseDetails = ({reservation}) => {
     const [isChangeGuestQuantityModalOpen, setChangeGuestQuantityModalOpen] = useState(false);
     const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
+    const [isChangeAddonsModalOpen, setChangeAddonsModalOpen] = useState(false);
 
     return (
         <VStack>
@@ -297,7 +299,14 @@ const PurchaseDetails = ({reservation}) => {
                     </HStack>
                     <HStack>
                         <BsBox2 size={15}/>
-                        <Link style={{whiteSpace: "nowrap"}}>Add-ons</Link>
+                        <Link style={{whiteSpace: "nowrap"}}
+                              onClick={(e) => {
+                                  e.stopPropagation();
+                                  setChangeAddonsModalOpen(true);
+                              }}
+                        >
+                            Add-ons
+                        </Link>
                     </HStack>
                     <HStack>
                         <RiRefund2Line size={18}/>
@@ -392,6 +401,12 @@ const PurchaseDetails = ({reservation}) => {
                     image: reservation.tour.imageUrl
                 }}
             />
+
+            <ChangeAddOns
+                booking={reservation}
+                isOpen={isChangeAddonsModalOpen}
+                onClose={() => setChangeAddonsModalOpen(false)}
+            />
         </VStack>
     );
 };
@@ -399,6 +414,51 @@ const PurchaseDetails = ({reservation}) => {
 const PaymentSummary = ({reservation}) => {
     const [cardDetails, setCardDetails] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [reservationAddons, setReservationAddons] = useState([]);
+    const [allAddons, setAllAddons] = useState([]);
+    const [isLoadingAddons, setIsLoadingAddons] = useState(true);
+
+    useEffect(() => {
+        const fetchAddons = async () => {
+            if (!reservation?.id || !reservation.tourId) return;
+
+            try {
+                const reservationAddonsResponse = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${reservation.id}`
+                );
+
+                const allAddonsResponse = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${reservation.tourId}`
+                );
+
+                setReservationAddons(reservationAddonsResponse.data);
+                setAllAddons(allAddonsResponse.data);
+            } catch (error) {
+                console.error('Error fetching add-ons:', error);
+            } finally {
+                setIsLoadingAddons(false);
+            }
+        };
+
+        fetchAddons();
+    }, [reservation?.id, reservation.tourId]);
+
+    const combinedAddons = reservation.reservationAddons?.map((selectedAddon) => {
+        const addonDetails = allAddons.find(
+            (addon) => addon.id === selectedAddon.addonId
+        );
+        return {
+            ...addonDetails,
+            quantity: selectedAddon.value,
+        };
+    }) || [];
+
+    const addonsTotalPrice = combinedAddons.reduce(
+        (sum, addon) => sum + (addon.price * addon.quantity || 0),
+        0
+    );
+
+    const finalTotalPrice = reservation.total_price + addonsTotalPrice;
 
     useEffect(() => {
         const fetchCardDetails = async () => {
@@ -449,9 +509,22 @@ const PaymentSummary = ({reservation}) => {
                 {/*    <Text>$214.56</Text>*/}
                 {/*</HStack>*/}
                 <Divider/>
+                {isLoadingAddons ? (
+                    <HStack justifyContent="center">
+                        <Spinner size="sm"/>
+                        <Text>Loading Add-ons...</Text>
+                    </HStack>
+                ) : (
+                    combinedAddons.map((addon) => (
+                        <HStack key={addon.id} justifyContent="space-between">
+                            <Text>{addon.label} (${addon.price} x {addon.quantity})</Text>
+                            <Text>${addon.price * addon.quantity}</Text>
+                        </HStack>
+                    ))
+                )}
                 <HStack justifyContent="space-between">
                     <Text fontWeight="bold">Total</Text>
-                    <Text fontWeight="bold">${reservation.total_price}</Text>
+                    <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                 </HStack>
                 <Button size={"sm"} mt={1} w="70px">Modify</Button>
             </VStack>
@@ -479,7 +552,7 @@ const PaymentSummary = ({reservation}) => {
                 </HStack>
                 <HStack justifyContent="space-between">
                     <Text>Paid</Text>
-                    <Text fontWeight="bold">${parseFloat(reservation.total_price).toFixed(2)}</Text>
+                    <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                 </HStack>
             </Box>
         </Box>

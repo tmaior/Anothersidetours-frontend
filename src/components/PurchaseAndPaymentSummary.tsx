@@ -92,7 +92,8 @@ const PurchaseAndPaymentSummary = ({booking}) => {
                 <VStack align="stretch" spacing={2}>
                     <HStack justify="space-between">
                         <Text>{`Guests ($${(booking.valuePerGuest || booking.tour?.price).toFixed(2)} × ${booking.guestQuantity})`}</Text>
-                        <Text>${parseFloat(booking.total_price).toFixed(2)}</Text>
+                        {/*<Text>${parseFloat(booking.total_price).toFixed(2)}</Text>*/}
+                        <Text>${((booking.valuePerGuest || booking.tour?.price) * booking.guestQuantity).toFixed(2)}</Text>
                     </HStack>
                 </VStack>
                 {isLoadingAddons ? (
@@ -111,7 +112,7 @@ const PurchaseAndPaymentSummary = ({booking}) => {
                 <Divider my={2}/>
                 <HStack justify="space-between">
                     <Text fontWeight="bold">Total</Text>
-                    <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
+                    <Text fontWeight="bold">${parseFloat(booking.total_price).toFixed(2)}</Text>
                 </HStack>
             </Box>
             <Box>
@@ -145,7 +146,7 @@ const PurchaseAndPaymentSummary = ({booking}) => {
                     )}
                     <HStack justify="space-between">
                         <Text>Paid</Text>
-                        <Text>${finalTotalPrice.toFixed(2)}</Text>
+                        <Text>${parseFloat(booking.total_price).toFixed(2)}</Text>
                     </HStack>
                 </VStack>
             </Box>

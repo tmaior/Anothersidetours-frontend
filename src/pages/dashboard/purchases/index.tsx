@@ -13,6 +13,7 @@ import {
     InputLeftElement,
     Link,
     Spacer,
+    Spinner,
     Text,
     VStack
 } from '@chakra-ui/react';
@@ -33,6 +34,7 @@ import ChangeArrivalModal from "../../../components/ChangeArrivalModal";
 import SendMessageModal from "../../../components/SendMessageModal";
 import TimelinePage from "../../../components/TimelinePage";
 import StatusBadge from "../../../components/StatusBadge";
+import axios from "axios";
 
 type GuestItemProps = {
     name: string;
@@ -395,6 +397,39 @@ const PurchaseDetails = ({reservation}) => {
 };
 
 const PaymentSummary = ({reservation}) => {
+    const [cardDetails, setCardDetails] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCardDetails = async () => {
+            if (!reservation.paymentMethodId) return;
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${reservation.paymentMethodId}`
+                );
+                setCardDetails(response.data);
+            } catch (error) {
+                console.error("Failed to fetch card details:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchCardDetails();
+    }, [reservation.paymentMethodId]);
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-GB');
+    };
+
+    if (isLoading) {
+        return (
+            <Center h="350px">
+                <Spinner size="xl" color="blue.500"/>
+            </Center>
+        );
+    }
 
     return (
         <Box bg="gray.100" borderRadius="md" boxShadow="sm" width="150%" marginTop={"-270px"} marginLeft={"200px"}
@@ -424,12 +459,27 @@ const PaymentSummary = ({reservation}) => {
             <Box mt={8}>
                 <Text fontSize="xl" fontWeight="bold">Payment Summary</Text>
                 <HStack justifyContent="space-between" mt={4}>
-                    <Text>💳 Payment *2833</Text>
-                    <Text>01/07/2025</Text>
+                    <Box as="span" role="img" aria-label="Card Icon" fontSize="lg">
+                        💳
+                    </Box>
+                    <Text>
+                        Payment
+                        <Box
+                            as="span"
+                            bg="white"
+                            px={1}
+                            py={1}
+                            borderRadius="md"
+                            boxShadow="sm"
+                        >
+                            *{cardDetails.last4}
+                        </Box>{" "}
+                        {formatDate(cardDetails.paymentDate)}
+                    </Text>
                 </HStack>
                 <HStack justifyContent="space-between">
                     <Text>Paid</Text>
-                    <Text fontWeight="bold">${reservation.total_price}</Text>
+                    <Text fontWeight="bold">${parseFloat(reservation.total_price).toFixed(2)}</Text>
                 </HStack>
             </Box>
         </Box>

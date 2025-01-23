@@ -130,7 +130,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking}) => {
                                 </Flex>
                                 <Flex justify="space-between">
                                     <Text>Paid</Text>
-                                    <Text>${booking.total_price.toFixed(2)}</Text>
+                                    <Text>${booking.tour.price * guestCount}.00</Text>
                                 </Flex>
                             </VStack>
                         </Box>

@@ -247,6 +247,7 @@ const PurchaseDetails = ({reservation}) => {
     const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
     const [isChangeAddonsModalOpen, setChangeAddonsModalOpen] = useState(false);
+    const [guestCount, setGuestCount] = useState(reservation.guestQuantity);
 
     return (
         <VStack>
@@ -383,6 +384,8 @@ const PurchaseDetails = ({reservation}) => {
                 booking={reservation}
                 isOpen={isChangeGuestQuantityModalOpen}
                 onClose={() => setChangeGuestQuantityModalOpen(false)}
+                guestCount={guestCount}
+                setGuestCount={setGuestCount}
             />
 
             <ChangeArrivalModal

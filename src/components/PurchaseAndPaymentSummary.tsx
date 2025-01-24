@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {Box, Divider, HStack, Spinner, Text, VStack,} from "@chakra-ui/react";
 import axios from "axios";
 
-const PurchaseAndPaymentSummary = ({booking}) => {
+const PurchaseAndPaymentSummary = ({booking, guestQuantity}) => {
     const [cardDetails, setCardDetails] = useState(null);
     const [reservationAddons, setReservationAddons] = useState([]);
     const [allAddons, setAllAddons] = useState([]);
@@ -48,7 +48,7 @@ const PurchaseAndPaymentSummary = ({booking}) => {
         0
     );
 
-    const finalTotalPrice = booking.total_price + addonsTotalPrice;
+    const finalTotalPrice = (booking.valuePerGuest || booking.tour?.price) * guestQuantity + addonsTotalPrice;
 
     useEffect(() => {
         const fetchCardDetails = async () => {
@@ -91,9 +91,9 @@ const PurchaseAndPaymentSummary = ({booking}) => {
                 </Text>
                 <VStack align="stretch" spacing={2}>
                     <HStack justify="space-between">
-                        <Text>{`Guests ($${(booking.valuePerGuest || booking.tour?.price).toFixed(2)} × ${booking.guestQuantity})`}</Text>
+                        <Text>{`Guests ($${(booking.valuePerGuest || booking.tour?.price).toFixed(2)} × ${guestQuantity})`}</Text>
                         {/*<Text>${parseFloat(booking.total_price).toFixed(2)}</Text>*/}
-                        <Text>${((booking.valuePerGuest || booking.tour?.price) * booking.guestQuantity).toFixed(2)}</Text>
+                        <Text>${((booking.valuePerGuest || booking.tour?.price) * guestQuantity).toFixed(2)}</Text>
                     </HStack>
                 </VStack>
                 {isLoadingAddons ? (
@@ -112,7 +112,7 @@ const PurchaseAndPaymentSummary = ({booking}) => {
                 <Divider my={2}/>
                 <HStack justify="space-between">
                     <Text fontWeight="bold">Total</Text>
-                    <Text fontWeight="bold">${parseFloat(booking.total_price).toFixed(2)}</Text>
+                    <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                 </HStack>
             </Box>
             <Box>
@@ -146,7 +146,7 @@ const PurchaseAndPaymentSummary = ({booking}) => {
                     )}
                     <HStack justify="space-between">
                         <Text>Paid</Text>
-                        <Text>${parseFloat(booking.total_price).toFixed(2)}</Text>
+                        <Text>${finalTotalPrice.toFixed(2)}</Text>
                     </HStack>
                 </VStack>
             </Box>

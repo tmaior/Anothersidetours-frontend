@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect} from "react";
 import {
     Box,
     Button,
@@ -21,8 +21,7 @@ import {
 import axios from "axios";
 import PurchaseAndPaymentSummary from "./PurchaseAndPaymentSummary";
 
-const ChangeGuestQuantityModal = ({isOpen, onClose, booking}) => {
-    const [guestCount, setGuestCount] = useState(booking.guestQuantity);
+const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGuestCount }) => {
 
     useEffect(() => {
         if (isOpen) {
@@ -64,7 +63,6 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking}) => {
                 duration: 5000,
                 isClosable: true,
             });
-
             onClose();
         } catch (error) {
             console.error("Failed to update reservation:", error);
@@ -144,6 +142,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking}) => {
                         <HStack align="center">
                             <PurchaseAndPaymentSummary
                                 booking={booking}
+                                guestQuantity={guestCount}
                             />
                         </HStack>
                     </Flex>

@@ -417,6 +417,7 @@ const PurchaseDetails = ({reservation}) => {
 const PaymentSummary = ({reservation}) => {
     const [cardDetails, setCardDetails] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [reservationAddons, setReservationAddons] = useState([]);
     const [allAddons, setAllAddons] = useState([]);
     const [isLoadingAddons, setIsLoadingAddons] = useState(true);
@@ -455,13 +456,6 @@ const PaymentSummary = ({reservation}) => {
             quantity: selectedAddon.value,
         };
     }) || [];
-
-    const addonsTotalPrice = combinedAddons.reduce(
-        (sum, addon) => sum + (addon.price * addon.quantity || 0),
-        0
-    );
-
-    const finalTotalPrice = reservation.total_price + addonsTotalPrice;
 
     useEffect(() => {
         const fetchCardDetails = async () => {

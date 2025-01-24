@@ -22,7 +22,7 @@ import DatePicker from "./TimePickerArrival";
 import AddTimeSlotModal from "./AddTimeSlotModal";
 import PurchaseAndPaymentSummary from "./PurchaseAndPaymentSummary";
 
-const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
+const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
     const [selectedDate, setSelectedDate] = useState(
         booking.dateFormatted
             ? parseToYYYYMMDD(booking.dateFormatted)
@@ -213,6 +213,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking}) => {
                         <HStack align="center">
                             <PurchaseAndPaymentSummary
                                 booking={booking}
+                                guestQuantity={booking.guestQuantity}
                             />
                         </HStack>
                     </HStack>

@@ -69,7 +69,10 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                             </Flex>
                         </VStack>
                         <HStack align="center">
-                            <PurchaseAndPaymentSummary booking={booking}/>
+                            <PurchaseAndPaymentSummary
+                                booking={booking}
+                                guestQuantity={booking.guestQuantity}
+                            />
                         </HStack>
                     </HStack>
 

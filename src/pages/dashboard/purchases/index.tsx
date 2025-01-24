@@ -457,6 +457,13 @@ const PaymentSummary = ({reservation}) => {
         };
     }) || [];
 
+    const addonsTotalPrice = combinedAddons.reduce(
+        (sum, addon) => sum + (addon.price * addon.quantity || 0),
+        0
+    );
+
+    const finalTotalPrice = reservation.total_price + addonsTotalPrice;
+
     useEffect(() => {
         const fetchCardDetails = async () => {
             if (!reservation.paymentMethodId) return;
@@ -522,7 +529,7 @@ const PaymentSummary = ({reservation}) => {
                 )}
                 <HStack justifyContent="space-between">
                     <Text fontWeight="bold">Total</Text>
-                    <Text fontWeight="bold">${reservation.total_price}</Text>
+                    <Text fontWeight="bold">${finalTotalPrice}</Text>
                 </HStack>
                 <Button size={"sm"} mt={1} w="70px">Modify</Button>
             </VStack>
@@ -550,7 +557,7 @@ const PaymentSummary = ({reservation}) => {
                 </HStack>
                 <HStack justifyContent="space-between">
                     <Text>Paid</Text>
-                    <Text fontWeight="bold">${reservation.total_price}</Text>
+                    <Text fontWeight="bold">${finalTotalPrice}</Text>
                 </HStack>
             </Box>
         </Box>

@@ -27,6 +27,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
     const [isLoadingAddons, setIsLoadingAddons] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const toast = useToast();
+    const [reservationAddons, setReservationAddons] = useState([]);
 
     useEffect(() => {
         const fetchAddons = async () => {
@@ -39,7 +40,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                 ]);
 
                 setAllAddons(allAddonsResponse.data);
-
+                setReservationAddons(reservationAddonsResponse.data);
                 const addonMap = {};
                 allAddonsResponse.data.forEach(addon => {
                     addonMap[addon.id] = addon;
@@ -101,23 +102,71 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
 
     const handleSaveChanges = async () => {
         setIsSaving(true);
-        const transformedAddons = Object.entries(selectedAddons).map(([id, value]) => {
-            const addon = allAddons.find(a => a.id === id);
-            if (!addon) return null;
-
-            if (addon.type === 'SELECT') {
-                return {addonId: id, value: value.toString()};
-            } else if (addon.type === 'CHECKBOX') {
-                return {addonId: id, value: value ? "1" : "0"};
-            }
-            return null;
-        }).filter(Boolean);
 
         try {
-            await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/update`, {
-                bookingId: booking.id,
-                addons: transformedAddons
-            });
+            const reservationAddonsMap = reservationAddons.reduce((map, reservationAddon) => {
+                map[reservationAddon.addonId] = reservationAddon.id;
+                return map;
+            }, {});
+
+            for (const [addonId, value] of Object.entries(selectedAddons)) {
+                const addon = allAddons.find((a) => a.id === addonId);
+                if (!addon) continue;
+
+                const reservationAddonId = reservationAddonsMap[addonId];
+
+                if (addon.type === 'SELECT') {
+                    const numericValue = Number(value);
+                    if (numericValue > 0) {
+                        if (reservationAddonId) {
+                            await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/${reservationAddonId}`, {
+                                tenantId: booking.tenantId,
+                                reservationId: booking.id,
+                                value: value.toString(),
+                            });
+                        } else {
+                            await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons`, {
+                                tenantId: booking.tenantId,
+                                reservationId: booking.id,
+                                addonId,
+                                value: value.toString(),
+                            });
+                        }
+                    } else if (reservationAddonId) {
+                        await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/${reservationAddonId}`, {
+                            data: {
+                                tenantId: booking.tenantId,
+                                reservationId: booking.id,
+                            },
+                        });
+                    }
+                } else if (addon.type === 'CHECKBOX') {
+                    if (value) {
+                        if (reservationAddonId) {
+                            await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/${reservationAddonId}`, {
+                                tenantId: booking.tenantId,
+                                reservationId: booking.id,
+                                value: "1",
+                            });
+                        } else {
+                            await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons`, {
+                                tenantId: booking.tenantId,
+                                reservationId: booking.id,
+                                addonId,
+                                value: "1",
+                            });
+                        }
+                    } else if (reservationAddonId) {
+                        await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/${reservationAddonId}`, {
+                            data: {
+                                tenantId: booking.tenantId,
+                                reservationId: booking.id,
+                            },
+                        });
+                    }
+                }
+            }
+
             toast({
                 title: "Success",
                 description: "Add-ons updated successfully.",
@@ -127,7 +176,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
             });
             onClose();
         } catch (error) {
-            console.error('Error saving add-ons:', error);
+            console.error("Error saving add-ons:", error);
             toast({
                 title: "Erro",
                 description: "Failed to save add-ons.",

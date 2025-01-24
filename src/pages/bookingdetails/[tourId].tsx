@@ -25,24 +25,41 @@ export default function BookingDetailsPage() {
     } = useDisclosure();
 
     const [tourData, setTourData] = useState(null);
+    const [loadingStatus, setLoadingStatus] = useState(null);
+    const [errorMessage, setErrorMessage] = useState(null);
 
     useEffect(() => {
         if (router.isReady && tourId) {
             const id = Array.isArray(tourId) ? tourId[0] : tourId;
             openBooking();
             fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`)
-                .then((res) => res.json())
+                .then(async (res) => {
+                    setLoadingStatus(res.status);
+                    if (!res.ok) {
+                        const errorData = await res.json();
+                        throw new Error(errorData.message || `Error: ${res.status}`);
+                    }
+                    return res.json();
+                })
                 .then((data) => {
                     setTourData(data);
                     setTourId(id);
                     setImageUrl(data.imageUrl);
                 })
-                .catch((err) => console.error(err));
+                .catch((err) => {
+                    setErrorMessage(err.message);
+                });
         }
     }, [router.isReady, tourId, setTourId,openBooking]);
 
     if (!tourData) {
-        return <div>Loading...</div>;
+        return (
+            <div>
+                {errorMessage
+                    ? `Error: ${errorMessage}`
+                    : `Loading... Request status: ${loadingStatus || "Undefined"}`}
+            </div>
+        );
     }
 
     const handleContinueToCheckout = () => {

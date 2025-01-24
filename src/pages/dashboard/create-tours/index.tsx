@@ -236,7 +236,7 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
                         </FormControl>
 
                         <FormControl isRequired isInvalid={errors.description}>
-                            <FormLabel>Description</FormLabel>
+                            <FormLabel>Excerpt</FormLabel>
                             <Textarea
                                 value={formData.description}
                                 onChange={(e) => handleFormChange("description", e.target.value)}

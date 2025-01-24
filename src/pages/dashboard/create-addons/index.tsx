@@ -65,7 +65,7 @@ function AddonContentPage() {
                 setPrice(addonData.price ? addonData.price.toString() : "0");
             }
 
-            const toursRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours`);
+            const toursRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`);
             const toursData = await toursRes.json();
             setTours(toursData);
         }

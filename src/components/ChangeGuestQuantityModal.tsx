@@ -80,7 +80,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
         <Modal isOpen={isOpen} onClose={onClose} size="4xl">
             <ModalOverlay/>
             <ModalContent>
-                <ModalHeader>Change Guest Quantity</ModalHeader>
+                <ModalHeader textAlign={"center"}>Change Guest Quantity</ModalHeader>
                 <ModalCloseButton/>
                 <ModalBody>
                     <Flex>

@@ -83,7 +83,7 @@ const SendMessageModal = ({isOpen, onClose, eventDetails}) => {
         <Modal isOpen={isOpen} onClose={onClose} size="xl">
             <ModalOverlay/>
             <ModalContent>
-                <ModalHeader>Send Group Message</ModalHeader>
+                <ModalHeader textAlign={"center"}>Send Group Message</ModalHeader>
                 <ModalCloseButton/>
                 <ModalBody>
                     <VStack spacing={4} align="stretch">

@@ -23,25 +23,18 @@ import AddTimeSlotModal from "./AddTimeSlotModal";
 import PurchaseAndPaymentSummary from "./PurchaseAndPaymentSummary";
 
 const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
-    const [selectedDate, setSelectedDate] = useState(
-        booking.dateFormatted
-            ? parseToYYYYMMDD(booking.dateFormatted)
-            : "2025-01-14"
-    );
-    const [selectedTime, setSelectedTime] = useState(booking.time || "11:00 AM");
+    const [selectedDate, setSelectedDate] = useState<string>();
+    const [selectedTime, setSelectedTime] = useState<string>();
     const [notifyCustomer, setNotifyCustomer] = useState(true);
-    const [cardDetails, setCardDetails] = useState(null);
     const [isDatePickerOpen, setDatePickerOpen] = useState(false);
     const [isTimeslotModalOpen, setTimeslotModalOpen] = useState(false);
     const [availableTimes, setAvailableTimes] = useState([]);
-    const [schedules, setSchedules] = useState<{ value: string; label: string }[]>([]);
-    const [loadingSchedules, setLoadingSchedules] = useState(true);
 
     const fetchSchedules = async () => {
         if (!booking.id) return;
         try {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/45ff048a-a6f4-480e-8c15-19f1994a2ea0`
+                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${booking.tour.id}`
             );
             const data = await res.json();
 
@@ -70,7 +63,6 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
             setAvailableTimes(formattedSchedules);
         } catch (error) {
             console.error("Failed to fetch schedules:", error);
-            setLoadingSchedules(false);
         }
     };
 
@@ -161,6 +153,12 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
             onClose();
         }
     };
+
+    useEffect(() => {
+        if (isOpen && booking.reservation_date) {
+            setSelectedDate(parseToYYYYMMDD(booking.reservation_date));
+        }
+    }, [isOpen, booking.reservation_date]);
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="3xl">

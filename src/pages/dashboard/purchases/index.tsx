@@ -247,7 +247,11 @@ const PurchaseDetails = ({reservation}) => {
     const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
     const [isChangeAddonsModalOpen, setChangeAddonsModalOpen] = useState(false);
-    const [guestCount, setGuestCount] = useState(reservation.guestQuantity);
+    const [guestCount, setGuestCount] = useState(reservation?.guestQuantity || 0);
+
+    if (!reservation) {
+        return <Text>No reservation Available</Text>;
+    }
 
     return (
         <VStack>
@@ -424,7 +428,7 @@ const PaymentSummary = ({reservation}) => {
 
     useEffect(() => {
         const fetchAddons = async () => {
-            if (!reservation?.id || !reservation.tourId) return;
+            if (!reservation?.id || !reservation?.tourId) return;
 
             try {
                 const reservationAddonsResponse = await axios.get(
@@ -445,9 +449,9 @@ const PaymentSummary = ({reservation}) => {
         };
 
         fetchAddons();
-    }, [reservation?.id, reservation.tourId]);
+    }, [reservation?.id, reservation?.tourId]);
 
-    const combinedAddons = reservation.reservationAddons?.map((selectedAddon) => {
+    const combinedAddons = reservation?.reservationAddons?.map((selectedAddon) => {
         const addonDetails = allAddons.find(
             (addon) => addon.id === selectedAddon.addonId
         );
@@ -462,11 +466,11 @@ const PaymentSummary = ({reservation}) => {
         0
     );
 
-    const finalTotalPrice = reservation.total_price + addonsTotalPrice;
+    const finalTotalPrice = (reservation?.total_price || 0) + addonsTotalPrice;
 
     useEffect(() => {
         const fetchCardDetails = async () => {
-            if (!reservation.paymentMethodId) return;
+            if (!reservation?.paymentMethodId) return;
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${reservation.paymentMethodId}`
@@ -480,7 +484,7 @@ const PaymentSummary = ({reservation}) => {
         };
 
         fetchCardDetails();
-    }, [reservation.paymentMethodId]);
+    }, [reservation?.paymentMethodId]);
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -705,7 +709,11 @@ const PurchasesPage = () => {
                             <PaymentSummary reservation={selectedReservation}/>
                         </Box>
                         <Box flex="1" overflowY="auto" padding="20px" paddingBottom="50px">
-                            <TimelinePage reservationId={selectedReservation.id}/>
+                            {selectedReservation ? (
+                                <TimelinePage reservationId={selectedReservation.id}/>
+                            ) : (
+                                <Text>No reservation Available</Text>
+                            )}
                         </Box>
                     </Box>
 

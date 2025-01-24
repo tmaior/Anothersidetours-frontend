@@ -203,6 +203,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                 booking={booking}
                                 guestQuantity={booking.guestQuantity}
                                 selectedAddons={selectedAddons}
+                                allAddons={allAddons}
                             />
                         </HStack>
                     </HStack>

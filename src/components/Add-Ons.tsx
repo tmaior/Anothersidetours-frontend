@@ -22,7 +22,7 @@ export default function AddOns({ addons }: AddOnProps) {
     };
 
     useEffect(() => {
-        const detailedAddons = addons.map((addon) => {
+        const detailedAddons = (addons || []).map((addon) => {
             if (addon.type === "SELECT" && (quantities[addon.id] || 0) > 0) {
                 return {
                     id: addon.id,
@@ -48,8 +48,8 @@ export default function AddOns({ addons }: AddOnProps) {
         setDetailedAddons(detailedAddons);
     }, [addons, quantities, checkedAddons, setDetailedAddons]);
 
-    const selectAddons = addons.filter((addon) => addon.type === "SELECT");
-    const checkboxAddons = addons.filter((addon) => addon.type === "CHECKBOX");
+    const selectAddons = (addons || []).filter((addon) => addon.type === "SELECT");
+    const checkboxAddons = (addons || []).filter((addon) => addon.type === "CHECKBOX");
 
     return (
         <Flex direction="column" width="100%" p={4} marginTop={"-120px"}>

@@ -57,7 +57,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
     } = useGuest();
     const {isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal} = useDisclosure();
 
-    const pricePerGuest = valuePrice;
+    const pricePerGuest = valuePrice || 0;
     const guestTotal = guestQuantity * pricePerGuest;
     const addonsTotal = detailedAddons.reduce((acc, addon) => acc + addon.total, 0);
     const totalAmount = guestTotal + addonsTotal;
@@ -307,11 +307,15 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
 
                                 <Spacer/>
                                 <VStack w="full" p={4} spacing={4} align="stretch">
-                                    <HStack w="full">
-                                        <Text>{`Guests (${guestQuantity} × $${pricePerGuest.toFixed(2)})`}</Text>
-                                        <Spacer/>
-                                        <Text>${guestTotal.toFixed(2)}</Text>
-                                    </HStack>
+                                    {guestQuantity && pricePerGuest !== undefined ? (
+                                        <HStack w="full">
+                                            <Text>{`Guests (${guestQuantity} × $${pricePerGuest.toFixed(2)})`}</Text>
+                                            <Spacer />
+                                            <Text>${guestTotal.toFixed(2)}</Text>
+                                        </HStack>
+                                    ) : (
+                                        <Text>No pricing information available.</Text>
+                                    )}
                                     {detailedAddons.map((addon) => (
                                         <HStack w="full" key={addon.id}>
                                             <Text>{`${addon.label} (${addon.quantity} × $${addon.price.toFixed(2)})`}</Text>

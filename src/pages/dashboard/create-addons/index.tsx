@@ -7,7 +7,6 @@ import {
     HStack,
     Input,
     Select,
-    Switch,
     Text,
     Textarea,
     useDisclosure,
@@ -35,8 +34,8 @@ function AddonContentPage() {
         description: "",
         type: "CHECKBOX",
         price: 0,
-        isPrivate: false,
-        isRequired: false,
+        // isPrivate: false,
+        // isRequired: false,
     });
     const [tours, setTours] = useState([]);
     const [errors, setErrors] = useState({
@@ -59,8 +58,8 @@ function AddonContentPage() {
                     description: addonData.description || "",
                     type: addonData.type || "CHECKBOX",
                     price: addonData.price || 0,
-                    isPrivate: addonData.isPrivate || false,
-                    isRequired: addonData.isRequired || false,
+                    // isPrivate: addonData.isPrivate || false,
+                    // isRequired: addonData.isRequired || false,
                 });
                 setPrice(addonData.price ? addonData.price.toString() : "0");
             }
@@ -241,25 +240,25 @@ function AddonContentPage() {
                         {errors.price && <Text color="red.500">This field is required and must be greater than 0</Text>}
                     </FormControl>
 
-                    <FormControl>
-                        <HStack>
-                            <Switch
-                                isChecked={formData.isPrivate}
-                                onChange={() => handleFormChange("isPrivate", !formData.isPrivate)}
-                            />
-                            <Text>Private (Add-on is only available for back office purchases)</Text>
-                        </HStack>
-                    </FormControl>
+                    {/*<FormControl>*/}
+                    {/*    <HStack>*/}
+                    {/*        <Switch*/}
+                    {/*            isChecked={formData.isPrivate}*/}
+                    {/*            onChange={() => handleFormChange("isPrivate", !formData.isPrivate)}*/}
+                    {/*        />*/}
+                    {/*        <Text>Private (Add-on is only available for back office purchases)</Text>*/}
+                    {/*    </HStack>*/}
+                    {/*</FormControl>*/}
 
-                    <FormControl>
-                        <HStack>
-                            <Switch
-                                isChecked={formData.isRequired}
-                                onChange={() => handleFormChange("isRequired", !formData.isRequired)}
-                            />
-                            <Text>Required (Add-on required during online checkout)</Text>
-                        </HStack>
-                    </FormControl>
+                    {/*<FormControl>*/}
+                    {/*    <HStack>*/}
+                    {/*        <Switch*/}
+                    {/*            isChecked={formData.isRequired}*/}
+                    {/*            onChange={() => handleFormChange("isRequired", !formData.isRequired)}*/}
+                    {/*        />*/}
+                    {/*        <Text>Required (Add-on required during online checkout)</Text>*/}
+                    {/*    </HStack>*/}
+                    {/*</FormControl>*/}
 
                     <HStack justify="space-between" mt={6}>
                         {isEditing && (

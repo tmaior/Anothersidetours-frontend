@@ -184,13 +184,28 @@ function ListTours() {
                             position="relative"
                         >
                             <HStack position="absolute" top={4} right={4} spacing={2}>
-                                <IconButton
-                                    aria-label="View Tour ID"
-                                    icon={<ViewIcon/>}
-                                    colorScheme="gray"
-                                    size="sm"
-                                    onClick={() => handleView(tour.id)}
-                                />
+                                <Box position="relative" display="inline-block">
+                                    <Box
+                                        position="relative"
+                                        _hover={{
+                                            "& > button": {
+                                                opacity: "1",
+                                                visibility: "visible",
+                                            },
+                                        }}
+                                    >
+                                        <IconButton
+                                            aria-label="View Tour ID"
+                                            icon={<ViewIcon/>}
+                                            colorScheme="gray"
+                                            size="sm"
+                                            onClick={() => handleView(tour.id)}
+                                            opacity="0"
+                                            visibility="hidden"
+                                            transition="opacity 0.2s ease, visibility 0.2s ease"
+                                        />
+                                    </Box>
+                                </Box>
                                 <IconButton
                                     aria-label="Edit"
                                     icon={<EditIcon boxSize={3}/>}

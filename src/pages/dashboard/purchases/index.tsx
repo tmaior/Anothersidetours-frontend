@@ -479,9 +479,8 @@ const PurchaseDetails = ({reservation}) => {
                 isOpen={isSendMessageModalOpen}
                 onClose={() => setSendMessageModalOpen(false)}
                 eventDetails={{
-                    title: reservation.title,
-                    date: reservation.dateFormatted,
-                    time: reservation.time,
+                    title: reservation.tour.name,
+                    dateTime: reservation.reservation_date,
                     image: reservation.tour.imageUrl
                 }}
             />

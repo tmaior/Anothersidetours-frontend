@@ -79,6 +79,30 @@ const SendMessageModal = ({isOpen, onClose, eventDetails}) => {
         onClose();
     };
 
+    const formatDateTime = (isoDateTime: string): string => {
+        if (!isoDateTime) {
+            throw new Error("Invalid ISO date/time format");
+        }
+
+        const originalDate = new Date(isoDateTime);
+
+        const year = originalDate.getUTCFullYear();
+        const month = originalDate.toLocaleString("en-US", {month: "short", timeZone: "UTC"});
+        const day = originalDate.getUTCDate().toString().padStart(2, "0");
+        const hours = originalDate.getUTCHours();
+        const minutes = originalDate.getUTCMinutes().toString().padStart(2, "0");
+
+        const period = hours >= 12 ? "PM" : "AM";
+        const formattedHour = hours % 12 || 12;
+
+        return `${month} ${day}, ${year}, ${formattedHour}:${minutes} ${period}`;
+    };
+
+    const formattedDateTime =
+        !eventDetails.date && !eventDetails.time
+            ? formatDateTime(eventDetails.dateTime)
+            : null;
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="xl">
             <ModalOverlay/>
@@ -97,7 +121,11 @@ const SendMessageModal = ({isOpen, onClose, eventDetails}) => {
                             />
                             <VStack>
                                 <Text fontWeight="bold">{eventDetails.title}</Text>
-                                <Text color="gray.600">{`${eventDetails.date} at ${eventDetails.time}`}</Text>
+                                <Text color="gray.600">
+                                    {eventDetails.date && eventDetails.time
+                                        ? `${eventDetails.date} at ${eventDetails.time}`
+                                        : formattedDateTime}
+                                </Text>
                             </VStack>
                         </HStack>
                         <FormControl display="flex" alignItems="center">

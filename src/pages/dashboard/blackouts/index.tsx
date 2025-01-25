@@ -361,7 +361,7 @@ function BlackoutDatesManagement() {
                                                         startDate: date || new Date(),
                                                     }))
                                                 }
-                                                dateFormat="dd/MM/yyyy"
+                                                dateFormat="MM/dd/yyyy"
                                                 customInput={<Input/>}
                                             />
                                         </Box>
@@ -376,7 +376,7 @@ function BlackoutDatesManagement() {
                                                         noEnd: !date,
                                                     }))
                                                 }
-                                                dateFormat="dd/MM/yyyy"
+                                                dateFormat="MM/dd/yyyy"
                                                 customInput={<Input/>}
                                                 isClearable
                                             />

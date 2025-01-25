@@ -23,6 +23,7 @@ import ReservationDetail from "../reservation-details";
 import {useGuest} from "../../../components/GuestContext";
 import withAuth from "../../../utils/withAuth";
 import NotesFromReservationModalicon from "../../../components/NotesFromReservationModalicon";
+import CustomDatePicker from "../../../components/DatePickerDefault";
 
 function Dashboard() {
     const [searchTerm, setSearchTerm] = useState("");
@@ -281,6 +282,18 @@ function Dashboard() {
         setSelectedReservation(null);
     };
 
+    function createDateFromISO(dateString) {
+        const [year, month, day] = dateString.split("-").map(Number);
+        return new Date(year, month - 1, day);
+    }
+
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
     return (
         <DashboardLayout>
             <Flex align="center" mb={4}>
@@ -326,13 +339,16 @@ function Dashboard() {
             </Flex>
             <Divider/>
             <HStack spacing={2} mb={4} align="center" marginTop={"10px"}>
-                <Input
-                    type="date"
-                    value={selectedDate}
-                    onChange={handleDateChange}
-                    size="sm"
-                    width="130px"
-                />
+                <Box w="130px">
+                    <CustomDatePicker
+                        selected={selectedDate ? createDateFromISO(selectedDate) : null}
+                        onDateChange={(date) => {
+                            const formattedDate = formatDate(date);
+                            setSelectedDate(formattedDate);
+                            setLoadedDates([formattedDate]);
+                        }}
+                    />
+                </Box>
                 <Select placeholder="Reserved" size="sm" width="120px">
                     <option value="reserved">Reserved</option>
                     <option value="not_reserved">Not Reserved</option>

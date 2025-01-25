@@ -466,7 +466,7 @@ const PaymentSummary = ({reservation}) => {
         0
     );
 
-    const finalTotalPrice = (reservation?.total_price || 0) + addonsTotalPrice;
+    const finalTotalPrice = ((reservation?.total_price || 0) + addonsTotalPrice).toFixed(2);
 
     useEffect(() => {
         const fetchCardDetails = async () => {
@@ -527,7 +527,7 @@ const PaymentSummary = ({reservation}) => {
                     combinedAddons.map((addon) => (
                         <HStack key={addon.id} justifyContent="space-between">
                             <Text>{addon.label} (${addon.price} x {addon.quantity})</Text>
-                            <Text>${addon.price * addon.quantity}</Text>
+                            <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
                         </HStack>
                     ))
                 )}

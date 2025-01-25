@@ -344,9 +344,16 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
                                 <Input
                                     value={formData.price}
                                     onChange={(e) => handleFormChange("price", e.target.value)}
+                                    onBlur={(e) => {
+                                        const value = parseFloat(e.target.value);
+                                        if (!isNaN(value)) {
+                                            handleFormChange("price", value.toFixed(2));
+                                        }
+                                    }}
                                     placeholder="$"
                                     width="auto"
                                     type="number"
+                                    step="0.01"
                                 />
                             </HStack>
                             {errors.price && (

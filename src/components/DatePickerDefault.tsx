@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {Box, Button, Grid, HStack, Text, useDisclosure, VStack} from "@chakra-ui/react";
 
 const CustomDatePicker = ({selected, onDateChange}) => {
@@ -10,6 +10,7 @@ const CustomDatePicker = ({selected, onDateChange}) => {
     );
     const [selectedDate, setSelectedDate] = useState(selected || null);
     const {isOpen, onOpen, onClose} = useDisclosure();
+    const ref = useRef(null);
 
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
@@ -41,8 +42,24 @@ const CustomDatePicker = ({selected, onDateChange}) => {
         onClose();
     };
 
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (ref.current && !ref.current.contains(event.target)) {
+                onClose();
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isOpen]);
+
     return (
-        <Box position="relative" w="fit-content">
+        <Box position="relative" w="fit-content" ref={ref}>
             <Button onClick={onOpen} size="sm" variant="outline">
                 {selected
                     ? selected.toLocaleDateString("en-US")

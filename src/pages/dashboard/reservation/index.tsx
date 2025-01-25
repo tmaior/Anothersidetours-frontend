@@ -178,7 +178,8 @@ function Dashboard() {
                             paymentMethodId: reservation.paymentMethodId,
                             total_price: reservation.total_price,
                             paymentIntentId: reservation.paymentIntentId,
-                            valuePerGuest: reservation.tour.price
+                            valuePerGuest: reservation.tour.price,
+                            tourId: reservation.tour.id
                         });
                         return acc;
                     },
@@ -215,7 +216,7 @@ function Dashboard() {
         setSearchTerm(e.target.value);
     };
 
-    const openNoteModal = ({ notes, reservation }) => {
+    const openNoteModal = ({notes, reservation}) => {
         if (reservation) {
             setSelectedReservation(reservation);
             setNotesReservationList(notes || []);

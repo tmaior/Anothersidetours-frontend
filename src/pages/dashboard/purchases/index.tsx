@@ -357,7 +357,7 @@ const PurchaseDetails = ({reservation}) => {
                             <MenuButton
                                 as={IconButton}
                                 icon={<BsThreeDots/>}
-                                variant="ghost"
+                                variant="outline"
                                 aria-label="Options"
                                 size="sm"
                                 onClick={(e) => e.stopPropagation()}

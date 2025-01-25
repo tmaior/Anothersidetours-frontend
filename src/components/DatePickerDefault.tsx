@@ -58,9 +58,17 @@ const CustomDatePicker = ({selected, onDateChange}) => {
         };
     }, [isOpen]);
 
+    const toggleModal = () => {
+        if (isOpen) {
+            onClose();
+        } else {
+            onOpen();
+        }
+    };
+
     return (
         <Box position="relative" w="fit-content" ref={ref}>
-            <Button onClick={onOpen} size="sm" variant="outline">
+            <Button onClick={toggleModal} size="sm" variant="outline">
                 {selected
                     ? selected.toLocaleDateString("en-US")
                     : "Select a Date"}

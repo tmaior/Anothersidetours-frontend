@@ -7,11 +7,16 @@ import {
     Divider,
     Flex,
     HStack,
+    IconButton,
     Image,
     Input,
     InputGroup,
     InputLeftElement,
     Link,
+    Menu,
+    MenuButton,
+    MenuItem,
+    MenuList,
     Spacer,
     Spinner,
     Text,
@@ -23,7 +28,7 @@ import {CiCalendar, CiClock2, CiLocationArrow1} from "react-icons/ci";
 import {IoPersonOutline} from "react-icons/io5";
 import {RiRefund2Line} from "react-icons/ri";
 import {AiOutlineMail} from "react-icons/ai";
-import {BsBox2, BsTelephone} from "react-icons/bs";
+import {BsBox2, BsTelephone, BsThreeDots} from "react-icons/bs";
 import {PiPencilSimpleLineDuotone} from "react-icons/pi";
 import {useRouter} from "next/router";
 import {HiOutlineMail} from "react-icons/hi";
@@ -36,6 +41,8 @@ import TimelinePage from "../../../components/TimelinePage";
 import StatusBadge from "../../../components/StatusBadge";
 import axios from "axios";
 import ChangeAddOns from "../../../components/ChangeAddonsModal";
+import {FiSend} from "react-icons/fi";
+import {MdOutlineCancel, MdOutlineLocalPrintshop, MdOutlineRefresh} from 'react-icons/md';
 
 type GuestItemProps = {
     name: string;
@@ -248,6 +255,7 @@ const PurchaseDetails = ({reservation}) => {
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
     const [isChangeAddonsModalOpen, setChangeAddonsModalOpen] = useState(false);
     const [guestCount, setGuestCount] = useState(reservation?.guestQuantity || 0);
+    const [isCancelConfirmationOpen, setCancelConfirmationOpen] = useState(false);
 
     if (!reservation) {
         return <Text>No reservation Available</Text>;
@@ -277,8 +285,8 @@ const PurchaseDetails = ({reservation}) => {
 
             </Box>
 
-            <Box flex="1" p={6} marginTop={"-50px"} marginLeft={"-70px"}>
-                <HStack spacing={6} mt={6} wrap="nowrap">
+            <Box flex="1" p={6} marginTop={"-50px"} marginLeft={"15px"}>
+                <HStack spacing={3} mt={5} wrap="nowrap">
                     <HStack>
                         <CiCalendar size={18}/>
                         <Link style={{whiteSpace: "nowrap"}}
@@ -340,8 +348,77 @@ const PurchaseDetails = ({reservation}) => {
                         <PiPencilSimpleLineDuotone size={18}/>
                         <Link style={{whiteSpace: "nowrap"}}>Resend Waiver Email</Link>
                     </HStack>
+                    <HStack>
+                        <MdOutlineRefresh size={18}/>
+                        <Link style={{whiteSpace: "nowrap"}}>Switch Experience</Link>
+                    </HStack>
+                    <HStack>
+                        <Menu placement="left-start" offset={[-50, 0]}>
+                            <MenuButton
+                                as={IconButton}
+                                icon={<BsThreeDots/>}
+                                variant="ghost"
+                                aria-label="Options"
+                                size="sm"
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                            <MenuList
+                                p={0}
+                                borderRadius="md"
+                                boxShadow="lg"
+                                width="100px"
+                                maxWidth="300px"
+                                minHeight="100px"
+                            >
+                                <MenuItem
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSendMessageModalOpen(true);
+                                    }}
+                                >
+                                    <HStack spacing={2}>
+                                        <MdOutlineLocalPrintshop/>
+                                        <Text>Print Receipt</Text>
+                                    </HStack>
+                                </MenuItem>
+                                <MenuItem
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSendMessageModalOpen(true);
+                                    }}
+                                >
+                                    <HStack spacing={2}>
+                                        <AiOutlineMail/>
+                                        <Text>Email Receipt</Text>
+                                    </HStack>
+                                </MenuItem>
+                                <MenuItem
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSendMessageModalOpen(true);
+                                    }}
+                                >
+                                    <HStack spacing={2}>
+                                        <FiSend/>
+                                        <Text>Rebook Organizer</Text>
+                                    </HStack>
+                                </MenuItem>
+                                <MenuItem
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCancelConfirmationOpen(true);
+                                    }}
+                                >
+                                    <HStack spacing={2}>
+                                        <MdOutlineCancel/>
+                                        <Text>Cancel Reservations</Text>
+                                    </HStack>
+                                </MenuItem>
+                            </MenuList>
+                        </Menu>
+                    </HStack>
                 </HStack>
-                <Box mt={8} marginLeft={"-30px"} marginTop={"50px"}>
+                <Box mt={8} marginLeft={"20px"} marginTop={"50px"}>
                     <Text fontSize="xl" fontWeight="bold">
                         {reservation.tour.name}
                     </Text>

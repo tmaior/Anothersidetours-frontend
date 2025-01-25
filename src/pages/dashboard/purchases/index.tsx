@@ -436,7 +436,7 @@ const PaymentSummary = ({reservation}) => {
                 );
 
                 const allAddonsResponse = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${reservation.tourId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${reservation.tour.id}`
                 );
 
                 setReservationAddons(reservationAddonsResponse.data);

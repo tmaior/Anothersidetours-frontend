@@ -19,17 +19,22 @@ import {
     Input,
     InputGroup,
     InputLeftElement,
+    Menu,
+    MenuButton,
+    MenuList,
     Text,
     useClipboard,
     useColorModeValue,
     useToast,
+    VStack,
 } from "@chakra-ui/react";
-import {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {useRouter} from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
 import {DeleteIcon, EditIcon, SearchIcon, ViewIcon} from "@chakra-ui/icons";
 import {useGuest} from "../../../components/GuestContext";
 import withAuth from "../../../utils/withAuth";
+import {BsThreeDots} from "react-icons/bs";
 
 function ListTours() {
     const inputBgColor = useColorModeValue("gray.100", "gray.700");
@@ -206,29 +211,48 @@ function ListTours() {
                                         />
                                     </Box>
                                 </Box>
-                                <IconButton
-                                    aria-label="Edit"
-                                    icon={<EditIcon boxSize={3}/>}
-                                    variant="outline"
-                                    w="50px"
-                                    h="30px"
-                                    _hover={{
-                                        borderColor: "black",
-                                    }}
-                                    onClick={() => handleEdit(tour.id)}
-                                />
-                                <IconButton
-                                    aria-label="Delete"
-                                    icon={<DeleteIcon boxSize={3}/>}
-                                    variant="outline"
-                                    w="50px"
-                                    h="30px"
-                                    ml={2}
-                                    _hover={{
-                                        borderColor: "black",
-                                    }}
-                                    onClick={() => handleDeleteClick(tour.id)}
-                                />
+                                <HStack>
+                                    <Menu placement="left-start" offset={[30, -100]}>
+                                        <MenuButton
+                                            as={IconButton}
+                                            icon={<BsThreeDots/>}
+                                            variant="outline"
+                                            aria-label="Options"
+                                            size="sm"
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                        <MenuList
+                                            p={0}
+                                            borderRadius="md"
+                                            boxShadow="lg"
+                                            minW="120px"
+                                            maxW="150px"
+                                        >
+                                            <VStack alignItems={"flex-start"}>
+                                                <Button
+                                                    leftIcon={<EditIcon/>}
+                                                    variant="ghost"
+                                                    justifyContent="flex-start"
+                                                    size="sm"
+                                                    w="100%"
+                                                    onClick={() => handleEdit(tour.id)}
+                                                >
+                                                    Edit
+                                                </Button>
+                                                <Button
+                                                    leftIcon={<DeleteIcon/>}
+                                                    variant="ghost"
+                                                    justifyContent="flex-start"
+                                                    size="sm"
+                                                    w="100%"
+                                                    onClick={() => handleDeleteClick(tour.id)}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </VStack>
+                                        </MenuList>
+                                    </Menu>
+                                </HStack>
                             </HStack>
 
                             {tourIdToShow === tour.id && (

@@ -271,7 +271,11 @@ function ListTours() {
                                     borderRadius="md"
                                 />
                                 <Box flex="1" maxWidth="600px">
-                                    <Heading fontSize="lg" noOfLines={1}>
+                                    <Heading
+                                        fontSize="lg" noOfLines={2}
+                                        wordBreak="break-word"
+                                        whiteSpace="normal"
+                                        maxW="80%">
                                         {tour.name}
                                     </Heading>
                                     <Text mt={2} noOfLines={3}>

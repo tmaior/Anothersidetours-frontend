@@ -488,7 +488,7 @@ const PaymentSummary = ({reservation}) => {
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB');
+        return date.toISOString().split("T")[0];
     };
 
     if (isLoading) {
@@ -497,6 +497,11 @@ const PaymentSummary = ({reservation}) => {
                 <Spinner size="xl" color="blue.500"/>
             </Center>
         );
+    }
+
+    function formatDateToAmerican(date) {
+        const [year, month, day] = date.split("-");
+        return `${month}/${day}/${year}`;
     }
 
     return (
@@ -556,7 +561,7 @@ const PaymentSummary = ({reservation}) => {
                         >
                             *{cardDetails.last4}
                         </Box>{" "}
-                        {formatDate(cardDetails.paymentDate)}
+                        {formatDateToAmerican(formatDate(cardDetails.paymentDate))}
                     </Text>
                 </HStack>
                 <HStack justifyContent="space-between">

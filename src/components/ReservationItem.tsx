@@ -129,10 +129,15 @@ const ReservationItem = ({
         setGuideModalOpen(true);
     };
 
+    function formatDateToAmerican(date) {
+        const [year, month, day] = date.split("-");
+        return `${month}/${day}/${year}`;
+    }
+
     return (
         <VStack align="stretch" spacing={4} bg="gray.50" p={4} borderRadius="md">
             <Text fontSize="sm" fontWeight="semibold" color="gray.700">
-                {date} {day} &nbsp;&nbsp; {availableSummary} - {reservedSummary}
+                {formatDateToAmerican(date)} {day} &nbsp;&nbsp; {availableSummary} - {reservedSummary}
             </Text>
             {reservations.map((item, index) => (
                 <Flex

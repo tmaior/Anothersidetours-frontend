@@ -140,10 +140,15 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
 
     const formattedCardDetails = cardDetails || internalCardDetails;
 
-    const formatDate = (dateString: string) => {
+    const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB');
+        return date.toISOString().split("T")[0];
     };
+
+    function formatDateToAmerican(date) {
+        const [year, month, day] = date.split("-");
+        return `${month}/${day}/${year}`;
+    }
 
     if (isLoadingAddons || isLoadingCardDetails) {
         return (
@@ -231,7 +236,7 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                                     >
                                         *{formattedCardDetails.last4}
                                     </Box>{" "}
-                                    {formatDate(formattedCardDetails.paymentDate)}
+                                    {formatDateToAmerican(formatDate(formattedCardDetails.paymentDate))}
                                 </Text>
                             </HStack>
                         </HStack>

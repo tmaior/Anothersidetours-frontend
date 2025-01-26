@@ -45,6 +45,7 @@ import ChangeAddOns from "../../../components/ChangeAddonsModal";
 import {FiSend} from "react-icons/fi";
 import {MdOutlineCancel, MdOutlineLocalPrintshop, MdOutlineRefresh} from 'react-icons/md';
 import CancelConfirmationModal from "../../../components/CancelConfirmationModal";
+import PurchaseNotes from "../../../components/PurchaseNotes";
 
 type GuestItemProps = {
     name: string;
@@ -830,6 +831,11 @@ const PurchasesPage = () => {
                         >
                             <PaymentSummary reservation={selectedReservation}/>
                         </Box>
+                        <Divider mb={4}/>
+                        <Box>
+                            <PurchaseNotes/>
+                        </Box>
+                        <Divider mb={4}/>
                         <Box flex="1" overflowY="auto" padding="20px" paddingBottom="50px">
                             {selectedReservation ? (
                                 <TimelinePage reservationId={selectedReservation.id}/>

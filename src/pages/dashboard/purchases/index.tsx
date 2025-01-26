@@ -241,6 +241,19 @@ const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) =>
 
 const PurchaseDetails = ({reservation}) => {
 
+    const dateObject = new Date(reservation.reservation_date);
+
+    const datePart = dateObject.toISOString().split("T")[0];
+
+    const utcHours = dateObject.getUTCHours();
+    const utcMinutes = dateObject.getUTCMinutes();
+    const period = utcHours >= 12 ? "PM" : "AM";
+    const hours12 = utcHours % 12 || 12;
+
+    const timePart = `${hours12.toString().padStart(2, "0")}:${utcMinutes
+        .toString()
+        .padStart(2, "0")} ${period}`;
+
     const formatDate = (dateString: string): string => {
         const options: Intl.DateTimeFormatOptions = {
             year: 'numeric',
@@ -426,11 +439,11 @@ const PurchaseDetails = ({reservation}) => {
                     <HStack>
                         <HStack>
                             <CiCalendar size={18}/>
-                            <Text>{formatDate(reservation.user.selectedDate)}</Text>
+                            <Text>{formatDate(datePart)}</Text>
                         </HStack>
                         <HStack>
                             <CiClock2/>
-                            <Text>{reservation.user.selectedTime}</Text>
+                            <Text>{timePart}</Text>
                         </HStack>
                     </HStack>
 
@@ -598,7 +611,6 @@ const PaymentSummary = ({reservation}) => {
                 {/*    <Text>Gratuity: 18%</Text>*/}
                 {/*    <Text>$214.56</Text>*/}
                 {/*</HStack>*/}
-                <Divider/>
                 {isLoadingAddons ? (
                     <HStack justifyContent="center">
                         <Spinner size="sm"/>
@@ -612,6 +624,7 @@ const PaymentSummary = ({reservation}) => {
                         </HStack>
                     ))
                 )}
+                <Divider/>
                 <HStack justifyContent="space-between">
                     <Text fontWeight="bold">Total</Text>
                     <Text fontWeight="bold">${finalTotalPrice}</Text>

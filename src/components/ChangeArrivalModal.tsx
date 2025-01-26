@@ -32,9 +32,10 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
 
     const fetchSchedules = async () => {
         if (!booking.id) return;
+        const tourId = booking.tour?.id || booking.tourId;
         try {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${booking.tour.id}`
+                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${tourId}`
             );
             const data = await res.json();
 
@@ -174,7 +175,11 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                                 <FormLabel>Date</FormLabel>
                                 <Input
                                     type="text"
-                                    value={formatDateMMMDDYYYY(selectedDate)}
+                                    value={
+                                        selectedDate
+                                            ? formatDateMMMDDYYYY(selectedDate)
+                                            : booking.dateFormatted
+                                    }
                                     onClick={() => setDatePickerOpen(true)}
                                     size="sm"
                                     w="200px"
@@ -185,7 +190,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                             <FormControl>
                                 <FormLabel>Time</FormLabel>
                                 <Select
-                                    value={selectedTime}
+                                    value={selectedTime || booking.time}
                                     onChange={(e) => setSelectedTime(e.target.value)}
                                     size="sm"
                                     w="200px"

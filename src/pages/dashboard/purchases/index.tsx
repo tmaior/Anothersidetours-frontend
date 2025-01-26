@@ -255,14 +255,15 @@ const PurchaseDetails = ({reservation}) => {
         .padStart(2, "0")} ${period}`;
 
     const formatDate = (dateString: string): string => {
-        const options: Intl.DateTimeFormatOptions = {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        };
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', options);
+        const [year, month, day] = dateString.split('-').map(Number);
+
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        return `${monthNames[month - 1]} ${day}, ${year}`;
     };
+
     const [isChangeGuestQuantityModalOpen, setChangeGuestQuantityModalOpen] = useState(false);
     const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);

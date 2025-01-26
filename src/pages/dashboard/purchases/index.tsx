@@ -20,6 +20,7 @@ import {
     Spacer,
     Spinner,
     Text,
+    useDisclosure,
     VStack
 } from '@chakra-ui/react';
 import {SearchIcon} from '@chakra-ui/icons';
@@ -43,6 +44,7 @@ import axios from "axios";
 import ChangeAddOns from "../../../components/ChangeAddonsModal";
 import {FiSend} from "react-icons/fi";
 import {MdOutlineCancel, MdOutlineLocalPrintshop, MdOutlineRefresh} from 'react-icons/md';
+import CancelConfirmationModal from "../../../components/CancelConfirmationModal";
 
 type GuestItemProps = {
     name: string;
@@ -264,6 +266,19 @@ const PurchaseDetails = ({reservation}) => {
         return `${monthNames[month - 1]} ${day}, ${year}`;
     };
 
+    const {
+        onClose: onConfirmClose,
+    } = useDisclosure();
+
+    const {
+        onOpen: onCancelOpen,
+    } = useDisclosure();
+
+    const handleConfirmCancel = () => {
+        onConfirmClose();
+        onCancelOpen();
+    };
+
     const [isChangeGuestQuantityModalOpen, setChangeGuestQuantityModalOpen] = useState(false);
     const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
@@ -387,7 +402,7 @@ const PurchaseDetails = ({reservation}) => {
                                 <MenuItem
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        setSendMessageModalOpen(true);
+                                        // setSendMessageModalOpen(true);
                                     }}
                                 >
                                     <HStack spacing={2}>
@@ -398,7 +413,7 @@ const PurchaseDetails = ({reservation}) => {
                                 <MenuItem
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        setSendMessageModalOpen(true);
+                                        // setSendMessageModalOpen(true);
                                     }}
                                 >
                                     <HStack spacing={2}>
@@ -409,7 +424,7 @@ const PurchaseDetails = ({reservation}) => {
                                 <MenuItem
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        setSendMessageModalOpen(true);
+                                        // setSendMessageModalOpen(true);
                                     }}
                                 >
                                     <HStack spacing={2}>
@@ -503,6 +518,18 @@ const PurchaseDetails = ({reservation}) => {
                 booking={reservation}
                 isOpen={isChangeAddonsModalOpen}
                 onClose={() => setChangeAddonsModalOpen(false)}
+            />
+
+            <CancelConfirmationModal
+                isOpen={isCancelConfirmationOpen}
+                onClose={() => setCancelConfirmationOpen(false)}
+                onConfirm={handleConfirmCancel}
+                booking={{
+                    title: reservation.tour.name,
+                    dateFormatted: formatDate(datePart),
+                    time: timePart,
+                    user: reservation.user
+                }}
             />
         </VStack>
     );

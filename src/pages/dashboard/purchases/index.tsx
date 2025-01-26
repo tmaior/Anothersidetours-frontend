@@ -511,7 +511,10 @@ const PurchaseDetails = ({reservation}) => {
                 eventDetails={{
                     title: reservation.tour.name,
                     dateTime: reservation.reservation_date,
-                    image: reservation.tour.imageUrl
+                    image: reservation.tour.imageUrl,
+                    name: reservation.user.name,
+                    email: reservation.user.email,
+                    phone: reservation.user.phone,
                 }}
             />
 

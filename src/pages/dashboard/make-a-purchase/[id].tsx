@@ -10,6 +10,7 @@ import {
     FormLabel,
     Heading,
     HStack,
+    Image,
     Input,
     Select,
     Spinner,
@@ -53,7 +54,7 @@ const PurchasePage = () => {
     const [schedules, setSchedules] = useState<{ value: string; label: string }[]>([]);
     const [loadingSchedules, setLoadingSchedules] = useState(true);
 
-    const [quantity, setQuantity] = useState(2);
+    const [quantity, setQuantity] = useState(1);
     const [date, setDate] = useState('2024-12-20');
     const [time, setTime] = useState('08:00');
 
@@ -92,6 +93,7 @@ const PurchasePage = () => {
     const [voucherValid, setVoucherValid] = useState(false);
     const [voucherError, setVoucherError] = useState('');
     const [appliedVoucherCode, setAppliedVoucherCode] = useState<string | null>(null);
+    const [selectedAddons, setSelectedAddons] = useState({});
 
     useEffect(() => {
         const fetchTour = async () => {
@@ -111,7 +113,7 @@ const PurchasePage = () => {
     }, [id]);
 
     useEffect(() => {
-        const total = quantity * basePricePerGuest;
+        const total = quantity * basePrice;
         const discountedTotal = total - voucherDiscount;
         setFinalPrice(discountedTotal > 0 ? discountedTotal : 0);
     }, [voucherDiscount, quantity]);
@@ -217,8 +219,7 @@ const PurchasePage = () => {
         );
     };
 
-    const basePricePerGuest = 149;
-    const basePrice = tour?.price || basePricePerGuest;
+    const basePrice = tour?.price
     const totalBase = quantity * basePrice;
 
     const dynamicAddOnsPrice = selectedAddOns.reduce((acc, selected) => {
@@ -269,7 +270,36 @@ const PurchasePage = () => {
         const finalDate = new Date(year, (month - 1), day, hour, minute);
         return finalDate.toISOString();
     };
-    const totalWithDiscount = Math.max(grandTotalFinal - voucherDiscount, 0);
+
+    let combinedAddons: (AddOn & { quantity: number })[] = [];
+    if (addons.length > 0) {
+        combinedAddons = addons.reduce((acc: (AddOn & { quantity: number })[], addon) => {
+            const selectedValue = selectedAddons[addon.id];
+            if (addon.type === 'SELECT' && typeof selectedValue === 'number' && selectedValue > 0) {
+                acc.push({
+                    ...addon,
+                    quantity: selectedValue,
+                });
+            } else if (addon.type === 'CHECKBOX' && selectedValue === true) {
+                acc.push({
+                    ...addon,
+                    quantity: 1,
+                });
+            }
+            return acc;
+        }, []);
+    }
+
+    const addonsTotalPrice = combinedAddons.reduce(
+        (sum, addon) => sum + (addon.price * addon.quantity),
+        0
+    );
+
+    const finalTotalPrice = tour
+        ? ((tour.valuePerGuest || tour.price) * quantity) + addonsTotalPrice
+        : 0;
+
+    const totalWithDiscount = Math.max(finalTotalPrice - voucherDiscount, 0);
     const handleCreateReservationAndPay = async () => {
         if (!stripe || !elements) {
             alert("Stripe has not yet been loaded.");
@@ -510,6 +540,28 @@ const PurchasePage = () => {
         );
     }
 
+
+    const handleIncrement = (addonId) => {
+        setSelectedAddons(prev => ({
+            ...prev,
+            [addonId]: (prev[addonId] || 0) + 1
+        }));
+    };
+
+    const handleDecrement = (addonId) => {
+        setSelectedAddons(prev => ({
+            ...prev,
+            [addonId]: prev[addonId] > 0 ? prev[addonId] - 1 : 0
+        }));
+    };
+
+    const handleCheckboxChange = (addonId) => {
+        setSelectedAddons(prev => ({
+            ...prev,
+            [addonId]: !prev[addonId]
+        }));
+    };
+
     return (
         <DashboardLayout>
             <Box p={8}>
@@ -568,72 +620,61 @@ const PurchasePage = () => {
                         </FormControl>
 
                         <Heading size="md" mt={8} mb={4}>Add-ons</Heading>
-                        {!loadingAddons && addons.map((addon) => {
-                            const selectedState = selectedAddOns.find((s) => s.addOnId === addon.id);
-                            if (!selectedState) return null;
-
-                            return (
-                                <Box key={addon.id} mb={4}>
-                                    <HStack justify="space-between">
-                                        <Text>
-                                            {addon.label} (US${addon.price})
-                                        </Text>
-                                        {addon.type === 'CHECKBOX' && (
-                                            <Switch
-                                                isChecked={selectedState.checked}
-                                                onChange={(e) => toggleCheckboxAddon(addon.id, e.target.checked)}
-                                                colorScheme="blue"
+                        <VStack spacing={4} align="stretch">
+                            {addons.map(addon => (
+                                <Flex key={addon.id} justify="space-between" align="center" gap={20}>
+                                    <VStack align="start" spacing={1}>
+                                        <Text fontWeight="bold">{addon.label}</Text>
+                                        <Text color="gray.500">${addon.price.toFixed(2)}</Text>
+                                    </VStack>
+                                    {addon.type === 'SELECT' ? (
+                                        <Flex align="center">
+                                            <Button size="sm" onClick={() => handleDecrement(addon.id)}
+                                                    disabled={selectedAddons[addon.id] <= 0}>
+                                                -
+                                            </Button>
+                                            <Input
+                                                value={selectedAddons[addon.id] || 0}
+                                                readOnly
+                                                w="50px"
+                                                textAlign="center"
+                                                mx={2}
                                             />
-                                        )}
-                                        {addon.type === 'SELECT' && (
-                                            <HStack>
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={() => decrementAddon(addon.id)}
-                                                >
-                                                    -
-                                                </Button>
-                                                <Text>{selectedState.quantity}</Text>
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={() => incrementAddon(addon.id)}
-                                                >
-                                                    +
-                                                </Button>
-                                            </HStack>
-                                        )}
-                                    </HStack>
-                                    {addon.description && (
-                                        <Text fontSize="sm" color="gray.600">
-                                            {addon.description}
-                                        </Text>
-                                    )}
-                                </Box>
-                            );
-                        })}
+                                            <Button size="sm" onClick={() => handleIncrement(addon.id)}>
+                                                +
+                                            </Button>
+                                        </Flex>
+                                    ) : addon.type === 'CHECKBOX' ? (
+                                        <Switch
+                                            isChecked={selectedAddons[addon.id] || false}
+                                            onChange={() => handleCheckboxChange(addon.id)}
+                                        />
+                                    ) : null}
+                                </Flex>
+                            ))}
+                        </VStack>
+                        {/*<HStack justify="space-between" mb={4}>*/}
+                        {/*    <Text>6% Booking Fee</Text>*/}
+                        {/*    <Switch*/}
+                        {/*        isChecked={bookingFee}*/}
+                        {/*        onChange={(e) => setBookingFee(e.target.checked)}*/}
+                        {/*        colorScheme="blue"*/}
+                        {/*    />*/}
+                        {/*</HStack>*/}
 
-                        <HStack justify="space-between" mb={4}>
-                            <Text>6% Booking Fee</Text>
-                            <Switch
-                                isChecked={bookingFee}
-                                onChange={(e) => setBookingFee(e.target.checked)}
-                                colorScheme="blue"
-                            />
-                        </HStack>
-
-                        <FormControl mb={4}>
-                            <FormLabel>Gratuity (optional)</FormLabel>
-                            <Select
-                                placeholder="Select tip amount"
-                                value={gratuity}
-                                onChange={(e) => setGratuity(e.target.value)}
-                            >
-                                <option value="0">0%</option>
-                                <option value={(totalBase * 0.10).toFixed(2)}>10%</option>
-                                <option value={(totalBase * 0.15).toFixed(2)}>15%</option>
-                                <option value={(totalBase * 0.20).toFixed(2)}>20%</option>
-                            </Select>
-                        </FormControl>
+                        {/*<FormControl mb={4}>*/}
+                        {/*    <FormLabel>Gratuity (optional)</FormLabel>*/}
+                        {/*    <Select*/}
+                        {/*        placeholder="Select tip amount"*/}
+                        {/*        value={gratuity}*/}
+                        {/*        onChange={(e) => setGratuity(e.target.value)}*/}
+                        {/*    >*/}
+                        {/*        <option value="0">0%</option>*/}
+                        {/*        <option value={(totalBase * 0.10).toFixed(2)}>10%</option>*/}
+                        {/*        <option value={(totalBase * 0.15).toFixed(2)}>15%</option>*/}
+                        {/*        <option value={(totalBase * 0.20).toFixed(2)}>20%</option>*/}
+                        {/*    </Select>*/}
+                        {/*</FormControl>*/}
 
                         <FormControl display="flex" alignItems="center" mb={4}>
                             <FormLabel mb="0" fontWeight="medium">
@@ -853,14 +894,45 @@ const PurchasePage = () => {
 
                     <Box w={{base: "100%", md: "400px"}} bg="white" p={6} borderRadius="md" boxShadow="sm">
                         <Heading size="md" mb={4}>Purchase Summary</Heading>
-                        <Box bg="blue.50" p={4} borderRadius="md" mb={4}>
-                            <Text fontWeight="bold">{tour.name}</Text>
+                        <Box
+                            bg="blue.50"
+                            p={4}
+                            borderRadius="md"
+                            mb={4}
+                            w="120%"
+                            ml="-10%"
+                        >
+                            <HStack>
+                                <Image
+                                    src={tour.imageUrl}
+                                    boxSize="40px"
+                                    borderRadius="md"
+                                    alt="Tour Icon"
+                                    objectFit="fill"
+                                />
+                                <Text fontWeight="bold">{tour.name}</Text>
+                            </HStack>
                             <Text fontSize="sm">
                                 {date} - {time}
                             </Text>
-                            <Text mt={2}>
-                                Guests ({quantity} × US${basePrice}) = US${(quantity * basePrice).toFixed(2)}
-                            </Text>
+                            <HStack justify={"space-between"}>
+                                <Text mt={2}>
+                                    Guests (${basePrice} × {quantity})
+                                </Text>
+                                <Text>
+                                    ${(quantity * basePrice).toFixed(2)}
+                                </Text>
+                            </HStack>
+                            {combinedAddons.length > 0 ? (
+                                combinedAddons.map((addon) => (
+                                    <HStack key={addon.id} justifyContent="space-between">
+                                        <Text>{addon.label} (${addon.price} x {addon.quantity})</Text>
+                                        <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
+                                    </HStack>
+                                ))
+                            ) : (
+                                <Text>No add-ons selected.</Text>
+                            )}
                         </Box>
                         {voucherDiscount > 0 && (
                             <Box bg="green.50" p={4} borderRadius="md" mb={4}>

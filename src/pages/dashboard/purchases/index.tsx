@@ -244,7 +244,9 @@ const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) =>
 
 const PurchaseDetails = ({reservation}) => {
 
-    const dateObject = new Date(reservation.reservation_date);
+    const dateObject = reservation?.reservation_date
+        ? new Date(reservation.reservation_date)
+        : new Date();
 
     const datePart = dateObject.toISOString().split("T")[0];
 

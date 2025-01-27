@@ -189,35 +189,6 @@ const PurchasePage = () => {
         setAttendees(updated);
     };
 
-    const incrementAddon = (addonId: string) => {
-        setSelectedAddOns((prev) =>
-            prev.map((sel) =>
-                sel.addOnId === addonId
-                    ? {...sel, quantity: sel.quantity + 1}
-                    : sel
-            )
-        );
-    };
-
-    const decrementAddon = (addonId: string) => {
-        setSelectedAddOns((prev) =>
-            prev.map((sel) =>
-                sel.addOnId === addonId
-                    ? {...sel, quantity: sel.quantity > 0 ? sel.quantity - 1 : 0}
-                    : sel
-            )
-        );
-    };
-
-    const toggleCheckboxAddon = (addonId: string, newValue: boolean) => {
-        setSelectedAddOns((prev) =>
-            prev.map((sel) =>
-                sel.addOnId === addonId
-                    ? {...sel, checked: newValue}
-                    : sel
-            )
-        );
-    };
 
     const basePrice = tour?.price
     const totalBase = quantity * basePrice;
@@ -267,7 +238,7 @@ const PurchasePage = () => {
             minute = parseInt(mStr, 10);
         }
 
-        const finalDate = new Date(year, (month - 1), day, hour, minute);
+        const finalDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
         return finalDate.toISOString();
     };
 
@@ -300,6 +271,7 @@ const PurchasePage = () => {
         : 0;
 
     const totalWithDiscount = Math.max(finalTotalPrice - voucherDiscount, 0);
+
     const handleCreateReservationAndPay = async () => {
         if (!stripe || !elements) {
             alert("Stripe has not yet been loaded.");
@@ -350,15 +322,23 @@ const PurchasePage = () => {
                 tourId: id,
                 userId: userId,
                 reservation_date: reservationDateTime,
-                addons: selectedAddOns.map((sel) => ({
-                    addonId: sel.addOnId,
-                    quantity: sel.checked ? 1 : sel.quantity,
-                })),
+                addons: Object.entries(selectedAddons).map(([addonId, value]) => {
+                    if (typeof value === "boolean") {
+                        return {
+                            addonId,
+                            quantity: value ? 1 : 0,
+                        };
+                    }
+
+                    return {
+                        addonId,
+                        quantity: value,
+                    };
+                }),
                 total_price: totalWithDiscount,
                 guestQuantity: quantity,
                 status: "ACCEPTED",
                 createdBy: "Back Office",
-
                 purchaseTags,
                 purchaseNote,
             };
@@ -542,23 +522,23 @@ const PurchasePage = () => {
 
 
     const handleIncrement = (addonId) => {
-        setSelectedAddons(prev => ({
+        setSelectedAddons((prev) => ({
             ...prev,
-            [addonId]: (prev[addonId] || 0) + 1
+            [addonId]: (prev[addonId] || 0) + 1,
         }));
     };
 
     const handleDecrement = (addonId) => {
-        setSelectedAddons(prev => ({
+        setSelectedAddons((prev) => ({
             ...prev,
-            [addonId]: prev[addonId] > 0 ? prev[addonId] - 1 : 0
+            [addonId]: Math.max((prev[addonId] || 0) - 1, 0),
         }));
     };
 
     const handleCheckboxChange = (addonId) => {
-        setSelectedAddons(prev => ({
+        setSelectedAddons((prev) => ({
             ...prev,
-            [addonId]: !prev[addonId]
+            [addonId]: !prev[addonId],
         }));
     };
 

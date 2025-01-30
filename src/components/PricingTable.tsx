@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {
     Box,
     Button,
@@ -32,17 +32,15 @@ import {useDemographics} from "../contexts/DemographicsContext";
 const PricingTable = () => {
     const [pricingStructure, setPricingStructure] = useState("tiered");
     const [flatPrice, setFlatPrice] = useState(169);
-    const [tiers, setTiers] = useState([{guests: "1+ Guests", price: 149}]);
+    const [tiers, setTiers] = useState([]);
     const [newTier, setNewTier] = useState({
         guests: "",
-        basePrice: 0,
-        adjustment: 0,
-        adjustmentType: "$",
-        operation: "Markup"
+        basePrices: {},
+        adjustments: {},
+        adjustmentTypes: {},
+        operations: {},
     });
-    const [tempPrice, setTempPrice] = useState(flatPrice);
     const {demographics} = useDemographics();
-    const [tierData, setTierData] = useState({});
 
     const basePriceModal = useDisclosure();
     const tierPriceModal = useDisclosure();
@@ -51,41 +49,110 @@ const PricingTable = () => {
         setPricingStructure(value);
     };
 
-    useEffect(() => {
-        setTiers((prevTiers) => prevTiers.filter(tier => demographics.some(d => d.id === tier.id)));
-    }, [demographics]);
-
     const handleAddTier = () => {
-        setNewTier({guests: "", basePrice: 0, adjustment: 0, adjustmentType: "$", operation: "Markup"});
+        const initialBasePrices = demographics.reduce((acc, demo) => {
+            acc[demo.id] = 0;
+            return acc;
+        }, {});
+
+        const initialAdjustments = demographics.reduce((acc, demo) => {
+            acc[demo.id] = 0;
+            return acc;
+        }, {});
+
+        const initialAdjustmentTypes = demographics.reduce((acc, demo) => {
+            acc[demo.id] = "$";
+            return acc;
+        }, {});
+
+        const initialOperations = demographics.reduce((acc, demo) => {
+            acc[demo.id] = "Markup";
+            return acc;
+        }, {});
+
+        setNewTier({
+            guests: "",
+            basePrices: initialBasePrices,
+            adjustments: initialAdjustments,
+            adjustmentTypes: initialAdjustmentTypes,
+            operations: initialOperations,
+        });
         tierPriceModal.onOpen();
     };
 
     const handleSaveTier = () => {
-        const finalPrice =
-            newTier.operation === "Markup"
-                ? newTier.adjustmentType === "$"
-                    ? newTier.basePrice + newTier.adjustment
-                    : newTier.basePrice + (newTier.basePrice * newTier.adjustment) / 100
-                : newTier.adjustmentType === "$"
-                    ? newTier.basePrice - newTier.adjustment
-                    : newTier.basePrice - (newTier.basePrice * newTier.adjustment) / 100;
+        const finalPrices = {};
+        for (const demo of demographics) {
+            const basePrice = newTier.basePrices[demo.id] || 0;
+            const adjustment = newTier.adjustments[demo.id] || 0;
+            const adjustmentType = newTier.adjustmentTypes[demo.id] || "$";
+            const operation = newTier.operations[demo.id] || "Markup";
 
-        setTiers([
-            ...tiers,
-            ...tiers,
-            {...newTier, guests: `${newTier.guests} + Guests`, price: finalPrice.toFixed(2)}
-        ]);
+            finalPrices[demo.id] =
+                operation === "Markup"
+                    ? adjustmentType === "$"
+                        ? basePrice + adjustment
+                        : basePrice + (basePrice * adjustment) / 100
+                    : adjustmentType === "$"
+                        ? basePrice - adjustment
+                        : basePrice - (basePrice * adjustment) / 100;
+        }
+
+        const newTierToSave = {
+            guests: `${newTier.guests} + Guests`,
+            basePrices: newTier.basePrices,
+            finalPrices,
+            adjustments: newTier.adjustments,
+            adjustmentTypes: newTier.adjustmentTypes,
+            operations: newTier.operations,
+        };
+
+        setTiers([...tiers, newTierToSave]);
         tierPriceModal.onClose();
     };
 
-    const handleDeleteTier = () => {
-        setTiers((prevTiers) => prevTiers.filter(tier => tier.id !== newTier.id));
-        tierPriceModal.onClose();
+    const handleDeleteTier = (index) => {
+        setTiers(tiers.filter((_, i) => i !== index));
     };
 
-    const handleSavePrice = () => {
-        setFlatPrice(tempPrice);
-        basePriceModal.onClose();
+    const handleBasePriceChange = (demoId, value) => {
+        setNewTier((prev) => ({
+            ...prev,
+            basePrices: {
+                ...prev.basePrices,
+                [demoId]: Number(value),
+            },
+        }));
+    };
+
+    const handleAdjustmentChange = (demoId, value) => {
+        setNewTier((prev) => ({
+            ...prev,
+            adjustments: {
+                ...prev.adjustments,
+                [demoId]: Number(value),
+            },
+        }));
+    };
+
+    const handleAdjustmentTypeChange = (demoId, value) => {
+        setNewTier((prev) => ({
+            ...prev,
+            adjustmentTypes: {
+                ...prev.adjustmentTypes,
+                [demoId]: value,
+            },
+        }));
+    };
+
+    const handleOperationChange = (demoId, value) => {
+        setNewTier((prev) => ({
+            ...prev,
+            operations: {
+                ...prev.operations,
+                [demoId]: value,
+            },
+        }));
     };
 
     return (
@@ -177,7 +244,7 @@ const PricingTable = () => {
                                     <Tr key={demo.id}>
                                         <Td>{demo.name}</Td>
                                         {tiers.map((tier, index) => (
-                                            <Td key={index}>${tier.price}</Td>
+                                            <Td key={index}>${tier.finalPrices[demo.id].toFixed(2)}</Td>
                                         ))}
                                     </Tr>
                                 ))}
@@ -190,7 +257,7 @@ const PricingTable = () => {
             <Modal isOpen={tierPriceModal.isOpen} onClose={tierPriceModal.onClose} isCentered>
                 <ModalOverlay/>
                 <ModalContent maxWidth="900px" width="90%">
-                    <ModalHeader>Tier {tiers.length + 1}</ModalHeader>
+                    <ModalHeader>Edit Tier</ModalHeader>
                     <ModalCloseButton/>
                     <ModalBody>
                         <Text fontSize="sm" mb={2}>
@@ -200,9 +267,7 @@ const PricingTable = () => {
                             type="number"
                             placeholder="Enter guest count"
                             value={newTier.guests}
-                            onChange={(e) =>
-                                setNewTier({...newTier, guests: e.target.value})
-                            }
+                            onChange={(e) => setNewTier({...newTier, guests: e.target.value})}
                         />
 
                         <Text fontSize="md" fontWeight="bold" mt={4} mb={2}>
@@ -228,31 +293,22 @@ const PricingTable = () => {
                                                 type="number"
                                                 width="100px"
                                                 placeholder="Enter base price"
-                                                value={newTier?.basePrice || ""}
-                                                onChange={(e) =>
-                                                    setNewTier({...newTier, basePrice: Number(e.target.value) || ""})
-                                                }
+                                                value={newTier.basePrices[demo.id] || ""}
+                                                onChange={(e) => handleBasePriceChange(demo.id, e.target.value)}
                                             />
                                         </Td>
                                         <Td>
                                             <Input
                                                 type="number"
                                                 width="80px"
-                                                value={newTier.adjustment}
-                                                onChange={(e) =>
-                                                    setNewTier({
-                                                        ...newTier,
-                                                        adjustment: Number(e.target.value),
-                                                    })
-                                                }
+                                                value={newTier.adjustments[demo.id] || ""}
+                                                onChange={(e) => handleAdjustmentChange(demo.id, e.target.value)}
                                             />
                                         </Td>
                                         <Td>
                                             <Select
-                                                value={newTier.adjustmentType}
-                                                onChange={(e) =>
-                                                    setNewTier({...newTier, adjustmentType: e.target.value})
-                                                }
+                                                value={newTier.adjustmentTypes[demo.id] || "$"}
+                                                onChange={(e) => handleAdjustmentTypeChange(demo.id, e.target.value)}
                                             >
                                                 <option value="$">$</option>
                                                 <option value="%">%</option>
@@ -260,10 +316,8 @@ const PricingTable = () => {
                                         </Td>
                                         <Td>
                                             <Select
-                                                value={newTier.operation}
-                                                onChange={(e) =>
-                                                    setNewTier({...newTier, operation: e.target.value})
-                                                }
+                                                value={newTier.operations[demo.id] || "Markup"}
+                                                onChange={(e) => handleOperationChange(demo.id, e.target.value)}
                                             >
                                                 <option value="Markup">Markup</option>
                                                 <option value="Markdown">Markdown</option>
@@ -271,15 +325,13 @@ const PricingTable = () => {
                                         </Td>
                                         <Td>
                                             $
-                                            {newTier.operation === "Markup"
-                                                ? newTier.adjustmentType === "$"
-                                                    ? newTier.basePrice + newTier.adjustment
-                                                    : newTier.basePrice +
-                                                    (newTier.basePrice * newTier.adjustment) / 100
-                                                : newTier.adjustmentType === "$"
-                                                    ? newTier.basePrice - newTier.adjustment
-                                                    : newTier.basePrice -
-                                                    (newTier.basePrice * newTier.adjustment) / 100}
+                                            {newTier.operations[demo.id] === "Markup"
+                                                ? newTier.adjustmentTypes[demo.id] === "$"
+                                                    ? (newTier.basePrices[demo.id] || 0) + (newTier.adjustments[demo.id] || 0)
+                                                    : (newTier.basePrices[demo.id] || 0) + ((newTier.basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100
+                                                : newTier.adjustmentTypes[demo.id] === "$"
+                                                    ? (newTier.basePrices[demo.id] || 0) - (newTier.adjustments[demo.id] || 0)
+                                                    : (newTier.basePrices[demo.id] || 0) - ((newTier.basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100}
                                         </Td>
                                     </Tr>
                                 ))}

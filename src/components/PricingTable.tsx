@@ -33,6 +33,7 @@ const PricingTable = () => {
     const [pricingStructure, setPricingStructure] = useState("tiered");
     const [flatPrice, setFlatPrice] = useState(169);
     const [tiers, setTiers] = useState([]);
+    const [firstBasePrices, setFirstBasePrices] = useState({});
     const [newTier, setNewTier] = useState({
         guests: "",
         basePrices: {},
@@ -51,7 +52,7 @@ const PricingTable = () => {
 
     const handleAddTier = () => {
         const initialBasePrices = demographics.reduce((acc, demo) => {
-            acc[demo.id] = 0;
+            acc[demo.id] = tiers.length === 0 ? 0 : firstBasePrices[demo.id] || 0;
             return acc;
         }, {});
 
@@ -107,12 +108,20 @@ const PricingTable = () => {
             operations: newTier.operations,
         };
 
+        if (tiers.length === 0) {
+            setFirstBasePrices(newTier.basePrices);
+        }
+
         setTiers([...tiers, newTierToSave]);
         tierPriceModal.onClose();
     };
 
     const handleDeleteTier = (index) => {
+        const updatedTiers = tiers.filter((_, i) => i !== index);
         setTiers(tiers.filter((_, i) => i !== index));
+        if (index === 0 && updatedTiers.length > 0) {
+            setFirstBasePrices(updatedTiers[0].basePrices);
+        }
     };
 
     const handleBasePriceChange = (demoId, value) => {
@@ -295,6 +304,7 @@ const PricingTable = () => {
                                                 placeholder="Enter base price"
                                                 value={newTier.basePrices[demo.id] || ""}
                                                 onChange={(e) => handleBasePriceChange(demo.id, e.target.value)}
+                                                disabled={tiers.length > 0}
                                             />
                                         </Td>
                                         <Td>

@@ -42,6 +42,7 @@ const PricingTable = () => {
     });
     const [tempPrice, setTempPrice] = useState(flatPrice);
     const {demographics} = useDemographics();
+    const [tierData, setTierData] = useState({});
 
     const basePriceModal = useDisclosure();
     const tierPriceModal = useDisclosure();
@@ -71,8 +72,14 @@ const PricingTable = () => {
 
         setTiers([
             ...tiers,
+            ...tiers,
             {...newTier, guests: `${newTier.guests} + Guests`, price: finalPrice.toFixed(2)}
         ]);
+        tierPriceModal.onClose();
+    };
+
+    const handleDeleteTier = () => {
+        setTiers((prevTiers) => prevTiers.filter(tier => tier.id !== newTier.id));
         tierPriceModal.onClose();
     };
 
@@ -280,7 +287,19 @@ const PricingTable = () => {
                         </Table>
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="ghost" onClick={tierPriceModal.onClose}>
+                        {newTier?.guests && (
+                            <Button
+                                colorScheme="gray"
+                                variant="outline"
+                                mr="auto"
+                                onClick={() => {
+                                    handleDeleteTier(newTier.guests);
+                                }}
+                            >
+                                Delete
+                            </Button>
+                        )}
+                        <Button variant="outline" onClick={tierPriceModal.onClose}>
                             Cancel
                         </Button>
                         <Button colorScheme="blue" ml={3} onClick={handleSaveTier}>

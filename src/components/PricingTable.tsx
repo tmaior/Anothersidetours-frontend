@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import {
     Box,
     Button,
@@ -26,22 +26,22 @@ import {
     useDisclosure,
     VStack,
 } from "@chakra-ui/react";
-import { AddIcon, EditIcon } from "@chakra-ui/icons";
-import { useDemographics } from "../contexts/DemographicsContext";
+import {AddIcon, EditIcon} from "@chakra-ui/icons";
+import {useDemographics} from "../contexts/DemographicsContext";
 
 const PricingTable = () => {
     const [pricingStructure, setPricingStructure] = useState("tiered");
     const [flatPrice, setFlatPrice] = useState(169);
-    const [tiers, setTiers] = useState([{ guests: "1+ Guests", price: 149 }]);
+    const [tiers, setTiers] = useState([{guests: "1+ Guests", price: 149}]);
     const [newTier, setNewTier] = useState({
         guests: "",
-        basePrice: 149,
+        basePrice: 0,
         adjustment: 0,
         adjustmentType: "$",
         operation: "Markup"
     });
     const [tempPrice, setTempPrice] = useState(flatPrice);
-    const { demographics } = useDemographics();
+    const {demographics} = useDemographics();
 
     const basePriceModal = useDisclosure();
     const tierPriceModal = useDisclosure();
@@ -50,8 +50,12 @@ const PricingTable = () => {
         setPricingStructure(value);
     };
 
+    useEffect(() => {
+        setTiers((prevTiers) => prevTiers.filter(tier => demographics.some(d => d.id === tier.id)));
+    }, [demographics]);
+
     const handleAddTier = () => {
-        setNewTier({ guests: "", basePrice: 149, adjustment: 0, adjustmentType: "$", operation: "Markup" });
+        setNewTier({guests: "", basePrice: 0, adjustment: 0, adjustmentType: "$", operation: "Markup"});
         tierPriceModal.onOpen();
     };
 
@@ -67,7 +71,7 @@ const PricingTable = () => {
 
         setTiers([
             ...tiers,
-            { ...newTier, guests: `${newTier.guests} + Guests`, price: finalPrice.toFixed(2) }
+            {...newTier, guests: `${newTier.guests} + Guests`, price: finalPrice.toFixed(2)}
         ]);
         tierPriceModal.onClose();
     };
@@ -101,7 +105,7 @@ const PricingTable = () => {
                         </Text>
                         {pricingStructure === "tiered" && (
                             <Button
-                                leftIcon={<AddIcon />}
+                                leftIcon={<AddIcon/>}
                                 size="sm"
                                 onClick={handleAddTier}
                                 colorScheme="gray"
@@ -128,7 +132,7 @@ const PricingTable = () => {
                                         <Td>${flatPrice}</Td>
                                         <Td>
                                             <IconButton
-                                                icon={<EditIcon />}
+                                                icon={<EditIcon/>}
                                                 size="xs"
                                                 variant="ghost"
                                                 aria-label="Edit Price"
@@ -148,7 +152,7 @@ const PricingTable = () => {
                                         <Th key={index}>
                                             {tier.guests}{" "}
                                             <IconButton
-                                                icon={<EditIcon />}
+                                                icon={<EditIcon/>}
                                                 size="xs"
                                                 variant="ghost"
                                                 aria-label="Edit Tier"
@@ -177,10 +181,10 @@ const PricingTable = () => {
             </VStack>
 
             <Modal isOpen={tierPriceModal.isOpen} onClose={tierPriceModal.onClose} isCentered>
-                <ModalOverlay />
-                <ModalContent maxWidth="700px">
+                <ModalOverlay/>
+                <ModalContent maxWidth="900px" width="90%">
                     <ModalHeader>Tier {tiers.length + 1}</ModalHeader>
-                    <ModalCloseButton />
+                    <ModalCloseButton/>
                     <ModalBody>
                         <Text fontSize="sm" mb={2}>
                             For group size greater than or equal to
@@ -190,7 +194,7 @@ const PricingTable = () => {
                             placeholder="Enter guest count"
                             value={newTier.guests}
                             onChange={(e) =>
-                                setNewTier({ ...newTier, guests: e.target.value })
+                                setNewTier({...newTier, guests: e.target.value})
                             }
                         />
 
@@ -212,7 +216,17 @@ const PricingTable = () => {
                                 {demographics.map((demo) => (
                                     <Tr key={demo.id}>
                                         <Td>{demo.name}</Td>
-                                        <Td>${newTier.basePrice}</Td>
+                                        <Td>
+                                            <Input
+                                                type="number"
+                                                width="100px"
+                                                placeholder="Enter base price"
+                                                value={newTier?.basePrice || ""}
+                                                onChange={(e) =>
+                                                    setNewTier({...newTier, basePrice: Number(e.target.value) || ""})
+                                                }
+                                            />
+                                        </Td>
                                         <Td>
                                             <Input
                                                 type="number"
@@ -230,7 +244,7 @@ const PricingTable = () => {
                                             <Select
                                                 value={newTier.adjustmentType}
                                                 onChange={(e) =>
-                                                    setNewTier({ ...newTier, adjustmentType: e.target.value })
+                                                    setNewTier({...newTier, adjustmentType: e.target.value})
                                                 }
                                             >
                                                 <option value="$">$</option>
@@ -241,7 +255,7 @@ const PricingTable = () => {
                                             <Select
                                                 value={newTier.operation}
                                                 onChange={(e) =>
-                                                    setNewTier({ ...newTier, operation: e.target.value })
+                                                    setNewTier({...newTier, operation: e.target.value})
                                                 }
                                             >
                                                 <option value="Markup">Markup</option>

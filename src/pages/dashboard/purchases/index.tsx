@@ -34,7 +34,7 @@ import {PiPencilSimpleLineDuotone} from "react-icons/pi";
 import {useRouter} from "next/router";
 import {HiOutlineMail} from "react-icons/hi";
 import {RxPerson} from "react-icons/rx";
-import {useGuest} from "../../../components/GuestContext";
+import {useGuest} from "../../../contexts/GuestContext";
 import ChangeGuestQuantityModal from "../../../components/ChangeGuestQuantityModal";
 import ChangeArrivalModal from "../../../components/ChangeArrivalModal";
 import SendMessageModal from "../../../components/SendMessageModal";

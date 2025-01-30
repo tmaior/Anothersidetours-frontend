@@ -1,4 +1,4 @@
-import {useGuest} from "./GuestContext";
+import {useGuest} from "../contexts/GuestContext";
 import {
     Alert,
     AlertIcon,

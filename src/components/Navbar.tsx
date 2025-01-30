@@ -1,5 +1,5 @@
 import {Box, Flex, Text} from "@chakra-ui/react";
-import {useGuest} from "./GuestContext";
+import {useGuest} from "../contexts/GuestContext";
 
 interface NavbarProps {
     title?: string;

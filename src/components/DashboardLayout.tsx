@@ -37,7 +37,7 @@ import {GiSettingsKnobs} from "react-icons/gi";
 import {VscGraph} from "react-icons/vsc";
 import {AiOutlineDashboard, AiOutlinePlus} from "react-icons/ai";
 import {IoMdAppstore} from "react-icons/io";
-import {useGuest} from "./GuestContext";
+import {useGuest} from "../contexts/GuestContext";
 
 export default function DashboardLayout({children}: { children: React.ReactNode }) {
     const router = useRouter();

@@ -1,6 +1,6 @@
 import { Input, Text, VStack } from "@chakra-ui/react";
 import { forwardRef, useImperativeHandle, useState } from "react";
-import { useGuest } from "./GuestContext";
+import { useGuest } from "../contexts/GuestContext";
 import InputMask from "react-input-mask";
 
 const FormInfo = forwardRef((props, ref) => {

@@ -1,7 +1,7 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
 import PickupSpinner from "./PickupSpinner";
 import CustomCheckbox from "./CustomCheckbox";
-import {useGuest} from "./GuestContext";
+import {useGuest} from "../contexts/GuestContext";
 import {useEffect, useState} from "react";
 
 interface AddOnProps {

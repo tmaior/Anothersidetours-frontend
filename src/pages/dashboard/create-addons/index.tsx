@@ -16,7 +16,7 @@ import {
 import {DeleteIcon} from "@chakra-ui/icons";
 import DashboardLayout from "../../../components/DashboardLayout";
 import {useRouter} from "next/router";
-import {useGuest} from "../../../components/GuestContext";
+import {useGuest} from "../../../contexts/GuestContext";
 import withAuth from "../../../utils/withAuth";
 
 function AddonContentPage() {

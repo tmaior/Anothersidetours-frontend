@@ -20,7 +20,7 @@ import {SearchIcon} from "@chakra-ui/icons";
 import React, {useEffect, useState} from "react";
 import {useRouter} from "next/router";
 import ReservationDetail from "../reservation-details";
-import {useGuest} from "../../../components/GuestContext";
+import {useGuest} from "../../../contexts/GuestContext";
 import withAuth from "../../../utils/withAuth";
 import NotesFromReservationModalicon from "../../../components/NotesFromReservationModalicon";
 import CustomDatePicker from "../../../components/DatePickerDefault";

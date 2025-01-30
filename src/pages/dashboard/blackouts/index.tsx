@@ -27,7 +27,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
 import DashboardLayout from "../../../components/DashboardLayout";
 import withAuth from "../../../utils/withAuth";
-import {useGuest} from "../../../components/GuestContext";
+import {useGuest} from "../../../contexts/GuestContext";
 
 function BlackoutDatesManagement() {
     const [blackoutDates, setBlackoutDates] = useState([]);

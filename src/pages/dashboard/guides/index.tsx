@@ -5,7 +5,7 @@ import withAuth from "../../../utils/withAuth";
 import DashboardLayout from "../../../components/DashboardLayout";
 import {useRouter} from "next/router";
 import axios from "axios";
-import {useGuest} from "../../../components/GuestContext";
+import {useGuest} from "../../../contexts/GuestContext";
 
 interface Guide {
     id: number;

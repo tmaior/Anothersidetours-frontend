@@ -20,7 +20,7 @@ import {
     VStack
 } from "@chakra-ui/react";
 import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
-import {useGuest} from "../../../components/GuestContext";
+import {useGuest} from "../../../contexts/GuestContext";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ProgressBar from "../../../components/ProgressBar";
 import withAuth from "../../../utils/withAuth";

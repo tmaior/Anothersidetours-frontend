@@ -33,7 +33,8 @@ import {
     VStack
 } from "@chakra-ui/react";
 import {DeleteIcon, DragHandleIcon, EditIcon} from "@chakra-ui/icons";
-import {useGuest} from "./GuestContext";
+import {useGuest} from "../contexts/GuestContext";
+import {useDemographics} from "../contexts/DemographicsContext";
 
 interface DemographicsProps {
     tourId: string | null;
@@ -48,6 +49,7 @@ const DemographicsTable = forwardRef(({tourId}: DemographicsProps, ref) => {
     const {isOpen, onOpen, onClose} = useDisclosure();
     const {isOpen: isModalOpen, onOpen: openModal, onClose: closeModal} = useDisclosure();
     const [newDemographic, setNewDemographic] = useState({name: "", caption: ""});
+    const {demographics, addDemographic, removeDemographic} = useDemographics();
 
     useEffect(() => {
         if (tourId) {
@@ -72,16 +74,18 @@ const DemographicsTable = forwardRef(({tourId}: DemographicsProps, ref) => {
             .catch((err) => console.error("Error fetching available demographics:", err));
     }, [tenantId]);
 
-    const handleSelectDemographic = (selectedId: string) => {
+    const handleSelectDemographic = (selectedId) => {
         const selectedDemo = availableDemographics.find((demo) => demo.id === selectedId);
         if (selectedDemo && !selectedDemographics.find((demo) => demo.id === selectedId)) {
             setSelectedDemographics([...selectedDemographics, selectedDemo]);
+            addDemographic(selectedDemo);
         }
         onClose();
     };
 
-    const handleRemoveDemographic = (id: string) => {
+    const handleRemoveDemographic = (id) => {
         setSelectedDemographics(selectedDemographics.filter((demo) => demo.id !== id));
+        removeDemographic(id);
     };
 
     const handleSaveDemographics = async () => {

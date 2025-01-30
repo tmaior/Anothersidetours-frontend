@@ -32,7 +32,7 @@ import React, {useEffect, useRef, useState} from "react";
 import {useRouter} from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
 import {DeleteIcon, EditIcon, SearchIcon, ViewIcon} from "@chakra-ui/icons";
-import {useGuest} from "../../../components/GuestContext";
+import {useGuest} from "../../../contexts/GuestContext";
 import withAuth from "../../../utils/withAuth";
 import {BsThreeDots} from "react-icons/bs";
 

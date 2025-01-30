@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 import FooterBar from "./Footer";
 import {CalendarIcon, TimeIcon} from "@chakra-ui/icons";
-import {useGuest} from "./GuestContext";
+import {useGuest} from "../contexts/GuestContext";
 import {format} from "date-fns";
 
 interface FinalModalProps {

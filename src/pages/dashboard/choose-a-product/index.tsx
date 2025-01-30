@@ -16,7 +16,7 @@ import {
 import DashboardLayout from '../../../components/DashboardLayout';
 import {SearchIcon} from '@chakra-ui/icons';
 import Link from 'next/link';
-import {useGuest} from '../../../components/GuestContext';
+import {useGuest} from '../../../contexts/GuestContext';
 import withAuth from "../../../utils/withAuth";
 
 function ToursPage() {

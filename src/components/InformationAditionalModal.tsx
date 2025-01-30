@@ -19,7 +19,7 @@ import FinalModal from "./FinalModal";
 import React, {useEffect, useState} from "react";
 import {CalendarIcon} from "@chakra-ui/icons";
 import AdditionalInformation from "./AdditionalInformationInputs";
-import {useGuest} from "./GuestContext";
+import {useGuest} from "../contexts/GuestContext";
 
 interface InformationAdditionalModalProps {
     isOpen: boolean,

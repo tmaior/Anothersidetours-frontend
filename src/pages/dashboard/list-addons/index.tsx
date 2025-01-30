@@ -15,7 +15,7 @@ import {useEffect, useState} from "react";
 import {useRouter} from "next/router";
 import DashboardLayout from "../../../components/DashboardLayout";
 import withAuth from "../../../utils/withAuth";
-import {useGuest} from "../../../components/GuestContext";
+import {useGuest} from "../../../contexts/GuestContext";
 
 function ListAddons() {
     const bgColor = useColorModeValue("white", "gray.800");

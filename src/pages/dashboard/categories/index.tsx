@@ -26,7 +26,7 @@ import {
 import {DeleteIcon, SearchIcon, SettingsIcon} from "@chakra-ui/icons";
 import DashboardLayout from "../../../components/DashboardLayout";
 import withAuth from "../../../utils/withAuth";
-import {useGuest} from "../../../components/GuestContext";
+import {useGuest} from "../../../contexts/GuestContext";
 
 interface Category {
     id: string;

@@ -18,7 +18,7 @@ import { FaTag } from "react-icons/fa";
 import { MdOutlineAccessTimeFilled } from "react-icons/md";
 import BookingDetails from "./BookingDetails";
 import CheckoutModal from "./CheckoutModal";
-import { useGuest } from "./GuestContext";
+import { useGuest } from "../contexts/GuestContext";
 
 export default function CardHome({ title, description, originalPrice, discountedPrice, duration, image,valuePrice,addons,onSelect,}) {
     const { isOpen: isBookingOpen, onOpen: openBooking, onClose: closeBooking } = useDisclosure();

@@ -5,7 +5,7 @@ import {
 } from "@chakra-ui/react";
 import BookingDetails from "../../components/BookingDetails";
 import CheckoutModal from "../../components/CheckoutModal";
-import {useGuest} from "../../components/GuestContext";
+import {useGuest} from "../../contexts/GuestContext";
 import ModalPageLayout from "../../components/ModalPageLayout";
 
 export default function BookingDetailsPage() {

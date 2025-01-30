@@ -3,7 +3,7 @@ import FooterBar from "./Footer";
 import Navbar from "./Navbar";
 import Grid from "./Grid";
 import AddOns from "./Add-Ons";
-import {useGuest} from "./GuestContext";
+import {useGuest} from "../contexts/GuestContext";
 
 interface BookingDetailsProps {
     onContinue?: () => void;

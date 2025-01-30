@@ -2,7 +2,7 @@ import {Box, SimpleGrid, Spinner, Text} from "@chakra-ui/react";
 import {useEffect, useState} from "react";
 import CardHome from "./CardHome";
 import {api} from "../services/api";
-import {useGuest} from "./GuestContext";
+import {useGuest} from "../contexts/GuestContext";
 
 interface CardData {
     id: number;

@@ -15,7 +15,7 @@ import {
     startOfWeek,
     subMonths,
 } from 'date-fns';
-import {useGuest} from "./GuestContext";
+import {useGuest} from "../contexts/GuestContext";
 import axios from "axios";
 
 interface DatePickerProps {

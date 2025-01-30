@@ -1,5 +1,5 @@
 import PickupSpinner from "./PickupSpinner";
-import {useGuest} from "./GuestContext";
+import {useGuest} from "../contexts/GuestContext";
 
 export default function Quantity() {
     const { guestQuantity, setGuestQuantity } = useGuest();

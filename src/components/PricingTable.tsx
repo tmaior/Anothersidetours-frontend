@@ -33,8 +33,8 @@ const PricingTable = () => {
     const [pricingStructure, setPricingStructure] = useState("tiered");
     const [flatPrice, setFlatPrice] = useState(169);
     const [tiers, setTiers] = useState([]);
-    const [firstBasePrices, setFirstBasePrices] = useState({});
     const [newTier, setNewTier] = useState({
+        id: null,
         guests: "",
         basePrices: {},
         adjustments: {},
@@ -52,7 +52,11 @@ const PricingTable = () => {
 
     const handleAddTier = () => {
         const initialBasePrices = demographics.reduce((acc, demo) => {
-            acc[demo.id] = tiers.length === 0 ? 0 : firstBasePrices[demo.id] || 0;
+            if (tiers.length > 0) {
+                acc[demo.id] = tiers[0].basePrices[demo.id] || 0;
+            } else {
+                acc[demo.id] = 0;
+            }
             return acc;
         }, {});
 
@@ -72,6 +76,7 @@ const PricingTable = () => {
         }, {});
 
         setNewTier({
+            id: crypto.randomUUID(),
             guests: "",
             basePrices: initialBasePrices,
             adjustments: initialAdjustments,
@@ -100,6 +105,7 @@ const PricingTable = () => {
         }
 
         const newTierToSave = {
+            id: newTier.id,
             guests: `${newTier.guests} + Guests`,
             basePrices: newTier.basePrices,
             finalPrices,
@@ -109,19 +115,15 @@ const PricingTable = () => {
         };
 
         if (tiers.length === 0) {
-            setFirstBasePrices(newTier.basePrices);
+            setTiers([newTierToSave]);
+        } else {
+            setTiers([...tiers, newTierToSave]);
         }
-
-        setTiers([...tiers, newTierToSave]);
         tierPriceModal.onClose();
     };
 
-    const handleDeleteTier = (index) => {
-        const updatedTiers = tiers.filter((_, i) => i !== index);
-        setTiers(tiers.filter((_, i) => i !== index));
-        if (index === 0 && updatedTiers.length > 0) {
-            setFirstBasePrices(updatedTiers[0].basePrices);
-        }
+    const handleDeleteTier = (id) => {
+        setTiers(tiers.filter((tier) => tier.id !== id));
     };
 
     const handleBasePriceChange = (demoId, value) => {
@@ -162,6 +164,11 @@ const PricingTable = () => {
                 [demoId]: value,
             },
         }));
+    };
+
+    const handleEditTier = (tier) => {
+        setNewTier(tier);
+        tierPriceModal.onOpen();
     };
 
     return (
@@ -231,18 +238,15 @@ const PricingTable = () => {
                             <Thead bg="gray.100">
                                 <Tr>
                                     <Th>Demographic</Th>
-                                    {tiers.map((tier, index) => (
-                                        <Th key={index}>
+                                    {tiers.map((tier) => (
+                                        <Th key={tier.id}>
                                             {tier.guests}{" "}
                                             <IconButton
                                                 icon={<EditIcon/>}
                                                 size="xs"
                                                 variant="ghost"
                                                 aria-label="Edit Tier"
-                                                onClick={() => {
-                                                    setNewTier(tier);
-                                                    tierPriceModal.onOpen();
-                                                }}
+                                                onClick={() => handleEditTier(tier)}
                                             />
                                         </Th>
                                     ))}
@@ -252,8 +256,8 @@ const PricingTable = () => {
                                 {demographics.map((demo) => (
                                     <Tr key={demo.id}>
                                         <Td>{demo.name}</Td>
-                                        {tiers.map((tier, index) => (
-                                            <Td key={index}>${tier.finalPrices[demo.id].toFixed(2)}</Td>
+                                        {tiers.map((tier) => (
+                                            <Td key={tier.id}>${tier.finalPrices[demo.id].toFixed(2)}</Td>
                                         ))}
                                     </Tr>
                                 ))}
@@ -304,7 +308,7 @@ const PricingTable = () => {
                                                 placeholder="Enter base price"
                                                 value={newTier.basePrices[demo.id] || ""}
                                                 onChange={(e) => handleBasePriceChange(demo.id, e.target.value)}
-                                                disabled={tiers.length > 0}
+                                                disabled={tiers.length > 0 && newTier.id !== tiers[0].id}
                                             />
                                         </Td>
                                         <Td>
@@ -349,14 +353,12 @@ const PricingTable = () => {
                         </Table>
                     </ModalBody>
                     <ModalFooter>
-                        {newTier?.guests && (
+                        {newTier?.id && (
                             <Button
                                 colorScheme="gray"
                                 variant="outline"
                                 mr="auto"
-                                onClick={() => {
-                                    handleDeleteTier(newTier.guests);
-                                }}
+                                onClick={() => handleDeleteTier(newTier.id)}
                             >
                                 Delete
                             </Button>

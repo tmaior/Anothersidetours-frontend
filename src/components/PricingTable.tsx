@@ -219,7 +219,7 @@ const PricingTable = () => {
                                 {demographics.map((demo) => (
                                     <Tr key={demo.id}>
                                         <Td>{demo.name}</Td>
-                                        <Td>${flatPrice}</Td>
+                                        <Td>${newTier.basePrices[demo.id].toFixed(2)}</Td>
                                         <Td>
                                             <IconButton
                                                 icon={<EditIcon/>}

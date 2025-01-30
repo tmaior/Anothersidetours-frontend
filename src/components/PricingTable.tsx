@@ -30,8 +30,8 @@ import {AddIcon, EditIcon} from "@chakra-ui/icons";
 
 const PricingTable = () => {
     const [pricingStructure, setPricingStructure] = useState("tiered");
+    const [flatPrice, setFlatPrice] = useState(169);
     const [tiers, setTiers] = useState([{guests: "1+ Guests", price: 149}]);
-    const {isOpen, onOpen, onClose} = useDisclosure();
     const [newTier, setNewTier] = useState({
         guests: "",
         basePrice: 149,
@@ -39,6 +39,10 @@ const PricingTable = () => {
         adjustmentType: "$",
         operation: "Markup"
     });
+    const [tempPrice, setTempPrice] = useState(flatPrice);
+
+    const basePriceModal = useDisclosure();
+    const tierPriceModal = useDisclosure();
 
     const handlePricingChange = (value) => {
         setPricingStructure(value);
@@ -46,7 +50,7 @@ const PricingTable = () => {
 
     const handleAddTier = () => {
         setNewTier({guests: "", basePrice: 149, adjustment: 0, adjustmentType: "$", operation: "Markup"});
-        onOpen();
+        tierPriceModal.onOpen();
     };
 
     const handleSaveTier = () => {
@@ -63,7 +67,12 @@ const PricingTable = () => {
             ...tiers,
             {...newTier, guests: `${newTier.guests} + Guests`, price: finalPrice.toFixed(2)}
         ]);
-        onClose();
+        tierPriceModal.onClose();
+    };
+
+    const handleSavePrice = () => {
+        setFlatPrice(tempPrice);
+        basePriceModal.onClose();
     };
 
     return (
@@ -88,51 +97,80 @@ const PricingTable = () => {
                         <Text fontSize="md" fontWeight="bold">
                             Terms
                         </Text>
-                        <Button
-                            leftIcon={<AddIcon/>}
-                            size="sm"
-                            onClick={handleAddTier}
-                            colorScheme="gray"
-                            variant="outline"
-                        >
-                            Add Tier
-                        </Button>
+                        {pricingStructure === "tiered" && (
+                            <Button
+                                leftIcon={<AddIcon/>}
+                                size="sm"
+                                onClick={handleAddTier}
+                                colorScheme="gray"
+                                variant="outline"
+                            >
+                                Add Tier
+                            </Button>
+                        )}
                     </HStack>
 
-                    <Table variant="simple" size="sm">
-                        <Thead bg="gray.100">
-                            <Tr>
-                                <Th>Demographic</Th>
-                                {tiers.map((tier, index) => (
-                                    <Th key={index}>
-                                        {tier.guests}{" "}
+                    {pricingStructure === "flat" ? (
+                        <Table variant="simple" size="sm">
+                            <Thead bg="gray.100">
+                                <Tr>
+                                    <Th>Demographic</Th>
+                                    <Th>Price</Th>
+                                    <Th>Actions</Th>
+                                </Tr>
+                            </Thead>
+                            <Tbody>
+                                <Tr>
+                                    <Td>Guests</Td>
+                                    <Td>${flatPrice}</Td>
+                                    <Td>
                                         <IconButton
                                             icon={<EditIcon/>}
                                             size="xs"
                                             variant="ghost"
                                             aria-label="Edit Tier"
-                                            onClick={() => {
-                                                setNewTier(tier);
-                                                onOpen();
-                                            }}
+                                            onClick={basePriceModal.onOpen}
                                         />
-                                    </Th>
-                                ))}
-                            </Tr>
-                        </Thead>
-                        <Tbody>
-                            <Tr>
-                                <Td>Guests</Td>
-                                {tiers.map((tier, index) => (
-                                    <Td key={index}>${tier.price}</Td>
-                                ))}
-                            </Tr>
-                        </Tbody>
-                    </Table>
+                                    </Td>
+                                </Tr>
+                            </Tbody>
+                        </Table>
+                    ) : (
+                        <Table variant="simple" size="sm">
+                            <Thead bg="gray.100">
+                                <Tr>
+                                    <Th>Demographic</Th>
+                                    {tiers.map((tier, index) => (
+                                        <Th key={index}>
+                                            {tier.guests}{" "}
+                                            <IconButton
+                                                icon={<EditIcon/>}
+                                                size="xs"
+                                                variant="ghost"
+                                                aria-label="Edit Tier"
+                                                onClick={() => {
+                                                    setNewTier(tier);
+                                                    tierPriceModal.onOpen();
+                                                }}
+                                            />
+                                        </Th>
+                                    ))}
+                                </Tr>
+                            </Thead>
+                            <Tbody>
+                                <Tr>
+                                    <Td>Guests</Td>
+                                    {tiers.map((tier, index) => (
+                                        <Td key={index}>${tier.price}</Td>
+                                    ))}
+                                </Tr>
+                            </Tbody>
+                        </Table>
+                    )}
                 </Box>
             </VStack>
 
-            <Modal isOpen={isOpen} onClose={onClose} isCentered>
+            <Modal isOpen={tierPriceModal.isOpen} onClose={tierPriceModal.onClose} isCentered>
                 <ModalOverlay/>
                 <ModalContent maxWidth="700px">
                     <ModalHeader>Tier {tiers.length + 1}</ModalHeader>
@@ -142,6 +180,7 @@ const PricingTable = () => {
                             For group size greater than or equal to
                         </Text>
                         <Input
+                            type="number"
                             placeholder="Enter guest count"
                             value={newTier.guests}
                             onChange={(e) =>
@@ -219,10 +258,51 @@ const PricingTable = () => {
                         </Table>
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="ghost" onClick={onClose}>
+                        <Button variant="ghost" onClick={tierPriceModal.onClose}>
                             Cancel
                         </Button>
                         <Button colorScheme="blue" ml={3} onClick={handleSaveTier}>
+                            Save
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+
+            <Modal isOpen={basePriceModal.isOpen} onClose={basePriceModal.onClose} isCentered>
+                <ModalOverlay/>
+                <ModalContent maxWidth="500px">
+                    <ModalHeader>Base Prices</ModalHeader>
+                    <ModalCloseButton/>
+                    <ModalBody>
+                        <Text fontSize="md" fontWeight="bold" mb={2}>
+                            Terms
+                        </Text>
+                        <Table variant="simple" size="sm">
+                            <Thead bg="gray.100">
+                                <Tr>
+                                    <Th>Demographics</Th>
+                                    <Th>Price</Th>
+                                </Tr>
+                            </Thead>
+                            <Tbody>
+                                <Tr>
+                                    <Td>Guests</Td>
+                                    <Td>
+                                        <Input
+                                            type="number"
+                                            value={tempPrice}
+                                            onChange={(e) => setTempPrice(Number(e.target.value))}
+                                        />
+                                    </Td>
+                                </Tr>
+                            </Tbody>
+                        </Table>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button variant="outline" onClick={basePriceModal.onClose}>
+                            Cancel
+                        </Button>
+                        <Button colorScheme="blue" ml={3} onClick={handleSavePrice}>
                             Save
                         </Button>
                     </ModalFooter>

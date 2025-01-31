@@ -10,8 +10,16 @@ import {
     FormLabel,
     Heading,
     HStack,
+    IconButton,
     Image,
     Input,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
     Select,
     Spinner,
     Switch,
@@ -22,6 +30,7 @@ import {
 import DashboardLayout from "../../../components/DashboardLayout";
 import {useRouter} from "next/router";
 import {CardElement, useElements, useStripe} from '@stripe/react-stripe-js';
+import {AddIcon, DeleteIcon, MinusIcon} from "@chakra-ui/icons";
 
 interface AddOn {
     id: string;
@@ -94,6 +103,36 @@ const PurchasePage = () => {
     const [voucherError, setVoucherError] = useState('');
     const [appliedVoucherCode, setAppliedVoucherCode] = useState<string | null>(null);
     const [selectedAddons, setSelectedAddons] = useState({});
+
+    const [items, setItems] = useState([{id: 1, type: "Charge", amount: "", quantity: 1}]);
+
+    const addItem = () => {
+        setItems([...items, {id: Date.now(), type: "Charge", amount: "", quantity: 1}]);
+    };
+
+    const removeItem = (id) => {
+        setItems(items.filter((item) => item.id !== id));
+    };
+
+    const updateItem = (id, field, value) => {
+        setItems(items.map((item) => (item.id === id ? {...item, [field]: value} : item)));
+    };
+
+    const [isLineItemModalOpen, setIsLineItemModalOpen] = useState(false);
+    const [lineItems, setLineItems] = useState([]);
+    const [newLineItem, setNewLineItem] = useState({
+        type: "Charge",
+        amount: "",
+        quantity: 1,
+        isTaxed: false,
+    });
+
+    const handleAddLineItem = () => {
+        setLineItems([...lineItems, newLineItem]);
+        setIsLineItemModalOpen(false);
+        setNewLineItem({type: "Charge", amount: "", quantity: 1, isTaxed: false});
+    };
+
 
     useEffect(() => {
         const fetchTour = async () => {
@@ -667,6 +706,122 @@ const PurchasePage = () => {
                                 ml={4}
                             />
                         </FormControl>
+
+                        {customLineItems && (
+                            <Button onClick={() => setIsLineItemModalOpen(true)}>+ Line Item</Button>
+                        )}
+
+                        <Modal isOpen={isLineItemModalOpen} onClose={() => setIsLineItemModalOpen(false)} size="2xl">
+                            <ModalOverlay/>
+                            <ModalContent h={"500px"}>
+                                <ModalHeader>Custom Line Items</ModalHeader>
+                                <ModalCloseButton/>
+
+                                <ModalBody>
+                                    <Flex gap={4}>
+                                        <Box flex="2" maxH="300px" overflowY="auto" pr={2} maxW={"300px"}>
+                                            {items.map((item) => (
+                                                <Box key={item.id} borderBottom="1px solid" borderColor="gray.200"
+                                                     pb={3} mb={3}>
+                                                    <HStack>
+                                                        <Input
+                                                            placeholder="Item"
+                                                            value={item.name}
+                                                            onChange={(e) => updateItem(item.id, "name", e.target.value)}
+                                                        />
+                                                        <IconButton
+                                                            icon={<DeleteIcon/>}
+                                                            colorScheme="gray"
+                                                            size="sm"
+                                                            onClick={() => removeItem(item.id)}
+                                                        />
+                                                    </HStack>
+
+                                                    <HStack mt={2}>
+                                                        <Select
+                                                            value={item.type}
+                                                            onChange={(e) => updateItem(item.id, "type", e.target.value)}
+                                                            width="100px"
+                                                        >
+                                                            <option value="Charge">Charge</option>
+                                                            <option value="Discount">Discount</option>
+                                                        </Select>
+
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="$"
+                                                            width="80px"
+                                                            value={item.amount}
+                                                            onChange={(e) => updateItem(item.id, "amount", parseFloat(e.target.value) || 0)}
+                                                        />
+
+                                                        <HStack>
+                                                            <IconButton
+                                                                icon={<MinusIcon/>}
+                                                                size="sm"
+                                                                onClick={() => updateItem(item.id, "quantity", Math.max(1, item.quantity - 1))}
+                                                            />
+                                                            <Text>{item.quantity}</Text>
+                                                            <IconButton
+                                                                icon={<AddIcon/>}
+                                                                size="sm"
+                                                                onClick={() => updateItem(item.id, "quantity", item.quantity + 1)}
+                                                            />
+                                                        </HStack>
+                                                    </HStack>
+                                                </Box>
+                                            ))}
+                                        </Box>
+
+                                        <Box flex="1" bg="gray.100" p={4} borderRadius="md" h={"300px"} display="flex"
+                                             flexDirection="column" justifyContent="space-between">
+                                            <Text fontWeight="bold">Breakdown</Text>
+                                            <HStack justify="space-between" mb={-10} spacing={2} mt={-8}>
+                                                <Text>Guests (${basePrice} × {quantity})</Text>
+                                                <Text fontWeight="semibold">${(quantity * basePrice).toFixed(2)}</Text>
+                                            </HStack>
+                                            {items.length > 0 && (
+                                                <Box>
+                                                    {items.map((item) => {
+                                                        const totalItem = item.amount * item.quantity;
+                                                        return (
+                                                            <HStack key={item.id} justify="space-between">
+                                                                <Text>
+                                                                    {item.name || "Unnamed"} ({item.type === "Discount" ? "-" : ""}${item.amount} × {item.quantity})
+                                                                </Text>
+                                                                <Text
+                                                                    fontWeight="semibold">{item.type === "Discount" ? "-" : ""}${totalItem.toFixed(2)}</Text>
+                                                            </HStack>
+                                                        );
+                                                    })}
+                                                </Box>
+                                            )}
+
+                                            <Divider my={2}/>
+                                            <Text textAlign="right" fontWeight="bold" fontSize="lg">
+                                                Total: ${(
+                                                quantity * basePrice +
+                                                items.reduce((acc, item) => {
+                                                    const totalItem = item.amount * item.quantity;
+                                                    return item.type === "Discount" ? acc - totalItem : acc + totalItem;
+                                                }, 0)
+                                            ).toFixed(2)}
+                                            </Text>
+                                        </Box>
+                                    </Flex>
+                                </ModalBody>
+
+                                <ModalFooter>
+                                    <Button variant="outline" onClick={addItem} leftIcon={<AddIcon/>}>
+                                        Add Line Item
+                                    </Button>
+                                    <Button colorScheme="blue" ml={3}>
+                                        Save
+                                    </Button>
+                                </ModalFooter>
+                            </ModalContent>
+                        </Modal>
+
 
                         <Divider my={6}/>
 

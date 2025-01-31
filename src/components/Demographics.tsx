@@ -133,7 +133,7 @@ const DemographicsTable = forwardRef(({tourId}: DemographicsProps, ref) => {
         }
     };
 
-    const handleCreateDemographic = () => {
+    const handleCreateDemographic = async () => {
         if (!newDemographic.name.trim()) {
             toast({
                 title: "Error",
@@ -145,16 +145,46 @@ const DemographicsTable = forwardRef(({tourId}: DemographicsProps, ref) => {
             return;
         }
 
-        toast({
-            title: "Success",
-            description: "Demographic created successfully.",
-            status: "success",
-            duration: 3000,
-            isClosable: true,
-        });
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: newDemographic.name,
+                    tenantId: tenantId,
+                }),
+            });
 
-        setNewDemographic({name: "", caption: ""});
-        closeModal();
+            if (!response.ok) {
+                throw new Error("Failed to create demographic");
+            }
+
+            const createdDemographic = await response.json();
+
+            setAvailableDemographics([...availableDemographics, createdDemographic]);
+
+            setNewDemographic({name: "", caption: ""});
+            closeModal();
+
+            toast({
+                title: "Success",
+                description: "Demographic created successfully.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error creating demographic:", error);
+            toast({
+                title: "Error",
+                description: "Could not create demographic.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
     };
 
     return (

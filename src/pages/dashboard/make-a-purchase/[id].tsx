@@ -31,6 +31,7 @@ import DashboardLayout from "../../../components/DashboardLayout";
 import {useRouter} from "next/router";
 import {CardElement, useElements, useStripe} from '@stripe/react-stripe-js';
 import {AddIcon, DeleteIcon, MinusIcon} from "@chakra-ui/icons";
+import {useGuest} from "../../../contexts/GuestContext";
 
 interface AddOn {
     id: string;
@@ -88,7 +89,8 @@ const PurchasePage = () => {
     const [internalNotesEnabled, setInternalNotesEnabled] = useState(true);
     const [purchaseTags, setPurchaseTags] = useState("");
     const [purchaseNote, setPurchaseNote] = useState("");
-    const [customLineItems, setCustomLineItems] = useState(false);
+    const [isCustomLineItemsEnabled, setIsCustomLineItemsEnabled] = useState(false);
+    const [customLineItems, setCustomLineItems] = useState([]);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [pickUpAddOn, setPickUpAddOn] = useState(0);
@@ -103,6 +105,7 @@ const PurchasePage = () => {
     const [voucherError, setVoucherError] = useState('');
     const [appliedVoucherCode, setAppliedVoucherCode] = useState<string | null>(null);
     const [selectedAddons, setSelectedAddons] = useState({});
+    const {tenantId} = useGuest();
 
     const [items, setItems] = useState([{id: 1, type: "Charge", amount: "", quantity: 1}]);
 
@@ -116,6 +119,13 @@ const PurchasePage = () => {
 
     const updateItem = (id, field, value) => {
         setItems(items.map((item) => (item.id === id ? {...item, [field]: value} : item)));
+    };
+
+    const handleSaveLineItems = () => {
+        if (isCustomLineItemsEnabled) {
+            setCustomLineItems([...items]);
+        }
+        setIsLineItemModalOpen(false);
     };
 
     const [isLineItemModalOpen, setIsLineItemModalOpen] = useState(false);
@@ -395,6 +405,25 @@ const PurchasePage = () => {
             const reservationResult = await reservationResponse.json();
             reservationId = reservationResult.id;
             console.log("Reservation created with ID:", reservationId);
+
+            if (customLineItems.length > 0) {
+                const customItemsPayload = customLineItems.map(item => ({
+                    tenantId: tenantId,
+                    tourId: id,
+                    label: item.name,
+                    description: item.type,
+                    amount: item.amount,
+                    quantity: item.quantity,
+                }));
+
+                const customItemsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/custom-items`, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({items: customItemsPayload, reservationId}),
+                });
+
+                if (!customItemsResponse.ok) throw new Error("Failed to create custom items.");
+            }
 
             if (!doNotCharge) {
                 const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
@@ -700,14 +729,14 @@ const PurchasePage = () => {
                                 Custom Line Items
                             </FormLabel>
                             <Switch
-                                isChecked={customLineItems}
-                                onChange={(e) => setCustomLineItems(e.target.checked)}
+                                isChecked={isCustomLineItemsEnabled}
+                                onChange={(e) => setIsCustomLineItemsEnabled(e.target.checked)}
                                 colorScheme="blue"
                                 ml={4}
                             />
                         </FormControl>
 
-                        {customLineItems && (
+                        {isCustomLineItemsEnabled && (
                             <Button onClick={() => setIsLineItemModalOpen(true)}>+ Line Item</Button>
                         )}
 
@@ -815,7 +844,7 @@ const PurchasePage = () => {
                                     <Button variant="outline" onClick={addItem} leftIcon={<AddIcon/>}>
                                         Add Line Item
                                     </Button>
-                                    <Button colorScheme="blue" ml={3}>
+                                    <Button colorScheme="blue" ml={3} onClick={handleSaveLineItems}>
                                         Save
                                     </Button>
                                 </ModalFooter>
@@ -1021,7 +1050,12 @@ const PurchasePage = () => {
                                     onClick={handleCreateReservationAndPay}
                                     loadingText="Processing"
                                 >
-                                    Pay US${totalWithDiscount.toFixed(2)}
+                                    Pay US${(totalWithDiscount +
+                                    items.reduce((acc, item) => {
+                                        const totalItem = item.amount * item.quantity;
+                                        return item.type === "Discount" ? acc - totalItem : acc + totalItem;
+                                    }, 0)
+                                ).toFixed(2)}
                                 </Button>
                             </HStack>
                         </HStack>
@@ -1068,6 +1102,20 @@ const PurchasePage = () => {
                             ) : (
                                 <Text>No add-ons selected.</Text>
                             )}
+                            {isCustomLineItemsEnabled && customLineItems.length > 0 && (
+                                <Box>
+                                    {customLineItems.map((item, index) => (
+                                        <HStack key={index} justify="space-between">
+                                            <Text>
+                                                {item.name || "Unnamed"} ({item.type === "Discount" ? "-" : ""}${item.amount} × {item.quantity})
+                                            </Text>
+                                            <Text fontWeight="semibold">
+                                                {item.type === "Discount" ? "-" : ""}${(item.amount * item.quantity).toFixed(2)}
+                                            </Text>
+                                        </HStack>
+                                    ))}
+                                </Box>
+                            )}
                         </Box>
                         {voucherDiscount > 0 && (
                             <Box bg="green.50" p={4} borderRadius="md" mb={4}>
@@ -1079,8 +1127,12 @@ const PurchasePage = () => {
                         )}
                         <Divider mb={4}/>
                         <Text fontWeight="bold" mb={2}>Grand Total</Text>
-                        <Text fontSize="xl" mb={4}>US${totalWithDiscount.toFixed(2)}</Text>
-
+                        <Text fontSize="xl" mb={4}>US${(totalWithDiscount +
+                            items.reduce((acc, item) => {
+                                const totalItem = item.amount * item.quantity;
+                                return item.type === "Discount" ? acc - totalItem : acc + totalItem;
+                            }, 0)
+                        ).toFixed(2)}</Text>
                         <FormControl mb={4}>
                             <FormLabel>Code</FormLabel>
                             <HStack>

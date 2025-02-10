@@ -11,23 +11,44 @@ import {
     IconButton,
     Image,
     Input,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+    Popover,
+    PopoverArrow,
+    PopoverBody,
+    PopoverContent,
+    PopoverTrigger,
+    Radio,
+    RadioGroup,
     Select,
     Spacer,
+    Stack,
     Switch,
+    Table,
+    Tbody,
+    Td,
     Text,
     Textarea,
+    Th,
+    Thead,
+    Tr,
+    useDisclosure,
     useToast,
     VStack
 } from "@chakra-ui/react";
-import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
+import {AddIcon, DeleteIcon, DragHandleIcon, EditIcon} from "@chakra-ui/icons";
 import {useGuest} from "../../../contexts/GuestContext";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ProgressBar from "../../../components/ProgressBar";
 import withAuth from "../../../utils/withAuth";
 import {useRouter} from "next/router";
-import Demographics from "../../../components/Demographics";
-import PricingTable from "../../../components/PricingTable";
 import CustomerQuestionnaire from "../../../components/CustomerQuestionnaire";
+import {useDemographics} from "../../../contexts/DemographicsContext";
 
 function DescriptionContentStep({onNext}: { onNext: () => void }) {
     const [newIncludedItem, setNewIncludedItem] = useState("");
@@ -638,6 +659,10 @@ function SchedulesAvailabilityStep({
 
             setTourId(tourId);
 
+            const demographics = await handleSaveDemographics(savedTour.id);
+
+            await handleSavePricing(savedTour.id, demographics, pricingStructure);
+
             const expandedTimeSlots = schedule.flatMap((slot) =>
                 generateTimeSlots(slot.startTime, slot.startPeriod, slot.endTime, slot.endPeriod)
             );
@@ -701,6 +726,435 @@ function SchedulesAvailabilityStep({
             });
         }
     }
+
+    const [tourDemographics, setTourDemographics] = useState<any[]>([]);
+    const [availableDemographics, setAvailableDemographics] = useState<any[]>([]);
+    const [selectedDemographics, setSelectedDemographics] = useState<any[]>([]);
+    const {isOpen, onOpen, onClose} = useDisclosure();
+    const {isOpen: isModalOpen, onOpen: openModal, onClose: closeModal} = useDisclosure();
+    const [newDemographic, setNewDemographic] = useState({name: "", caption: ""});
+    const {addDemographic, removeDemographic} = useDemographics();
+
+    useEffect(() => {
+        if (tourId) {
+            fetchTourDemographics();
+        }
+    }, [tourId]);
+
+    const fetchTourDemographics = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics/demographicByTourId/${tourId}`);
+            const data = await response.json();
+            setTourDemographics(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Error fetching tour demographics:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics/tenant/${tenantId}`)
+            .then((res) => res.json())
+            .then((data) => setAvailableDemographics(Array.isArray(data) ? data : []))
+            .catch((err) => console.error("Error fetching available demographics:", err));
+    }, [tenantId]);
+
+    const handleSelectDemographic = (selectedId) => {
+        const selectedDemo = availableDemographics.find((demo) => demo.id === selectedId);
+        if (selectedDemo && !selectedDemographics.find((demo) => demo.id === selectedId)) {
+            setSelectedDemographics([...selectedDemographics, selectedDemo]);
+            addDemographic(selectedDemo);
+        }
+        onClose();
+    };
+
+    const handleRemoveDemographic = (id) => {
+        setSelectedDemographics(selectedDemographics.filter((demo) => demo.id !== id));
+        removeDemographic(id);
+    };
+
+    const handleSaveDemographics = async (tourId) => {
+        if (!tourId) {
+            console.error("Tour ID is missing. Cannot save demographics.");
+            return [];
+        }
+
+        if (selectedDemographics.length === 0) {
+            console.warn("No demographics selected, skipping demographic saving.");
+            return [];
+        }
+
+        try {
+            const savedDemographics = [];
+
+            await Promise.all(
+                selectedDemographics.map(async (demo) => {
+                    if (!demo.id) {
+                        console.warn(`Skipping demographic with missing ID:`, demo);
+                        return;
+                    }
+
+                    const response = await fetch(
+                        `${process.env.NEXT_PUBLIC_API_URL}/demographics/assign-to-tour`,
+                        {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({
+                                tourId,
+                                demographicId: demo.id,
+                            }),
+                        }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to assign demographic ${demo.name} to tour.`);
+                    }
+
+                    savedDemographics.push(demo);
+                })
+            );
+
+            console.log("Demographics assigned:", savedDemographics);
+
+            toast({
+                title: "Demographics Saved",
+                description: "Successfully added demographics to the tour.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+
+            return savedDemographics;
+
+        } catch (error) {
+            console.error("Error saving demographics:", error);
+            toast({
+                title: "Error",
+                description: "Could not save demographics.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return [];
+        }
+    };
+
+    const handleSavePricing = async (tourId, demographics, pricingType) => {
+        if (!tourId) {
+            console.error("Tour ID is missing. Cannot save pricing.");
+            return;
+        }
+
+        if (!demographics || demographics.length === 0) {
+            console.warn("No demographics found, skipping pricing save.");
+            return;
+        }
+
+        try {
+            await Promise.all(
+                demographics.map(async (demo) => {
+                    const demographicId = demo.id;
+                    let bodyData;
+
+                    if (pricingType === "flat") {
+                        bodyData = {
+                            tourId,
+                            demographicId,
+                            pricingType: "flat",
+                            basePrice: basePrices[demographicId] || 0,
+                        };
+                    } else if (pricingType === "tiered") {
+                        console.log("Tiered Pricing Data:", tiers);
+
+                        if (!tiers || tiers.length === 0) {
+                            console.warn("No tiers found, skipping tiered pricing save.");
+                            return;
+                        }
+
+                        bodyData = {
+                            tourId,
+                            demographicId,
+                            pricingType: "tiered",
+                            tiers: tiers.map((tier) => ({
+                                quantity: Number(tier.guests.replace("+ Guests", "").trim()),
+                                price: tier.finalPrices[demographicId] || 0,
+                            })),
+                        };
+                    } else {
+                        console.error(`Unknown pricing type: ${pricingType}`);
+                        return;
+                    }
+
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(bodyData),
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Failed to create ${pricingType} pricing for demographic ${demographicId}. Error: ${errorText}`);
+                    }
+                })
+            );
+
+            toast({
+                title: "Pricing Saved",
+                description: `Pricing (${pricingType}) data has been saved successfully.`,
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+
+        } catch (error) {
+            console.error("Error saving pricing:", error);
+            toast({
+                title: "Error",
+                description: `Could not save ${pricingType} pricing.`,
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    };
+
+
+    const handleCreateDemographic = async () => {
+        if (!newDemographic.name.trim()) {
+            toast({
+                title: "Error",
+                description: "Name is required.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: newDemographic.name,
+                    tenantId: tenantId,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to create demographic");
+            }
+
+            const createdDemographic = await response.json();
+
+            setAvailableDemographics([...availableDemographics, createdDemographic]);
+
+            setNewDemographic({name: "", caption: ""});
+            closeModal();
+
+            toast({
+                title: "Success",
+                description: "Demographic created successfully.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error creating demographic:", error);
+            toast({
+                title: "Error",
+                description: "Could not create demographic.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    };
+
+    const [pricingStructure, setPricingStructure] = useState("tiered");
+    const [basePrices, setBasePrices] = useState({});
+    const [tiers, setTiers] = useState([]);
+    const [newTier, setNewTier] = useState({
+        id: null,
+        guests: "",
+        adjustments: {},
+        adjustmentTypes: {},
+        operations: {},
+    });
+    const {demographics} = useDemographics();
+
+    const basePriceModal = useDisclosure();
+    const tierPriceModal = useDisclosure();
+    const flatPriceModal = useDisclosure();
+
+    useEffect(() => {
+        const updatedTiers = tiers.map((tier) => {
+            const finalPrices = {};
+            for (const demo of demographics) {
+                const basePrice = basePrices[demo.id] || 0;
+                const adjustment = tier.adjustments[demo.id] || 0;
+                const adjustmentType = tier.adjustmentTypes[demo.id] || "$";
+                const operation = tier.operations[demo.id] || "Markup";
+
+                finalPrices[demo.id] =
+                    operation === "Markup"
+                        ? adjustmentType === "$"
+                            ? basePrice + adjustment
+                            : basePrice + (basePrice * adjustment) / 100
+                        : adjustmentType === "$"
+                            ? basePrice - adjustment
+                            : basePrice - (basePrice * adjustment) / 100;
+            }
+            return {
+                ...tier,
+                finalPrices,
+            };
+        });
+        setTiers(updatedTiers);
+    }, [basePrices]);
+
+    const handlePricingChange = (value) => {
+        setPricingStructure(value);
+
+        if (value === "tiered" && tiers.length === 0) {
+            const initialAdjustments = demographics.reduce((acc, demo) => {
+                acc[demo.id] = 0;
+                return acc;
+            }, {});
+
+            const initialAdjustmentTypes = demographics.reduce((acc, demo) => {
+                acc[demo.id] = "$";
+                return acc;
+            }, {});
+
+            const initialOperations = demographics.reduce((acc, demo) => {
+                acc[demo.id] = "Markup";
+                return acc;
+            }, {});
+
+            setNewTier({
+                id: crypto.randomUUID(),
+                guests: "1+ Guests",
+                adjustments: initialAdjustments,
+                adjustmentTypes: initialAdjustmentTypes,
+                operations: initialOperations,
+            });
+        }
+    };
+
+    const handleAddTier = () => {
+        const initialAdjustments = demographics.reduce((acc, demo) => {
+            acc[demo.id] = 0;
+            return acc;
+        }, {});
+
+        const initialAdjustmentTypes = demographics.reduce((acc, demo) => {
+            acc[demo.id] = "$";
+            return acc;
+        }, {});
+
+        const initialOperations = demographics.reduce((acc, demo) => {
+            acc[demo.id] = "Markup";
+            return acc;
+        }, {});
+
+        const guests = tiers.length === 0 ? "1+ Guests" : "";
+
+        setNewTier({
+            id: crypto.randomUUID(),
+            guests,
+            adjustments: initialAdjustments,
+            adjustmentTypes: initialAdjustmentTypes,
+            operations: initialOperations,
+        });
+        tierPriceModal.onOpen();
+    };
+
+    const handleSaveTier = () => {
+        const finalPrices = {};
+        for (const demo of demographics) {
+            const basePrice = basePrices[demo.id] || 0;
+            const adjustment = newTier.adjustments[demo.id] || 0;
+            const adjustmentType = newTier.adjustmentTypes[demo.id] || "$";
+            const operation = newTier.operations[demo.id] || "Markup";
+
+            finalPrices[demo.id] =
+                operation === "Markup"
+                    ? adjustmentType === "$"
+                        ? basePrice + adjustment
+                        : basePrice + (basePrice * adjustment) / 100
+                    : adjustmentType === "$"
+                        ? basePrice - adjustment
+                        : basePrice - (basePrice * adjustment) / 100;
+        }
+
+        const newTierToSave = {
+            id: newTier.id,
+            guests: newTier.guests || `${newTier.guests} + Guests`,
+            finalPrices,
+            adjustments: newTier.adjustments,
+            adjustmentTypes: newTier.adjustmentTypes,
+            operations: newTier.operations,
+        };
+
+        if (tiers.length === 0) {
+            setTiers([newTierToSave]);
+        } else {
+            setTiers([...tiers, newTierToSave]);
+        }
+        tierPriceModal.onClose();
+    };
+
+    const handleDeleteTier = (id) => {
+        setTiers(tiers.filter((tier) => tier.id !== id));
+    };
+
+    const handleBasePriceChange = (demoId, value) => {
+        setBasePrices((prev) => ({
+            ...prev,
+            [demoId]: Number(value),
+        }));
+    };
+
+    const handleAdjustmentChange = (demoId, value) => {
+        setNewTier((prev) => ({
+            ...prev,
+            adjustments: {
+                ...prev.adjustments,
+                [demoId]: Number(value),
+            },
+        }));
+    };
+
+    const handleAdjustmentTypeChange = (demoId, value) => {
+        setNewTier((prev) => ({
+            ...prev,
+            adjustmentTypes: {
+                ...prev.adjustmentTypes,
+                [demoId]: value,
+            },
+        }));
+    };
+
+    const handleOperationChange = (demoId, value) => {
+        setNewTier((prev) => ({
+            ...prev,
+            operations: {
+                ...prev.operations,
+                [demoId]: value,
+            },
+        }));
+    };
+
+    const handleEditTier = (tier) => {
+        setNewTier(tier);
+        tierPriceModal.onOpen();
+    };
+
+    const handleSaveFlatPrices = () => {
+        flatPriceModal.onClose();
+    };
 
     return (
         <Box
@@ -914,8 +1368,404 @@ function SchedulesAvailabilityStep({
                                     onChange={(e) => setMaxPerEventLimit(Number(e.target.value))}
                                 />
                             </FormControl>
-                            <Demographics tourId={tourId}/>
-                            <PricingTable/>
+                            <Box>
+                                <HStack justify={"space-between"} spacing={2} mt={2} mb={2}>
+                                    <Text fontSize="lg" fontWeight="bold" mb={4}>
+                                        Demographics
+                                    </Text>
+                                    <Popover isOpen={isOpen} onClose={onClose} placement="bottom-start">
+                                        <PopoverTrigger>
+                                            <Button onClick={onOpen} colorScheme="gray" variant="outline">
+                                                + Add Demographic
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent>
+                                            <PopoverArrow/>
+                                            <PopoverBody>
+                                                <VStack align="stretch">
+                                                    <RadioGroup onChange={handleSelectDemographic}>
+                                                        <Stack direction="column" maxH="200px" overflowY="auto">
+                                                            {availableDemographics.map((demo) => (
+                                                                <Radio key={demo.id} value={demo.id}>
+                                                                    {demo.name}
+                                                                </Radio>
+                                                            ))}
+                                                        </Stack>
+                                                    </RadioGroup>
+                                                    <Button colorScheme="gray" variant="outline" onClick={openModal}>
+                                                        + Create Demographic
+                                                    </Button>
+                                                </VStack>
+                                            </PopoverBody>
+                                        </PopoverContent>
+                                    </Popover>
+                                </HStack>
+
+                                <Table variant="simple" borderRadius="md" overflow="hidden">
+                                    <Thead>
+                                        <Tr bg="gray.100">
+                                            <Th>Demographic</Th>
+                                            <Th>Actions</Th>
+                                        </Tr>
+                                    </Thead>
+                                    <Tbody>
+                                        {tourDemographics.length === 0 && selectedDemographics.length === 0 ? (
+                                            <Tr>
+                                                <Td colSpan={2} textAlign="center" p={4} color="gray.500">
+                                                    No demographics available
+                                                </Td>
+                                            </Tr>
+                                        ) : (
+                                            <>
+                                                {tourDemographics.map((demo) => (
+                                                    <Tr key={demo.id} fontSize="sm">
+                                                        <Td p={2}>
+                                                            <HStack spacing={2}>
+                                                                <DragHandleIcon boxSize={3}/>
+                                                                <Text fontSize="sm">{demo.name}</Text>
+                                                            </HStack>
+                                                        </Td>
+                                                        <Td p={1}>
+                                                            <IconButton
+                                                                icon={<DeleteIcon/>}
+                                                                size="xs"
+                                                                colorScheme="gray"
+                                                                variant="outline"
+                                                                aria-label="Delete"
+                                                                onClick={() => handleRemoveDemographic(demo.id)}
+                                                            />
+                                                        </Td>
+                                                    </Tr>
+                                                ))}
+
+                                                {selectedDemographics.map((demo) => (
+                                                    <Tr key={demo.id} fontSize="sm" bg="gray.50">
+                                                        <Td p={2}>
+                                                            <HStack spacing={2}>
+                                                                <DragHandleIcon boxSize={3}/>
+                                                                <Text fontSize="sm">{demo.name} (Unsaved)</Text>
+                                                            </HStack>
+                                                        </Td>
+                                                        <HStack p={1}>
+                                                            <IconButton
+                                                                icon={<EditIcon/>}
+                                                                size="xs"
+                                                                aria-label="Edit"
+                                                                colorScheme="gray"
+                                                                variant="outline"
+                                                                // onClick={() => handleEditDemographic(demo.id, demo.name)}
+                                                            />
+                                                            <IconButton
+                                                                icon={<DeleteIcon/>}
+                                                                size="xs"
+                                                                colorScheme="gray"
+                                                                variant="outline"
+                                                                aria-label="Delete"
+                                                                onClick={() => handleRemoveDemographic(demo.id)}
+                                                            />
+                                                        </HStack>
+                                                    </Tr>
+                                                ))}
+                                            </>
+                                        )}
+                                    </Tbody>
+                                </Table>
+
+                                <Modal isOpen={isModalOpen} onClose={closeModal}>
+                                    <ModalOverlay/>
+                                    <ModalContent>
+                                        <ModalHeader>Create Demographic</ModalHeader>
+                                        <ModalCloseButton/>
+                                        <ModalBody>
+                                            <Text mb={2}>Name</Text>
+                                            <Input
+                                                placeholder="Name"
+                                                value={newDemographic.name}
+                                                onChange={(e) => setNewDemographic({
+                                                    ...newDemographic,
+                                                    name: e.target.value
+                                                })}
+                                            />
+
+                                            <Text mt={4} mb={2}>Caption</Text>
+                                            <Textarea
+                                                placeholder="Caption"
+                                                value={newDemographic.caption}
+                                                onChange={(e) => setNewDemographic({
+                                                    ...newDemographic,
+                                                    caption: e.target.value
+                                                })}
+                                            />
+                                        </ModalBody>
+
+                                        <ModalFooter>
+                                            <Button variant="outline" mr={3} onClick={closeModal}>
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                colorScheme="blue"
+                                                onClick={handleCreateDemographic}
+                                                isDisabled={!newDemographic.name.trim()}
+                                            >
+                                                Create
+                                            </Button>
+                                        </ModalFooter>
+                                    </ModalContent>
+                                </Modal>
+                            </Box>
+                            <Box>
+                                <Text fontSize="lg" fontWeight="bold" mb={4}>
+                                    Public Pricing
+                                </Text>
+                                <VStack align="start" spacing={4}>
+                                    <Box>
+                                        <VStack align="flex-start">
+                                            <RadioGroup onChange={handlePricingChange} value={pricingStructure}>
+                                                <Stack direction="column" spacing={2}>
+                                                    <Radio value="flat">Flat Pricing</Radio>
+                                                    <Radio value="tiered">Tiered Pricing</Radio>
+                                                </Stack>
+                                            </RadioGroup>
+                                        </VStack>
+                                    </Box>
+
+                                    <Box width="100%">
+                                        <HStack justifyContent="space-between" spacing={2} mb={2}>
+                                            <Text fontSize="md" fontWeight="bold">
+                                                Terms
+                                            </Text>
+                                            {pricingStructure === "tiered" && (
+                                                <Button
+                                                    leftIcon={<AddIcon/>}
+                                                    size="sm"
+                                                    onClick={handleAddTier}
+                                                    colorScheme="gray"
+                                                    variant="outline"
+                                                >
+                                                    Add Tier
+                                                </Button>
+                                            )}
+                                        </HStack>
+
+                                        {pricingStructure === "flat" ? (
+                                            <Table variant="simple" size="sm">
+                                                <Thead bg="gray.100">
+                                                    <Tr>
+                                                        <Th>Demographic</Th>
+                                                        <Th>Price</Th>
+                                                        <Th>Actions</Th>
+                                                    </Tr>
+                                                </Thead>
+                                                <Tbody>
+                                                    {demographics.map((demo) => (
+                                                        <Tr key={demo.id}>
+                                                            <Td>{demo.name}</Td>
+                                                            <Td>${basePrices[demo.id]?.toFixed(2) || "0.00"}</Td>
+                                                            <Td>
+                                                                <IconButton
+                                                                    icon={<EditIcon/>}
+                                                                    size="xs"
+                                                                    variant="ghost"
+                                                                    aria-label="Edit Price"
+                                                                    onClick={flatPriceModal.onOpen}
+                                                                />
+                                                            </Td>
+                                                        </Tr>
+                                                    ))}
+                                                </Tbody>
+                                            </Table>
+                                        ) : (
+                                            <Table variant="simple" size="sm">
+                                                <Thead bg="gray.100">
+                                                    <Tr>
+                                                        <Th>Demographic</Th>
+                                                        {tiers.map((tier) => (
+                                                            <Th key={tier.id}>
+                                                                {tier.guests}{" "}
+                                                                <IconButton
+                                                                    icon={<EditIcon/>}
+                                                                    size="xs"
+                                                                    variant="ghost"
+                                                                    aria-label="Edit Tier"
+                                                                    onClick={() => handleEditTier(tier)}
+                                                                />
+                                                            </Th>
+                                                        ))}
+                                                    </Tr>
+                                                </Thead>
+                                                <Tbody>
+                                                    {demographics.map((demo) => (
+                                                        <Tr key={demo.id}>
+                                                            <Td>{demo.name}</Td>
+                                                            {tiers.map((tier) => (
+                                                                <Td key={tier.id}>${tier.finalPrices[demo.id].toFixed(2)}</Td>
+                                                            ))}
+                                                        </Tr>
+                                                    ))}
+                                                </Tbody>
+                                            </Table>
+                                        )}
+                                    </Box>
+                                </VStack>
+
+                                <Modal isOpen={flatPriceModal.isOpen} onClose={flatPriceModal.onClose} isCentered>
+                                    <ModalOverlay/>
+                                    <ModalContent maxWidth="500px">
+                                        <ModalHeader>Base Prices</ModalHeader>
+                                        <ModalCloseButton/>
+                                        <ModalBody>
+                                            <Text fontSize="md" fontWeight="bold" mb={2}>
+                                                Terms
+                                            </Text>
+                                            <Table variant="simple" size="sm">
+                                                <Thead bg="gray.100">
+                                                    <Tr>
+                                                        <Th>Demographics</Th>
+                                                        <Th>Price</Th>
+                                                    </Tr>
+                                                </Thead>
+                                                <Tbody>
+                                                    {demographics.map((demo) => (
+                                                        <Tr key={demo.id}>
+                                                            <Td>{demo.name}</Td>
+                                                            <Td>
+                                                                <Input
+                                                                    type="number"
+                                                                    value={basePrices[demo.id] || ""}
+                                                                    onChange={(e) => handleBasePriceChange(demo.id, e.target.value)}
+                                                                />
+                                                            </Td>
+                                                        </Tr>
+                                                    ))}
+                                                </Tbody>
+                                            </Table>
+                                        </ModalBody>
+                                        <ModalFooter>
+                                            <Button variant="outline" onClick={flatPriceModal.onClose}>
+                                                Cancel
+                                            </Button>
+                                            <Button colorScheme="blue" ml={3} onClick={handleSaveFlatPrices}>
+                                                Save
+                                            </Button>
+                                        </ModalFooter>
+                                    </ModalContent>
+                                </Modal>
+
+                                <Modal isOpen={tierPriceModal.isOpen} onClose={tierPriceModal.onClose} isCentered>
+                                    <ModalOverlay/>
+                                    <ModalContent maxWidth="900px" width="90%">
+                                        <ModalHeader>Edit Tier</ModalHeader>
+                                        <ModalCloseButton/>
+                                        <ModalBody>
+                                            <Text fontSize="sm" mb={2}>
+                                                For group size greater than or equal to
+                                            </Text>
+                                            <Input
+                                                type="number"
+                                                placeholder="Enter guest count"
+                                                value={newTier.guests.replace("+ Guests", "").trim()}
+                                                onChange={(e) =>
+                                                    setNewTier({
+                                                        ...newTier,
+                                                        guests: `${e.target.value} + Guests`,
+                                                    })
+                                                }
+                                                disabled={newTier.guests === "1+ Guests"}
+                                            />
+
+                                            <Text fontSize="md" fontWeight="bold" mt={4} mb={2}>
+                                                Terms
+                                            </Text>
+                                            <Table variant="simple" size="sm">
+                                                <Thead bg="gray.100">
+                                                    <Tr>
+                                                        <Th>Demographic</Th>
+                                                        <Th>Base Price</Th>
+                                                        <Th>Adjustment</Th>
+                                                        <Th></Th>
+                                                        <Th></Th>
+                                                        <Th>Final Price</Th>
+                                                    </Tr>
+                                                </Thead>
+                                                <Tbody>
+                                                    {demographics.map((demo) => (
+                                                        <Tr key={demo.id}>
+                                                            <Td>{demo.name}</Td>
+                                                            <Td>
+                                                                <Input
+                                                                    type="number"
+                                                                    width="100px"
+                                                                    placeholder="Enter base price"
+                                                                    value={basePrices[demo.id] || ""}
+                                                                    onChange={(e) => handleBasePriceChange(demo.id, e.target.value)}
+                                                                    disabled={newTier.guests !== "1+ Guests"}
+                                                                />
+                                                            </Td>
+                                                            <Td>
+                                                                <Input
+                                                                    type="number"
+                                                                    width="80px"
+                                                                    value={newTier.adjustments[demo.id] || ""}
+                                                                    onChange={(e) => handleAdjustmentChange(demo.id, e.target.value)}
+                                                                    disabled={newTier.guests === "1+ Guests"}
+                                                                />
+                                                            </Td>
+                                                            <Td>
+                                                                <Select
+                                                                    value={newTier.adjustmentTypes[demo.id] || "$"}
+                                                                    onChange={(e) => handleAdjustmentTypeChange(demo.id, e.target.value)}
+                                                                    disabled={newTier.guests === "1+ Guests"}
+                                                                >
+                                                                    <option value="$">$</option>
+                                                                    <option value="%">%</option>
+                                                                </Select>
+                                                            </Td>
+                                                            <Td>
+                                                                <Select
+                                                                    value={newTier.operations[demo.id] || "Markup"}
+                                                                    onChange={(e) => handleOperationChange(demo.id, e.target.value)}
+                                                                    disabled={newTier.guests === "1+ Guests"}
+                                                                >
+                                                                    <option value="Markup">Markup</option>
+                                                                    <option value="Markdown">Markdown</option>
+                                                                </Select>
+                                                            </Td>
+                                                            <Td>
+                                                                $
+                                                                {newTier.operations[demo.id] === "Markup"
+                                                                    ? newTier.adjustmentTypes[demo.id] === "$"
+                                                                        ? (basePrices[demo.id] || 0) + (newTier.adjustments[demo.id] || 0)
+                                                                        : (basePrices[demo.id] || 0) + ((basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100
+                                                                    : newTier.adjustmentTypes[demo.id] === "$"
+                                                                        ? (basePrices[demo.id] || 0) - (newTier.adjustments[demo.id] || 0)
+                                                                        : (basePrices[demo.id] || 0) - ((basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100}
+                                                            </Td>
+                                                        </Tr>
+                                                    ))}
+                                                </Tbody>
+                                            </Table>
+                                        </ModalBody>
+                                        <ModalFooter>
+                                            {newTier?.id && (
+                                                <Button
+                                                    colorScheme="gray"
+                                                    variant="outline"
+                                                    mr="auto"
+                                                    onClick={() => handleDeleteTier(newTier.id)}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            )}
+                                            <Button variant="outline" onClick={tierPriceModal.onClose}>
+                                                Cancel
+                                            </Button>
+                                            <Button colorScheme="blue" ml={3} onClick={handleSaveTier}>
+                                                Save
+                                            </Button>
+                                        </ModalFooter>
+                                    </ModalContent>
+                                </Modal>
+                            </Box>
                             <CustomerQuestionnaire/>
                         </Box>
                         <Divider/>

@@ -36,6 +36,7 @@ import CancelConfirmationModal from "../../../components/CancelConfirmationModal
 import BookingCancellationModal from "../../../components/BookingCancellationModal";
 import ChangeArrivalModal from "../../../components/ChangeArrivalModal";
 import SendMessageModal from "../../../components/SendMessageModal";
+import {format, parse} from "date-fns";
 
 export default function ReservationDetail({reservation, onCloseDetail, setReservations}) {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
@@ -128,6 +129,38 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
 
             if (!paymentResponse.ok) throw new Error("Failed to confirm payment");
 
+            const parsedDate = parse(reservation.dateFormatted, 'MMM dd, yyyy', new Date());
+            const formattedDate = format(parsedDate, 'yyyy-MM-dd');
+
+            const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mail/send-reservation-email`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    toEmail: reservation.user?.email,
+                    emailData: {
+                        userType: "customer",
+                        title: "booking email",
+                        status: "approved",
+                        name: reservation.user?.name,
+                        email: reservation.user?.email,
+                        phone: reservation.user?.phone,
+                        date: formattedDate,
+                        time: reservation.time,
+                        duration: reservation.duration,
+                        quantity: reservation.quantity,
+                        guests: reservation.guests,
+                        tourTitle: reservation.tourTitle,
+                        description: "your reservation has been approved",
+                        totals: [
+                            {label: "total", amount: `$${reservation.total_price.toFixed(2)}`},
+                            {label: "paid", amount: `$${reservation.total_price.toFixed(2)}`}
+                        ]
+                    }
+                }),
+            });
+
+            if (!emailResponse.ok) throw new Error("Failed to send email");
+
             await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservation.id}`, {
                 method: "PUT",
                 headers: {"Content-Type": "application/json"},
@@ -170,6 +203,38 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({paymentMethodId: reservation.paymentMethodId}),
             });
+
+            const parsedDate = parse(reservation.dateFormatted, 'MMM dd, yyyy', new Date());
+            const formattedDate = format(parsedDate, 'yyyy-MM-dd');
+
+            const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mail/send-reservation-email`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    toEmail: reservation.user?.email,
+                    emailData: {
+                        userType: "customer",
+                        title: "booking email",
+                        status: "declined",
+                        name: reservation.user?.name,
+                        email: reservation.user?.email,
+                        phone: reservation.user?.phone,
+                        date: formattedDate,
+                        time: reservation.time,
+                        duration: reservation.duration,
+                        quantity: reservation.quantity,
+                        guests: reservation.guests,
+                        tourTitle: reservation.tourTitle,
+                        description: "your reservation has been declined",
+                        totals: [
+                            {label: "total", amount: `$${reservation.total_price.toFixed(2)}`},
+                            {label: "paid", amount: `$${reservation.total_price.toFixed(2)}`}
+                        ]
+                    }
+                }),
+            });
+
+            if (!emailResponse.ok) throw new Error("Failed to send email");
 
             await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservation.id}`, {
                 method: "PUT",

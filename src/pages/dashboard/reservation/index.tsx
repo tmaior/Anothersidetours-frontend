@@ -119,6 +119,7 @@ function Dashboard() {
                     total_price: number;
                     imageUrl: string;
                     paymentIntentId: string;
+                    duration:number;
                     user?: {
                         name: string;
                         phone: string;
@@ -180,7 +181,8 @@ function Dashboard() {
                             total_price: reservation.total_price,
                             paymentIntentId: reservation.paymentIntentId,
                             valuePerGuest: reservation.tour.price,
-                            tourId: reservation.tour.id
+                            tourId: reservation.tour.id,
+                            duration: reservation.tour.duration
                         });
                         return acc;
                     },

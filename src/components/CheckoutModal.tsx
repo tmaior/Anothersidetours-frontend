@@ -209,6 +209,38 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                 setErrorMessage("Failed to save payment method.");
                 return;
             }
+
+            // const parsedDate = parse(selectedDate, 'MMM dd, yyyy', new Date());
+            // const formattedDate = format(parsedDate, 'yyyy-MM-dd');
+
+            const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mail/send-reservation-email`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    toEmail: email,
+                    emailData: {
+                        userType: "customer",
+                        title: "booking email",
+                        status: "pending",
+                        name: name,
+                        email: email,
+                        phone: phone,
+                        date: selectedDate,
+                        time: selectedTime,
+                        duration: 2,
+                        quantity: guestQuantity,
+                        tourTitle: title,
+                        description: "your reservation is pending",
+                        totals: [
+                            {label: "total", amount: `$${totalAmount.toFixed(2)}`},
+                            {label: "paid", amount: `$${totalAmount.toFixed(2)}`}
+                        ]
+                    }
+                }),
+            });
+
+            if (!emailResponse.ok) throw new Error("Failed to send email");
+
             onClose();
             openAdditionalModal();
         } catch (error) {

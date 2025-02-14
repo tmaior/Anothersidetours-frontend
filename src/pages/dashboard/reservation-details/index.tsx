@@ -147,9 +147,8 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                         date: formattedDate,
                         time: reservation.time,
                         duration: reservation.duration,
-                        quantity: reservation.quantity,
-                        guests: reservation.guests,
-                        tourTitle: reservation.tourTitle,
+                        quantity: reservation.guestQuantity,
+                        tourTitle: reservation.title,
                         description: "your reservation has been approved",
                         totals: [
                             {label: "total", amount: `$${reservation.total_price.toFixed(2)}`},
@@ -222,9 +221,8 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                         date: formattedDate,
                         time: reservation.time,
                         duration: reservation.duration,
-                        quantity: reservation.quantity,
-                        guests: reservation.guests,
-                        tourTitle: reservation.tourTitle,
+                        quantity: reservation.guestQuantity,
+                        tourTitle: reservation.title,
                         description: "your reservation has been declined",
                         totals: [
                             {label: "total", amount: `$${reservation.total_price.toFixed(2)}`},

@@ -107,10 +107,10 @@ const PurchasePage = () => {
     const [selectedAddons, setSelectedAddons] = useState({});
     const {tenantId} = useGuest();
 
-    const [items, setItems] = useState([{id: 1, type: "Charge", amount: "", quantity: 1}]);
+    const [items, setItems] = useState([{ id: 1, type: "Charge", amount: 0, quantity: 1, name: "" }]);
 
     const addItem = () => {
-        setItems([...items, {id: Date.now(), type: "Charge", amount: "", quantity: 1}]);
+        setItems([...items, { id: Date.now(), type: "Charge", amount: 0, quantity: 1, name: "" }]);
     };
 
     const removeItem = (id) => {
@@ -118,7 +118,7 @@ const PurchasePage = () => {
     };
 
     const updateItem = (id, field, value) => {
-        setItems(items.map((item) => (item.id === id ? {...item, [field]: value} : item)));
+        setItems(items.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
     };
 
     const handleSaveLineItems = () => {
@@ -762,8 +762,7 @@ const PurchasePage = () => {
                                                             icon={<DeleteIcon/>}
                                                             colorScheme="gray"
                                                             size="sm"
-                                                            onClick={() => removeItem(item.id)}
-                                                        />
+                                                            onClick={() => removeItem(item.id)} aria-label={'delete'}                                                        />
                                                     </HStack>
 
                                                     <HStack mt={2}>
@@ -789,12 +788,14 @@ const PurchasePage = () => {
                                                                 icon={<MinusIcon/>}
                                                                 size="sm"
                                                                 onClick={() => updateItem(item.id, "quantity", Math.max(1, item.quantity - 1))}
+                                                                aria-label={'Decrease quantity'}
                                                             />
                                                             <Text>{item.quantity}</Text>
                                                             <IconButton
                                                                 icon={<AddIcon/>}
                                                                 size="sm"
                                                                 onClick={() => updateItem(item.id, "quantity", item.quantity + 1)}
+                                                                aria-label={'Increase quantity'}
                                                             />
                                                         </HStack>
                                                     </HStack>

@@ -4,9 +4,11 @@ import Navbar from "./Navbar";
 import Grid from "./Grid";
 import AddOns from "./Add-Ons";
 import {useGuest} from "../contexts/GuestContext";
+import debounce from 'lodash.debounce';
 
 interface BookingDetailsProps {
     onContinue?: () => void;
+    tourId: string;
     title: string;
     description: string;
     originalPrice: string;
@@ -15,6 +17,7 @@ interface BookingDetailsProps {
 
 export default function BookingDetails({
                                            onContinue,
+                                           tourId,
                                            title,
                                            description,
                                            originalPrice,
@@ -25,10 +28,57 @@ export default function BookingDetails({
     const [localSelectedTime, setLocalSelectedTime] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const {setSelectedDate, setSelectedTime, setTitle, name, email, phone, guestQuantity, setUserId} = useGuest();
+    const normalizedEmail = email?.trim().toLowerCase();
 
     useEffect(() => {
         setTitle(title);
     }, [title, setTitle]);
+
+
+    function combineDateAndTime(date, time) {
+        if (!date || !time) return null;
+        const datePart = date.toISOString().split("T")[0];
+        const [timeValue, modifier] = time.split(" ");
+        let [hours, minutes] = timeValue.split(":").map(Number);
+        if (modifier.toUpperCase() === "PM" && hours < 12) {
+            hours += 12;
+        }
+        if (modifier.toUpperCase() === "AM" && hours === 12) {
+            hours = 0;
+        }
+        const hoursString = hours.toString().padStart(2, "0");
+        const minutesString = minutes.toString().padStart(2, "0");
+        const combinedISO = `${datePart}T${hoursString}:${minutesString}:00.000Z`;
+        return new Date(combinedISO);
+    }
+
+    useEffect(() => {
+        const debouncedUpsert = debounce(() => {
+            if (normalizedEmail && normalizedEmail.includes("@") && localSelectedDate && localSelectedTime) {
+                const combinedDateTime = combineDateAndTime(localSelectedDate, localSelectedTime);
+                const payload = {
+                    tourId,
+                    name,
+                    email: normalizedEmail,
+                    phone,
+                    guestQuantity,
+                    selectedDate: combinedDateTime ? combinedDateTime.toISOString() : null,
+                    statusCheckout: "INCOMPLETE",
+                };
+
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/incomplete`, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(payload),
+                }).catch(console.error);
+            }
+        }, 1000);
+        debouncedUpsert();
+        return () => {
+            debouncedUpsert.cancel();
+        };
+    }, [email, name, phone, guestQuantity, localSelectedDate, localSelectedTime]);
+
 
     const handleValidation = async () => {
         const isFormValid = formInfoRef.current?.validateForm();

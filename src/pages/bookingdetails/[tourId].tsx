@@ -80,6 +80,7 @@ export default function BookingDetailsPage() {
         <>
             <ModalPageLayout isOpen={isBookingOpen}>
                 <BookingDetails
+                    tourId={tourId}
                     title={tourData.name}
                     description={tourData.description}
                     originalPrice={tourData.price}

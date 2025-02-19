@@ -477,7 +477,7 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                                             <AccordionIcon/>
                                         </AccordionButton>
                                         <AccordionPanel>
-                                            Informações adicionais...
+                                            Additional information...
                                         </AccordionPanel>
                                     </AccordionItem>
                                 </Accordion>
@@ -490,7 +490,7 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                                 0 Customer Notes
                             </Td>
                             <Td>
-                                <Text color="green.500">3 Signed</Text>
+                                <Text color="green.500">0 Signed</Text>
                                 <Text color="red.500">0 Unsigned</Text>
                             </Td>
                             <Td> - </Td>

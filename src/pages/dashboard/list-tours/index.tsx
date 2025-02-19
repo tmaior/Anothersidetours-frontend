@@ -141,16 +141,23 @@ function ListTours() {
 
     return (
         <DashboardLayout>
-            <Box p={2} width={"1300px"}>
-                <HStack mb={4} spacing={4}>
-                    <Text fontSize="2xl" fontWeight="medium" textAlign="center">
+            <Box p={2} width={{ base: "100%", md: "1300px" }} mx="auto" bg={"tomato"}>
+                <HStack
+                    mb={4}
+                    spacing={4}
+                    flexWrap="wrap"
+                    justify="center"
+                    alignItems="center"
+                >
+                    <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="medium" textAlign="center">
                         Products
                     </Text>
-                    <Center height="50px">
+                    <Center height="50px" display={{ base: "none", md: "flex" }}>
                         <Divider orientation="vertical" borderWidth="1px"/>
                     </Center>
-                    <HStack>
-                        <InputGroup w={"1000px"}>
+
+                        <InputGroup w={{ base: "100%", md: "600px" }}
+                                    flex="1">
                             <InputLeftElement pointerEvents="none">
                                 <SearchIcon color="gray.400"/>
                             </InputLeftElement>
@@ -158,13 +165,12 @@ function ListTours() {
                                 placeholder="Search by name"
                                 bg={inputBgColor}
                                 value={searchName}
-                                w="1200px"
                                 onChange={(e) => setSearchName(e.target.value)}
                             />
                         </InputGroup>
-                    </HStack>
+
                     <Button
-                        w={"200px"}
+                        w={{ base: "100%", md: "200px" }}
                         colorScheme="blue"
                         onClick={() => router.push("/dashboard/create-tours")}
                     >
@@ -174,7 +180,9 @@ function ListTours() {
 
                 <Divider orientation="horizontal" borderWidth="1px" color={"black"}/>
 
-                <Grid templateColumns="repeat(2, 1fr)" gap={6} mt={4}>
+                <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }}
+                      gap={6}
+                      mt={4}>
                     {filteredTours.map((tour) => (
                         <GridItem
                             key={tour.id}
@@ -263,7 +271,7 @@ function ListTours() {
                                     </Button>
                                 </Text>
                             )}
-                            <HStack spacing={4} align="start">
+                            <HStack spacing={4} align="start" flexWrap="wrap">
                                 <Image
                                     src={tour.imageUrl || "https://via.placeholder.com/150x100"}
                                     alt={tour.name}
@@ -272,10 +280,11 @@ function ListTours() {
                                 />
                                 <Box flex="1" maxWidth="600px">
                                     <Heading
-                                        fontSize="lg" noOfLines={2}
+                                        fontSize={{ base: "md", md: "lg" }}
+                                        noOfLines={2}
                                         wordBreak="break-word"
                                         whiteSpace="normal"
-                                        maxW="80%">
+                                        maxW="100%">
                                         {tour.name}
                                     </Heading>
                                     <Text mt={2} noOfLines={3}>

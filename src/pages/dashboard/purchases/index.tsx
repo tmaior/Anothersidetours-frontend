@@ -615,6 +615,9 @@ const PaymentSummary = ({reservation}) => {
     };
 
     if (isLoading) {
+        if (!reservation) {
+            return null;
+        }
         return (
             <Center h="350px">
                 <Spinner size="xl" color="blue.500"/>

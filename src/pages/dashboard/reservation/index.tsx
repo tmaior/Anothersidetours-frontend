@@ -10,6 +10,7 @@ import {
     InputLeftElement,
     Select,
     Spacer,
+    Stack,
     Text,
     useDisclosure,
     VStack,
@@ -119,7 +120,7 @@ function Dashboard() {
                     total_price: number;
                     imageUrl: string;
                     paymentIntentId: string;
-                    duration:number;
+                    duration: number;
                     user?: {
                         name: string;
                         phone: string;
@@ -298,14 +299,19 @@ function Dashboard() {
 
     return (
         <DashboardLayout>
-            <Flex align="center" mb={4}>
-                <Text fontSize="2xl" fontWeight="medium" marginLeft={"-15px"}>
+            <Flex align="center"
+                  mb={4}
+                  direction={{base: "column", md: "row"}}
+                  px={{base: 4, md: 0}}>
+                <Text fontSize="2xl" fontWeight="medium" ml={{base: 0, md: "-15px"}}>
                     Dashboard
                 </Text>
-                <Center height='50px' w={"40px"}>
+                <Center height="50px"
+                        w={{base: "100%", md: "40px"}}
+                        display={{base: "none", md: "block"}}>
                     <Divider orientation='vertical'/>
                 </Center>
-                <HStack spacing={2}>
+                <Stack direction={{base: "column", md: "row"}} spacing={2} width="100%">
                     <InputGroup>
                         <InputLeftElement pointerEvents="none" marginTop={"-3px"}>
                             <SearchIcon color="gray.400"/>
@@ -318,7 +324,7 @@ function Dashboard() {
                             border="none"
                             boxShadow="none"
                             focusBorderColor="transparent"
-                            w={"1250px"}
+                            w={{base: "100%", md: "250px"}}
                             _placeholder={{fontSize: "lg"}}
                             value={searchTerm}
                             onChange={handleSearch}
@@ -329,19 +335,24 @@ function Dashboard() {
                         size="md"
                         marginLeft={"-50px"}
                         h={"40px"}
-                        w={"200px"}
+                        w={{base: "100%", md: "200px"}}
                         border={"none"}
                         borderRadius={"4px"}
                         onClick={handlePurchaseClick}
                     >
                         Make a Purchase
                     </Button>
-                </HStack>
+                </Stack>
                 <Spacer/>
             </Flex>
             <Divider/>
-            <HStack spacing={2} mb={4} align="center" marginTop={"10px"}>
-                <Box w="130px">
+            <HStack spacing={2}
+                    mb={4}
+                    align="center"
+                    mt={{base: "10px", md: "10px"}}
+                    px={{base: 4, md: 0}}
+                    wrap="wrap">
+                <Box w={{base: "100px", md: "130px"}}>
                     <CustomDatePicker
                         selected={selectedDate ? createDateFromISO(selectedDate) : null}
                         onDateChange={(date) => {
@@ -351,11 +362,11 @@ function Dashboard() {
                         }}
                     />
                 </Box>
-                <Select placeholder="Reserved" size="sm" width="120px">
+                <Select placeholder="Reserved" size="sm" w={{base: "100px", md: "120px"}}>
                     <option value="reserved">Reserved</option>
                     <option value="not_reserved">Not Reserved</option>
                 </Select>
-                <Select size="sm" width="90px" placeholder="List">
+                <Select size="sm" w={{base: "80px", md: "90px"}} placeholder="List">
                     <option value="list">List</option>
                     <option value="grid">Grid</option>
                 </Select>
@@ -365,7 +376,7 @@ function Dashboard() {
                 </Button>
             </HStack>
             <Divider/>
-            <HStack spacing={4} mb={4} marginTop={"10px"}>
+            <HStack spacing={4} mb={4} mt="10px" wrap="wrap" px={{base: 4, md: 0}}>
                 <Text fontSize="sm" color="gray.600">
                     Filters:
                 </Text>
@@ -379,17 +390,21 @@ function Dashboard() {
                     Guides: All
                 </Button>
             </HStack>
-            <Flex maxHeight="calc(100vh - 80px)" overflowY="auto" ml={"-40px"}>
+            <Flex direction={{base: "column", md: "row"}}
+                  maxHeight="calc(100vh - 80px)"
+                  overflowY="auto"
+                  ml={{base: 0, md: "-40px"}}>
                 <Box
-                    w={isDetailVisible ? "15%" : "100%"}
+                    w={{base: "100%", md: isDetailVisible ? "30%" : "100%"}}
                     overflowY="auto"
                     overflowX="hidden"
-                    borderRight={isDetailVisible ? "1px solid #e2e8f0" : "none"}
+                    borderRight={{base: "none", md: isDetailVisible ? "1px solid #e2e8f0" : "none"}}
                     transition="width 0.3s ease"
                     display="flex"
                     flexDirection="column"
+                    px={{base: 4, md: 0}}
                 >
-                    <Box p={4} marginTop={"-30px"}>
+                    <Box p={4} mt={{base: "0", md: "-30px"}}>
 
                         <Divider orientation='horizontal' width="100%"/>
                         <VStack spacing={6} align="stretch" marginTop={"10px"}>
@@ -421,7 +436,10 @@ function Dashboard() {
                     </Box>
                 </Box>
                 {isDetailVisible && (
-                    <Box w="70%" overflowY="auto" transition="width 0.3s ease">
+                    <Box w={{base: "100%", md: "70%"}}
+                         overflowY="auto"
+                         transition="width 0.3s ease"
+                         px={{base: 4, md: 0}}>
                         <ReservationDetail
                             reservation={selectedReservation}
                             onCloseDetail={handleCloseDetail}

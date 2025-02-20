@@ -143,15 +143,16 @@ const ReservationItem = ({
                 <Flex
                     key={index}
                     bg="white"
-                    p={3}
+                    p={{ base: 2, md: 3 }}
                     borderRadius="md"
                     align="center"
                     justify="space-between"
                     boxShadow="sm"
                     cursor="pointer"
                     onClick={() => onSelectReservation(item)}
+                    flexWrap={{ base: "wrap", md: "nowrap" }}
                 >
-                    <HStack spacing={3}>
+                    <HStack spacing={{ base: 2, md: 3 }} flexShrink={0}>
                         <Box minWidth="40px" textAlign="center">
                             <Text fontWeight="medium" fontSize="sm" color="gray.600">
                                 {item.time.split(' ')[0]}
@@ -168,14 +169,14 @@ const ReservationItem = ({
                             objectFit="fill"
                         />
                     </HStack>
-                    <Box flex="1" ml={4}>
+                    <Box flex="1" ml={{ base: 2, md: 4 }} mt={{ base: 2, md: 0 }}>
                         {!isCompactView && (
                             <Text fontWeight="semibold" fontSize="sm">
                                 {item.title}
                             </Text>
                         )}
                         {!isCompactView && (
-                            <HStack spacing={3} fontSize="xs" color="gray.500">
+                            <HStack spacing={{ base: 2, md: 3 }} fontSize={{ base: "xs", md: "xs" }} color="gray.500">
                                 <Text>{item.available}</Text>
                                 <Text>{item.reservedDetails}</Text>
                             </HStack>
@@ -186,7 +187,7 @@ const ReservationItem = ({
                         <HStack spacing={4} align="center">
                             <Box boxSize="8px" borderRadius="full" bg={item.statusColor}/>
                             <Flex
-                                w={"900px"}
+                                w={"600px"}
                                 display="flex"
                                 justifyContent="space-between"
                                 alignItems="center"
@@ -237,14 +238,14 @@ const ReservationItem = ({
                                 </Flex>
                             </Flex>
                             <DashBoardMenu reservation={item}/>
-                            <Button
-                                variant="outline"
-                                colorScheme="green"
-                                size="xs"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                +
-                            </Button>
+                            {/*<Button*/}
+                            {/*    variant="outline"*/}
+                            {/*    colorScheme="green"*/}
+                            {/*    size="xs"*/}
+                            {/*    onClick={(e) => e.stopPropagation()}*/}
+                            {/*>*/}
+                            {/*    +*/}
+                            {/*</Button>*/}
                         </HStack>
                     )}
                 </Flex>

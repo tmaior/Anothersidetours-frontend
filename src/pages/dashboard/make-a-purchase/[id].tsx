@@ -923,33 +923,33 @@ const PurchasePage = () => {
 
                         <Divider my={6}/>
 
-                        <Heading size="md" mb={4}>Attendee Info</Heading>
-                        {attendees.map((attendee, i) => (
-                            <Box key={i} borderWidth="1px" borderRadius="md" p={4} mb={4}>
-                                <HStack spacing={4}>
-                                    <Button
-                                        variant="ghost"
-                                        fontSize="2xl"
-                                        onClick={() => setMainAttendeeIndex(i)}
-                                        aria-label="Set as main attendee"
-                                        border={mainAttendeeIndex === i ? "2px solid" : "none"}
-                                        borderColor={mainAttendeeIndex === i ? "blue.500" : "transparent"}
-                                        borderRadius="full"
-                                        p={2}
-                                    >
-                                        🏳
-                                    </Button>
-                                    <Text fontWeight="medium">{attendee.name}</Text>
-                                    <Input
-                                        placeholder={`Guests #${i + 1}`}
-                                        value={attendee.info}
-                                        onChange={(e) => handleInfoChange(i, e.target.value)}
-                                        variant="outline"
-                                        w="200px"
-                                    />
-                                </HStack>
-                            </Box>
-                        ))}
+                        {/*<Heading size="md" mb={4}>Attendee Info</Heading>*/}
+                        {/*{attendees.map((attendee, i) => (*/}
+                        {/*    <Box key={i} borderWidth="1px" borderRadius="md" p={4} mb={4}>*/}
+                        {/*        <HStack spacing={4}>*/}
+                        {/*            <Button*/}
+                        {/*                variant="ghost"*/}
+                        {/*                fontSize="2xl"*/}
+                        {/*                onClick={() => setMainAttendeeIndex(i)}*/}
+                        {/*                aria-label="Set as main attendee"*/}
+                        {/*                border={mainAttendeeIndex === i ? "2px solid" : "none"}*/}
+                        {/*                borderColor={mainAttendeeIndex === i ? "blue.500" : "transparent"}*/}
+                        {/*                borderRadius="full"*/}
+                        {/*                p={2}*/}
+                        {/*            >*/}
+                        {/*                🏳*/}
+                        {/*            </Button>*/}
+                        {/*            <Text fontWeight="medium">{attendee.name}</Text>*/}
+                        {/*            <Input*/}
+                        {/*                placeholder={`Guests #${i + 1}`}*/}
+                        {/*                value={attendee.info}*/}
+                        {/*                onChange={(e) => handleInfoChange(i, e.target.value)}*/}
+                        {/*                variant="outline"*/}
+                        {/*                w="200px"*/}
+                        {/*            />*/}
+                        {/*        </HStack>*/}
+                        {/*    </Box>*/}
+                        {/*))}*/}
 
                         <Heading size="md" mb={4}>Payment</Heading>
 

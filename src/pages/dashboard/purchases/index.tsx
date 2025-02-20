@@ -805,6 +805,7 @@ const PurchasesPage = () => {
                         />
                     </Box>
                     <Box
+                        marginRight={"-25px"}
                         flex="1"
                         height="100%"
                         overflowY="auto"

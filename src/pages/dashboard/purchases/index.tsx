@@ -112,12 +112,19 @@ const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) =>
         }
     }, [tenantId,]);
 
+    const normalizePhoneNumber = (phone) => {
+        return phone.replace(/[^\d]/g, '');
+    };
+
     const filteredDisplayedReservations = displayedReservations.filter((reservation) => {
         const user = reservation.user || {};
+        const normalizedSearchTerm = normalizePhoneNumber(searchTerm);
+        const normalizedPhone = normalizePhoneNumber(user.phone || '');
+
         return (
             user.name?.toLowerCase().includes(searchTerm) ||
             user.email?.toLowerCase().includes(searchTerm) ||
-            user.phone?.toLowerCase().includes(searchTerm)
+            normalizedPhone.includes(normalizedSearchTerm)
         );
     });
 
@@ -756,28 +763,37 @@ const PurchasesPage = () => {
             overflow="hidden"
         >
             <DashboardLayout>
-                <Flex align="center" mb={4}>
-                    <Text fontSize="2xl" fontWeight="medium" marginLeft={"-15px"}>
+                <Flex align="center"
+                      mb={4}
+                      direction={{base: "column", md: "row"}}
+                      px={{base: 4, md: 0}}
+                >
+                    <Text fontSize="2xl" fontWeight="medium" ml={{base: 0, md: "-15px"}}>
                         Purchases
                     </Text>
-                    <Center height='50px' w={"40px"}>
+                    <Center height="50px"
+                            w={{base: "100%", md: "40px"}}
+                            display={{base: "none", md: "block"}}>
                         <Divider orientation='vertical'/>
                     </Center>
-                    <HStack spacing={2}>
-                        <InputGroup>
+                    <Flex
+                        direction={{ base: "column", md: "row" }}
+                        align="center"
+                        justify="space-between"
+                        width="100%"
+                    >
+                        <InputGroup w={{ base: "100%", md: "auto" }} flex="1" mr={2}>
                             <InputLeftElement pointerEvents="none" marginTop={"-3px"}>
-                                <SearchIcon color="gray.400"/>
+                                <SearchIcon color="gray.400" />
                             </InputLeftElement>
                             <Input
-                                marginLeft={"5px"}
                                 placeholder="Name, email, phone or ID"
-                                width="250px"
                                 size="sm"
                                 border="none"
                                 boxShadow="none"
                                 focusBorderColor="transparent"
-                                w={"1250px"}
-                                _placeholder={{fontSize: "lg"}}
+                                w={{ base: "100%", md: "auto" }}
+                                _placeholder={{ fontSize: "lg" }}
                                 value={searchTerm}
                                 onChange={handleSearch}
                             />
@@ -785,16 +801,15 @@ const PurchasesPage = () => {
                         <Button
                             colorScheme="green"
                             size="md"
-                            marginLeft={"-50px"}
                             h={"40px"}
-                            w={"200px"}
+                            w={{ base: "100%", md: "250px" }}
                             border={"none"}
                             borderRadius={"4px"}
                             onClick={handlePurchaseClick}
                         >
                             Make a Purchase
                         </Button>
-                    </HStack>
+                    </Flex>
                     <Spacer/>
                 </Flex>
                 <HStack height="100vh" width="100%">

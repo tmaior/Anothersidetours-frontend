@@ -1,8 +1,6 @@
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import {
-    useDisclosure,
-} from "@chakra-ui/react";
+import {useRouter} from "next/router";
+import {useEffect, useState} from "react";
+import {useDisclosure,} from "@chakra-ui/react";
 import BookingDetails from "../../components/BookingDetails";
 import CheckoutModal from "../../components/CheckoutModal";
 import {useGuest} from "../../contexts/GuestContext";
@@ -10,8 +8,9 @@ import ModalPageLayout from "../../components/ModalPageLayout";
 
 export default function BookingDetailsPage() {
     const router = useRouter();
-    const { tourId } = router.query;
-    const { setTourId,setImageUrl } = useGuest();
+    const {tourId} = router.query;
+    const {setTourId, setImageUrl} = useGuest();
+    const tourIdAsString = Array.isArray(tourId) ? tourId[0] : (tourId || "");
 
     const {
         isOpen: isBookingOpen,
@@ -50,7 +49,7 @@ export default function BookingDetailsPage() {
                     setErrorMessage(err.message);
                 });
         }
-    }, [router.isReady, tourId, setTourId,openBooking]);
+    }, [router.isReady, tourId, setTourId, openBooking]);
 
     if (!tourData) {
         return (
@@ -80,7 +79,7 @@ export default function BookingDetailsPage() {
         <>
             <ModalPageLayout isOpen={isBookingOpen}>
                 <BookingDetails
-                    tourId={tourId}
+                    tourId={tourIdAsString}
                     title={tourData.name}
                     description={tourData.description}
                     originalPrice={tourData.price}

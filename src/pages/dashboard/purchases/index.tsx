@@ -20,6 +20,7 @@ import {
     Spacer,
     Spinner,
     Text,
+    useBreakpointValue,
     useDisclosure,
     VStack
 } from '@chakra-ui/react';
@@ -289,6 +290,222 @@ const PurchaseDetails = ({reservation}) => {
         onCancelOpen();
     };
 
+
+    const ACTION_ITEMS = [
+        {
+            label: "Arrival",
+            icon: <CiCalendar size={18}/>,
+            // minBreakpoint: "lg",
+            ranges: [
+                {minBreakpoint: "lg", maxBreakpoint: "lg"},
+                {minBreakpoint: "lg"},
+            ],
+            onClick: (e) => {
+                e.stopPropagation();
+                setChangeArrivalOpen(true);
+            },
+        },
+        {
+            label: "Guests",
+            icon: <IoPersonOutline size={18}/>,
+            // minBreakpoint: "lg",
+            ranges: [
+                {minBreakpoint: "lg", maxBreakpoint: "lg"},
+                {minBreakpoint: "lg"},
+            ],
+            onClick: (e) => {
+                e.stopPropagation();
+                setChangeGuestQuantityModalOpen(true);
+            },
+        },
+        {
+            label: "Add-ons",
+            icon: <BsBox2 size={15}/>,
+            // minBreakpoint: "lg",
+            ranges: [
+                {minBreakpoint: "lg", maxBreakpoint: "lg"},
+                {minBreakpoint: "lg"},
+            ],
+            onClick: (e) => {
+                e.stopPropagation();
+                setChangeAddonsModalOpen(true);
+            },
+        },
+        {
+            label: "Refund",
+            icon: <RiRefund2Line size={18}/>,
+            // minBreakpoint: "lg",
+            ranges: [
+                {minBreakpoint: "lg", maxBreakpoint: "lg"},
+                {minBreakpoint: "lg"},
+            ],
+            onClick: (e) => {
+                e.stopPropagation();
+            },
+        },
+        {
+            label: "Message Guests",
+            icon: <CiLocationArrow1 size={18}/>,
+            // minBreakpoint: "lg",
+            ranges: [
+                {minBreakpoint: "lg", maxBreakpoint: "lg"},
+                {minBreakpoint: "lg"},
+            ],
+            onClick: (e) => {
+                e.stopPropagation();
+                setSendMessageModalOpen(true);
+            },
+        },
+        {
+            label: "Resend Confirmation",
+            icon: <AiOutlineMail size={18}/>,
+            // minBreakpoint: "lg",
+            ranges: [
+                {minBreakpoint: "lg", maxBreakpoint: "lg"},
+                {minBreakpoint: "lg"},
+            ],
+            onClick: (e) => {
+                e.stopPropagation();
+            },
+        },
+        {
+            label: "Resend Gratuity Notification",
+            icon: <AiOutlineMail size={18}/>,
+            // minBreakpoint: "2xl",
+            ranges: [
+                {minBreakpoint: "lg", maxBreakpoint: "lg"},
+                {minBreakpoint: "2xl"},
+            ],
+            onClick: (e) => {
+                e.stopPropagation();
+            },
+        },
+        {
+            label: "Resend Waiver Email",
+            icon: <PiPencilSimpleLineDuotone size={18}/>,
+            // minBreakpoint: "2xl",
+            ranges: [
+                {minBreakpoint: "lg", maxBreakpoint: "lg"},
+                {minBreakpoint: "2xl"},
+            ],
+            onClick: (e) => {
+                e.stopPropagation();
+            },
+        },
+        // {
+        //     label: "Switch Experience",
+        //     icon: <MdOutlineRefresh size={18} />,
+        //     minBreakpoint: "lg",
+        //     maxBreakpoint: "lg",
+        //     onClick: (e) => {
+        //         e.stopPropagation();
+        //     },
+        // },
+        // {
+        //     label: "Switch Experience",
+        //     icon: <MdOutlineRefresh size={18} />,
+        //     minBreakpoint: "2xl",
+        //     onClick: (e) => {
+        //         e.stopPropagation();
+        //     },
+        // },
+        {
+            label: "Switch Experience",
+            icon: <MdOutlineRefresh size={18}/>,
+            ranges: [
+                {minBreakpoint: "lg", maxBreakpoint: "lg"},
+                {minBreakpoint: "2xl"},
+            ],
+            onClick: (e) => {
+                e.stopPropagation();
+            },
+        },
+        {
+            label: "Print Receipt",
+            icon: <MdOutlineLocalPrintshop size={18}/>,
+            // minBreakpoint: "lg",
+            // maxBreakpoint: "lg",
+            ranges: [
+                {minBreakpoint: "lg", maxBreakpoint: "lg"},
+                {minBreakpoint: "2xl", maxBreakpoint: "xl"},
+            ],
+            onClick: (e) => {
+                e.stopPropagation();
+            },
+        },
+        {
+            label: "Email Receipt",
+            icon: <AiOutlineMail size={18}/>,
+            // minBreakpoint: "lg",
+            // maxBreakpoint: "lg",
+            ranges: [
+                {minBreakpoint: "lg", maxBreakpoint: "lg"},
+                {minBreakpoint: "2xl", maxBreakpoint: "xl"},
+            ],
+            onClick: (e) => {
+                e.stopPropagation();
+            },
+        },
+        {
+            label: "Rebook Organizer",
+            icon: <FiSend size={18}/>,
+            // minBreakpoint: "lg",
+            // maxBreakpoint: "lg",
+            ranges: [
+                {minBreakpoint: "lg", maxBreakpoint: "lg"},
+                {minBreakpoint: "2xl", maxBreakpoint: "xl"},
+            ],
+            onClick: (e) => {
+                e.stopPropagation();
+            },
+        },
+        {
+            label: "Cancel Reservations",
+            icon: <MdOutlineCancel size={18}/>,
+            // minBreakpoint: "lg",
+            // maxBreakpoint: "lg",
+            ranges: [
+                {minBreakpoint: "lg", maxBreakpoint: "lg"},
+                {minBreakpoint: "2xl", maxBreakpoint: "xl"},
+            ],
+            onClick: (e) => {
+                e.stopPropagation();
+                setCancelConfirmationOpen(true);
+            },
+        }
+    ];
+
+    const currentBreakpoint = useBreakpointValue({
+        base: "base",
+        sm: "sm",
+        md: "md",
+        lg: "lg",
+        xl: "xl",
+        "2xl": "2xl",
+    }) || "base";
+
+    function isVisibleInCurrentBreakpointWithRanges(item, currentBp) {
+        const order = ["base", "sm", "md", "lg", "xl", "2xl"];
+        const currentIndex = order.indexOf(currentBp);
+
+        return item.ranges.some(range => {
+            const minIndex = range.minBreakpoint
+                ? order.indexOf(range.minBreakpoint)
+                : 0;
+            const maxIndex = range.maxBreakpoint
+                ? order.indexOf(range.maxBreakpoint)
+                : order.length - 1;
+
+            return currentIndex >= minIndex && currentIndex <= maxIndex;
+        });
+    }
+
+    const visibleItems = ACTION_ITEMS.filter((item) =>
+        isVisibleInCurrentBreakpointWithRanges(item, currentBreakpoint)
+    );
+
+    const hiddenItems = ACTION_ITEMS.filter((item) => !visibleItems.includes(item));
+
     const [isChangeGuestQuantityModalOpen, setChangeGuestQuantityModalOpen] = useState(false);
     const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
@@ -304,94 +521,34 @@ const PurchaseDetails = ({reservation}) => {
         <VStack>
             <Box
                 position="relative"
-                width="175%"
-                maxWidth="none"
+                width={{base: "30%", md: "90%", xl: "100%", "2xl": "175%"}}
+                maxWidth={{base: "none", md: "none", xl: "none"}}
                 borderRadius="lg"
                 overflowY="auto"
-                marginTop={"-5px"}
-                marginLeft={"10px"}
+                marginTop={{base: "0", md: "-5px"}}
+                marginLeft={{base: "0", md: "10px"}}
             >
-                <img
+                <Image
                     src={reservation.tour.imageUrl || "https://via.placeholder.com/1000x300"}
                     alt={reservation.tour.name}
-                    style={{
-                        width: "100%",
-                        height: "200px",
-                        objectFit: "cover",
-                        backgroundColor: "gray.300",
-                    }}
+                    width="100%"
+                    height="200px"
+                    objectFit="cover"
+                    bg="gray.300"
                 />
-
             </Box>
 
             <Box flex="1" p={6} marginTop={"-50px"} marginLeft={"15px"}>
                 <HStack spacing={3} mt={5} wrap="nowrap">
-                    <HStack>
-                        <CiCalendar size={18}/>
-                        <Link style={{whiteSpace: "nowrap"}}
-                              onClick={(e) => {
-                                  e.stopPropagation();
-                                  setChangeArrivalOpen(true);
-                              }}
-                        >
-                            Arrival
-                        </Link>
-                    </HStack>
-                    <HStack>
-                        <IoPersonOutline size={18}/>
-                        <Link
-                            style={{whiteSpace: "nowrap"}}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setChangeGuestQuantityModalOpen(true);
-                            }}
-                        >
-                            Guests
-                        </Link>
-                    </HStack>
-                    <HStack>
-                        <BsBox2 size={15}/>
-                        <Link style={{whiteSpace: "nowrap"}}
-                              onClick={(e) => {
-                                  e.stopPropagation();
-                                  setChangeAddonsModalOpen(true);
-                              }}
-                        >
-                            Add-ons
-                        </Link>
-                    </HStack>
-                    <HStack>
-                        <RiRefund2Line size={18}/>
-                        <Link style={{whiteSpace: "nowrap"}}>Refund</Link>
-                    </HStack>
-                    <HStack>
-                        <CiLocationArrow1 size={18}/>
-                        <Link style={{whiteSpace: "nowrap"}}
-                              onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSendMessageModalOpen(true);
-                              }}
-                        >
-                            Message Guests
-                        </Link>
-                    </HStack>
-                    <HStack>
-                        <AiOutlineMail size={18}/>
-                        <Link style={{whiteSpace: "nowrap"}}>Resend Confirmation</Link>
-                    </HStack>
-                    <HStack>
-                        <AiOutlineMail size={18}/>
-                        <Link style={{whiteSpace: "nowrap"}}>Resend Gratuity Notification</Link>
-                    </HStack>
-                    <HStack>
-                        <PiPencilSimpleLineDuotone size={18}/>
-                        <Link style={{whiteSpace: "nowrap"}}>Resend Waiver Email</Link>
-                    </HStack>
-                    <HStack>
-                        <MdOutlineRefresh size={18}/>
-                        <Link style={{whiteSpace: "nowrap"}}>Switch Experience</Link>
-                    </HStack>
-                    <HStack>
+                    {visibleItems.map((item, idx) => (
+                        <HStack key={idx}>
+                            {item.icon}
+                            <Link style={{whiteSpace: "nowrap"}} onClick={item.onClick}>
+                                {item.label}
+                            </Link>
+                        </HStack>
+                    ))}
+                    {hiddenItems.length > 0 && (
                         <Menu placement="left-start" offset={[-50, 0]}>
                             <MenuButton
                                 as={IconButton}
@@ -401,63 +558,29 @@ const PurchaseDetails = ({reservation}) => {
                                 size="sm"
                                 onClick={(e) => e.stopPropagation()}
                             />
-                            <MenuList
-                                p={0}
-                                borderRadius="md"
-                                boxShadow="lg"
-                                width="100px"
-                                maxWidth="300px"
-                                minHeight="100px"
-                            >
-                                <MenuItem
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        // setSendMessageModalOpen(true);
-                                    }}
-                                >
-                                    <HStack spacing={2}>
-                                        <MdOutlineLocalPrintshop/>
-                                        <Text>Print Receipt</Text>
-                                    </HStack>
-                                </MenuItem>
-                                <MenuItem
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        // setSendMessageModalOpen(true);
-                                    }}
-                                >
-                                    <HStack spacing={2}>
-                                        <AiOutlineMail/>
-                                        <Text>Email Receipt</Text>
-                                    </HStack>
-                                </MenuItem>
-                                <MenuItem
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        // setSendMessageModalOpen(true);
-                                    }}
-                                >
-                                    <HStack spacing={2}>
-                                        <FiSend/>
-                                        <Text>Rebook Organizer</Text>
-                                    </HStack>
-                                </MenuItem>
-                                <MenuItem
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setCancelConfirmationOpen(true);
-                                    }}
-                                >
-                                    <HStack spacing={2}>
-                                        <MdOutlineCancel/>
-                                        <Text>Cancel Reservations</Text>
-                                    </HStack>
-                                </MenuItem>
+                            <MenuList p={0} borderRadius="md" boxShadow="lg">
+                                {hiddenItems.map((item, idx) => (
+                                    <MenuItem
+                                        key={idx}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            item.onClick?.(e);
+                                        }}
+                                    >
+                                        <HStack spacing={2}>
+                                            {item.icon}
+                                            <Text>{item.label}</Text>
+                                        </HStack>
+                                    </MenuItem>
+                                ))}
                             </MenuList>
                         </Menu>
-                    </HStack>
+                    )}
                 </HStack>
-                <Box mt={8} marginLeft={"20px"} marginTop={"50px"}>
+                <Box
+                    mt={{base: "50px", xl: "15px", "2xl": "50px"}}
+                    ml={{base: "50px", xl: "-30px", "2xl": "-10px"}}
+                >
                     <Text fontSize="xl" fontWeight="bold">
                         {reservation.tour.name}
                     </Text>
@@ -644,13 +767,13 @@ const PaymentSummary = ({reservation}) => {
             bg="gray.100"
             borderRadius="md"
             boxShadow="sm"
-            marginTop={{ base: "0", md: "0", lg: "-270px" }}
-            marginLeft={{ base: "0", md: "0", lg: "200px" }}
-            padding={{ base: "10px", md: "20px" }}
+            marginTop={{base: "0", md: "0", lg: "-270px"}}
+            marginLeft={{base: "0", md: "0", lg: "200px"}}
+            padding={{base: "10px", md: "20px"}}
             position="relative"
-            left={{ base: "0", md: "0" }}
-            width={{ base: "100%", xl: "100%", "2xl": "150%" }}
-            maxWidth={{ base: "100%", md: "90%", lg: "100%", "2xl": "150%" }}
+            left={{base: "0", md: "0"}}
+            width={{base: "100%", xl: "100%", "2xl": "150%"}}
+            maxWidth={{base: "100%", md: "90%", lg: "100%", "2xl": "150%"}}
             overflow="hidden"
         >
             <Text fontSize="xl" fontWeight="bold">Purchase Summary</Text>
@@ -790,14 +913,14 @@ const PurchasesPage = () => {
                         <Divider orientation='vertical'/>
                     </Center>
                     <Flex
-                        direction={{ base: "column", md: "row" }}
+                        direction={{base: "column", md: "row"}}
                         align="center"
                         justify="space-between"
                         width="100%"
                     >
-                        <InputGroup w={{ base: "100%", md: "auto" }} flex="1" mr={2}>
+                        <InputGroup w={{base: "100%", md: "auto"}} flex="1" mr={2}>
                             <InputLeftElement pointerEvents="none" marginTop={"-3px"}>
-                                <SearchIcon color="gray.400" />
+                                <SearchIcon color="gray.400"/>
                             </InputLeftElement>
                             <Input
                                 placeholder="Name, email, phone or ID"
@@ -805,8 +928,8 @@ const PurchasesPage = () => {
                                 border="none"
                                 boxShadow="none"
                                 focusBorderColor="transparent"
-                                w={{ base: "100%", md: "auto" }}
-                                _placeholder={{ fontSize: "lg" }}
+                                w={{base: "100%", md: "auto"}}
+                                _placeholder={{fontSize: "lg"}}
                                 value={searchTerm}
                                 onChange={handleSearch}
                             />
@@ -815,7 +938,7 @@ const PurchasesPage = () => {
                             colorScheme="green"
                             size="md"
                             h={"40px"}
-                            w={{ base: "100%", md: "250px" }}
+                            w={{base: "100%", md: "250px"}}
                             border={"none"}
                             borderRadius={"4px"}
                             onClick={handlePurchaseClick}

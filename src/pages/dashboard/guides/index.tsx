@@ -72,7 +72,7 @@ function GuidesPage() {
 
     return (
         <DashboardLayout>
-            <Box p={8} maxW="100%" marginLeft={"-50px"} marginTop={"-30px"}>
+            <Box p={8} w={"1000px"} maxW="100%" marginLeft={"100px"} marginTop={"-30px"}>
                 <Flex justifyContent="space-between" alignItems="center" mb={3} w={"100%"}>
                     <Flex alignItems="center">
                         <Heading>Guide Management</Heading>

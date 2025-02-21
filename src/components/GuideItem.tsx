@@ -17,7 +17,7 @@ export default function GuideItem({
     return (
         <Box
             marginTop={"10"}
-            w={"1500px"}
+            w={{ base: "40%", md: "50%", lg: "1100px" }}
             borderWidth="1px"
             borderRadius="lg"
             overflow="hidden"

@@ -262,13 +262,23 @@ function BlackoutDatesManagement() {
                                             {date.startDate && (
                                                 <Text>
                                                     <strong>Start Date:</strong>{" "}
-                                                    {new Date(date.startDate).toLocaleDateString('en-GB', {timeZone: 'UTC'})}
+                                                    {new Date(date.startDate).toLocaleDateString("en-US", {
+                                                        timeZone: "UTC",
+                                                        month: "2-digit",
+                                                        day: "2-digit",
+                                                        year: "numeric",
+                                                    })}
                                                 </Text>
                                             )}
                                             {date.endDate ? (
                                                 <Text>
                                                     <strong>End Date:</strong>{" "}
-                                                    {new Date(date.endDate).toLocaleDateString()}
+                                                    {new Date(date.endDate).toLocaleDateString("en-US", {
+                                                        timeZone: "UTC",
+                                                        month: "2-digit",
+                                                        day: "2-digit",
+                                                        year: "numeric",
+                                                    })}
                                                 </Text>
                                             ) : (
                                                 <Text>

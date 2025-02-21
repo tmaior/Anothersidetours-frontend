@@ -8,7 +8,7 @@ import debounce from 'lodash.debounce';
 
 interface BookingDetailsProps {
     onContinue?: () => void;
-    tourId: string;
+    tourId?: string;
     title: string;
     description: string;
     originalPrice: string;

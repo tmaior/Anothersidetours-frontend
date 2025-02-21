@@ -141,7 +141,7 @@ function ListTours() {
 
     return (
         <DashboardLayout>
-            <Box p={2} width={{ base: "100%", md: "1300px" }} mx="auto">
+            <Box p={2} width={{ base: "100%", md: "1000px" }} mx="auto">
                 <HStack
                     mb={4}
                     spacing={4}

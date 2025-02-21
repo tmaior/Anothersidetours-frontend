@@ -154,6 +154,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
             <Box
                 as="nav"
                 width="250px"
+                h={"1000px"}
                 bg="#222324"
                 p={4}
                 borderRight="1px solid #333"
@@ -161,7 +162,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                 flexDirection="column"
                 alignItems="stretch"
             >
-                <VStack spacing={4} align="stretch">
+                <VStack spacing={4} align="stretch" marginTop={"-50px"}>
                     <Box
                         as="button"
                         onClick={() => router.push("/dashboard/reservation")}
@@ -199,7 +200,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         onClick={() => router.push("/dashboard/reservation")}
                     >
                         <Button
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             marginLeft={"-5"}
                             justifyContent="flex-start"
                             color="white"
@@ -229,7 +230,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -258,7 +259,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -287,7 +288,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -316,7 +317,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -345,7 +346,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -374,7 +375,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -403,7 +404,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -432,7 +433,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -461,7 +462,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -490,7 +491,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -519,7 +520,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -548,7 +549,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -577,7 +578,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     >
                         <Button
                             marginLeft={"-5"}
-                            marginTop={"-30px"}
+                            marginTop={"-130px"}
                             justifyContent="flex-start"
                             color="white"
                             variant="ghost"
@@ -600,7 +601,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     </Text>
                 </VStack>
 
-                <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"} marginTop={"20px"}>
+                <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"} marginTop={"-60px"}>
                     {/*{!isLoading && selectedTenant && (*/}
                     <Menu placement="right-start" offset={[0, 0]} closeOnSelect={false}>
                         <MenuButton
@@ -623,7 +624,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             }}
                         >
                             <HStack spacing={3} alignItems="center">
-                                <Avatar size="sm" src={selectedTenant?.imageUrl || "https://bit.ly/broken-link"} />
+                                <Avatar size="sm" src={selectedTenant?.imageUrl || "https://bit.ly/broken-link"}/>
                                 <Box overflow="hidden">
                                     <Text
                                         fontSize="sm"

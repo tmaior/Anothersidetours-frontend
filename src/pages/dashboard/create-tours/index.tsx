@@ -245,6 +245,7 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
                     overflowY="auto"
                     flex="1"
                     pb="150px"
+                    marginRight={"-30px"}
                     css={{
                         '&::-webkit-scrollbar': {
                             width: '6px',

@@ -550,7 +550,7 @@ function SchedulesAvailabilityStep({
 
     const resetFields = () => {
         setSchedule([]);
-        setEventDuration(0);
+        setEventDuration('');
         setGuestLimit(0);
         setEarlyArrival(false);
         setTitle("");
@@ -1167,7 +1167,7 @@ function SchedulesAvailabilityStep({
                 <Box p={8}
                      maxWidth="2000px"
                      mx="auto"
-                     maxHeight="1000px"
+                     maxHeight="850px"
                      overflowY="auto"
                      flex="1"
                      pb="150px"
@@ -1207,7 +1207,7 @@ function SchedulesAvailabilityStep({
                                         <Input
                                             type="number"
                                             value={eventDuration}
-                                            onChange={(e) => setEventDuration(Number(e.target.value))}
+                                            onChange={(e) => setEventDuration(e.target.value)}
                                         />
                                         <Select>
                                             <option value="hour">hour</option>
@@ -1816,7 +1816,7 @@ function CreateToursPage({isEditing = false}: { isEditing?: boolean }) {
 
     const resetFields = () => {
         setSchedule([]);
-        setEventDuration(0);
+        setEventDuration('');
         setGuestLimit(0);
         setEarlyArrival(false);
         setTitle("");
@@ -1835,7 +1835,7 @@ function CreateToursPage({isEditing = false}: { isEditing?: boolean }) {
         setImagePreview(null);
         setImageFile(null);
         setSchedule([]);
-        setEventDuration(0);
+        setEventDuration('');
         setGuestLimit(0);
         setEarlyArrival(false);
         setTitle("");

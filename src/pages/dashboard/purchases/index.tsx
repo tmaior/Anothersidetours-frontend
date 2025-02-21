@@ -638,8 +638,21 @@ const PaymentSummary = ({reservation}) => {
     }
 
     return (
-        <Box bg="gray.100" borderRadius="md" boxShadow="sm" width="150%" marginTop={"-270px"} marginLeft={"200px"}
-             padding={"20px"}>
+
+
+        <Box
+            bg="gray.100"
+            borderRadius="md"
+            boxShadow="sm"
+            marginTop={{ base: "0", md: "0", lg: "-270px" }}
+            marginLeft={{ base: "0", md: "0", lg: "200px" }}
+            padding={{ base: "10px", md: "20px" }}
+            position="relative"
+            left={{ base: "0", md: "0" }}
+            width={{ base: "100%", xl: "100%", "2xl": "150%" }}
+            maxWidth={{ base: "100%", md: "90%", lg: "100%", "2xl": "150%" }}
+            overflow="hidden"
+        >
             <Text fontSize="xl" fontWeight="bold">Purchase Summary</Text>
             <VStack spacing={4} align="stretch" mt={4}>
                 {/*<HStack justifyContent="space-between">*/}

@@ -10,6 +10,7 @@ import {
     isBefore,
     isSameDay,
     isSameMonth,
+    parse,
     startOfDay,
     startOfMonth,
     startOfWeek,
@@ -450,7 +451,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
                     try {
                         if (time.includes(":")) {
                             const today = new Date().toISOString().split("T")[0];
-                            const combinedDateTime = new Date(`${today} ${time}`);
+                            const dateTimeString = `${today} ${time}`;
+                            const combinedDateTime = parse(dateTimeString, 'yyyy-MM-dd hh:mm a', new Date());
                             if (isNaN(combinedDateTime.getTime())) {
                                 throw new Error(`Invalid time value: ${time}`);
                             }

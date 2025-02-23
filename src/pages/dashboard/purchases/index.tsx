@@ -20,7 +20,6 @@ import {
     Spacer,
     Spinner,
     Text,
-    useBreakpointValue,
     useDisclosure,
     VStack
 } from '@chakra-ui/react';
@@ -47,6 +46,7 @@ import {FiSend} from "react-icons/fi";
 import {MdOutlineCancel, MdOutlineLocalPrintshop, MdOutlineRefresh} from 'react-icons/md';
 import CancelConfirmationModal from "../../../components/CancelConfirmationModal";
 import PurchaseNotes from "../../../components/PurchaseNotes";
+import useWindowWidth from "../../../hooks/useWindowWidth";
 
 type GuestItemProps = {
     name: string;
@@ -290,16 +290,19 @@ const PurchaseDetails = ({reservation}) => {
         onCancelOpen();
     };
 
+    const windowWidth = useWindowWidth();
+
+    const isVisible = (minWidth, maxWidth) => {
+        return windowWidth >= minWidth && windowWidth <= maxWidth;
+    };
+
 
     const ACTION_ITEMS = [
         {
             label: "Arrival",
             icon: <CiCalendar size={18}/>,
             // minBreakpoint: "lg",
-            ranges: [
-                {minBreakpoint: "lg", maxBreakpoint: "lg"},
-                {minBreakpoint: "lg"},
-            ],
+            isVisible: isVisible(480, 2560),
             onClick: (e) => {
                 e.stopPropagation();
                 setChangeArrivalOpen(true);
@@ -309,10 +312,7 @@ const PurchaseDetails = ({reservation}) => {
             label: "Guests",
             icon: <IoPersonOutline size={18}/>,
             // minBreakpoint: "lg",
-            ranges: [
-                {minBreakpoint: "lg", maxBreakpoint: "lg"},
-                {minBreakpoint: "lg"},
-            ],
+            isVisible: isVisible(480, 2560),
             onClick: (e) => {
                 e.stopPropagation();
                 setChangeGuestQuantityModalOpen(true);
@@ -322,10 +322,7 @@ const PurchaseDetails = ({reservation}) => {
             label: "Add-ons",
             icon: <BsBox2 size={15}/>,
             // minBreakpoint: "lg",
-            ranges: [
-                {minBreakpoint: "lg", maxBreakpoint: "lg"},
-                {minBreakpoint: "lg"},
-            ],
+            isVisible: isVisible(480, 2560),
             onClick: (e) => {
                 e.stopPropagation();
                 setChangeAddonsModalOpen(true);
@@ -335,10 +332,7 @@ const PurchaseDetails = ({reservation}) => {
             label: "Refund",
             icon: <RiRefund2Line size={18}/>,
             // minBreakpoint: "lg",
-            ranges: [
-                {minBreakpoint: "lg", maxBreakpoint: "lg"},
-                {minBreakpoint: "lg"},
-            ],
+            isVisible: isVisible(480, 2560),
             onClick: (e) => {
                 e.stopPropagation();
             },
@@ -347,10 +341,7 @@ const PurchaseDetails = ({reservation}) => {
             label: "Message Guests",
             icon: <CiLocationArrow1 size={18}/>,
             // minBreakpoint: "lg",
-            ranges: [
-                {minBreakpoint: "lg", maxBreakpoint: "lg"},
-                {minBreakpoint: "lg"},
-            ],
+            isVisible: isVisible(480, 2560),
             onClick: (e) => {
                 e.stopPropagation();
                 setSendMessageModalOpen(true);
@@ -360,10 +351,7 @@ const PurchaseDetails = ({reservation}) => {
             label: "Resend Confirmation",
             icon: <AiOutlineMail size={18}/>,
             // minBreakpoint: "lg",
-            ranges: [
-                {minBreakpoint: "lg", maxBreakpoint: "lg"},
-                {minBreakpoint: "lg"},
-            ],
+            isVisible: isVisible(480, 2560),
             onClick: (e) => {
                 e.stopPropagation();
             },
@@ -372,10 +360,7 @@ const PurchaseDetails = ({reservation}) => {
             label: "Resend Gratuity Notification",
             icon: <AiOutlineMail size={18}/>,
             // minBreakpoint: "2xl",
-            ranges: [
-                {minBreakpoint: "lg", maxBreakpoint: "lg"},
-                {minBreakpoint: "2xl"},
-            ],
+            isVisible: isVisible(1538, 2560),
             onClick: (e) => {
                 e.stopPropagation();
             },
@@ -384,10 +369,7 @@ const PurchaseDetails = ({reservation}) => {
             label: "Resend Waiver Email",
             icon: <PiPencilSimpleLineDuotone size={18}/>,
             // minBreakpoint: "2xl",
-            ranges: [
-                {minBreakpoint: "lg", maxBreakpoint: "lg"},
-                {minBreakpoint: "2xl"},
-            ],
+            isVisible: isVisible(1728, 2560),
             onClick: (e) => {
                 e.stopPropagation();
             },
@@ -412,10 +394,7 @@ const PurchaseDetails = ({reservation}) => {
         {
             label: "Switch Experience",
             icon: <MdOutlineRefresh size={18}/>,
-            ranges: [
-                {minBreakpoint: "lg", maxBreakpoint: "lg"},
-                {minBreakpoint: "2xl"},
-            ],
+            isVisible: isVisible(1880, 2560),
             onClick: (e) => {
                 e.stopPropagation();
             },
@@ -425,10 +404,7 @@ const PurchaseDetails = ({reservation}) => {
             icon: <MdOutlineLocalPrintshop size={18}/>,
             // minBreakpoint: "lg",
             // maxBreakpoint: "lg",
-            ranges: [
-                {minBreakpoint: "lg", maxBreakpoint: "lg"},
-                {minBreakpoint: "2xl", maxBreakpoint: "xl"},
-            ],
+            isVisible: isVisible(2560, 2560),
             onClick: (e) => {
                 e.stopPropagation();
             },
@@ -438,10 +414,7 @@ const PurchaseDetails = ({reservation}) => {
             icon: <AiOutlineMail size={18}/>,
             // minBreakpoint: "lg",
             // maxBreakpoint: "lg",
-            ranges: [
-                {minBreakpoint: "lg", maxBreakpoint: "lg"},
-                {minBreakpoint: "2xl", maxBreakpoint: "xl"},
-            ],
+            isVisible: isVisible(2560, 2560),
             onClick: (e) => {
                 e.stopPropagation();
             },
@@ -451,10 +424,7 @@ const PurchaseDetails = ({reservation}) => {
             icon: <FiSend size={18}/>,
             // minBreakpoint: "lg",
             // maxBreakpoint: "lg",
-            ranges: [
-                {minBreakpoint: "lg", maxBreakpoint: "lg"},
-                {minBreakpoint: "2xl", maxBreakpoint: "xl"},
-            ],
+            isVisible: isVisible(2560, 2560),
             onClick: (e) => {
                 e.stopPropagation();
             },
@@ -464,10 +434,7 @@ const PurchaseDetails = ({reservation}) => {
             icon: <MdOutlineCancel size={18}/>,
             // minBreakpoint: "lg",
             // maxBreakpoint: "lg",
-            ranges: [
-                {minBreakpoint: "lg", maxBreakpoint: "lg"},
-                {minBreakpoint: "2xl", maxBreakpoint: "xl"},
-            ],
+            isVisible: isVisible(2560, 2560),
             onClick: (e) => {
                 e.stopPropagation();
                 setCancelConfirmationOpen(true);
@@ -475,36 +442,39 @@ const PurchaseDetails = ({reservation}) => {
         }
     ];
 
-    const currentBreakpoint = useBreakpointValue({
-        base: "base",
-        sm: "sm",
-        md: "md",
-        lg: "lg",
-        xl: "xl",
-        "2xl": "2xl",
-    }) || "base";
+    const visibleItems = ACTION_ITEMS.filter((item) => item.isVisible);
+    const hiddenItems = ACTION_ITEMS.filter((item) => !item.isVisible);
 
-    function isVisibleInCurrentBreakpointWithRanges(item, currentBp) {
-        const order = ["base", "sm", "md", "lg", "xl", "2xl"];
-        const currentIndex = order.indexOf(currentBp);
-
-        return item.ranges.some(range => {
-            const minIndex = range.minBreakpoint
-                ? order.indexOf(range.minBreakpoint)
-                : 0;
-            const maxIndex = range.maxBreakpoint
-                ? order.indexOf(range.maxBreakpoint)
-                : order.length - 1;
-
-            return currentIndex >= minIndex && currentIndex <= maxIndex;
-        });
-    }
-
-    const visibleItems = ACTION_ITEMS.filter((item) =>
-        isVisibleInCurrentBreakpointWithRanges(item, currentBreakpoint)
-    );
-
-    const hiddenItems = ACTION_ITEMS.filter((item) => !visibleItems.includes(item));
+    // const currentBreakpoint = useBreakpointValue({
+    //     base: "base",
+    //     sm: "sm",
+    //     md: "md",
+    //     lg: "lg",
+    //     xl: "xl",
+    //     "2xl": "2xl",
+    // }) || "base";
+    //
+    // function isVisibleInCurrentBreakpointWithRanges(item, currentBp) {
+    //     const order = ["base", "sm", "md", "lg", "xl", "2xl"];
+    //     const currentIndex = order.indexOf(currentBp);
+    //
+    //     return item.ranges.some(range => {
+    //         const minIndex = range.minBreakpoint
+    //             ? order.indexOf(range.minBreakpoint)
+    //             : 0;
+    //         const maxIndex = range.maxBreakpoint
+    //             ? order.indexOf(range.maxBreakpoint)
+    //             : order.length - 1;
+    //
+    //         return currentIndex >= minIndex && currentIndex <= maxIndex;
+    //     });
+    // }
+    //
+    // const visibleItems = ACTION_ITEMS.filter((item) =>
+    //     isVisibleInCurrentBreakpointWithRanges(item, currentBreakpoint)
+    // );
+    //
+    // const hiddenItems = ACTION_ITEMS.filter((item) => !visibleItems.includes(item));
 
     const [isChangeGuestQuantityModalOpen, setChangeGuestQuantityModalOpen] = useState(false);
     const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
@@ -773,7 +743,7 @@ const PaymentSummary = ({reservation}) => {
             position="relative"
             left={{base: "0", md: "0"}}
             width={{base: "100%", xl: "100%", "2xl": "150%"}}
-            maxWidth={{base: "100%", md: "90%", lg: "100%", "2xl": "150%"}}
+            maxWidth={{base: "100%", md: "90%", lg: "100%", "2xl": "130%"}}
             overflow="hidden"
         >
             <Text fontSize="xl" fontWeight="bold">Purchase Summary</Text>

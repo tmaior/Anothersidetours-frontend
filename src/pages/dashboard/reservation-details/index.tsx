@@ -31,12 +31,12 @@ import {FaRegTimesCircle} from "react-icons/fa";
 import {AiOutlineCompass} from "react-icons/ai";
 import {useGuides} from "../../../hooks/useGuides";
 import {useGuideAssignment} from "../../../hooks/useGuideAssignment";
-import {useReservationGuides} from "../../../hooks/useReservationGuides";
 import CancelConfirmationModal from "../../../components/CancelConfirmationModal";
 import BookingCancellationModal from "../../../components/BookingCancellationModal";
 import ChangeArrivalModal from "../../../components/ChangeArrivalModal";
 import SendMessageModal from "../../../components/SendMessageModal";
 import {format, parse} from "date-fns";
+import useGuidesStore from "../../../utils/store";
 
 export default function ReservationDetail({reservation, onCloseDetail, setReservations}) {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
@@ -47,10 +47,15 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {assignGuides, isAssigning} = useGuideAssignment();
     const toast = useToast();
-    const {guides, loading} = useReservationGuides(reservation?.id);
+    // const {guides, loading} = useReservationGuides(reservation?.id);
     const [currentStatus, setCurrentStatus] = useState(reservation?.status);
     const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
+
+    const {reservationGuides, setReservationGuides} = useGuidesStore();
+    const guides = reservationGuides[reservation?.id] || [];
+    const loading = false;
+    const [, setLocalGuides] = useState([]);
 
     const {
         isOpen: isConfirmOpen,
@@ -71,7 +76,8 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
 
     useEffect(() => {
         setCurrentStatus(reservation?.status);
-    }, [reservation]);
+        setLocalGuides(reservationGuides[reservation.id]);
+    }, [reservation, reservationGuides]);
 
     const displayGuideText = () => {
         if (loading) return "Loading guides...";
@@ -81,6 +87,8 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
 
     const handleSaveGuides = async (guides) => {
         const guideIds = guides.map((guide) => guide.id);
+
+        setReservationGuides(reservation.id, guides);
 
         try {
             await assignGuides(reservation.id, guideIds);
@@ -94,6 +102,9 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
                 isClosable: true,
             });
         } catch {
+
+            setReservationGuides(reservation.id, reservationGuides[reservation.id] || []);
+
             toast({
                 title: "Error",
                 description: "Failed to update guides",

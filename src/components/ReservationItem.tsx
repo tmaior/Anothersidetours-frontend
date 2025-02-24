@@ -1,4 +1,4 @@
-import {Box, Button, Flex, HStack, IconButton, Image, Text, useToast, VStack,} from "@chakra-ui/react";
+import {Box, Flex, HStack, IconButton, Image, Text, useToast, VStack,} from "@chakra-ui/react";
 import {BsSticky} from "react-icons/bs";
 import {FaPencilAlt} from "react-icons/fa";
 import React, {useEffect, useState} from "react";
@@ -6,8 +6,8 @@ import {AiOutlineCompass} from "react-icons/ai";
 import ManageGuidesModal from "./ManageGuidesModal";
 import {useGuides} from "../hooks/useGuides";
 import {useGuideAssignment} from "../hooks/useGuideAssignment";
-import {useReservationGuides} from "../hooks/useReservationGuides";
 import DashBoardMenu from "./DashboardMenuList";
+import useGuidesStore from "../utils/store";
 
 const ReservationItem = ({
                              date,
@@ -29,15 +29,19 @@ const ReservationItem = ({
     const {assignGuides, isAssigning,} = useGuideAssignment();
     const toast = useToast();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const {guides, loading} = useReservationGuides(reservationId);
+    const {reservationGuides, setReservationGuides} = useGuidesStore();
 
     useEffect(() => {
-        if (guides.length > 0) {
+        if (reservationGuides[reservationId]) {
+            const guides = reservationGuides[reservationId];
             const guideNames = guides.map((guide) => guide.name).join(", ");
             setSelectedGuideNames(guideNames);
             setSelectedGuideIds(guides.map((guide) => guide.id));
+        } else {
+            setSelectedGuideNames("No guides assigned");
+            setSelectedGuideIds([]);
         }
-    }, [guides]);
+    }, [reservationGuides, reservationId]);
 
     const handleNoteClick = async (item) => {
         try {
@@ -93,6 +97,8 @@ const ReservationItem = ({
         setSelectedGuideIds(guideIds);
         setSelectedGuideNames(selectedGuides.map((guide) => guide.name).join(", "));
 
+        setReservationGuides(reservationId, selectedGuides);
+
         if (reservationId) {
             try {
                 await assignGuides(reservationId, guideIds);
@@ -143,16 +149,16 @@ const ReservationItem = ({
                 <Flex
                     key={index}
                     bg="white"
-                    p={{ base: 2, md: 3 }}
+                    p={{base: 2, md: 3}}
                     borderRadius="md"
                     align="center"
                     justify="space-between"
                     boxShadow="sm"
                     cursor="pointer"
                     onClick={() => onSelectReservation(item)}
-                    flexWrap={{ base: "wrap", md: "nowrap" }}
+                    flexWrap={{base: "wrap", md: "nowrap"}}
                 >
-                    <HStack spacing={{ base: 2, md: 3 }} flexShrink={0}>
+                    <HStack spacing={{base: 2, md: 3}} flexShrink={0}>
                         <Box minWidth="40px" textAlign="center">
                             <Text fontWeight="medium" fontSize="sm" color="gray.600">
                                 {item.time.split(' ')[0]}
@@ -169,14 +175,14 @@ const ReservationItem = ({
                             objectFit="fill"
                         />
                     </HStack>
-                    <Box flex="1" ml={{ base: 2, md: 4 }} mt={{ base: 2, md: 0 }}>
+                    <Box flex="1" ml={{base: 2, md: 4}} mt={{base: 2, md: 0}}>
                         {!isCompactView && (
                             <Text fontWeight="semibold" fontSize="sm">
                                 {item.title}
                             </Text>
                         )}
                         {!isCompactView && (
-                            <HStack spacing={{ base: 2, md: 3 }} fontSize={{ base: "xs", md: "xs" }} color="gray.500">
+                            <HStack spacing={{base: 2, md: 3}} fontSize={{base: "xs", md: "xs"}} color="gray.500">
                                 <Text>{item.available}</Text>
                                 <Text>{item.reservedDetails}</Text>
                             </HStack>

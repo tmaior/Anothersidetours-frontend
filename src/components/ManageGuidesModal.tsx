@@ -17,6 +17,7 @@ import {
 } from "@chakra-ui/react";
 import {useEffect, useState} from "react";
 import axios from "axios";
+import useGuidesStore from "../utils/store";
 
 const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -24,6 +25,7 @@ const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
     const [guides, setGuides] = useState([]);
     const [loading, setLoading] = useState(true);
     const toast = useToast();
+    const { setReservationGuides } = useGuidesStore();
 
     useEffect(() => {
         if (isOpen) {
@@ -70,6 +72,7 @@ const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
             return guide ? {id: guide.id, name: guide.name} : null;
         }).filter(Boolean);
         onSelectGuide(selectedGuidesWithIds);
+        setReservationGuides(reservationId, selectedGuidesWithIds);
         onClose();
     };
 

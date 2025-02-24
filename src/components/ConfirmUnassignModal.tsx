@@ -11,15 +11,18 @@ import {
     useToast,
 } from "@chakra-ui/react";
 import {useGuideAssignment} from "../hooks/useGuideAssignment";
+import useGuidesStore from "../utils/store";
 
 const ConfirmUnassignModal = ({isOpen, onClose, reservation, onConfirm}) => {
     const toast = useToast();
 
     const {assignGuides} = useGuideAssignment();
+    const {setReservationGuides} = useGuidesStore();
 
     const handleConfirm = async () => {
         try {
             await assignGuides(reservation.id, []);
+            setReservationGuides(reservation.id, []);
             toast({
                 title: "Success",
                 description: "All guides have been unassigned from the reservation.",
@@ -43,7 +46,7 @@ const ConfirmUnassignModal = ({isOpen, onClose, reservation, onConfirm}) => {
 
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
-            <ModalOverlay />
+            <ModalOverlay/>
             <ModalContent>
                 <ModalHeader>Confirm Unassign</ModalHeader>
                 <ModalBody>

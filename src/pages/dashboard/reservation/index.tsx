@@ -395,7 +395,7 @@ function Dashboard() {
                   overflowY="auto"
                   ml={{base: 0, md: "-40px"}}>
                 <Box
-                    w={{base: "100%", md: isDetailVisible ? "30%" : "100%"}}
+                    w={{base: "100%", md: isDetailVisible ? "20%" : "100%"}}
                     overflowY="auto"
                     overflowX="hidden"
                     borderRight={{base: "none", md: isDetailVisible ? "1px solid #e2e8f0" : "none"}}

@@ -14,7 +14,7 @@ export function useGuideAssignment() {
                 {guideIds}
             );
             return response.data;
-        } catch (err: any) {
+        } catch (err) {
             console.error("Failed to assign guides:", err);
             setError(err.response?.data?.message || "Failed to assign guides");
         } finally {
@@ -31,7 +31,7 @@ export function useGuideAssignment() {
                 {data: {guideIds}}
             );
             return response.data;
-        } catch (err: any) {
+        } catch (err) {
             console.error("Failed to remove guides:", err);
             setError(err.response?.data?.message || "Failed to remove guides");
         } finally {

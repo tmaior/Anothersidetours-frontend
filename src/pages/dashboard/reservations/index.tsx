@@ -116,7 +116,7 @@ export default function ListReservations() {
             }
         }
         fetchAddons();
-    }, []);
+    }, [toast]);
 
     const handleAddAddon = async () => {
         const reservation = reservations.find((res) => res.id === selectedReservation);

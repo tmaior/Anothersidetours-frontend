@@ -70,7 +70,7 @@ function AddonContentPage() {
         }
 
         fetchData();
-    }, [addonId]);
+    }, [addonId,tenantId]);
 
     const handleFormChange = (field: string, value: string | number | boolean) => {
         if (field === "price") {

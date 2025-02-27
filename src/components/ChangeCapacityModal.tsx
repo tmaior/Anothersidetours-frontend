@@ -5,6 +5,7 @@ import {
     Flex,
     HStack,
     Icon,
+    Image,
     Modal,
     ModalBody,
     ModalCloseButton,
@@ -21,7 +22,7 @@ import {GoPerson} from "react-icons/go";
 import {MdAccessTime} from "react-icons/md";
 
 const ChangeCapacityModal = ({isOpen, onClose, eventDetails}) => {
-    const [selectedOption, setSelectedOption] = useState("");
+    const [selectedOption,] = useState("");
     const [selected, setSelected] = useState("");
 
     const handleSelect = (value) => {
@@ -61,7 +62,7 @@ const ChangeCapacityModal = ({isOpen, onClose, eventDetails}) => {
                     <Box bg="gray.100" p={4} borderRadius="md" mb={4}>
                         <HStack spacing={4}>
                             <Box>
-                                <img
+                                <Image
                                     src={eventDetails.imageUrl}
                                     alt={eventDetails.title}
                                     style={{

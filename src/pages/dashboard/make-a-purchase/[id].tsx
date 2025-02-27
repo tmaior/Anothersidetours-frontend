@@ -48,6 +48,16 @@ interface SelectedAddOn {
     checked: boolean;
 }
 
+interface Tour {
+    id: string;
+    name: string;
+    imageUrl: string;
+    price: number;
+    valuePerGuest?: number;
+    description?: string;
+}
+
+
 const PurchasePage = () => {
     const router = useRouter();
     const {id} = router.query;
@@ -55,11 +65,11 @@ const PurchasePage = () => {
     const stripe = useStripe();
     const elements = useElements();
 
-    const [tour, setTour] = useState<any>(null);
+    const [tour, setTour] = useState<Tour>(null);
     const [addons, setAddons] = useState<AddOn[]>([]);
     const [selectedAddOns, setSelectedAddOns] = useState<SelectedAddOn[]>([]);
     const [loading, setLoading] = useState(true);
-    const [loadingAddons, setLoadingAddons] = useState(true);
+    const [, setLoadingAddons] = useState(true);
 
     const [schedules, setSchedules] = useState<{ value: string; label: string }[]>([]);
     const [loadingSchedules, setLoadingSchedules] = useState(true);
@@ -79,12 +89,11 @@ const PurchasePage = () => {
         {name: "Guests #1", info: ""},
         {name: "Guests #2", info: ""}
     ]);
-    const [mainAttendeeIndex, setMainAttendeeIndex] = useState(0);
 
     const [doNotCharge, setDoNotCharge] = useState(false);
 
-    const [bookingFee, setBookingFee] = useState(false);
-    const [gratuity, setGratuity] = useState('');
+    const [bookingFee,] = useState(false);
+    const [gratuity,] = useState('');
 
     const [internalNotesEnabled, setInternalNotesEnabled] = useState(true);
     const [purchaseTags, setPurchaseTags] = useState("");
@@ -97,7 +106,7 @@ const PurchasePage = () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [privateTourAddOn, setPrivateTourAddOn] = useState(0);
     const toast = useToast();
-    const [finalPrice, setFinalPrice] = useState(298);
+    const [, setFinalPrice] = useState(298);
     const [voucherDiscount, setVoucherDiscount] = useState(0);
     const [voucherCode, setVoucherCode] = useState('');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -107,10 +116,10 @@ const PurchasePage = () => {
     const [selectedAddons, setSelectedAddons] = useState({});
     const {tenantId} = useGuest();
 
-    const [items, setItems] = useState([{ id: 1, type: "Charge", amount: 0, quantity: 1, name: "" }]);
+    const [items, setItems] = useState([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
 
     const addItem = () => {
-        setItems([...items, { id: Date.now(), type: "Charge", amount: 0, quantity: 1, name: "" }]);
+        setItems([...items, {id: Date.now(), type: "Charge", amount: 0, quantity: 1, name: ""}]);
     };
 
     const removeItem = (id) => {
@@ -118,7 +127,7 @@ const PurchasePage = () => {
     };
 
     const updateItem = (id, field, value) => {
-        setItems(items.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+        setItems(items.map((item) => (item.id === id ? {...item, [field]: value} : item)));
     };
 
     const handleSaveLineItems = () => {
@@ -137,6 +146,7 @@ const PurchasePage = () => {
         isTaxed: false,
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleAddLineItem = () => {
         setLineItems([...lineItems, newLineItem]);
         setIsLineItemModalOpen(false);
@@ -160,12 +170,6 @@ const PurchasePage = () => {
         };
         fetchTour();
     }, [id]);
-
-    useEffect(() => {
-        const total = quantity * basePrice;
-        const discountedTotal = total - voucherDiscount;
-        setFinalPrice(discountedTotal > 0 ? discountedTotal : 0);
-    }, [voucherDiscount, quantity]);
 
     useEffect(() => {
         const fetchAddOns = async () => {
@@ -201,9 +205,9 @@ const PurchasePage = () => {
                 const data = await res.json();
 
                 const formattedSchedules = data.map((timeStr: string) => {
-                    let dateObj: Date;
+
                     const testDate = `2024-12-20 ${timeStr}`;
-                    dateObj = new Date(testDate);
+                    const dateObj = new Date(testDate);
 
                     if (isNaN(dateObj.getTime())) {
                         return {
@@ -232,6 +236,7 @@ const PurchasePage = () => {
         fetchSchedules();
     }, [id]);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleInfoChange = (index: number, newInfo: string) => {
         const updated = [...attendees];
         updated[index].info = newInfo;
@@ -241,6 +246,12 @@ const PurchasePage = () => {
 
     const basePrice = tour?.price
     const totalBase = quantity * basePrice;
+
+    useEffect(() => {
+        const total = quantity * basePrice;
+        const discountedTotal = total - voucherDiscount;
+        setFinalPrice(discountedTotal > 0 ? discountedTotal : 0);
+    }, [basePrice, voucherDiscount, quantity]);
 
     const dynamicAddOnsPrice = selectedAddOns.reduce((acc, selected) => {
         const addonInfo = addons.find((a) => a.id === selected.addOnId);
@@ -260,6 +271,7 @@ const PurchasePage = () => {
     const gratuityAmount = gratuity !== '' ? parseFloat(gratuity) : 0;
 
     const feeAmount = bookingFee ? totalBase * 0.06 : 0;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const grandTotalFinal = totalBase + dynamicAddOnsPrice + totalManualAddOns + gratuityAmount + feeAmount;
     const combineDateAndTime = (dateStr: string, timeStr: string): string => {
         const [year, month, day] = dateStr.split("-").map(Number);
@@ -762,7 +774,7 @@ const PurchasePage = () => {
                                                             icon={<DeleteIcon/>}
                                                             colorScheme="gray"
                                                             size="sm"
-                                                            onClick={() => removeItem(item.id)} aria-label={'delete'}                                                        />
+                                                            onClick={() => removeItem(item.id)} aria-label={'delete'}/>
                                                     </HStack>
 
                                                     <HStack mt={2}>

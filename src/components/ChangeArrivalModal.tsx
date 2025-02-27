@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {
     Button,
     Checkbox,
@@ -30,9 +30,10 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
     const [isTimeslotModalOpen, setTimeslotModalOpen] = useState(false);
     const [availableTimes, setAvailableTimes] = useState([]);
 
-    const fetchSchedules = async () => {
+    const fetchSchedules = useCallback(async () => {
         if (!booking.id) return;
         const tourId = booking.tour?.id || booking.tourId;
+
         try {
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${tourId}`
@@ -40,9 +41,8 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
             const data = await res.json();
 
             const formattedSchedules = data.map((timeStr: string) => {
-                let dateObj: Date;
                 const testDate = `2024-12-20 ${timeStr}`;
-                dateObj = new Date(testDate);
+                const dateObj = new Date(testDate);
 
                 if (isNaN(dateObj.getTime())) {
                     return {
@@ -65,13 +65,13 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
         } catch (error) {
             console.error("Failed to fetch schedules:", error);
         }
-    };
+    }, [booking.id, booking.tour, booking.tourId, setAvailableTimes]);
 
     useEffect(() => {
         if (isOpen) {
             fetchSchedules();
         }
-    }, [isOpen, selectedDate]);
+    }, [fetchSchedules,isOpen, selectedDate]);
 
     const handleAddTimeslot = (timeslot) => {
         console.log("New timeslot created:", timeslot);
@@ -106,25 +106,25 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
         return `${monthNames[monthIndex]} ${Number(day)}, ${year}`;
     }
 
-    function combineDateAndTime(dateStr, timeStr) {
+    function combineDateAndTime(dateStr: string, timeStr: string): string {
         const [year, month, day] = dateStr.split('-');
         const timeParts = timeStr.match(/(\d{1,2}):(\d{2})\s?([AP]M)?/);
         if (!timeParts) throw new Error(`Invalid time format: ${timeStr}`);
 
-        let [_, hoursMatch, minutesMatch, meridianMatch] = timeParts;
-        let hours = parseInt(hoursMatch, 10);
+        const [, hoursMatch, minutesMatch, meridianMatchRaw] = timeParts;
 
-        if (meridianMatch) {
-            meridianMatch = meridianMatch.toUpperCase();
-            if (meridianMatch === 'PM' && hours < 12) {
+        let hours = parseInt(hoursMatch, 10);
+        const minutes = minutesMatch;
+        const meridian = meridianMatchRaw?.toUpperCase();
+
+        if (meridian) {
+            if (meridian === 'PM' && hours < 12) {
                 hours += 12;
-            } else if (meridianMatch === 'AM' && hours === 12) {
+            } else if (meridian === 'AM' && hours === 12) {
                 hours = 0;
             }
         }
-
-        const finalDateTime = `${year}-${month}-${day} ${String(hours).padStart(2, '0')}:${minutesMatch}:00.000`;
-        return finalDateTime;
+        return `${year}-${month}-${day} ${String(hours).padStart(2, '0')}:${minutes}:00.000`;
     }
 
     const handleSaveChanges = async () => {

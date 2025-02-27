@@ -56,7 +56,7 @@ const CustomDatePicker = ({selected, onDateChange}) => {
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [isOpen]);
+    }, [onClose,isOpen]);
 
     const toggleModal = () => {
         if (isOpen) {

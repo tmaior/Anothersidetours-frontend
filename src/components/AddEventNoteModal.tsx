@@ -4,7 +4,7 @@ import {
     Button,
     FormControl,
     FormLabel,
-    HStack,
+    HStack, Image,
     Modal,
     ModalBody,
     ModalCloseButton,
@@ -20,16 +20,11 @@ import {
 import {CiCalendar} from "react-icons/ci";
 import {MdAccessTime} from "react-icons/md";
 
-const AddEventNoteModal = ({isOpen, onClose, eventDetails, onSave, reservationId}) => {
+const AddEventNoteModal = ({isOpen,onSave, onClose, eventDetails, reservationId}) => {
     const [note, setNote] = useState("");
     const toast = useToast();
-    const [notes, setNotes] = useState([]);
+    const [, setNotes] = useState([]);
 
-    const handleSave = () => {
-        onSave(note);
-        setNote("");
-        onClose();
-    };
 
     const formatDate = (date: string | Date | undefined): string => {
         if (!date) return "Invalid Date";
@@ -69,6 +64,9 @@ const AddEventNoteModal = ({isOpen, onClose, eventDetails, onSave, reservationId
                 }
 
                 const createdNote = await response.json();
+                if (onSave) {
+                    onSave(createdNote);
+                }
                 setNotes((prevNotes) => [...prevNotes, createdNote]);
                 setNote("");
                 onClose();
@@ -93,34 +91,34 @@ const AddEventNoteModal = ({isOpen, onClose, eventDetails, onSave, reservationId
         }
     };
 
-    const handleRemoveNote = async (noteId) => {
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${noteId}`, {
-                method: "DELETE",
-            });
-
-            if (!response.ok) throw new Error("Failed to delete note");
-
-            setNotes((prevNotes) => prevNotes.filter((note) => note.id !== noteId));
-
-            toast({
-                title: "Note Removed",
-                description: "Note has been removed successfully.",
-                status: "success",
-                duration: 3000,
-                isClosable: true,
-            });
-        } catch (error) {
-            console.error("Error removing note:", error);
-            toast({
-                title: "Error",
-                description: "Failed to remove note.",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
-        }
-    };
+    // const handleRemoveNote = async (noteId) => {
+    //     try {
+    //         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${noteId}`, {
+    //             method: "DELETE",
+    //         });
+    //
+    //         if (!response.ok) throw new Error("Failed to delete note");
+    //
+    //         setNotes((prevNotes) => prevNotes.filter((note) => note.id !== noteId));
+    //
+    //         toast({
+    //             title: "Note Removed",
+    //             description: "Note has been removed successfully.",
+    //             status: "success",
+    //             duration: 3000,
+    //             isClosable: true,
+    //         });
+    //     } catch (error) {
+    //         console.error("Error removing note:", error);
+    //         toast({
+    //             title: "Error",
+    //             description: "Failed to remove note.",
+    //             status: "error",
+    //             duration: 5000,
+    //             isClosable: true,
+    //         });
+    //     }
+    // };
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="lg">
@@ -132,7 +130,7 @@ const AddEventNoteModal = ({isOpen, onClose, eventDetails, onSave, reservationId
                     <Box bg="gray.100" p={4} borderRadius="md" mb={4}>
                         <HStack spacing={4}>
                             <Box>
-                                <img
+                                <Image
                                     src={eventDetails.imageUrl}
                                     alt={eventDetails.title}
                                     style={{

@@ -109,7 +109,7 @@ function CategoryManagement() {
         if (!tenantId) return;
         fetchCategories(tenantId);
         fetchTours(tenantId);
-    }, [tenantId]);
+    }, [fetchCategories,fetchTours,tenantId]);
 
     const handleCreateCategory = async () => {
         if (!newCategory.name) {

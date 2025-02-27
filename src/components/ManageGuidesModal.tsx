@@ -19,6 +19,12 @@ import {useEffect, useState} from "react";
 import axios from "axios";
 import useGuidesStore from "../utils/store";
 
+interface Guide {
+    id: string;
+    name: string;
+    expertise: string;
+}
+
 const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedGuides, setSelectedGuides] = useState([]);
@@ -56,7 +62,7 @@ const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
                 })
                 .finally(() => setLoading(false));
         }
-    }, [isOpen, reservationId]);
+    }, [toast,isOpen, reservationId]);
 
     const toggleGuide = (guideName) => {
         if (selectedGuides.includes(guideName)) {
@@ -70,7 +76,7 @@ const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
         const selectedGuidesWithIds = selectedGuides.map((name) => {
             const guide = guides.find((g) => g.name === name);
             return guide ? {id: guide.id, name: guide.name} : null;
-        }).filter(Boolean);
+        }).filter(Boolean) as Guide[];
         onSelectGuide(selectedGuidesWithIds);
         setReservationGuides(reservationId, selectedGuidesWithIds);
         onClose();

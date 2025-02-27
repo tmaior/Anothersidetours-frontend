@@ -509,6 +509,12 @@ interface SchedulesAvailabilityStepProps {
     isEditing?: boolean;
 }
 
+interface Demographic {
+    id: string;
+    name: string;
+    caption?: string;
+}
+
 function SchedulesAvailabilityStep({
                                        onBack,
                                        isEditing = false,
@@ -585,10 +591,13 @@ function SchedulesAvailabilityStep({
 
     function generateTimeSlots(startTime, startPeriod, endTime, endPeriod) {
         const convertTo24Hour = (time, period) => {
-            let [hours, minutes] = time.split(":").map(Number);
-            if (period === "PM" && hours < 12) hours += 12;
-            if (period === "AM" && hours === 12) hours = 0;
-            return {hours, minutes};
+            const [hours, minutes] = time.split(":").map(Number);
+            let adjustedHours = hours;
+
+            if (period === "PM" && hours < 12) adjustedHours += 12;
+            if (period === "AM" && hours === 12) adjustedHours = 0;
+
+            return { hours: adjustedHours, minutes };
         };
 
         const formatTime = (hours, minutes) => {
@@ -602,7 +611,7 @@ function SchedulesAvailabilityStep({
         const end = convertTo24Hour(endTime, endPeriod);
 
         const timeSlots = [];
-        let current = {...start};
+        const current = { ...start };
 
         while (
             current.hours < end.hours ||
@@ -728,9 +737,9 @@ function SchedulesAvailabilityStep({
         }
     }
 
-    const [tourDemographics, setTourDemographics] = useState<any[]>([]);
-    const [availableDemographics, setAvailableDemographics] = useState<any[]>([]);
-    const [selectedDemographics, setSelectedDemographics] = useState<any[]>([]);
+    const [tourDemographics, setTourDemographics] = useState<Demographic[]>([]);
+    const [availableDemographics, setAvailableDemographics] = useState<Demographic[]>([]);
+    const [selectedDemographics, setSelectedDemographics] = useState<Demographic[]>([]);
     const {isOpen, onOpen, onClose} = useDisclosure();
     const {isOpen: isModalOpen, onOpen: openModal, onClose: closeModal} = useDisclosure();
     const [newDemographic, setNewDemographic] = useState({name: "", caption: ""});
@@ -985,6 +994,7 @@ function SchedulesAvailabilityStep({
     });
     const {demographics} = useDemographics();
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const basePriceModal = useDisclosure();
     const tierPriceModal = useDisclosure();
     const flatPriceModal = useDisclosure();

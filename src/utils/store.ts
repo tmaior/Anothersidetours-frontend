@@ -1,8 +1,14 @@
 import {create} from 'zustand';
 
-interface GuidesStore {
-    reservationGuides: { [reservationId: string]: any[] };
-    setReservationGuides: (reservationId: string, guides: any[]) => void;
+export interface Guide {
+    id: string;
+    name: string;
+    expertise: string;
+}
+
+export interface GuidesStore {
+    reservationGuides: { [reservationId: string]: Guide[] };
+    setReservationGuides: (reservationId: string, guides: Guide[]) => void;
     removeReservationGuides: (reservationId: string) => void;
 }
 

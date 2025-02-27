@@ -49,7 +49,7 @@ export default function BookingDetailsPage() {
                     setErrorMessage(err.message);
                 });
         }
-    }, [router.isReady, tourId, setTourId, openBooking]);
+    }, [router.isReady, tourId,setImageUrl ,setTourId, openBooking]);
 
     if (!tourData) {
         return (

@@ -1,7 +1,7 @@
 import {Box, Flex, HStack, IconButton, Image, Text, useToast, VStack,} from "@chakra-ui/react";
 import {BsSticky} from "react-icons/bs";
 import {FaPencilAlt} from "react-icons/fa";
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {AiOutlineCompass} from "react-icons/ai";
 import ManageGuidesModal from "./ManageGuidesModal";
 import {useGuides} from "../hooks/useGuides";
@@ -60,11 +60,7 @@ const ReservationItem = ({
         }
     };
 
-    useEffect(() => {
-        fetchGuidesForReservation();
-    }, [reservationId]);
-
-    const fetchGuidesForReservation = async () => {
+    const fetchGuidesForReservation = useCallback(async () => {
         if (reservationId) {
             try {
                 const response = await fetch(
@@ -90,14 +86,24 @@ const ReservationItem = ({
                 });
             }
         }
-    };
+    }, [reservationId, toast]);
+
+    useEffect(() => {
+        fetchGuidesForReservation();
+    }, [fetchGuidesForReservation, reservationId]);
 
     const handleGuideSelection = async (selectedGuides: { id: string; name: string }[]) => {
         const guideIds = selectedGuides.map((guide) => guide.id);
         setSelectedGuideIds(guideIds);
         setSelectedGuideNames(selectedGuides.map((guide) => guide.name).join(", "));
 
-        setReservationGuides(reservationId, selectedGuides);
+        const formattedGuides = selectedGuides.map((guide) => ({
+            ...guide,
+            expertise: "",
+            photoUrl: "",
+        }));
+
+        setReservationGuides(reservationId, formattedGuides);
 
         if (reservationId) {
             try {

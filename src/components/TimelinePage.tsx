@@ -8,6 +8,18 @@ import {TfiLayoutWidthDefaultAlt} from "react-icons/tfi";
 import {format} from "date-fns";
 import {MdDoNotDisturbOn} from "react-icons/md";
 
+interface Event {
+    id: string;
+    eventTitle: string;
+    status: "ACCEPTED" | "REJECTED" | "CANCELED" | "PAYMENT" | "CREATED";
+    eventType: "Reservation" | "Communication";
+    createdAt: string;
+    createdBy?: string;
+    eventDescription?: string;
+    value?: number;
+    to?: string;
+}
+
 export default function TimelinePage({reservationId}: { reservationId: string }) {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -32,7 +44,7 @@ export default function TimelinePage({reservationId}: { reservationId: string })
         fetchEvents();
     }, [reservationId]);
 
-    const filteredEvents = events.filter((evt: any) => {
+    const filteredEvents = events.filter((evt: Event) => {
         if (evt.eventType === "Reservation" && !showReservation) return false;
         if (evt.eventType === "Communication" && !showCommunication) return false;
         return true;
@@ -76,7 +88,7 @@ export default function TimelinePage({reservationId}: { reservationId: string })
             </HStack>
 
             <VStack align="stretch" divider={<StackDivider borderColor={dividerColor}/>}>
-                {filteredEvents.map((event: any, idx: number) => (
+                {filteredEvents.map((event: Event, idx: number) => (
                     <TimelineItem key={event.id} event={event} isLast={idx === filteredEvents.length - 1}/>
                 ))}
             </VStack>
@@ -85,7 +97,7 @@ export default function TimelinePage({reservationId}: { reservationId: string })
 }
 
 
-function TimelineItem({event, isLast}: { event: any; isLast: boolean }) {
+function TimelineItem({event, isLast}: { event: Event; isLast: boolean }) {
 
     function getEventIcon(title: string) {
         if (event.status === "ACCEPTED") {

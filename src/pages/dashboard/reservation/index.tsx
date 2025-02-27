@@ -12,7 +12,6 @@ import {
     Spacer,
     Stack,
     Text,
-    useDisclosure,
     VStack,
 } from "@chakra-ui/react";
 import DashboardLayout from "../../../components/DashboardLayout";
@@ -29,7 +28,6 @@ import CustomDatePicker from "../../../components/DatePickerDefault";
 function Dashboard() {
     const [searchTerm, setSearchTerm] = useState("");
     const [loadedDates, setLoadedDates] = useState([]);
-    const [activeNote, setActiveNote] = useState(null);
     const {tenantId} = useGuest();
     const [reservations, setReservations] = useState([]);
 
@@ -37,7 +35,6 @@ function Dashboard() {
     const [isDetailVisible, setIsDetailVisible] = useState(false);
     const [userDetails, setUserDetails] = useState({});
 
-    const {isOpen, onOpen, onClose} = useDisclosure();
     const router = useRouter();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isLoading, setIsLoading] = useState(true);
@@ -47,16 +44,9 @@ function Dashboard() {
     const [isNotesOpen, setNotesOpen] = useState(false);
     const [notesReservationList, setNotesReservationList] = useState([]);
 
-
     const filteredReservations = reservations.filter((reservation) =>
         loadedDates.includes(reservation.date)
     );
-
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newDate = e.target.value;
-        setSelectedDate(newDate);
-        setLoadedDates([newDate]);
-    };
 
     useEffect(() => {
         const fetchReservations = async () => {
@@ -214,7 +204,7 @@ function Dashboard() {
         };
 
         fetchReservations();
-    }, [tenantId]);
+    }, [userDetails,tenantId]);
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);

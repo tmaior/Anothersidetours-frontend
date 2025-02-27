@@ -27,7 +27,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
         if (isOpen) {
             setGuestCount(booking.guestQuantity);
         }
-    }, [isOpen, booking]);
+    }, [setGuestCount,isOpen, booking]);
 
     const toast = useToast();
     const handleIncrease = () => setGuestCount(guestCount + 1);

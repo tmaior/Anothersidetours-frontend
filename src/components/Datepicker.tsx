@@ -77,10 +77,10 @@ const DatePicker: React.FC<DatePickerProps> = ({
     useEffect(() => {
         const fetchBlockedDatesForTour = async () => {
             try {
-                let categoryBlockedDates: string[] = [];
-                let globalBlockedDates: string[] = [];
+                const categoryBlockedDates: string[] = [];
+                const globalBlockedDates: string[] = [];
                 let combinedBlockedDates: string[] = [];
-                let categoryBlockedTimes: { date: string; startTime: string; endTime: string }[] = [];
+                const categoryBlockedTimes: { date: string; startTime: string; endTime: string }[] = [];
 
                 const tourResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`);
                 if (!tourResponse.ok) throw new Error('Failed to fetch tour details');
@@ -374,7 +374,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             }
 
             setError(null);
-        } catch (error: any) {
+        } catch (error) {
             setError(error.response?.data?.message || 'Failed to fetch available times');
             setAvailableTimes([]);
         }
@@ -464,7 +464,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                             }
                             formattedTime = format(date, "hh:mm a");
                         }
-                    } catch (error: any) {
+                    } catch (error) {
                         console.error(error.message);
                         formattedTime = "Invalid time";
                     }

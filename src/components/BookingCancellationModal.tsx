@@ -137,6 +137,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                         <Image
                                             src={booking.imageUrl || "https://via.placeholder.com/150x100"}
                                             // alt={tour.name}
+                                            alt={booking.name ? `Avatar of ${booking.name}` : "Default avatar"}
                                             boxSize="70px"
                                             borderRadius="md"
                                         />

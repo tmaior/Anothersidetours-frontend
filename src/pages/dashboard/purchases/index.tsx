@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
     Box,
     Button,
@@ -47,6 +47,7 @@ import {MdOutlineCancel, MdOutlineLocalPrintshop, MdOutlineRefresh} from 'react-
 import CancelConfirmationModal from "../../../components/CancelConfirmationModal";
 import PurchaseNotes from "../../../components/PurchaseNotes";
 import useWindowWidth from "../../../hooks/useWindowWidth";
+import withAuth from "../../../utils/withAuth";
 
 type GuestItemProps = {
     name: string;
@@ -72,6 +73,7 @@ const GuestItem: React.FC<GuestItemProps> = ({name, date, guests, avatarUrl, onC
                 boxSize="50px"
                 src={avatarUrl || "https://via.placeholder.com/50"}
                 title={name}
+                alt={name ? `Avatar of ${name}` : "Default avatar"}
                 borderRadius="md"
             />
             <VStack align="start" spacing={0}>
@@ -129,20 +131,7 @@ const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) =>
         );
     });
 
-    const handleScroll = () => {
-        const container = containerRef.current;
-
-        if (container) {
-            const isAtBottom =
-                container.scrollHeight - container.scrollTop === container.clientHeight;
-
-            if (isAtBottom && !isLoading && hasMore) {
-                loadMoreReservations();
-            }
-        }
-    };
-
-    const loadMoreReservations = () => {
+    const loadMoreReservations = useCallback(() => {
         if (!hasMore || isLoading) return;
 
         setIsLoading(true);
@@ -167,7 +156,33 @@ const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) =>
 
             setIsLoading(false);
         }, 500);
-    };
+    }, [hasMore, isLoading, displayedReservations, reservations, PAGE_LIMIT]);
+
+    const handleScroll = useCallback(() => {
+        const container = containerRef.current;
+
+        if (container) {
+            const isAtBottom =
+                container.scrollHeight - container.scrollTop === container.clientHeight;
+
+            if (isAtBottom && !isLoading && hasMore) {
+                loadMoreReservations();
+            }
+        }
+    }, [isLoading, hasMore, loadMoreReservations]);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (container) {
+            container.addEventListener('scroll', handleScroll);
+        }
+
+        return () => {
+            if (container) {
+                container.removeEventListener('scroll', handleScroll);
+            }
+        };
+    }, [handleScroll]);
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -182,7 +197,7 @@ const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) =>
         return () => {
             container?.removeEventListener("scroll", handleScroll);
         };
-    }, [displayedReservations, hasMore, isLoading]);
+    }, [displayedReservations, hasMore, isLoading, handleScroll]);
 
     return (
         <VStack
@@ -672,7 +687,7 @@ const PaymentSummary = ({reservation}) => {
         };
 
         fetchAddons();
-    }, [reservation?.id, reservation?.tourId]);
+    }, [reservation.tour.id, reservation?.id, reservation?.tourId]);
 
     const combinedAddons = reservation?.reservationAddons?.map((selectedAddon) => {
         const addonDetails = allAddons.find(
@@ -981,4 +996,4 @@ const PurchasesPage = () => {
     );
 };
 
-export default PurchasesPage;
+export default withAuth(PurchasesPage);

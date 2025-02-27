@@ -29,6 +29,17 @@ import DashboardLayout from "../../../components/DashboardLayout";
 import withAuth from "../../../utils/withAuth";
 import {useGuest} from "../../../contexts/GuestContext";
 
+interface BlackoutDatePayload {
+    isGlobal: boolean;
+    startDate: string;
+    startTime: string;
+    endTime: string;
+    reason: string;
+    tourId: string;
+    categoryId: string | null;
+    tenantId: string;
+}
+
 function BlackoutDatesManagement() {
     const [blackoutDates, setBlackoutDates] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -168,7 +179,7 @@ function BlackoutDatesManagement() {
             utcEndDate = convertToUtcMidnight(endDate).toISOString();
         }
 
-        const payload: any = {
+        const payload: BlackoutDatePayload = {
             isGlobal,
             startDate: utcStartDate,
             startTime: formattedStartTime,
@@ -218,7 +229,7 @@ function BlackoutDatesManagement() {
             });
 
             onClose();
-        } catch (error: any) {
+        } catch (error) {
             console.error("Error creating blackout date:", error);
             toast({
                 title: "Error",

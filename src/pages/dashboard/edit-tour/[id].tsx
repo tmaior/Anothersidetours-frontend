@@ -11,14 +11,7 @@ function EditTourPage() {
         setTitle,
         setDescription,
         setPrice,
-        setIncludedItems,
-        setBringItems,
         setImagePreview,
-        setImageFile,
-        setSchedule,
-        setEventDuration,
-        setGuestLimit,
-        setEarlyArrival,
         setOperationProcedures
     } = useGuest();
 
@@ -47,7 +40,7 @@ function EditTourPage() {
         }
 
         fetchTour();
-    }, [id]);
+    }, [id,setDescription ,setImagePreview ,setOperationProcedures ,setPrice ,setTitle]);
 
     if (isLoading) {
         return <div>Carregando dados...</div>;

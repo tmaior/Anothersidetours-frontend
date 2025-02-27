@@ -37,9 +37,13 @@ export default function BookingDetails({
 
     function combineDateAndTime(date, time) {
         if (!date || !time) return null;
+
         const datePart = date.toISOString().split("T")[0];
         const [timeValue, modifier] = time.split(" ");
-        let [hours, minutes] = timeValue.split(":").map(Number);
+
+        let [hours] = timeValue.split(":").map(Number);
+        const [, minutes] = timeValue.split(":").map(Number);
+
         if (modifier.toUpperCase() === "PM" && hours < 12) {
             hours += 12;
         }
@@ -51,6 +55,7 @@ export default function BookingDetails({
         const combinedISO = `${datePart}T${hoursString}:${minutesString}:00.000Z`;
         return new Date(combinedISO);
     }
+
 
     useEffect(() => {
         const debouncedUpsert = debounce(() => {
@@ -77,7 +82,7 @@ export default function BookingDetails({
         return () => {
             debouncedUpsert.cancel();
         };
-    }, [email, name, phone, guestQuantity, localSelectedDate, localSelectedTime]);
+    }, [normalizedEmail, tourId,email, name, phone, guestQuantity, localSelectedDate, localSelectedTime]);
 
 
     const handleValidation = async () => {

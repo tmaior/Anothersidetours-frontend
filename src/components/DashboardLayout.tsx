@@ -94,7 +94,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
             }
             setIsLoading(false);
         }
-    }, [tenantId, tenants, setTenantId]);
+    }, [noTenants ,toast,tenantId, tenants, setTenantId]);
 
     const [newTenant, setNewTenant] = useState({title: "", description: "", image: null});
 

@@ -284,14 +284,14 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                     isSelected
                                         ? '#337AB7'
                                         : isPast || isBlocked
-                                            ? 'gray.300'
+                                            ? 'white.300'
                                             : '#E9F7D4'
                                 }
                                 color={
                                     isSelected
                                         ? 'white'
                                         : isPast || isBlocked
-                                            ? 'gray.500'
+                                            ? 'gray.300'
                                             : '#337AB7'
                                 }
                                 cursor={

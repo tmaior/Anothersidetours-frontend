@@ -128,8 +128,10 @@ const DatePicker: React.FC<DatePickerProps> = ({
                     const categoryData = await categoryResponse.json();
 
                     categoryData.forEach((b: BlackoutDate) => {
-                        if (b.startDate && b.endDate) {
-                            const intervalDates = getDateRange(b.startDate, b.endDate);
+                        if (b.startDate) {
+                            const intervalDates = b.endDate
+                                ? getDateRange(b.startDate, b.endDate)
+                                : [formatDate(new Date(b.startDate))];
                             if (b.startTime && b.endTime) {
                                 intervalDates.forEach(date => {
                                     categoryBlockedTimes.push({
@@ -206,7 +208,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
     }, [tourId]);
 
     const renderHeader = () => (
-        <Box display="flex" justifyContent="space-between" alignItems="center" p={2} bg="gray.100">
+        <Box display="flex" justifyContent="space-between" alignItems="center" p={2} bg="white">
             <Text
                 cursor="pointer"
                 onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
@@ -215,7 +217,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             >
                 {'<'}
             </Text>
-            <Text fontSize="lg" fontWeight="bold">
+            <Text fontSize="lg" fontWeight="normal">
                 {format(currentMonth, 'MMMM yyyy')}
             </Text>
             <Text
@@ -236,7 +238,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
         for (let i = 0; i < 7; i++) {
             days.push(
-                <Text key={i} textAlign="center" fontWeight="bold">
+                <Text key={i} textAlign="center" fontWeight="normal">
                     {format(addDays(startDate, i), dateFormat)}
                 </Text>
             );

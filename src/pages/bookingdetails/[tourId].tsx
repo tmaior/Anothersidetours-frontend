@@ -85,6 +85,7 @@ export default function BookingDetailsPage({reservationData}) {
                 <BookingDetails
                     tourId={tourIdAsString}
                     title={tourData.name}
+                    minGuests={tourData.minPerEventLimit}
                     description={tourData.description}
                     originalPrice={tourData.price}
                     addons={tourData.addons}

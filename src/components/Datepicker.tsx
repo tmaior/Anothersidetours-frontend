@@ -66,7 +66,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             const dayKey = format(day, 'yyyy-MM-dd');
             newMonthDayData[dayKey] = (
                 <span>
-                    <sup>$ </sup>{originalPrice}
+                    <sup>$</sup>{originalPrice}
                 </span>
             );
         });
@@ -271,9 +271,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
                     days.push(
                         <Box key={day.toISOString() + i}>
                             <Flex
-                                w="full"
+                                w="60px"
                                 h="40px"
-                                p="2px"
+                                p="1px"
                                 position="relative"
                                 onClick={() => {
                                     if (!isPast && !isBlocked) {
@@ -316,11 +316,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                             : 'auto'
                                 }
                             >
-                                <Text w="full" textAlign="end" fontSize="10px">
+                                <Text w="full" textAlign="end" fontSize="10px" marginLeft={"-7px"}>
                                     {formattedDate}
                                 </Text>
                                 <Text
                                     position="absolute"
+                                    marginLeft={"-6px"}
                                     top="50%"
                                     left="50%"
                                     transform="translate(-50%, -50%)"
@@ -338,7 +339,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                                     lineHeight="normal"
                                                     textAlign="center"
                                                 >
-                                                    call for
+                                                    Call For
                                                     <br/>
                                                     Info
                                                 </Text>

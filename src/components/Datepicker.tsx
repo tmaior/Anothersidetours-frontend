@@ -294,27 +294,11 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                             ? 'gray.300'
                                             : '#337AB7'
                                 }
-                                cursor={
-                                    isBlocked
-                                        ? 'not-allowed'
-                                        : isPast
-                                            ? 'not-allowed'
-                                            : 'pointer'
-                                }
-                                _hover={
-                                    isBlocked
-                                        ? {}
-                                        : isPast
-                                            ? {}
-                                            : {bg: '#337AB7', color: 'white'}
-                                }
-                                pointerEvents={
-                                    isBlocked
-                                        ? 'none'
-                                        : isPast
-                                            ? 'none'
-                                            : 'auto'
-                                }
+                                cursor={isBlocked || isPast ? 'not-allowed' : 'pointer'}
+                                _hover={{
+                                    bg: isBlocked || isPast ? undefined : '#337AB7',
+                                    color: isBlocked || isPast ? undefined : 'white'
+                                }}
                             >
                                 <Text w="full" textAlign="end" fontSize="10px" marginLeft={"-7px"}>
                                     {formattedDate}

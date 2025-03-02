@@ -516,7 +516,7 @@ const PurchasePage = () => {
                     isClosable: true,
                 });
                 setTimeout(() => {
-                    router.push("/dashboard/reservation");
+                    router.push("/dashboard/purchases");
                 }, 1000);
             } else {
                 alert("Reservation created without immediate charge (Do Not Charge).");

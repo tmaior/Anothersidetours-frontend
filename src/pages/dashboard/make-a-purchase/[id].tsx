@@ -24,6 +24,7 @@ import {
     Spinner,
     Switch,
     Text,
+    Textarea,
     useToast,
     VStack,
 } from '@chakra-ui/react'
@@ -1043,10 +1044,10 @@ const PurchasePage = () => {
                                 </FormControl>
                                 <FormControl>
                                     <FormLabel>Purchase Note</FormLabel>
-                                    <Input
-                                        placeholder=""
+                                    <Textarea
                                         value={purchaseNote}
                                         onChange={(e) => setPurchaseNote(e.target.value)}
+                                        placeholder="Enter Notes"
                                     />
                                 </FormControl>
                             </VStack>

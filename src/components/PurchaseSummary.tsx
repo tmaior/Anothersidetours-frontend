@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box, Button, Divider, FormControl, FormLabel, Heading, HStack, Image, Input, Text,} from '@chakra-ui/react';
+import {Box, Button, Divider, FormControl, FormLabel, HStack, Image, Input, Text,} from '@chakra-ui/react';
 
 interface Addon {
     id: string;
@@ -51,8 +51,7 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                                                              handleValidateVoucher,
                                                          }) => {
     return (
-        <Box w={{base: "100%", md: "400px"}} bg="white" p={6} borderRadius="md" boxShadow="sm">
-            <Heading size="md" mb={4}>Purchase Summary</Heading>
+        <>
             <Box bg="blue.50" p={4} borderRadius="md" mb={4} w="120%" ml="-10%">
                 <HStack>
                     <Image
@@ -133,8 +132,7 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                     <Button onClick={handleValidateVoucher}>Apply Code</Button>
                 </HStack>
                 {voucherError && <Text color="red.500">{voucherError}</Text>}
-            </FormControl>
-        </Box>
+            </FormControl></>
     );
 };
 

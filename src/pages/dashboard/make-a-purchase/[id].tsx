@@ -1075,24 +1075,26 @@ const PurchasePage = () => {
                         </HStack>
                     </Box>
 
-                    <PurchaseSummary
-                        tour={tour}
-                        date={date}
-                        time={time}
-                        basePrice={basePrice}
-                        quantity={quantity}
-                        combinedAddons={combinedAddons}
-                        isCustomLineItemsEnabled={isCustomLineItemsEnabled}
-                        customLineItems={customLineItems}
-                        voucherDiscount={voucherDiscount}
-                        totalWithDiscount={totalWithDiscount}
-                        items={items}
-                        voucherCode={voucherCode}
-                        setVoucherCode={setVoucherCode}
-                        voucherError={voucherError}
-                        handleValidateVoucher={handleValidateVoucher}
-                    />
-
+                    <Box w={{base: "100%", md: "400px"}} bg="white" p={6} borderRadius="md" boxShadow="sm">
+                        <Heading size="md" mb={4}>Purchase Summary</Heading>
+                        <PurchaseSummary
+                            tour={tour}
+                            date={date}
+                            time={time}
+                            basePrice={basePrice}
+                            quantity={quantity}
+                            combinedAddons={combinedAddons}
+                            isCustomLineItemsEnabled={isCustomLineItemsEnabled}
+                            customLineItems={customLineItems}
+                            voucherDiscount={voucherDiscount}
+                            totalWithDiscount={totalWithDiscount}
+                            items={items}
+                            voucherCode={voucherCode}
+                            setVoucherCode={setVoucherCode}
+                            voucherError={voucherError}
+                            handleValidateVoucher={handleValidateVoucher}
+                        />
+                    </Box>
                 </Flex>
             </Box>
         </DashboardLayout>

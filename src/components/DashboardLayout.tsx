@@ -458,7 +458,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
-                        onClick={() => router.push("/dashboard/under-construction")}
+                        onClick={() => router.push("/dashboard/settings")}
                     >
                         <Button
                             marginLeft={"-5"}

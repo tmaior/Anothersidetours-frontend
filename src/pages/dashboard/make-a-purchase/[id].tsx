@@ -59,6 +59,21 @@ interface Tour {
     description?: string;
 }
 
+interface FormData {
+    quantity: number;
+    date: string;
+    time: string;
+    organizerName: string;
+    emailEnabled: boolean;
+    organizerEmail: string;
+    phoneEnabled: boolean;
+    organizerPhone: string;
+    organizerAttending: boolean;
+    attendees: Array<{name: string, info: string}>;
+    purchaseTags: string;
+    purchaseNote: string;
+    selectedAddOns: SelectedAddOn[];
+}
 
 const PurchasePage = () => {
     const router = useRouter();
@@ -75,6 +90,8 @@ const PurchasePage = () => {
 
     const [schedules, setSchedules] = useState<{ value: string; label: string }[]>([]);
     const [loadingSchedules, setLoadingSchedules] = useState(true);
+    const [formDataMap, setFormDataMap] = useState<{[key: string]: FormData}>({});
+    const [selectedCartItemIndex, setSelectedCartItemIndex] = useState<number>(0);
 
     const [quantity, setQuantity] = useState(1);
     const [date, setDate] = useState('2024-12-20');
@@ -120,6 +137,132 @@ const PurchasePage = () => {
 
     const [items, setItems] = useState([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
 
+    const saveCurrentFormData = () => {
+        if (cart.length === 0) return;
+        
+        const currentCartItem = cart[selectedCartItemIndex];
+        if (!currentCartItem) return;
+        
+        const formData: FormData = {
+            quantity,
+            date,
+            time,
+            organizerName,
+            emailEnabled,
+            organizerEmail,
+            phoneEnabled,
+            organizerPhone,
+            organizerAttending,
+            attendees,
+            purchaseTags,
+            purchaseNote,
+            selectedAddOns,
+        };
+        
+        setFormDataMap(prev => ({
+            ...prev,
+            [currentCartItem.id]: formData
+        }));
+    };
+
+    const loadFormData = (index: number) => {
+        if (cart.length === 0) return;
+        
+        const cartItem = cart[index];
+        if (!cartItem) return;
+        saveCurrentFormData();
+        setSelectedCartItemIndex(index);
+        const formData = formDataMap[cartItem.id];
+        if (!formData) {
+            const initialFormData: FormData = {
+                quantity,
+                date,
+                time,
+                organizerName,
+                emailEnabled,
+                organizerEmail,
+                phoneEnabled,
+                organizerPhone,
+                organizerAttending,
+                attendees,
+                purchaseTags,
+                purchaseNote,
+                selectedAddOns,
+            };
+            
+            setFormDataMap(prev => ({
+                ...prev,
+                [cartItem.id]: initialFormData
+            }));
+            return;
+        }
+        
+        setQuantity(formData.quantity);
+        setDate(formData.date);
+        setTime(formData.time);
+        setOrganizerName(formData.organizerName);
+        setEmailEnabled(formData.emailEnabled);
+        setOrganizerEmail(formData.organizerEmail);
+        setPhoneEnabled(formData.phoneEnabled);
+        setOrganizerPhone(formData.organizerPhone);
+        setOrganizerAttending(formData.organizerAttending);
+        setAttendees(formData.attendees);
+        setPurchaseTags(formData.purchaseTags);
+        setPurchaseNote(formData.purchaseNote);
+        setSelectedAddOns(formData.selectedAddOns);
+    };
+    useEffect(() => {
+        if (cart.length === 0) return;
+        let hasNewItems = false;
+        cart.forEach((item) => {
+            if (!formDataMap[item.id]) {
+                hasNewItems = true;
+                const initialFormData: FormData = {
+                    quantity: 1,
+                    date: '2024-12-20',
+                    time: '08:00',
+                    organizerName: "",
+                    emailEnabled: true,
+                    organizerEmail: "",
+                    phoneEnabled: true,
+                    organizerPhone: "",
+                    organizerAttending: true,
+                    attendees: [
+                        {name: "Guests #1", info: ""},
+                        {name: "Guests #2", info: ""}
+                    ],
+                    purchaseTags: "",
+                    purchaseNote: "",
+                    selectedAddOns: selectedAddOns.length > 0 ? [...selectedAddOns] : [],
+                };
+                
+                setFormDataMap(prev => ({
+                    ...prev,
+                    [item.id]: initialFormData
+                }));
+            }
+        });
+        if (hasNewItems) {
+            const newItemIndex = cart.findIndex(item => !formDataMap[item.id]);
+            if (newItemIndex >= 0) {
+                setSelectedCartItemIndex(newItemIndex);
+            }
+        }
+        else if (selectedCartItemIndex >= cart.length && cart.length > 0) {
+            setSelectedCartItemIndex(0);
+        }
+    }, [cart]);
+    useEffect(() => {
+        if (cart.length > 0) {
+            saveCurrentFormData();
+        }
+    }, [
+        quantity, date, time, organizerName, 
+        emailEnabled, organizerEmail, phoneEnabled, 
+        organizerPhone, organizerAttending, attendees,
+        purchaseTags, purchaseNote, selectedAddOns
+    ]);
+
     const addItem = () => {
         setItems([...items, {id: Date.now(), type: "Charge", amount: 0, quantity: 1, name: ""}]);
     };
@@ -156,6 +299,7 @@ const PurchasePage = () => {
     };
 
     const handleNavigateToProducts = () => {
+        saveCurrentFormData();
         setNavigationSource('make-a-purchase');
         if (typeof window !== 'undefined') {
             localStorage.setItem('navigationSource', 'make-a-purchase');
@@ -367,6 +511,7 @@ const PurchasePage = () => {
             alert("Stripe has not yet been loaded.");
             return;
         }
+        saveCurrentFormData();
 
         let reservationId: string | null = null;
         let userId: string | null = null;
@@ -1123,6 +1268,8 @@ const PurchasePage = () => {
                             voucherError={voucherError}
                             handleValidateVoucher={handleValidateVoucher}
                             removeFromCart={removeFromCart}
+                            selectedCartItemIndex={selectedCartItemIndex}
+                            onSelectCartItem={loadFormData}
                         />
                     </Box>
                 </Flex>

@@ -38,6 +38,8 @@ interface PurchaseSummaryProps {
     voucherError?: string;
     handleValidateVoucher: () => void;
     removeFromCart: (index: number) => void;
+    selectedCartItemIndex: number;
+    onSelectCartItem: (index: number) => void;
 }
 
 const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
@@ -56,6 +58,8 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
     voucherError,
     handleValidateVoucher,
     removeFromCart,
+    selectedCartItemIndex,
+    onSelectCartItem,
 }) => {
     const calculateCartTotal = () => {
         return cart.reduce((total, tour, index) => {
@@ -82,12 +86,16 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                 {cart.map((tour, index) => (
                     <Box 
                         key={`${tour.id}-${index}`} 
-                        bg="blue.50" 
+                        bg={selectedCartItemIndex === index ? "blue.100" : "blue.50"}
                         p={4} 
                         borderRadius="md" 
                         w="120%" 
                         ml="-10%"
                         position="relative"
+                        cursor="pointer"
+                        onClick={() => onSelectCartItem(index)}
+                        _hover={{ bg: "blue.100" }}
+                        border={selectedCartItemIndex === index ? "2px solid blue.500" : "none"}
                     >
                         <IconButton
                             aria-label="Remove item"
@@ -98,7 +106,10 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                             right={2}
                             colorScheme="red"
                             variant="ghost"
-                            onClick={() => removeFromCart(index)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                removeFromCart(index);
+                            }}
                         />
                         <HStack>
                             <Image

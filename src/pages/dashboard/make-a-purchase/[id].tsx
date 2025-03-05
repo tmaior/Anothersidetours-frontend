@@ -33,6 +33,7 @@ import {CardElement, useElements, useStripe} from '@stripe/react-stripe-js';
 import {AddIcon, DeleteIcon, MinusIcon} from "@chakra-ui/icons";
 import {useGuest} from "../../../contexts/GuestContext";
 import PurchaseSummary from '../../../components/PurchaseSummary';
+import {useCart} from "../../../contexts/CartContext";
 
 interface AddOn {
     id: string;
@@ -115,6 +116,7 @@ const PurchasePage = () => {
     const [appliedVoucherCode, setAppliedVoucherCode] = useState<string | null>(null);
     const [selectedAddons, setSelectedAddons] = useState({});
     const {tenantId} = useGuest();
+    const { cart, setCart, addToCart, newCart, setNavigationSource, navigationSource } = useCart();
 
     const [items, setItems] = useState([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
 
@@ -153,23 +155,50 @@ const PurchasePage = () => {
         setNewLineItem({type: "Charge", amount: "", quantity: 1, isTaxed: false});
     };
 
+    const handleNavigateToProducts = () => {
+        setNavigationSource('make-a-purchase');
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('navigationSource', 'make-a-purchase');
+        }
+        router.push('/dashboard/choose-a-product?source=make-a-purchase');
+    };
 
     useEffect(() => {
-        const fetchTour = async () => {
+        if (!id) return;
+        
+        const fetchTourData = async () => {
             try {
-                if (!id) return;
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`);
-                if (!res.ok) throw new Error('Tour not found');
-                const data = await res.json();
-                setTour(data);
+                setLoading(true);
+                const existingTour = cart.find(item => item.id === id);
+                const directAccess = !navigationSource || navigationSource !== 'make-a-purchase';
+                if (existingTour) {
+                    setTour(existingTour);
+                } else {
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`);
+                    if (!res.ok) throw new Error('Tour not found');
+                    const data = await res.json();
+                    setTour(data);
+                    if (directAccess) {
+                        newCart(data);
+                    } else {
+                        addToCart(data);
+                    }
+                }
             } catch (error) {
                 console.error('Failed to fetch tour:', error);
+                toast({
+                    title: "Error",
+                    description: "Failed to load tour information",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
             } finally {
                 setLoading(false);
             }
         };
-        fetchTour();
-    }, [id]);
+        fetchTourData();
+    }, [id, cart, addToCart, newCart, navigationSource, toast]);
 
     useEffect(() => {
         const fetchAddOns = async () => {
@@ -244,7 +273,7 @@ const PurchasePage = () => {
     };
 
 
-    const basePrice = tour?.price
+    const basePrice = cart.length > 0 ? cart[0].price : 0;
     const totalBase = quantity * basePrice;
 
     useEffect(() => {
@@ -327,8 +356,8 @@ const PurchasePage = () => {
         0
     );
 
-    const finalTotalPrice = tour
-        ? ((tour.valuePerGuest || tour.price) * quantity) + addonsTotalPrice
+    const finalTotalPrice = cart.length > 0
+        ? ((cart[0].valuePerGuest || cart[0].price) * quantity) + addonsTotalPrice
         : 0;
 
     const totalWithDiscount = Math.max(finalTotalPrice - voucherDiscount, 0);
@@ -589,7 +618,7 @@ const PurchasePage = () => {
         );
     }
 
-    if (!tour) {
+    if (cart.length === 0) {
         return (
             <DashboardLayout>
                 <Box p={8} textAlign="center">
@@ -625,7 +654,9 @@ const PurchasePage = () => {
     return (
         <DashboardLayout>
             <Box p={8}>
-                <Heading size="lg" mb={6}>Make a Purchase</Heading>
+                <HStack justifyContent="space-between" mb={6}>
+                    <Heading size="lg">Make a Purchase</Heading>
+                </HStack>
                 <Flex direction={{base: 'column', md: 'row'}} gap={8}>
 
                     <Box flex="1" bg="gray.50" p={6} borderRadius="md" boxShadow="sm">
@@ -1057,7 +1088,7 @@ const PurchasePage = () => {
                         <HStack justify="space-between">
                             <Button variant="outline" onClick={handleCancel}>Cancel</Button>
                             <HStack spacing={4}>
-                                <Button variant="outline" onClick={() => router.push("/dashboard/choose-a-product")}>Add Another Product</Button>
+                                <Button variant="outline" onClick={handleNavigateToProducts}>Add Another Product</Button>
                                 <Button
                                     colorScheme="green"
                                     onClick={handleCreateReservationAndPay}
@@ -1076,23 +1107,26 @@ const PurchasePage = () => {
 
                     <Box w={{base: "100%", md: "400px"}} bg="white" p={6} borderRadius="md" boxShadow="sm">
                         <Heading size="md" mb={4}>Purchase Summary</Heading>
-                        <PurchaseSummary
-                            tour={tour}
-                            date={date}
-                            time={time}
-                            basePrice={basePrice}
-                            quantity={quantity}
-                            combinedAddons={combinedAddons}
-                            isCustomLineItemsEnabled={isCustomLineItemsEnabled}
-                            customLineItems={customLineItems}
-                            voucherDiscount={voucherDiscount}
-                            totalWithDiscount={totalWithDiscount}
-                            items={items}
-                            voucherCode={voucherCode}
-                            setVoucherCode={setVoucherCode}
-                            voucherError={voucherError}
-                            handleValidateVoucher={handleValidateVoucher}
-                        />
+                        {cart.map((tourItem, index) => (
+                            <PurchaseSummary
+                                key={tourItem.id || index}
+                                tour={tourItem}
+                                date={date}
+                                time={time}
+                                basePrice={tourItem.price}
+                                quantity={quantity}
+                                combinedAddons={combinedAddons}
+                                isCustomLineItemsEnabled={isCustomLineItemsEnabled}
+                                customLineItems={customLineItems}
+                                voucherDiscount={voucherDiscount}
+                                totalWithDiscount={totalWithDiscount}
+                                items={items}
+                                voucherCode={voucherCode}
+                                setVoucherCode={setVoucherCode}
+                                voucherError={voucherError}
+                                handleValidateVoucher={handleValidateVoucher}
+                            />
+                        ))}
                     </Box>
                 </Flex>
             </Box>

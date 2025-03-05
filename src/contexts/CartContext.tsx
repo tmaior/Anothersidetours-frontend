@@ -1,4 +1,4 @@
-import {createContext, useContext, useState} from 'react';
+import {createContext, useContext, useState, useEffect} from 'react';
 
 interface Tour {
     id: string;
@@ -12,14 +12,73 @@ interface Tour {
 interface CartContextType {
     cart: Tour[];
     setCart: React.Dispatch<React.SetStateAction<Tour[]>>;
+    addToCart: (tour: Tour) => void;
+    resetCart: () => void;
+    newCart: (tour: Tour) => void;
+    clearCart: () => void;
+    setNavigationSource: (source: string) => void;
+    navigationSource: string;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({children}) => {
-    const [cart, setCart] = useState<Tour[]>([]);
+    const [cart, setCart] = useState<Tour[]>(() => {
+        if (typeof window !== 'undefined') {
+            const savedCart = localStorage.getItem('cart');
+            return savedCart ? JSON.parse(savedCart) : [];
+        }
+        return [];
+    });
+    
+    const [navigationSource, setNavigationSource] = useState<string>(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('navigationSource') || '';
+        }
+        return '';
+    });
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+    }, [cart]);
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('navigationSource', navigationSource);
+        }
+    }, [navigationSource]);
+    const addToCart = (tour: Tour) => {
+        setCart(prevCart => {
+            const exists = prevCart.some(item => item.id === tour.id);
+            if (!exists) {
+                return [...prevCart, tour];
+            }
+            return prevCart;
+        });
+    };
+    const newCart = (tour: Tour) => {
+        setCart([tour]);
+    };
+    const resetCart = () => {
+        if (navigationSource !== 'make-a-purchase') {
+            setCart([]);
+        }
+    };
+    const clearCart = () => {
+        setCart([]);
+    };
+
     return (
-        <CartContext.Provider value={{cart, setCart}}>
+        <CartContext.Provider value={{
+            cart, 
+            setCart, 
+            addToCart,
+            newCart, 
+            resetCart, 
+            clearCart,
+            navigationSource,
+            setNavigationSource
+        }}>
             {children}
         </CartContext.Provider>
     );

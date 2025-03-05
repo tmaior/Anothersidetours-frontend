@@ -15,15 +15,31 @@ import {
 } from '@chakra-ui/react';
 import DashboardLayout from '../../../components/DashboardLayout';
 import {SearchIcon} from '@chakra-ui/icons';
-import Link from 'next/link';
 import {useGuest} from '../../../contexts/GuestContext';
+import {useCart} from '../../../contexts/CartContext';
 import withAuth from "../../../utils/withAuth";
+import {useRouter} from 'next/router';
 
 function ToursPage() {
     const {tenantId} = useGuest();
     const [tours, setTours] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const {addToCart, setNavigationSource, navigationSource} = useCart();
+    const router = useRouter();
+
+    const handleNavigateToProduct = (tour) => {
+        addToCart(tour);
+        setNavigationSource('make-a-purchase');
+        router.push(`/dashboard/make-a-purchase/${tour.id}`);
+    };
+
+    useEffect(() => {
+        const {source} = router.query;
+        if (source) {
+            setNavigationSource(source as string);
+        }
+    }, [router.query, setNavigationSource]);
 
     useEffect(() => {
         const fetchTours = async () => {
@@ -88,34 +104,33 @@ function ToursPage() {
 
                 <SimpleGrid columns={[1, 2, 3]} spacing={6} marginTop={"30px"}>
                     {filteredTours.map((tour) => (
-                        <Link href={`/dashboard/make-a-purchase/${tour.id}`} key={tour.id} passHref>
-                            <Box
-                                key={tour.id}
-                                borderWidth="1px"
-                                borderRadius="md"
-                                overflow="hidden"
-                                p={4}
-                                _hover={{boxShadow: 'md', cursor: 'pointer'}}
-                            >
-                                <Flex align="center">
-                                    <Image
-                                        src={tour.imageUrl}
-                                        alt={tour.name}
-                                        boxSize="70px"
-                                        objectFit="cover"
-                                        borderRadius="md"
-                                    />
-                                    <Box ml={4}>
-                                        <Heading as="h2" size="sm" mb={1}>
-                                            {tour.name}
-                                        </Heading>
-                                        <Text color="gray.600">
-                                            {`$${tour.price} / hour`}
-                                        </Text>
-                                    </Box>
-                                </Flex>
-                            </Box>
-                        </Link>
+                        <Box
+                            key={tour.id}
+                            borderWidth="1px"
+                            borderRadius="md"
+                            overflow="hidden"
+                            p={4}
+                            _hover={{boxShadow: 'md', cursor: 'pointer'}}
+                            onClick={() => handleNavigateToProduct(tour)}
+                        >
+                            <Flex align="center">
+                                <Image
+                                    src={tour.imageUrl}
+                                    alt={tour.name}
+                                    boxSize="70px"
+                                    objectFit="cover"
+                                    borderRadius="md"
+                                />
+                                <Box ml={4}>
+                                    <Heading as="h2" size="sm" mb={1}>
+                                        {tour.name}
+                                    </Heading>
+                                    <Text color="gray.600">
+                                        {`$${tour.price} / hour`}
+                                    </Text>
+                                </Box>
+                            </Flex>
+                        </Box>
                     ))}
                 </SimpleGrid>
 
@@ -129,4 +144,4 @@ function ToursPage() {
     );
 }
 
-export default withAuth(ToursPage);
+export default withAuth(ToursPage); 

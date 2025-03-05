@@ -1270,6 +1270,8 @@ const PurchasePage = () => {
                             removeFromCart={removeFromCart}
                             selectedCartItemIndex={selectedCartItemIndex}
                             onSelectCartItem={loadFormData}
+                            formDataMap={formDataMap}
+                            addons={addons}
                         />
                     </Box>
                 </Flex>

@@ -6,7 +6,10 @@ interface Addon {
     id: string;
     label: string;
     price: number;
-    quantity: number;
+    quantity?: number;
+    type?: 'CHECKBOX' | 'SELECT';
+    tourId?: string;
+    description?: string;
 }
 
 interface LineItem {
@@ -14,6 +17,26 @@ interface LineItem {
     type: 'Charge' | 'Discount';
     amount: number;
     quantity: number;
+}
+
+interface ItemFormData {
+    quantity: number;
+    date: string;
+    time: string;
+    organizerName: string;
+    emailEnabled: boolean;
+    organizerEmail: string;
+    phoneEnabled: boolean;
+    organizerPhone: string;
+    organizerAttending: boolean;
+    attendees: Array<{name: string, info: string}>;
+    purchaseTags: string;
+    purchaseNote: string;
+    selectedAddOns: Array<{
+        addOnId: string;
+        quantity: number;
+        checked: boolean;
+    }>;
 }
 
 interface PurchaseSummaryProps {
@@ -40,6 +63,8 @@ interface PurchaseSummaryProps {
     removeFromCart: (index: number) => void;
     selectedCartItemIndex: number;
     onSelectCartItem: (index: number) => void;
+    formDataMap: {[key: string]: ItemFormData};
+    addons: Addon[];
 }
 
 const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
@@ -60,12 +85,32 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
     removeFromCart,
     selectedCartItemIndex,
     onSelectCartItem,
+    formDataMap,
+    addons,
 }) => {
     const calculateCartTotal = () => {
         return cart.reduce((total, tour, index) => {
-            const itemTotal = tour.price * quantity;
-            const addonTotal = combinedAddons.reduce((sum, addon) => 
-                sum + (addon.price * addon.quantity), 0);
+            const tourFormData = formDataMap[tour.id];
+            const itemQuantity = tourFormData ? tourFormData.quantity : quantity;
+            const itemTotal = tour.price * itemQuantity;
+            let addonTotal = 0;
+            if (tourFormData && tourFormData.selectedAddOns) {
+                addonTotal = tourFormData.selectedAddOns.reduce((sum, selectedAddon) => {
+                    const addonInfo = addons.find(a => a.id === selectedAddon.addOnId);
+                    if (!addonInfo) return sum;
+                    
+                    if (addonInfo.type === 'CHECKBOX' && selectedAddon.checked) {
+                        return sum + addonInfo.price;
+                    }
+                    if (addonInfo.type === 'SELECT') {
+                        return sum + (addonInfo.price * selectedAddon.quantity);
+                    }
+                    return sum;
+                }, 0);
+            } else {
+                addonTotal = combinedAddons.reduce((sum, addon) => 
+                    sum + (addon.price * (addon.quantity || 1)), 0);
+            }
             const customItemsTotal = isCustomLineItemsEnabled 
                 ? customLineItems.reduce((sum, item) => {
                     const itemAmount = item.amount * item.quantity;
@@ -83,86 +128,114 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
     return (
         <>
             <VStack spacing={4} align="stretch" mb={4}>
-                {cart.map((tour, index) => (
-                    <Box 
-                        key={`${tour.id}-${index}`} 
-                        bg={selectedCartItemIndex === index ? "blue.100" : "blue.50"}
-                        p={4} 
-                        borderRadius="md" 
-                        w="120%" 
-                        ml="-10%"
-                        position="relative"
-                        cursor="pointer"
-                        onClick={() => onSelectCartItem(index)}
-                        _hover={{ bg: "blue.100" }}
-                        border={selectedCartItemIndex === index ? "2px solid blue.500" : "none"}
-                    >
-                        <IconButton
-                            aria-label="Remove item"
-                            icon={<DeleteIcon />}
-                            size="sm"
-                            position="absolute"
-                            top={2}
-                            right={2}
-                            colorScheme="red"
-                            variant="ghost"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                removeFromCart(index);
-                            }}
-                        />
-                        <HStack>
-                            <Image
-                                src={tour.imageUrl}
-                                boxSize="40px"
-                                borderRadius="md"
-                                alt="Tour Icon"
-                                objectFit="fill"
+                {cart.map((tour, index) => {
+                    const tourFormData = formDataMap[tour.id];
+                    const itemQuantity = tourFormData ? tourFormData.quantity : quantity;
+                    const itemDate = tourFormData ? tourFormData.date : date;
+                    const itemTime = tourFormData ? tourFormData.time : time;
+                    return (
+                        <Box 
+                            key={`${tour.id}-${index}`} 
+                            bg={selectedCartItemIndex === index ? "blue.100" : "blue.50"}
+                            p={4} 
+                            borderRadius="md" 
+                            w="120%" 
+                            ml="-10%"
+                            position="relative"
+                            cursor="pointer"
+                            onClick={() => onSelectCartItem(index)}
+                            _hover={{ bg: "blue.100" }}
+                            borderWidth={selectedCartItemIndex === index ? "2px" : "0"}
+                            borderStyle="solid"
+                            borderColor={selectedCartItemIndex === index ? "blue.500" : "transparent"}
+                        >
+                            <IconButton
+                                aria-label="Remove item"
+                                icon={<DeleteIcon />}
+                                size="sm"
+                                position="absolute"
+                                top={2}
+                                right={2}
+                                colorScheme="red"
+                                variant="ghost"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeFromCart(index);
+                                }}
                             />
-                            <Text fontWeight="bold">{tour.name}</Text>
-                        </HStack>
-                        <Text fontSize="sm">
-                            {date} - {time}
-                        </Text>
-                        <HStack justify="space-between">
-                            <Text mt={2}>
-                                Guests (${tour.price} × {quantity})
+                            <HStack>
+                                <Image
+                                    src={tour.imageUrl}
+                                    boxSize="40px"
+                                    borderRadius="md"
+                                    alt="Tour Icon"
+                                    objectFit="fill"
+                                />
+                                <Text fontWeight="bold">{tour.name}</Text>
+                            </HStack>
+                            <Text fontSize="sm">
+                                {itemDate} - {itemTime}
                             </Text>
-                            <Text>
-                                ${(quantity * tour.price).toFixed(2)}
-                            </Text>
-                        </HStack>
-                        {combinedAddons.length > 0 ? (
-                            combinedAddons.map((addon) => (
-                                <HStack key={`${addon.id}-${index}`} justifyContent="space-between">
-                                    <Text>
-                                        {addon.label} (${addon.price} x {addon.quantity})
-                                    </Text>
-                                    <Text>
-                                        ${(addon.price * addon.quantity).toFixed(2)}
-                                    </Text>
-                                </HStack>
-                            ))
-                        ) : (
-                            <Text>No add-ons selected.</Text>
-                        )}
-                        
-                        {isCustomLineItemsEnabled && customLineItems.length > 0 && (
-                            <Box>
-                                {customLineItems.map((item, itemIndex) => (
-                                    <HStack key={`${itemIndex}-${index}`} justify="space-between">
+                            <HStack justify="space-between">
+                                <Text mt={2}>
+                                    Guests (${tour.price} × {itemQuantity})
+                                </Text>
+                                <Text>
+                                    ${(itemQuantity * tour.price).toFixed(2)}
+                                </Text>
+                            </HStack>
+                            {tourFormData && tourFormData.selectedAddOns && tourFormData.selectedAddOns.length > 0 ? (
+                                tourFormData.selectedAddOns
+                                    .filter(addon => addon.checked || addon.quantity > 0)
+                                    .map((selectedAddon) => {
+                                        const addonInfo = addons.find(a => a.id === selectedAddon.addOnId);
+                                        if (!addonInfo) return null;
+                                        
+                                        const quantity = addonInfo.type === 'CHECKBOX' ? 1 : selectedAddon.quantity;
+                                        const price = addonInfo.price;
+                                        
+                                        return (
+                                            <HStack key={`${selectedAddon.addOnId}-${index}`} justifyContent="space-between">
+                                                <Text>
+                                                    {addonInfo.label} (${price} x {quantity})
+                                                </Text>
+                                                <Text>
+                                                    ${(price * quantity).toFixed(2)}
+                                                </Text>
+                                            </HStack>
+                                        );
+                                    })
+                            ) : combinedAddons.length > 0 ? (
+                                combinedAddons.map((addon) => (
+                                    <HStack key={`${addon.id}-${index}`} justifyContent="space-between">
                                         <Text>
-                                            {item.name || "Unnamed"} ({item.type === "Discount" ? "-" : ""}${item.amount} × {item.quantity})
+                                            {addon.label} (${addon.price} x {addon.quantity})
                                         </Text>
-                                        <Text fontWeight="semibold">
-                                            {item.type === "Discount" ? "-" : ""}${(item.amount * item.quantity).toFixed(2)}
+                                        <Text>
+                                            ${(addon.price * addon.quantity).toFixed(2)}
                                         </Text>
                                     </HStack>
-                                ))}
-                            </Box>
-                        )}
-                    </Box>
-                ))}
+                                ))
+                            ) : (
+                                <Text>No add-ons selected.</Text>
+                            )}
+                            {isCustomLineItemsEnabled && customLineItems.length > 0 && (
+                                <Box>
+                                    {customLineItems.map((item, itemIndex) => (
+                                        <HStack key={`${itemIndex}-${index}`} justify="space-between">
+                                            <Text>
+                                                {item.name || "Unnamed"} ({item.type === "Discount" ? "-" : ""}${item.amount} × {item.quantity})
+                                            </Text>
+                                            <Text fontWeight="semibold">
+                                                {item.type === "Discount" ? "-" : ""}${(item.amount * item.quantity).toFixed(2)}
+                                            </Text>
+                                        </HStack>
+                                    ))}
+                                </Box>
+                            )}
+                        </Box>
+                    );
+                })}
             </VStack>
             
             {voucherDiscount > 0 && (

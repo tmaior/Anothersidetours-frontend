@@ -48,13 +48,7 @@ export const CartProvider = ({children}) => {
         }
     }, [navigationSource]);
     const addToCart = (tour: Tour) => {
-        setCart(prevCart => {
-            const exists = prevCart.some(item => item.id === tour.id);
-            if (!exists) {
-                return [...prevCart, tour];
-            }
-            return prevCart;
-        });
+        setCart(prevCart => [...prevCart, tour]);
     };
     const newCart = (tour: Tour) => {
         setCart([tour]);

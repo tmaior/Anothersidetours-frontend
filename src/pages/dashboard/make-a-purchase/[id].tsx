@@ -317,7 +317,7 @@ const PurchasePage = () => {
             localStorage.setItem('navigationSource', 'make-a-purchase');
             window.location.href = '/dashboard/choose-a-product?source=make-a-purchase';
         }
-        router.push('/dashboard/choose-a-product?source=make-a-purchase');
+        router.push("/dashboard/choose-a-product");
     };
 
     useEffect(() => {

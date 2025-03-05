@@ -19,6 +19,7 @@
     "@stripe/react-stripe-js": "^2.9.0",
     "@stripe/stripe-js": "^4.10.0",
     "@tanstack/react-query": "^5.62.7",
+    "ag-grid-react": "^33.1.1",
     "axios": "^1.7.7",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",

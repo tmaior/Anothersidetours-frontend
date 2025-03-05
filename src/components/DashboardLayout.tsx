@@ -342,7 +342,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         fontSize="md"
                         color="gray.400"
                         pl={4}
-                        onClick={() => router.push("/dashboard/under-construction")}
+                        onClick={() => router.push("/dashboard/reports")}
                     >
                         <Button
                             marginLeft={"-5"}
@@ -351,7 +351,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             color="white"
                             variant="ghost"
                             w="230px"
-                            background={router.pathname === "/dashboard/Reports" ? "blue.500" : "transparent"}
+                            background={router.pathname === "/dashboard/reports" ? "blue.500" : "transparent"}
                             _hover={{
                                 background: "rgba(255, 255, 255, 0.1)",
                                 transition: "background 0.2s ease-in-out",

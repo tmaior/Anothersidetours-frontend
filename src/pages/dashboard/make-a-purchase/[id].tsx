@@ -69,7 +69,7 @@ interface FormData {
     phoneEnabled: boolean;
     organizerPhone: string;
     organizerAttending: boolean;
-    attendees: Array<{name: string, info: string}>;
+    attendees: Array<{ name: string, info: string }>;
     purchaseTags: string;
     purchaseNote: string;
     selectedAddOns: SelectedAddOn[];
@@ -85,64 +85,54 @@ const PurchasePage = () => {
     const [tour, setTour] = useState<Tour>(null);
     const [addons, setAddons] = useState<AddOn[]>([]);
     const [selectedAddOns, setSelectedAddOns] = useState<SelectedAddOn[]>([]);
+    const [combinedAddons, setCombinedAddons] = useState<(AddOn & { quantity: number })[]>([]);
     const [loading, setLoading] = useState(true);
     const [, setLoadingAddons] = useState(true);
 
     const [schedules, setSchedules] = useState<{ value: string; label: string }[]>([]);
     const [loadingSchedules, setLoadingSchedules] = useState(true);
-    const [formDataMap, setFormDataMap] = useState<{[key: string]: FormData}>({});
+    const [formDataMap, setFormDataMap] = useState<{ [key: string]: FormData }>({});
     const [selectedCartItemIndex, setSelectedCartItemIndex] = useState<number>(0);
 
     const [quantity, setQuantity] = useState(1);
+    const [quantityError, setQuantityError] = useState(false);
     const [date, setDate] = useState('2024-12-20');
     const [time, setTime] = useState('08:00');
-
     const [organizerName, setOrganizerName] = useState("");
     const [emailEnabled, setEmailEnabled] = useState(true);
     const [organizerEmail, setOrganizerEmail] = useState("");
     const [phoneEnabled, setPhoneEnabled] = useState(true);
     const [organizerPhone, setOrganizerPhone] = useState("");
     const [organizerAttending, setOrganizerAttending] = useState(true);
-
-    const [attendees, setAttendees] = useState([
-        {name: "Guests #1", info: ""},
-        {name: "Guests #2", info: ""}
-    ]);
+    const [attendees, setAttendees] = useState([{name: "", info: ""}, {name: "", info: ""}]);
     const [doNotCharge, setDoNotCharge] = useState(false);
-
-    const [bookingFee,] = useState(false);
-    const [gratuity,] = useState('');
-
+    const [bookingFee, setBookingFee] = useState(false);
+    const [gratuity, setGratuity] = useState('');
     const [internalNotesEnabled, setInternalNotesEnabled] = useState(true);
     const [purchaseTags, setPurchaseTags] = useState("");
     const [purchaseNote, setPurchaseNote] = useState("");
     const [isCustomLineItemsEnabled, setIsCustomLineItemsEnabled] = useState(false);
     const [customLineItems, setCustomLineItems] = useState([]);
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [pickUpAddOn, setPickUpAddOn] = useState(0);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [privateTourAddOn, setPrivateTourAddOn] = useState(0);
     const toast = useToast();
-    const [, setFinalPrice] = useState(298);
+    const [finalPrice, setFinalPrice] = useState(0);
     const [voucherDiscount, setVoucherDiscount] = useState(0);
     const [voucherCode, setVoucherCode] = useState('');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [voucherValid, setVoucherValid] = useState(false);
     const [voucherError, setVoucherError] = useState('');
     const [appliedVoucherCode, setAppliedVoucherCode] = useState<string | null>(null);
-    const [selectedAddons, setSelectedAddons] = useState({});
+    const [submitting, setSubmitting] = useState(false);
     const {tenantId} = useGuest();
-    const { cart, setCart, addToCart, newCart, setNavigationSource, navigationSource, removeFromCart } = useCart();
+    const {cart, setCart, addToCart, newCart, setNavigationSource, navigationSource, removeFromCart} = useCart();
 
     const [items, setItems] = useState([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
 
     const saveCurrentFormData = () => {
         if (cart.length === 0) return;
-        
         const currentCartItem = cart[selectedCartItemIndex];
         if (!currentCartItem) return;
-        
         const formData: FormData = {
             quantity,
             date,
@@ -158,7 +148,6 @@ const PurchasePage = () => {
             purchaseNote,
             selectedAddOns,
         };
-        
         setFormDataMap(prev => ({
             ...prev,
             [currentCartItem.id]: formData
@@ -167,7 +156,6 @@ const PurchasePage = () => {
 
     const loadFormData = (index: number) => {
         if (cart.length === 0) return;
-        
         const cartItem = cart[index];
         if (!cartItem) return;
         saveCurrentFormData();
@@ -175,28 +163,30 @@ const PurchasePage = () => {
         const formData = formDataMap[cartItem.id];
         if (!formData) {
             const initialFormData: FormData = {
-                quantity,
-                date,
-                time,
-                organizerName,
-                emailEnabled,
-                organizerEmail,
-                phoneEnabled,
-                organizerPhone,
-                organizerAttending,
-                attendees,
-                purchaseTags,
-                purchaseNote,
-                selectedAddOns,
+                quantity: 1,
+                date: '2024-12-20',
+                time: '08:00',
+                organizerName: "",
+                emailEnabled: true,
+                organizerEmail: "",
+                phoneEnabled: true,
+                organizerPhone: "",
+                organizerAttending: true,
+                attendees: [
+                    {name: "Guests #1", info: ""},
+                    {name: "Guests #2", info: ""}
+                ],
+                purchaseTags: "",
+                purchaseNote: "",
+                selectedAddOns: selectedAddOns.length > 0 ? [...selectedAddOns] : [],
             };
-            
+
             setFormDataMap(prev => ({
                 ...prev,
                 [cartItem.id]: initialFormData
             }));
             return;
         }
-        
         setQuantity(formData.quantity);
         setDate(formData.date);
         setTime(formData.time);
@@ -235,7 +225,6 @@ const PurchasePage = () => {
                     purchaseNote: "",
                     selectedAddOns: selectedAddOns.length > 0 ? [...selectedAddOns] : [],
                 };
-                
                 setFormDataMap(prev => ({
                     ...prev,
                     [item.id]: initialFormData
@@ -247,8 +236,7 @@ const PurchasePage = () => {
             if (newItemIndex >= 0) {
                 setSelectedCartItemIndex(newItemIndex);
             }
-        }
-        else if (selectedCartItemIndex >= cart.length && cart.length > 0) {
+        } else if (selectedCartItemIndex >= cart.length && cart.length > 0) {
             setSelectedCartItemIndex(0);
         }
     }, [cart]);
@@ -257,8 +245,8 @@ const PurchasePage = () => {
             saveCurrentFormData();
         }
     }, [
-        quantity, date, time, organizerName, 
-        emailEnabled, organizerEmail, phoneEnabled, 
+        quantity, date, time, organizerName,
+        emailEnabled, organizerEmail, phoneEnabled,
         organizerPhone, organizerAttending, attendees,
         purchaseTags, purchaseNote, selectedAddOns
     ]);
@@ -309,7 +297,6 @@ const PurchasePage = () => {
 
     useEffect(() => {
         if (!id) return;
-        
         const fetchTourData = async () => {
             try {
                 setLoading(true);
@@ -476,24 +463,27 @@ const PurchasePage = () => {
         return finalDate.toISOString();
     };
 
-    let combinedAddons: (AddOn & { quantity: number })[] = [];
-    if (addons.length > 0) {
-        combinedAddons = addons.reduce((acc: (AddOn & { quantity: number })[], addon) => {
-            const selectedValue = selectedAddons[addon.id];
-            if (addon.type === 'SELECT' && typeof selectedValue === 'number' && selectedValue > 0) {
+    useEffect(() => {
+        if (addons.length === 0) return;
+        const updatedCombinedAddons = selectedAddOns.reduce((acc: (AddOn & { quantity: number })[], selectedAddon) => {
+            const addonInfo = addons.find(a => a.id === selectedAddon.addOnId);
+            if (!addonInfo) return acc;
+
+            if (addonInfo.type === 'CHECKBOX' && selectedAddon.checked) {
                 acc.push({
-                    ...addon,
-                    quantity: selectedValue,
+                    ...addonInfo,
+                    quantity: 1
                 });
-            } else if (addon.type === 'CHECKBOX' && selectedValue === true) {
+            } else if (addonInfo.type === 'SELECT' && selectedAddon.quantity > 0) {
                 acc.push({
-                    ...addon,
-                    quantity: 1,
+                    ...addonInfo,
+                    quantity: selectedAddon.quantity
                 });
             }
             return acc;
         }, []);
-    }
+        setCombinedAddons(updatedCombinedAddons);
+    }, [selectedAddOns, addons]);
 
     const addonsTotalPrice = combinedAddons.reduce(
         (sum, addon) => sum + (addon.price * addon.quantity),
@@ -507,15 +497,10 @@ const PurchasePage = () => {
     const totalWithDiscount = Math.max(finalTotalPrice - voucherDiscount, 0);
 
     const handleCreateReservationAndPay = async () => {
-        if (!stripe || !elements) {
-            alert("Stripe has not yet been loaded.");
-            return;
-        }
         saveCurrentFormData();
-
+        const formattedAttendees = [];
         let reservationId: string | null = null;
         let userId: string | null = null;
-
         try {
             const userPayload = {
                 name: organizerName,
@@ -550,29 +535,57 @@ const PurchasePage = () => {
             if (!updateUserResponse.ok) {
                 throw new Error("Failed to update user status.");
             }
+            cart.forEach((cartItem, index) => {
+                const tourFormData = formDataMap[cartItem.id];
+                if (!tourFormData) return;
+                const tourAttendees = tourFormData.attendees.filter(a => a.name && a.name.trim() !== '');
+                tourAttendees.forEach(attendee => {
+                    formattedAttendees.push({
+                        name: attendee.name,
+                        additionalInfo: attendee.info || '',
+                    });
+                });
+            });
 
+            if (formattedAttendees.length === 0) {
+                toast({
+                    title: "Missing Information",
+                    description: "At least one attendee name is required.",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+                return;
+            }
+            setSubmitting(true);
             const reservationDateTime = combineDateAndTime(date, time);
-
-            const reservationData = {
-                tourId: id,
+            const requestBody = {
+                tour: {
+                    id: cart[0].id,
+                    tenantId: tenantId,
+                    name: cart[0].name,
+                    basePrice: cart[0].price,
+                },
+                status: "CONFIRMED",
+                tenantId: tenantId,
                 userId: userId,
                 reservation_date: reservationDateTime,
-                addons: Object.entries(selectedAddons).map(([addonId, value]) => {
-                    if (typeof value === "boolean") {
+                addons: selectedAddOns.map(addonItem => {
+                    if (addonItem.checked) {
                         return {
-                            addonId,
-                            quantity: value ? 1 : 0,
+                            addonId: addonItem.addOnId,
+                            value: "1",
+                        };
+                    } else if (addonItem.quantity > 0) {
+                        return {
+                            addonId: addonItem.addOnId,
+                            value: addonItem.quantity.toString(),
                         };
                     }
-
-                    return {
-                        addonId,
-                        quantity: value,
-                    };
-                }),
+                    return null;
+                }).filter(Boolean),
                 total_price: totalWithDiscount,
                 guestQuantity: quantity,
-                status: "ACCEPTED",
                 createdBy: "Back Office",
                 purchaseTags,
                 purchaseNote,
@@ -581,7 +594,7 @@ const PurchasePage = () => {
             const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(reservationData),
+                body: JSON.stringify(requestBody),
             });
 
             if (!reservationResponse.ok) {
@@ -591,110 +604,6 @@ const PurchasePage = () => {
             const reservationResult = await reservationResponse.json();
             reservationId = reservationResult.id;
             console.log("Reservation created with ID:", reservationId);
-
-            if (customLineItems.length > 0) {
-                const customItemsPayload = customLineItems.map(item => ({
-                    tenantId: tenantId,
-                    tourId: id,
-                    label: item.name,
-                    description: item.type,
-                    amount: item.amount,
-                    quantity: item.quantity,
-                }));
-
-                const customItemsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/custom-items`, {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({items: customItemsPayload, reservationId}),
-                });
-
-                if (!customItemsResponse.ok) throw new Error("Failed to create custom items.");
-            }
-
-            if (!doNotCharge) {
-                const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({reservationId}),
-                });
-
-                if (!setupIntentRes.ok) {
-                    throw new Error("Failed to create SetupIntent.");
-                }
-
-                const {clientSecret} = await setupIntentRes.json();
-
-                const cardElement = elements.getElement(CardElement);
-                if (!cardElement) {
-                    throw new Error("CardElement is not available.");
-                }
-
-                const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
-                    payment_method: {
-                        card: cardElement,
-                        billing_details: {
-                            name: organizerName || "Guest Organizer",
-                            email: emailEnabled ? organizerEmail : "",
-                        },
-                    },
-                });
-
-                if (paymentMethodResponse.error) {
-                    throw new Error(paymentMethodResponse.error.message);
-                }
-
-                const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
-
-                const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({paymentMethodId, reservationId}),
-                });
-
-                if (!savePMRes.ok) {
-                    throw new Error("Failed to save PaymentMethod.");
-                }
-
-                if (voucherValid && appliedVoucherCode) {
-                    const redeemResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/redeem`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            code: appliedVoucherCode,
-                            reservationId: reservationResult.id,
-                        }),
-                    });
-
-                    if (redeemResponse.ok) {
-                        toast({
-                            title: 'Voucher Redeemed',
-                            description: 'The voucher has been successfully redeemed.',
-                            status: 'success',
-                            duration: 4000,
-                            isClosable: true,
-                        });
-                        setAppliedVoucherCode("")
-                    } else {
-                        throw new Error('Failed to redeem voucher');
-                    }
-                }
-
-                toast({
-                    title: "Reservation Complete!",
-                    description: "Your reservation and payment were successful.",
-                    status: "success",
-                    duration: 5000,
-                    isClosable: true,
-                });
-                setTimeout(() => {
-                    router.push("/dashboard/purchases");
-                }, 1000);
-            } else {
-                alert("Reservation created without immediate charge (Do Not Charge).");
-            }
-
         } catch (error) {
             console.error("Error creating reservation/payment:", error);
             if (error instanceof Error) {
@@ -776,24 +685,73 @@ const PurchasePage = () => {
 
 
     const handleIncrement = (addonId) => {
-        setSelectedAddons((prev) => ({
-            ...prev,
-            [addonId]: (prev[addonId] || 0) + 1,
-        }));
+        setSelectedAddOns((prev) => {
+            const existingAddonIndex = prev.findIndex(addon => addon.addOnId === addonId);
+
+            if (existingAddonIndex >= 0) {
+                const updatedAddons = [...prev];
+                updatedAddons[existingAddonIndex] = {
+                    ...updatedAddons[existingAddonIndex],
+                    quantity: (updatedAddons[existingAddonIndex].quantity || 0) + 1
+                };
+                return updatedAddons;
+            } else {
+                return [...prev, {
+                    addOnId: addonId,
+                    quantity: 1,
+                    checked: false
+                }];
+            }
+        });
     };
 
     const handleDecrement = (addonId) => {
-        setSelectedAddons((prev) => ({
-            ...prev,
-            [addonId]: Math.max((prev[addonId] || 0) - 1, 0),
-        }));
+        setSelectedAddOns((prev) => {
+            const existingAddonIndex = prev.findIndex(addon => addon.addOnId === addonId);
+
+            if (existingAddonIndex >= 0) {
+                const updatedAddons = [...prev];
+                const newQuantity = Math.max((updatedAddons[existingAddonIndex].quantity || 0) - 1, 0);
+
+                if (newQuantity === 0) {
+                    return prev.filter(addon => addon.addOnId !== addonId);
+                } else {
+                    updatedAddons[existingAddonIndex] = {
+                        ...updatedAddons[existingAddonIndex],
+                        quantity: newQuantity
+                    };
+                    return updatedAddons;
+                }
+            }
+            return prev;
+        });
     };
 
     const handleCheckboxChange = (addonId) => {
-        setSelectedAddons((prev) => ({
-            ...prev,
-            [addonId]: !prev[addonId],
-        }));
+        setSelectedAddOns((prev) => {
+            const existingAddonIndex = prev.findIndex(addon => addon.addOnId === addonId);
+
+            if (existingAddonIndex >= 0) {
+                const updatedAddons = [...prev];
+                const newChecked = !updatedAddons[existingAddonIndex].checked;
+
+                if (!newChecked) {
+                    return prev.filter(addon => addon.addOnId !== addonId);
+                } else {
+                    updatedAddons[existingAddonIndex] = {
+                        ...updatedAddons[existingAddonIndex],
+                        checked: newChecked
+                    };
+                    return updatedAddons;
+                }
+            } else {
+                return [...prev, {
+                    addOnId: addonId,
+                    quantity: 0,
+                    checked: true
+                }];
+            }
+        });
     };
 
     return (
@@ -866,11 +824,12 @@ const PurchasePage = () => {
                                     {addon.type === 'SELECT' ? (
                                         <Flex align="center">
                                             <Button size="sm" onClick={() => handleDecrement(addon.id)}
-                                                    disabled={selectedAddons[addon.id] <= 0}>
+                                                    disabled={!selectedAddOns.find(s => s.addOnId === addon.id) ||
+                                                        (selectedAddOns.find(s => s.addOnId === addon.id)?.quantity || 0) <= 0}>
                                                 -
                                             </Button>
                                             <Input
-                                                value={selectedAddons[addon.id] || 0}
+                                                value={selectedAddOns.find(s => s.addOnId === addon.id)?.quantity || 0}
                                                 readOnly
                                                 w="50px"
                                                 textAlign="center"
@@ -882,7 +841,7 @@ const PurchasePage = () => {
                                         </Flex>
                                     ) : addon.type === 'CHECKBOX' ? (
                                         <Switch
-                                            isChecked={selectedAddons[addon.id] || false}
+                                            isChecked={selectedAddOns.find(s => s.addOnId === addon.id)?.checked || false}
                                             onChange={() => handleCheckboxChange(addon.id)}
                                         />
                                     ) : null}
@@ -1233,7 +1192,8 @@ const PurchasePage = () => {
                         <HStack justify="space-between">
                             <Button variant="outline" onClick={handleCancel}>Cancel</Button>
                             <HStack spacing={4}>
-                                <Button variant="outline" onClick={handleNavigateToProducts}>Add Another Product</Button>
+                                <Button variant="outline" onClick={handleNavigateToProducts}>Add Another
+                                    Product</Button>
                                 <Button
                                     colorScheme="green"
                                     onClick={handleCreateReservationAndPay}

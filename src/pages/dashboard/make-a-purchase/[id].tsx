@@ -498,6 +498,7 @@ const PurchasePage = () => {
 
     const handleCreateReservationAndPay = async () => {
         saveCurrentFormData();
+        setSubmitting(true);
         const formattedAttendees = [];
         let reservationId: string | null = null;
         let userId: string | null = null;
@@ -547,7 +548,6 @@ const PurchasePage = () => {
                 });
             });
 
-            setSubmitting(true);
             const reservationDateTime = combineDateAndTime(date, time);
             const requestBody = {
                 tourId: cart[0].id,
@@ -690,8 +690,6 @@ const PurchasePage = () => {
             } else {
                 alert("Reservation created without immediate charge (Do Not Charge).");
             }
-
-
         } catch (error) {
             console.error("Error creating reservation/payment:", error);
             if (error instanceof Error) {
@@ -699,6 +697,8 @@ const PurchasePage = () => {
             } else {
                 setErrorMessage("An unexpected error has occurred.");
             }
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -1285,7 +1285,9 @@ const PurchasePage = () => {
                                 <Button
                                     colorScheme="green"
                                     onClick={handleCreateReservationAndPay}
-                                    loadingText="Processing"
+                                    loadingText="Processing Payment"
+                                    isLoading={submitting}
+                                    isDisabled={submitting}
                                 >
                                     Pay US${(totalWithDiscount +
                                     items.reduce((acc, item) => {

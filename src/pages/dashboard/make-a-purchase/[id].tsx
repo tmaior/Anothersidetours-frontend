@@ -129,6 +129,29 @@ const PurchasePage = () => {
 
     const [items, setItems] = useState([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
 
+    const fetchAddOnsForTour = async (tourId: string) => {
+        try {
+            if (!tourId) return;
+            
+            setLoadingAddons(true);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`);
+            const data = await res.json();
+            setAddons(data);
+
+            const initSelected = data.map((addon: AddOn) => ({
+                addOnId: addon.id,
+                quantity: 0,
+                checked: false
+            }));
+            setSelectedAddOns(initSelected);
+
+            setLoadingAddons(false);
+        } catch (error) {
+            console.error('Failed to fetch addons:', error);
+            setLoadingAddons(false);
+        }
+    };
+
     const saveCurrentFormData = () => {
         if (cart.length === 0) return;
         const currentCartItem = cart[selectedCartItemIndex];
@@ -185,6 +208,7 @@ const PurchasePage = () => {
                 ...prev,
                 [cartItem.id]: initialFormData
             }));
+            fetchAddOnsForTour(cartItem.id);
             return;
         }
         setQuantity(formData.quantity);
@@ -330,30 +354,6 @@ const PurchasePage = () => {
         };
         fetchTourData();
     }, [id, cart, addToCart, newCart, navigationSource, toast]);
-
-    useEffect(() => {
-        const fetchAddOns = async () => {
-            try {
-                if (!id) return;
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${id}`);
-                const data = await res.json();
-                setAddons(data);
-
-                const initSelected = data.map((addon: AddOn) => ({
-                    addOnId: addon.id,
-                    quantity: 0,
-                    checked: false
-                }));
-                setSelectedAddOns(initSelected);
-
-                setLoadingAddons(false);
-            } catch (error) {
-                console.error('Failed to fetch addons:', error);
-                setLoadingAddons(false);
-            }
-        };
-        fetchAddOns();
-    }, [id]);
 
     useEffect(() => {
         const fetchSchedules = async () => {
@@ -748,6 +748,18 @@ const PurchasePage = () => {
             setVoucherError('Failed to validate voucher.');
         }
     };
+
+    useEffect(() => {
+        const fetchInitialAddOns = async () => {
+            const currentTourId = cart.length > 0 && selectedCartItemIndex < cart.length
+                ? cart[selectedCartItemIndex].id
+                : id;
+            if (currentTourId) {
+                await fetchAddOnsForTour(currentTourId);
+            }
+        };
+        fetchInitialAddOns();
+    }, [id, cart, selectedCartItemIndex, fetchAddOnsForTour]);
 
     if (loading) {
         return (

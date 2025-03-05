@@ -116,7 +116,7 @@ const PurchasePage = () => {
     const [appliedVoucherCode, setAppliedVoucherCode] = useState<string | null>(null);
     const [selectedAddons, setSelectedAddons] = useState({});
     const {tenantId} = useGuest();
-    const { cart, setCart, addToCart, newCart, setNavigationSource, navigationSource } = useCart();
+    const { cart, setCart, addToCart, newCart, setNavigationSource, navigationSource, removeFromCart } = useCart();
 
     const [items, setItems] = useState([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
 
@@ -1107,26 +1107,23 @@ const PurchasePage = () => {
 
                     <Box w={{base: "100%", md: "400px"}} bg="white" p={6} borderRadius="md" boxShadow="sm">
                         <Heading size="md" mb={4}>Purchase Summary</Heading>
-                        {cart.map((tourItem, index) => (
-                            <PurchaseSummary
-                                key={tourItem.id || index}
-                                tour={tourItem}
-                                date={date}
-                                time={time}
-                                basePrice={tourItem.price}
-                                quantity={quantity}
-                                combinedAddons={combinedAddons}
-                                isCustomLineItemsEnabled={isCustomLineItemsEnabled}
-                                customLineItems={customLineItems}
-                                voucherDiscount={voucherDiscount}
-                                totalWithDiscount={totalWithDiscount}
-                                items={items}
-                                voucherCode={voucherCode}
-                                setVoucherCode={setVoucherCode}
-                                voucherError={voucherError}
-                                handleValidateVoucher={handleValidateVoucher}
-                            />
-                        ))}
+                        <PurchaseSummary
+                            cart={cart}
+                            date={date}
+                            time={time}
+                            quantity={quantity}
+                            combinedAddons={combinedAddons}
+                            isCustomLineItemsEnabled={isCustomLineItemsEnabled}
+                            customLineItems={customLineItems}
+                            voucherDiscount={voucherDiscount}
+                            totalWithDiscount={totalWithDiscount}
+                            items={items}
+                            voucherCode={voucherCode}
+                            setVoucherCode={setVoucherCode}
+                            voucherError={voucherError}
+                            handleValidateVoucher={handleValidateVoucher}
+                            removeFromCart={removeFromCart}
+                        />
                     </Box>
                 </Flex>
             </Box>

@@ -13,6 +13,7 @@ interface CartContextType {
     cart: Tour[];
     setCart: React.Dispatch<React.SetStateAction<Tour[]>>;
     addToCart: (tour: Tour) => void;
+    removeFromCart: (index: number) => void;
     resetCart: () => void;
     newCart: (tour: Tour) => void;
     clearCart: () => void;
@@ -50,6 +51,13 @@ export const CartProvider = ({children}) => {
     const addToCart = (tour: Tour) => {
         setCart(prevCart => [...prevCart, tour]);
     };
+    const removeFromCart = (index: number) => {
+        setCart(prevCart => {
+            const newCart = [...prevCart];
+            newCart.splice(index, 1);
+            return newCart;
+        });
+    };
     const newCart = (tour: Tour) => {
         setCart([tour]);
     };
@@ -67,6 +75,7 @@ export const CartProvider = ({children}) => {
             cart, 
             setCart, 
             addToCart,
+            removeFromCart,
             newCart, 
             resetCart, 
             clearCart,

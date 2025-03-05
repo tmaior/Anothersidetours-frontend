@@ -90,7 +90,6 @@ const PurchasePage = () => {
         {name: "Guests #1", info: ""},
         {name: "Guests #2", info: ""}
     ]);
-
     const [doNotCharge, setDoNotCharge] = useState(false);
 
     const [bookingFee,] = useState(false);
@@ -1058,7 +1057,7 @@ const PurchasePage = () => {
                         <HStack justify="space-between">
                             <Button variant="outline" onClick={handleCancel}>Cancel</Button>
                             <HStack spacing={4}>
-                                <Button variant="outline">Add Another Product</Button>
+                                <Button variant="outline" onClick={() => router.push("/dashboard/choose-a-product")}>Add Another Product</Button>
                                 <Button
                                     colorScheme="green"
                                     onClick={handleCreateReservationAndPay}

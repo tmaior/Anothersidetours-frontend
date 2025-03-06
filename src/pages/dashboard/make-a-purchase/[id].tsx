@@ -537,6 +537,7 @@ const PurchasePage = () => {
             if (!updateUserResponse.ok) {
                 throw new Error("Failed to update user status.");
             }
+
             cart.forEach((cartItem, index) => {
                 const tourFormData = formDataMap[cartItem.id];
                 if (!tourFormData) return;
@@ -549,12 +550,18 @@ const PurchasePage = () => {
                 });
             });
 
-            const reservationDateTime = combineDateAndTime(date, time);
-            const requestBody = {
-                tourId: cart[0].id,
-                status: "ACCEPTED",
-                userId: userId,
-                reservation_date: reservationDateTime,
+            const cartPayload = cart.map((cartItem) => {
+                const formData = formDataMap[cartItem.id];
+                return {
+                    tourId: cartItem.id,
+                    reservationData: {
+                        status: "ACCEPTED",
+                        reservation_date: combineDateAndTime(formData.date, formData.time),
+                        guestQuantity: formData.quantity,
+                        purchaseTags: formData.purchaseTags,
+                        purchaseNote: formData.purchaseNote,
+                    },
+
                 addons: selectedAddOns.map(addonItem => {
                     if (addonItem.checked) {
                         return {
@@ -574,6 +581,13 @@ const PurchasePage = () => {
                 createdBy: "Back Office",
                 purchaseTags,
                 purchaseNote,
+            };
+        });
+
+            const requestBody = {
+                cart: cartPayload,
+                userId: userId,
+                createdBy: "Back Office",
             };
 
             const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations`, {

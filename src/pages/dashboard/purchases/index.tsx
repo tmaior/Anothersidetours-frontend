@@ -687,7 +687,7 @@ const PaymentSummary = ({reservation}) => {
         };
 
         fetchAddons();
-    }, [reservation.tour.id, reservation?.id, reservation?.tourId]);
+    }, [reservation?.tour?.id, reservation?.id, reservation?.tourId]);
 
     const combinedAddons = reservation?.reservationAddons?.map((selectedAddon) => {
         const addonDetails = allAddons.find(
@@ -865,13 +865,13 @@ const PurchasesPage = () => {
         }
     }, [tenantId, selectedReservation]);
 
-    if (isLoading) {
-        return (
-            <Center width="100vw" height="100vh">
-                <CircularProgress isIndeterminate color="blue.500"/>
-            </Center>
-        );
-    }
+    // if (isLoading) {
+    //     return (
+    //         <Center width="100vw" height="100vh">
+    //             <CircularProgress isIndeterminate color="blue.500"/>
+    //         </Center>
+    //     );
+    // }
 
     const handlePurchaseClick = () => {
         router.push("/dashboard/choose-a-product");

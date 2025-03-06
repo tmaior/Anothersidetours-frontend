@@ -84,6 +84,7 @@ const PurchasePage = () => {
 
     const [tour, setTour] = useState<Tour>(null);
     const [addons, setAddons] = useState<AddOn[]>([]);
+    const [addonsMap, setAddonsMap] = useState<{ [key: string]: AddOn[] }>({});
     const [selectedAddOns, setSelectedAddOns] = useState<SelectedAddOn[]>([]);
     const [combinedAddons, setCombinedAddons] = useState<(AddOn & { quantity: number })[]>([]);
     const [loading, setLoading] = useState(true);
@@ -145,14 +146,23 @@ const PurchasePage = () => {
             setLoadingAddons(true);
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`);
             const data = await res.json();
+            setAddonsMap(prev => ({
+                ...prev,
+                [tourId]: data
+            }));
             setAddons(data);
 
-            const initSelected = data.map((addon: AddOn) => ({
-                addOnId: addon.id,
-                quantity: 0,
-                checked: false
-            }));
-            setSelectedAddOns(initSelected);
+            const existingFormData = formDataMap[tourId];
+            if (existingFormData && existingFormData.selectedAddOns && existingFormData.selectedAddOns.length > 0) {
+                setSelectedAddOns(existingFormData.selectedAddOns);
+            } else {
+                const initSelected = data.map((addon: AddOn) => ({
+                    addOnId: addon.id,
+                    quantity: 0,
+                    checked: false
+                }));
+                setSelectedAddOns(initSelected);
+            }
 
             setLoadingAddons(false);
         } catch (error) {
@@ -161,36 +171,33 @@ const PurchasePage = () => {
         }
     };
 
-    const saveCurrentFormData = () => {
-        if (cart.length === 0) return;
-        const currentCartItem = cart[selectedCartItemIndex];
-        if (!currentCartItem) return;
-        const formData: FormData = {
-            quantity,
-            date,
-            time,
-            organizerName,
-            emailEnabled,
-            organizerEmail,
-            phoneEnabled,
-            organizerPhone,
-            organizerAttending,
-            attendees,
-            purchaseTags,
-            purchaseNote,
-            selectedAddOns,
-        };
-        setFormDataMap(prev => ({
-            ...prev,
-            [currentCartItem.id]: formData
-        }));
-    };
-
     const loadFormData = (index: number) => {
         if (cart.length === 0) return;
         const cartItem = cart[index];
         if (!cartItem) return;
-        saveCurrentFormData();
+
+        if (selectedCartItemIndex >= 0 && selectedCartItemIndex < cart.length) {
+            const currentTourId = cart[selectedCartItemIndex].id;
+            setFormDataMap(prev => ({
+                ...prev,
+                [currentTourId]: {
+                    ...prev[currentTourId],
+                    quantity,
+                    date,
+                    time,
+                    organizerName,
+                    emailEnabled,
+                    organizerEmail,
+                    phoneEnabled,
+                    organizerPhone,
+                    organizerAttending,
+                    attendees,
+                    purchaseTags,
+                    purchaseNote,
+                    selectedAddOns,
+                }
+            }));
+        }
         setSelectedCartItemIndex(index);
         const formData = formDataMap[cartItem.id];
         if (!formData) {
@@ -210,13 +217,25 @@ const PurchasePage = () => {
                 ],
                 purchaseTags: "",
                 purchaseNote: "",
-                selectedAddOns: selectedAddOns.length > 0 ? [...selectedAddOns] : [],
+                selectedAddOns: [],
             };
 
             setFormDataMap(prev => ({
                 ...prev,
                 [cartItem.id]: initialFormData
             }));
+            setQuantity(initialFormData.quantity);
+            setDate(initialFormData.date);
+            setTime(initialFormData.time);
+            setOrganizerName(initialFormData.organizerName);
+            setEmailEnabled(initialFormData.emailEnabled);
+            setOrganizerEmail(initialFormData.organizerEmail);
+            setPhoneEnabled(initialFormData.phoneEnabled);
+            setOrganizerPhone(initialFormData.organizerPhone);
+            setOrganizerAttending(initialFormData.organizerAttending);
+            setAttendees(initialFormData.attendees);
+            setPurchaseTags(initialFormData.purchaseTags);
+            setPurchaseNote(initialFormData.purchaseNote);
             fetchAddOnsForTour(cartItem.id);
             return;
         }
@@ -232,7 +251,7 @@ const PurchasePage = () => {
         setAttendees(formData.attendees);
         setPurchaseTags(formData.purchaseTags);
         setPurchaseNote(formData.purchaseNote);
-        setSelectedAddOns(formData.selectedAddOns);
+        fetchAddOnsForTour(cartItem.id);
     };
     useEffect(() => {
         if (cart.length === 0) return;
@@ -256,7 +275,7 @@ const PurchasePage = () => {
                     ],
                     purchaseTags: "",
                     purchaseNote: "",
-                    selectedAddOns: selectedAddOns.length > 0 ? [...selectedAddOns] : [],
+                    selectedAddOns: [],
                 };
                 setFormDataMap(prev => ({
                     ...prev,
@@ -268,6 +287,10 @@ const PurchasePage = () => {
             const newItemIndex = cart.findIndex(item => !formDataMap[item.id]);
             if (newItemIndex >= 0) {
                 setSelectedCartItemIndex(newItemIndex);
+                const newItem = cart[newItemIndex];
+                if (newItem) {
+                    fetchAddOnsForTour(newItem.id);
+                }
             }
         } else if (selectedCartItemIndex >= cart.length && cart.length > 0) {
             setSelectedCartItemIndex(0);
@@ -275,13 +298,34 @@ const PurchasePage = () => {
     }, [cart]);
     useEffect(() => {
         if (cart.length > 0) {
-            saveCurrentFormData();
+            if (cart.length > 0 && selectedCartItemIndex < cart.length) {
+                const currentTourId = cart[selectedCartItemIndex].id;
+                setFormDataMap(prev => ({
+                    ...prev,
+                    [currentTourId]: {
+                        ...prev[currentTourId],
+                        quantity,
+                        date,
+                        time,
+                        organizerName,
+                        emailEnabled,
+                        organizerEmail,
+                        phoneEnabled,
+                        organizerPhone,
+                        organizerAttending,
+                        attendees,
+                        purchaseTags,
+                        purchaseNote,
+                    }
+                }));
+            }
         }
     }, [
         quantity, date, time, organizerName,
         emailEnabled, organizerEmail, phoneEnabled,
         organizerPhone, organizerAttending, attendees,
-        purchaseTags, purchaseNote, selectedAddOns
+        purchaseTags, purchaseNote,
+        selectedCartItemIndex
     ]);
 
     const addItem = () => {
@@ -506,7 +550,29 @@ const PurchasePage = () => {
     const totalWithDiscount = Math.max(finalTotalPrice - voucherDiscount, 0);
 
     const handleCreateReservationAndPay = async () => {
-        saveCurrentFormData();
+        if (selectedCartItemIndex >= 0 && selectedCartItemIndex < cart.length) {
+            const currentTourId = cart[selectedCartItemIndex].id;
+            setFormDataMap(prev => ({
+                ...prev,
+                [currentTourId]: {
+                    ...prev[currentTourId],
+                    quantity,
+                    date,
+                    time,
+                    organizerName,
+                    emailEnabled,
+                    organizerEmail,
+                    phoneEnabled,
+                    organizerPhone,
+                    organizerAttending,
+                    attendees,
+                    purchaseTags,
+                    purchaseNote,
+                    selectedAddOns,
+                }
+            }));
+        }
+        
         setSubmitting(true);
         const formattedAttendees = [];
         let reservationId: string | null = null;
@@ -777,12 +843,15 @@ const PurchasePage = () => {
             const currentTourId = cart.length > 0 && selectedCartItemIndex < cart.length
                 ? cart[selectedCartItemIndex].id
                 : typeof id === 'string' ? id : Array.isArray(id) ? id[0] : null;
-            if (currentTourId) {
+            const shouldFetchAddons = 
+                !formDataMap[currentTourId]?.selectedAddOns || 
+                formDataMap[currentTourId]?.selectedAddOns.length === 0;
+            if (currentTourId && shouldFetchAddons) {
                 await fetchAddOnsForTour(currentTourId);
             }
         };
         fetchInitialAddOns();
-    }, [id, cart, selectedCartItemIndex, fetchAddOnsForTour]);
+    }, [id, cart, selectedCartItemIndex, formDataMap]);
 
     if (loading) {
         return (
@@ -810,70 +879,101 @@ const PurchasePage = () => {
     const handleIncrement = (addonId) => {
         setSelectedAddOns((prev) => {
             const existingAddonIndex = prev.findIndex(addon => addon.addOnId === addonId);
+            let updatedAddons;
 
             if (existingAddonIndex >= 0) {
-                const updatedAddons = [...prev];
+                updatedAddons = [...prev];
                 updatedAddons[existingAddonIndex] = {
                     ...updatedAddons[existingAddonIndex],
                     quantity: (updatedAddons[existingAddonIndex].quantity || 0) + 1
                 };
-                return updatedAddons;
             } else {
-                return [...prev, {
+                updatedAddons = [...prev, {
                     addOnId: addonId,
                     quantity: 1,
                     checked: false
                 }];
             }
+            if (cart.length > 0 && selectedCartItemIndex < cart.length) {
+                const currentTourId = cart[selectedCartItemIndex].id;
+                setFormDataMap(prevMap => ({
+                    ...prevMap,
+                    [currentTourId]: {
+                        ...prevMap[currentTourId],
+                        selectedAddOns: updatedAddons
+                    }
+                }));
+            }
+            return updatedAddons;
         });
     };
 
     const handleDecrement = (addonId) => {
         setSelectedAddOns((prev) => {
             const existingAddonIndex = prev.findIndex(addon => addon.addOnId === addonId);
+            let updatedAddons = [...prev];
 
             if (existingAddonIndex >= 0) {
-                const updatedAddons = [...prev];
                 const newQuantity = Math.max((updatedAddons[existingAddonIndex].quantity || 0) - 1, 0);
 
                 if (newQuantity === 0) {
-                    return prev.filter(addon => addon.addOnId !== addonId);
+                    updatedAddons = prev.filter(addon => addon.addOnId !== addonId);
                 } else {
                     updatedAddons[existingAddonIndex] = {
                         ...updatedAddons[existingAddonIndex],
                         quantity: newQuantity
                     };
-                    return updatedAddons;
+                }
+                if (cart.length > 0 && selectedCartItemIndex < cart.length) {
+                    const currentTourId = cart[selectedCartItemIndex].id;
+                    setFormDataMap(prevMap => ({
+                        ...prevMap,
+                        [currentTourId]: {
+                            ...prevMap[currentTourId],
+                            selectedAddOns: updatedAddons
+                        }
+                    }));
                 }
             }
-            return prev;
+            return updatedAddons;
         });
     };
 
     const handleCheckboxChange = (addonId) => {
         setSelectedAddOns((prev) => {
             const existingAddonIndex = prev.findIndex(addon => addon.addOnId === addonId);
+            let updatedAddons;
 
             if (existingAddonIndex >= 0) {
-                const updatedAddons = [...prev];
-                const newChecked = !updatedAddons[existingAddonIndex].checked;
+                const newChecked = !prev[existingAddonIndex].checked;
 
                 if (!newChecked) {
-                    return prev.filter(addon => addon.addOnId !== addonId);
+                    updatedAddons = prev.filter(addon => addon.addOnId !== addonId);
                 } else {
+                    updatedAddons = [...prev];
                     updatedAddons[existingAddonIndex] = {
                         ...updatedAddons[existingAddonIndex],
                         checked: newChecked
                     };
-                    return updatedAddons;
                 }
             } else {
-                return [...prev, {
+                updatedAddons = [...prev, {
                     addOnId: addonId,
                     quantity: 0,
                     checked: true
                 }];
             }
+            if (cart.length > 0 && selectedCartItemIndex < cart.length) {
+                const currentTourId = cart[selectedCartItemIndex].id;
+                setFormDataMap(prevMap => ({
+                    ...prevMap,
+                    [currentTourId]: {
+                        ...prevMap[currentTourId],
+                        selectedAddOns: updatedAddons
+                    }
+                }));
+            }
+            return updatedAddons;
         });
     };
 
@@ -1357,6 +1457,7 @@ const PurchasePage = () => {
                             onSelectCartItem={loadFormData}
                             formDataMap={formDataMap}
                             addons={addons}
+                            addonsMap={addonsMap}
                         />
                     </Box>
                 </Flex>

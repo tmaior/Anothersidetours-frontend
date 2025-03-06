@@ -125,14 +125,23 @@ const PurchasePage = () => {
     const [appliedVoucherCode, setAppliedVoucherCode] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const {tenantId} = useGuest();
-    const {cart, setCart, addToCart, newCart, setNavigationSource, navigationSource, removeFromCart} = useCart();
+    const {
+        cart,
+        setCart,
+        addToCart,
+        newCart,
+        setNavigationSource,
+        navigationSource,
+        removeFromCart,
+        clearCart
+    } = useCart();
 
     const [items, setItems] = useState([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
 
     const fetchAddOnsForTour = async (tourId: string) => {
         try {
             if (!tourId) return;
-            
+
             setLoadingAddons(true);
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`);
             const data = await res.json();
@@ -528,10 +537,8 @@ const PurchasePage = () => {
             userId = userResult.id;
             const updateUserResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({statusCheckout: "COMPLETED"}),
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ statusCheckout: "COMPLETED" }),
             });
 
             if (!updateUserResponse.ok) {
@@ -561,28 +568,27 @@ const PurchasePage = () => {
                         purchaseTags: formData.purchaseTags,
                         purchaseNote: formData.purchaseNote,
                     },
-
-                addons: selectedAddOns.map(addonItem => {
-                    if (addonItem.checked) {
-                        return {
-                            addonId: addonItem.addOnId,
-                            value: "1",
-                        };
-                    } else if (addonItem.quantity > 0) {
-                        return {
-                            addonId: addonItem.addOnId,
-                            value: addonItem.quantity.toString(),
-                        };
-                    }
-                    return null;
-                }).filter(Boolean),
-                total_price: totalWithDiscount,
-                guestQuantity: quantity,
-                createdBy: "Back Office",
-                purchaseTags,
-                purchaseNote,
-            };
-        });
+                    addons: selectedAddOns.map(addonItem => {
+                        if (addonItem.checked) {
+                            return {
+                                addonId: addonItem.addOnId,
+                                value: "1",
+                            };
+                        } else if (addonItem.quantity > 0) {
+                            return {
+                                addonId: addonItem.addOnId,
+                                value: addonItem.quantity.toString(),
+                            };
+                        }
+                        return null;
+                    }).filter(Boolean),
+                    total_price: totalWithDiscount,
+                    guestQuantity: quantity,
+                    createdBy: "Back Office",
+                    purchaseTags,
+                    purchaseNote,
+                };
+            });
 
             const requestBody = {
                 cart: cartPayload,
@@ -600,85 +606,91 @@ const PurchasePage = () => {
                 throw new Error("Failed to create reservation.");
             }
 
-            const reservationResult = await reservationResponse.json();
-            reservationId = reservationResult.id;
+            const reservationResults = await reservationResponse.json();
 
-            if (customLineItems.length > 0) {
-                const customItemsPayload = customLineItems.map(item => ({
-                    tenantId: tenantId,
-                    tourId: id,
-                    label: item.name,
-                    description: item.type,
-                    amount: item.amount,
-                    quantity: item.quantity,
-                }));
+            for (const reservation of reservationResults) {
+                const reservationId = reservation.id;
 
-                const customItemsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/custom-items`, {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({items: customItemsPayload, reservationId}),
-                });
+                if (customLineItems.length > 0) {
+                    const customItemsPayload = customLineItems.map(item => ({
+                        tenantId: tenantId,
+                        tourId: id,
+                        label: item.name,
+                        description: item.type,
+                        amount: item.amount,
+                        quantity: item.quantity,
+                    }));
 
-                if (!customItemsResponse.ok) throw new Error("Failed to create custom items.");
-            }
-
-            if (!doNotCharge) {
-                const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({reservationId}),
-                });
-
-                if (!setupIntentRes.ok) {
-                    throw new Error("Failed to create SetupIntent.");
-                }
-
-                const {clientSecret} = await setupIntentRes.json();
-
-                const cardElement = elements.getElement(CardElement);
-                if (!cardElement) {
-                    throw new Error("CardElement is not available.");
-                }
-
-                const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
-                    payment_method: {
-                        card: cardElement,
-                        billing_details: {
-                            name: organizerName || "Guest Organizer",
-                            email: emailEnabled ? organizerEmail : "",
-                        },
-                    },
-                });
-
-                if (paymentMethodResponse.error) {
-                    throw new Error(paymentMethodResponse.error.message);
-                }
-
-                const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
-
-                const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({paymentMethodId, reservationId}),
-                });
-
-                if (!savePMRes.ok) {
-                    throw new Error("Failed to save PaymentMethod.");
-                }
-
-                if (voucherValid && appliedVoucherCode) {
-                    const redeemResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/redeem`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            code: appliedVoucherCode,
-                            reservationId: reservationResult.id,
-                        }),
+                    const customItemsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/custom-items`, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({ items: customItemsPayload, reservationId }),
                     });
 
-                    if (redeemResponse.ok) {
+                    if (!customItemsResponse.ok) {
+                        throw new Error("Failed to create custom items.");
+                    }
+                }
+
+                if (!doNotCharge) {
+                    const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ reservationId }),
+                    });
+
+                    if (!setupIntentRes.ok) {
+                        throw new Error("Failed to create SetupIntent.");
+                    }
+
+                    const { clientSecret } = await setupIntentRes.json();
+
+                    const cardElement = elements.getElement(CardElement);
+                    if (!cardElement) {
+                        throw new Error("CardElement is not available.");
+                    }
+
+                    const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
+                        payment_method: {
+                            card: cardElement,
+                            billing_details: {
+                                name: organizerName || "Guest Organizer",
+                                email: emailEnabled ? organizerEmail : "",
+                            },
+                        },
+                    });
+
+                    if (paymentMethodResponse.error) {
+                        throw new Error(paymentMethodResponse.error.message);
+                    }
+
+                    const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
+
+                    const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ paymentMethodId, reservationId }),
+                    });
+
+                    if (!savePMRes.ok) {
+                        throw new Error("Failed to save PaymentMethod.");
+                    }
+
+                    if (voucherValid && appliedVoucherCode) {
+                        const redeemResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/redeem`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                code: appliedVoucherCode,
+                                reservationId,
+                            }),
+                        });
+
+                        if (!redeemResponse.ok) {
+                            throw new Error('Failed to redeem voucher');
+                        }
                         toast({
                             title: 'Voucher Redeemed',
                             description: 'The voucher has been successfully redeemed.',
@@ -686,25 +698,22 @@ const PurchasePage = () => {
                             duration: 4000,
                             isClosable: true,
                         });
-                        setAppliedVoucherCode("")
-                    } else {
-                        throw new Error('Failed to redeem voucher');
+                        setAppliedVoucherCode("");
                     }
                 }
-
-                toast({
-                    title: "Reservation Complete!",
-                    description: "Your reservation and payment were successful.",
-                    status: "success",
-                    duration: 5000,
-                    isClosable: true,
-                });
-                setTimeout(() => {
-                    router.push("/dashboard/purchases");
-                }, 1000);
-            } else {
-                alert("Reservation created without immediate charge (Do Not Charge).");
             }
+
+            toast({
+                title: "Reservation Complete!",
+                description: "Your reservation and payment were successful.",
+                status: "success",
+                duration: 5000,
+                isClosable: true,
+            });
+            clearCart();
+            setTimeout(() => {
+                router.push("/dashboard/purchases");
+            }, 1000);
         } catch (error) {
             console.error("Error creating reservation/payment:", error);
             if (error instanceof Error) {
@@ -768,7 +777,7 @@ const PurchasePage = () => {
         const fetchInitialAddOns = async () => {
             const currentTourId = cart.length > 0 && selectedCartItemIndex < cart.length
                 ? cart[selectedCartItemIndex].id
-                : id;
+                : typeof id === 'string' ? id : Array.isArray(id) ? id[0] : null;
             if (currentTourId) {
                 await fetchAddOnsForTour(currentTourId);
             }

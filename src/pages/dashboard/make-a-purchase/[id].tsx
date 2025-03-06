@@ -320,13 +320,12 @@ const PurchasePage = () => {
     };
 
     const handleNavigateToProducts = () => {
-        saveCurrentFormData();
-        setNavigationSource('make-a-purchase');
         if (typeof window !== 'undefined') {
             localStorage.setItem('navigationSource', 'make-a-purchase');
             window.location.href = '/dashboard/choose-a-product?source=make-a-purchase';
         }
         router.push("/dashboard/choose-a-product");
+        setNavigationSource('make-a-purchase');
     };
 
     useEffect(() => {
@@ -538,7 +537,7 @@ const PurchasePage = () => {
             const updateUserResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ statusCheckout: "COMPLETED" }),
+                body: JSON.stringify({statusCheckout: "COMPLETED"}),
             });
 
             if (!updateUserResponse.ok) {
@@ -624,7 +623,7 @@ const PurchasePage = () => {
                     const customItemsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/custom-items`, {
                         method: "POST",
                         headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify({ items: customItemsPayload, reservationId }),
+                        body: JSON.stringify({items: customItemsPayload, reservationId}),
                     });
 
                     if (!customItemsResponse.ok) {
@@ -636,14 +635,14 @@ const PurchasePage = () => {
                     const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ reservationId }),
+                        body: JSON.stringify({reservationId}),
                     });
 
                     if (!setupIntentRes.ok) {
                         throw new Error("Failed to create SetupIntent.");
                     }
 
-                    const { clientSecret } = await setupIntentRes.json();
+                    const {clientSecret} = await setupIntentRes.json();
 
                     const cardElement = elements.getElement(CardElement);
                     if (!cardElement) {
@@ -669,7 +668,7 @@ const PurchasePage = () => {
                     const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ paymentMethodId, reservationId }),
+                        body: JSON.stringify({paymentMethodId, reservationId}),
                     });
 
                     if (!savePMRes.ok) {

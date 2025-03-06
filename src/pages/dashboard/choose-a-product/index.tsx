@@ -25,16 +25,14 @@ function ToursPage() {
     const [tours, setTours] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const {addToCart, setNavigationSource, navigationSource, clearCart} = useCart();
+    const {addToCart, setNavigationSource, resetCart} = useCart();
     const router = useRouter();
 
     const handleNavigateToProduct = (tour) => {
-        if (!navigationSource || navigationSource !== 'make-a-purchase') {
-            clearCart();
-        }
+        resetCart();
         addToCart(tour);
-        setNavigationSource('choose-a-product');
         router.push(`/dashboard/make-a-purchase/${tour.id}`);
+        setNavigationSource('choose-a-product');
     };
 
     useEffect(() => {

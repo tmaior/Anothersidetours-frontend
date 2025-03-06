@@ -49,6 +49,17 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     const [isLoading, setIsLoading] = useState(true);
     const [noTenants, setNoTenants] = useState(false);
     const toast = useToast();
+    const [key, setKey] = useState(router.asPath);
+
+    useEffect(() => {
+        const handleRouteChange = (url) => {
+            setKey(url);
+        };
+        router.events.on('routeChangeComplete', handleRouteChange);
+        return () => {
+            router.events.off('routeChangeComplete', handleRouteChange);
+        };
+    }, [router]);
 
     useEffect(() => {
 
@@ -167,7 +178,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     <VStack spacing={4} align="stretch" marginTop={"-50px"}>
                         <Box
                             as="button"
-                            onClick={() => router.push("/dashboard/reservation")}
+                            onClick={() => window.location.href = "/dashboard/reservation"}
                             display="flex"
                             justifyContent="center"
                             alignItems="center"
@@ -199,7 +210,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/reservation")}
+                            onClick={() => window.location.href = "/dashboard/reservation"}
                         >
                             <Button
                                 marginTop={"-130px"}
@@ -228,7 +239,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/purchases")}
+                            onClick={() => window.location.href = "/dashboard/purchases"}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -257,7 +268,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/under-construction")}
+                            onClick={() => window.location.href = "/dashboard/Customer"}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -286,7 +297,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/list-tours")}
+                            onClick={() => window.location.href = "/dashboard/list-tours"}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -315,7 +326,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/under-construction")}
+                            onClick={() => window.location.href = "/dashboard/Resources"}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -344,7 +355,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/under-construction")}
+                            onClick={() => window.location.href = "/dashboard/Reports"}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -373,7 +384,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/under-construction")}
+                            onClick={() => window.location.href = "/dashboard/Marketing"}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -402,7 +413,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/under-construction")}
+                            onClick={() => window.location.href = "/dashboard/Distribution"}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -431,7 +442,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/under-construction")}
+                            onClick={() => window.location.href = "/dashboard/App Store"}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -460,7 +471,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/under-construction")}
+                            onClick={() => window.location.href = "/dashboard/Settings"}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -489,7 +500,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/guides")}
+                            onClick={() => window.location.href = "/dashboard/guides"}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -518,7 +529,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/list-addons")}
+                            onClick={() => window.location.href = "/dashboard/list-addons"}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -547,7 +558,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/categories")}
+                            onClick={() => window.location.href = "/dashboard/categories"}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -576,7 +587,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => router.push("/dashboard/blackouts")}
+                            onClick={() => window.location.href = "/dashboard/blackouts"}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -723,7 +734,9 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     {isLoading ? (
                         <Text color="white">Loading...</Text>
                     ) : (
-                        children
+                        <div key={key}>
+                            {children}
+                        </div>
                     )}
                 </Box>
 

@@ -117,6 +117,7 @@ const GroupCard: React.FC<GroupCardProps> = ({
             overflow="hidden"
             boxShadow="sm"
             bg="white"
+            w={"100%"}
         >
             <HStack
                 p={3}
@@ -337,7 +338,7 @@ const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) =>
             marginTop={"-100px"}
             marginLeft={"-40px"}
             ref={containerRef}
-            spacing={4}
+            spacing={0}
             width="30%"
             borderRight="1px solid #E2E8F0"
             height="calc(100vh - 100px)"

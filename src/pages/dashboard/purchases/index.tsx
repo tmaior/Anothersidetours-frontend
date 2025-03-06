@@ -58,6 +58,15 @@ type GuestItemProps = {
     isSelected?: boolean;
 };
 
+type GroupCardProps = {
+    groupId: string;
+    items: any[];
+    isExpanded: boolean;
+    onToggle: () => void;
+    onSelectReservation: (reservation: any) => void;
+    selectedReservation: any;
+    formatDate: (dateString: string) => string;
+};
 const GuestItem: React.FC<GuestItemProps> = ({name, date, guests, avatarUrl, onClick, isSelected}) => (
     <HStack
         p={3}
@@ -84,6 +93,85 @@ const GuestItem: React.FC<GuestItemProps> = ({name, date, guests, avatarUrl, onC
         <Text fontSize="xs" color="gray.500">{date}</Text>
     </HStack>
 );
+const GroupCard: React.FC<GroupCardProps> = ({
+    groupId,
+    items,
+    isExpanded,
+    onToggle,
+    onSelectReservation,
+    selectedReservation,
+    formatDate
+}) => {
+    const totalGuests = items.reduce((sum, item) => sum + (item.guestQuantity || 0), 0);
+    const earliestDate = items.reduce((earliest, item) => {
+        const currentDate = new Date(item.reservation_date);
+        return earliest && earliest < currentDate ? earliest : currentDate;
+    }, null);
+    const groupImage = items[0]?.tour?.imageUrl || 'https://via.placeholder.com/50';
+    
+    return (
+        <Box 
+            borderWidth="1px" 
+            borderRadius="md" 
+            mb={2} 
+            overflow="hidden"
+            boxShadow="sm"
+            bg="white"
+        >
+            <HStack
+                p={3}
+                justifyContent="space-between"
+                width="100%"
+                onClick={onToggle}
+                cursor="pointer"
+                bg={isExpanded ? 'blue.50' : 'white'}
+                _hover={{ bg: 'blue.50' }}
+            >
+                <HStack>
+                    <Image
+                        boxSize="50px"
+                        src={groupImage}
+                        alt="Group tours"
+                        borderRadius="md"
+                    />
+                    <VStack align="start" spacing={0}>
+                        <Text fontWeight="bold" fontSize="sm">Group Booking ({items.length} tours)</Text>
+                        <Text fontSize="sm">⦿ {totalGuests} Total Guests</Text>
+                    </VStack>
+                </HStack>
+                <Box>
+                    <Text fontSize="xs" color="gray.500">
+                        {earliestDate ? formatDate(earliestDate.toISOString()) : 'N/A'}
+                    </Text>
+                </Box>
+            </HStack>
+            
+            {isExpanded && (
+                <VStack 
+                    p={3} 
+                    pt={0} 
+                    spacing={2} 
+                    align="stretch" 
+                    bg="gray.50"
+                    borderTop="1px dashed"
+                    borderColor="gray.200"
+                >
+                    {items.map((item) => (
+                        <GuestItem
+                            key={item.id}
+                            name={item.tour?.name || 'Unknown Tour'}
+                            avatarUrl={item.tour?.imageUrl || 'https://via.placeholder.com/50'}
+                            guests={item.guestQuantity || 'N/A'}
+                            date={formatDate(item.reservation_date)}
+                            isSelected={selectedReservation?.id === item.id}
+                            onClick={() => onSelectReservation(item)}
+                        />
+                    ))}
+                </VStack>
+            )}
+        </Box>
+    );
+};
 
 const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) => {
     const [reservations, setReservations] = useState([]);
@@ -93,6 +181,7 @@ const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) =>
     const containerRef = useRef<HTMLDivElement>(null);
     const PAGE_LIMIT = 10;
     const {tenantId} = useGuest();
+    const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchReservations = async () => {
@@ -198,6 +287,28 @@ const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) =>
             container?.removeEventListener("scroll", handleScroll);
         };
     }, [displayedReservations, hasMore, isLoading, handleScroll]);
+    const groupReservations = (reservations) => {
+        const grouped: { [groupId: string]: any[] } = {};
+        const ungrouped = [];
+        
+        reservations.forEach(reservation => {
+            if (reservation.groupId) {
+                if (!grouped[reservation.groupId]) {
+                    grouped[reservation.groupId] = [];
+                }
+                grouped[reservation.groupId].push(reservation);
+            } else {
+                ungrouped.push(reservation);
+            }
+        });
+        
+        return { grouped, ungrouped };
+    };
+
+    const toggleGroupExpansion = (groupId) => {
+        setExpandedGroupId(prev => prev === groupId ? null : groupId);
+    };
+    const { grouped, ungrouped } = groupReservations(filteredDisplayedReservations);
 
     return (
         <VStack
@@ -236,7 +347,19 @@ const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) =>
                 }
             }}
         >
-            {filteredDisplayedReservations.map((purchase) => (
+            {Object.entries(grouped).map(([groupId, items]) => (
+                <GroupCard
+                    key={groupId}
+                    groupId={groupId}
+                    items={items}
+                    isExpanded={expandedGroupId === groupId}
+                    onToggle={() => toggleGroupExpansion(groupId)}
+                    onSelectReservation={onSelectReservation}
+                    selectedReservation={selectedReservation}
+                    formatDate={formatDate}
+                />
+            ))}
+            {ungrouped.map((purchase) => (
                 <GuestItem
                     key={purchase.id}
                     name={purchase.user?.name || 'Unknown'}

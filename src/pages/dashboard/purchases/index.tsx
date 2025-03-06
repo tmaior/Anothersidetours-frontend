@@ -128,14 +128,36 @@ const GroupCard: React.FC<GroupCardProps> = ({
                 _hover={{ bg: 'blue.50' }}
             >
                 <HStack>
-                    <Image
-                        boxSize="50px"
-                        src={groupImage}
-                        alt="Group tours"
-                        borderRadius="md"
-                    />
+                    <Box position="relative">
+                        <Image
+                            boxSize="50px"
+                            src={groupImage}
+                            alt="Group tours"
+                            borderRadius="md"
+                        />
+                        <Box
+                            position="absolute"
+                            top="-8px"
+                            right="-8px"
+                            bg="blue.500"
+                            color="white"
+                            borderRadius="full"
+                            width="22px"
+                            height="22px"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            fontSize="xs"
+                            fontWeight="bold"
+                            boxShadow="0 2px 4px rgba(0,0,0,0.2)"
+                            border="2px solid white"
+                            zIndex="1"
+                        >
+                            {items.length}
+                        </Box>
+                    </Box>
                     <VStack align="start" spacing={0}>
-                        <Text fontWeight="bold" fontSize="sm">Group Booking ({items.length} tours)</Text>
+                        <Text fontWeight="bold" fontSize="sm">Group Booking</Text>
                         <Text fontSize="sm">⦿ {totalGuests} Total Guests</Text>
                     </VStack>
                 </HStack>
@@ -786,6 +808,31 @@ const PaymentSummary = ({reservation}) => {
     const [reservationAddons, setReservationAddons] = useState([]);
     const [allAddons, setAllAddons] = useState([]);
     const [isLoadingAddons, setIsLoadingAddons] = useState(true);
+    const isGroupBooking = reservation?.groupId;
+    const [groupReservations, setGroupReservations] = useState([]);
+    const [isLoadingGroup, setIsLoadingGroup] = useState(false);
+
+    useEffect(() => {
+        const fetchGroupReservations = async () => {
+            if (!isGroupBooking) return;
+            
+            setIsLoadingGroup(true);
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/byGroupId/${reservation.groupId}`
+                );
+                setGroupReservations(response.data);
+            } catch (error) {
+                console.error('Error fetching group reservations:', error);
+            } finally {
+                setIsLoadingGroup(false);
+            }
+        };
+
+        if (isGroupBooking) {
+            fetchGroupReservations();
+        }
+    }, [isGroupBooking, reservation?.groupId]);
 
     useEffect(() => {
         const fetchAddons = async () => {
@@ -826,8 +873,8 @@ const PaymentSummary = ({reservation}) => {
         (sum, addon) => sum + (addon.price * addon.quantity || 0),
         0
     );
-
-    const finalTotalPrice = ((reservation?.total_price || 0) + addonsTotalPrice).toFixed(2);
+    const tourPrice = (reservation?.valuePerGuest || reservation?.tour?.price || 0) * (reservation?.guestQuantity || 0);
+    const finalTotalPrice = (tourPrice + addonsTotalPrice).toFixed(2);
 
     useEffect(() => {
         const fetchCardDetails = async () => {

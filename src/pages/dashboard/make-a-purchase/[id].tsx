@@ -1435,7 +1435,7 @@ const PurchasePage = () => {
                         </HStack>
                     </Box>
 
-                    <Box w={{base: "100%", md: "400px"}} bg="white" p={6} borderRadius="md" boxShadow="sm">
+                    <Box w={{base: "100%", md: "400px"}} bg="white" p={6} borderRadius="md">
                         <Heading size="md" mb={4}>Purchase Summary</Heading>
                         <PurchaseSummary
                             cart={cart}

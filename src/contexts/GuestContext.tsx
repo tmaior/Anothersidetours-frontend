@@ -80,7 +80,7 @@ export const useGuest = (): GuestContextType => {
 }
 
 export function GuestProvider({children}: { children: ReactNode }) {
-    const [guestQuantity, setGuestQuantity] = useState(2);
+    const [guestQuantity, setGuestQuantity] = useState<number>(0);
     const [name, setName] = useState("");
     const [title, setTitle] = useState("");
     const [email, setEmail] = useState("");
@@ -108,7 +108,7 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
 
     const resetGuestQuantity = () => {
-        setGuestQuantity(2);
+        setGuestQuantity(0);
         setName("");
         setEmail("");
         setTitle("");

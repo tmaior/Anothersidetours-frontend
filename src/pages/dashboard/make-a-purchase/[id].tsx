@@ -633,16 +633,18 @@ const PurchasePage = () => {
                         purchaseTags: formData.purchaseTags,
                         purchaseNote: formData.purchaseNote,
                     },
-                    addons: selectedAddOns.map(addonItem => {
+                    addons: formData.selectedAddOns.map(addonItem => {
                         if (addonItem.checked) {
                             return {
                                 addonId: addonItem.addOnId,
                                 value: "1",
+                                quantity: 1
                             };
                         } else if (addonItem.quantity > 0) {
                             return {
                                 addonId: addonItem.addOnId,
                                 value: addonItem.quantity.toString(),
+                                quantity: addonItem.quantity
                             };
                         }
                         return null;

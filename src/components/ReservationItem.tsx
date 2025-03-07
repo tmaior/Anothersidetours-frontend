@@ -15,33 +15,17 @@ const ReservationItem = ({
                              availableSummary,
                              reservedSummary,
                              reservations,
-                             reservationId,
                              onNoteClick,
                              onSelectReservation,
                              isCompactView,
                          }) => {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [selectedGuideIds, setSelectedGuideIds] = useState<string[]>([]);
+    const [activeReservationItem, setActiveReservationItem] = useState(null);
     const {guidesList, loadingGuides} = useGuides();
-    const [selectedGuideNames, setSelectedGuideNames] = useState<string>("");
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {assignGuides, isAssigning,} = useGuideAssignment();
     const toast = useToast();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {reservationGuides, setReservationGuides} = useGuidesStore();
-
-    useEffect(() => {
-        if (reservationGuides[reservationId]) {
-            const guides = reservationGuides[reservationId];
-            const guideNames = guides.map((guide) => guide.name).join(", ");
-            setSelectedGuideNames(guideNames);
-            setSelectedGuideIds(guides.map((guide) => guide.id));
-        } else {
-            setSelectedGuideNames("No guides assigned");
-            setSelectedGuideIds([]);
-        }
-    }, [reservationGuides, reservationId]);
 
     const handleNoteClick = async (item) => {
         try {
@@ -60,42 +44,44 @@ const ReservationItem = ({
         }
     };
 
-    const fetchGuidesForReservation = useCallback(async () => {
-        if (reservationId) {
+    const fetchGuidesForItem = useCallback(async (itemId) => {
+        if (itemId) {
             try {
                 const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservationId}/guides`
+                    `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${itemId}/guides`
                 );
                 if (response.ok) {
                     const data = await response.json();
                     const validGuides = data.filter((item) => item.guide?.name);
-                    const guideNames = validGuides.map((item) => item.guide.name).join(", ");
-                    setSelectedGuideNames(guideNames || "No guides assigned");
-                    setSelectedGuideIds(validGuides.map((item) => item.guideId));
+                    
+                    const formattedGuides = validGuides.map(item => ({
+                        id: item.guideId,
+                        name: item.guide.name,
+                        expertise: ""
+                    }));
+                    
+                    setReservationGuides(itemId, formattedGuides);
                 } else {
                     throw new Error("Failed to fetch guides");
                 }
             } catch (error) {
-                console.error("Error fetching guides:", error);
-                toast({
-                    title: "Error",
-                    description: "Failed to fetch guides for the reservation.",
-                    status: "error",
-                    duration: 3000,
-                    isClosable: true,
-                });
+                console.error("Error fetching guides for item:", error);
             }
         }
-    }, [reservationId, toast]);
+    }, [setReservationGuides]);
 
     useEffect(() => {
-        fetchGuidesForReservation();
-    }, [fetchGuidesForReservation, reservationId]);
+        if (reservations && reservations.length > 0) {
+            reservations.forEach(item => {
+                fetchGuidesForItem(item.id);
+            });
+        }
+    }, [reservations, fetchGuidesForItem]);
 
     const handleGuideSelection = async (selectedGuides: { id: string; name: string }[]) => {
+        if (!activeReservationItem) return;
+        const itemId = activeReservationItem.id;
         const guideIds = selectedGuides.map((guide) => guide.id);
-        setSelectedGuideIds(guideIds);
-        setSelectedGuideNames(selectedGuides.map((guide) => guide.name).join(", "));
 
         const formattedGuides = selectedGuides.map((guide) => ({
             ...guide,
@@ -103,41 +89,46 @@ const ReservationItem = ({
             photoUrl: "",
         }));
 
-        setReservationGuides(reservationId, formattedGuides);
+        setReservationGuides(itemId, formattedGuides);
 
-        if (reservationId) {
-            try {
-                await assignGuides(reservationId, guideIds);
-                toast({
-                    title: guideIds.length > 0 ? "Guides Assigned" : "Guides Removed",
-                    description: guideIds.length > 0
-                        ? "Guides successfully assigned to reservation"
-                        : "All guides removed from reservation",
-                    status: "success",
-                    duration: 3000,
-                    isClosable: true,
-                });
-                await fetchGuidesForReservation();
-            } catch {
-                toast({
-                    title: "Error",
-                    description: "Failed to update guides",
-                    status: "error",
-                    duration: 3000,
-                    isClosable: true,
-                });
-            }
+        try {
+            await assignGuides(itemId, guideIds);
+            toast({
+                title: guideIds.length > 0 ? "Guides Assigned" : "Guides Removed",
+                description: guideIds.length > 0
+                    ? "Guides successfully assigned to reservation"
+                    : "All guides removed from reservation",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+            await fetchGuidesForItem(itemId);
+        } catch {
+            toast({
+                title: "Error",
+                description: "Failed to update guides",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
         }
     };
 
-    const displayGuideText = () => {
+    const displayGuideText = (item) => {
         if (loadingGuides) return "Loading guides...";
-        if (guidesList.length === 0) return "No Guide available";
-        return selectedGuideNames || "No Guide selected";
+        if (guidesList.length === 0) return "No guide available";
+        
+        if (reservationGuides[item.id]) {
+            const guides = reservationGuides[item.id];
+            return guides.length > 0 ? guides.map(guide => guide.name).join(", ") : "No guides assigned";
+        }
+        
+        return "No guides assigned";
     };
 
-    const handleOpenGuideModal = (e) => {
+    const handleOpenGuideModal = (e, item) => {
         e.stopPropagation();
+        setActiveReservationItem(item);
         setGuideModalOpen(true);
     };
 
@@ -219,18 +210,13 @@ const ReservationItem = ({
                                         fontSize="xs"
                                         color="green.600"
                                         textAlign="center"
-                                        onClick={handleOpenGuideModal}
+                                        onClick={(e) => handleOpenGuideModal(e, item)}
                                         cursor="pointer"
                                         _hover={{color: "blue.500"}}
                                     >
-                                        {displayGuideText()}
+                                        {displayGuideText(item)}
                                     </Text>
                                 </Flex>
-                                <ManageGuidesModal
-                                    isOpen={isGuideModalOpen}
-                                    onClose={() => setGuideModalOpen(false)}
-                                    onSelectGuide={handleGuideSelection} reservationId={reservationId}
-                                />
                                 <Flex align="center" justify="center">
                                     {item.hasNotes ? (
                                         <IconButton
@@ -250,18 +236,19 @@ const ReservationItem = ({
                                 </Flex>
                             </Flex>
                             <DashBoardMenu reservation={item}/>
-                            {/*<Button*/}
-                            {/*    variant="outline"*/}
-                            {/*    colorScheme="green"*/}
-                            {/*    size="xs"*/}
-                            {/*    onClick={(e) => e.stopPropagation()}*/}
-                            {/*>*/}
-                            {/*    +*/}
-                            {/*</Button>*/}
                         </HStack>
                     )}
                 </Flex>
             ))}
+            
+            {activeReservationItem && (
+                <ManageGuidesModal
+                    isOpen={isGuideModalOpen}
+                    onClose={() => setGuideModalOpen(false)}
+                    onSelectGuide={handleGuideSelection}
+                    reservationId={activeReservationItem.id}
+                />
+            )}
         </VStack>
     );
 };

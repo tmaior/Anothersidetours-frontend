@@ -1285,6 +1285,7 @@ const PurchasesPage = () => {
                             padding="20px"
                             maxWidth="500px"
                             mx="auto"
+                            marginLeft={showDetailedSummary ? "800px" : "500px"}
                         >
                             {showDetailedSummary ? (
                                 <PurchaseSummaryDetailed 

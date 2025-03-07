@@ -13,7 +13,7 @@ interface BookingDetailsProps {
     description: string;
     originalPrice: string;
     addons: Array<{ id: string; label: string; type: string; description: string; price: number }>;
-    minGuests:number;
+    minGuests?:number;
     name?: string;
     email?: string;
     phone?: string;

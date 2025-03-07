@@ -191,7 +191,7 @@ const GroupCard: React.FC<GroupCardProps> = ({
                         </Box>
                     </Box>
                     <VStack align="start" spacing={0}>
-                        <Text fontWeight="bold" fontSize="sm">Group Booking</Text>
+                        <Text fontWeight="bold" fontSize="sm">{selectedReservation.user.name}</Text>
                         <Text fontSize="sm">⦿ {totalGuests} Total Guests</Text>
                     </VStack>
                 </HStack>

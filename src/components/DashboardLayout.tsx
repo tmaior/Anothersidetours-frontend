@@ -387,6 +387,35 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             pl={4}
                             onClick={() => window.location.href = "/dashboard/under-construction"}
                         >
+                            <HStack spacing={3}>
+                                <IoMdAppstore name="Distribution"/>
+                                <Text>App Store</Text>
+                            </HStack>
+                        </Button>
+                    </Text>
+                    <Text
+                        fontSize="md"
+                        color="gray.400"
+                        pl={4}
+                        onClick={() => router.push("/dashboard/settings")}
+                    >
+                        <Button
+                            marginLeft={"-5"}
+                            marginTop={"-130px"}
+                            justifyContent="flex-start"
+                            color="white"
+                            variant="ghost"
+                            w="230px"
+                            background={router.pathname === "/dashboard/Settings" ? "blue.500" : "transparent"}
+                            _hover={{
+                                background: "rgba(255, 255, 255, 0.1)",
+                                transition: "background 0.2s ease-in-out",
+                            }}
+                            _active={{
+                                background: "blue.500",
+                                color: "white",
+                            }}
+                          
                             <Button
                                 marginLeft={"-5"}
                                 marginTop={"-130px"}

@@ -113,9 +113,9 @@ export default function MyProfileForm() {
       newErrors.email = { isError: true, message: 'Invalid email address' }
     }
 
-    if (!formData.phone) {
-      newErrors.phone = { isError: true, message: 'This field is required' }
-    }
+    // if (!formData.phone) {
+    //   newErrors.phone = { isError: true, message: 'This field is required' }
+    // }
 
     setErrors(newErrors)
 
@@ -312,7 +312,7 @@ export default function MyProfileForm() {
             )}
           </FormControl>
 
-          <FormControl isRequired>
+          <FormControl>
             <FormLabel>Phone</FormLabel>
             <Input
               value={formData.phone}
@@ -444,7 +444,7 @@ export default function MyProfileForm() {
             Multi Factor Authentication
           </Text>
 
-          <FormControl isRequired>
+          <FormControl>
             <FormLabel>Mobile phone</FormLabel>
             <Input
               value={formData.mfaPhone}

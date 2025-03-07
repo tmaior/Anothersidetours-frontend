@@ -14,6 +14,7 @@ import {
     ModalHeader,
     ModalOverlay,
     Select,
+    useToast,
     VStack,
 } from "@chakra-ui/react";
 import axios from "axios";
@@ -29,6 +30,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
     const [isDatePickerOpen, setDatePickerOpen] = useState(false);
     const [isTimeslotModalOpen, setTimeslotModalOpen] = useState(false);
     const [availableTimes, setAvailableTimes] = useState([]);
+    const toast = useToast();
 
     const fetchSchedules = useCallback(async () => {
         if (!booking.id) return;
@@ -71,7 +73,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
         if (isOpen) {
             fetchSchedules();
         }
-    }, [fetchSchedules,isOpen, selectedDate]);
+    }, [fetchSchedules, isOpen, selectedDate]);
 
     const handleAddTimeslot = (timeslot) => {
         console.log("New timeslot created:", timeslot);
@@ -128,14 +130,22 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
     }
 
     const handleSaveChanges = async () => {
-        if (!selectedDate || !selectedTime) {
-            console.error("Date or time is not selected.");
-            return;
-        }
-
         try {
+            const dateToUse = selectedDate || parseToYYYYMMDD(booking.reservation_date);
+            const timeToUse = selectedTime || booking.time;
+            const dateHasChanged = selectedDate && selectedDate !== parseToYYYYMMDD(booking.reservation_date);
+            const timeHasChanged = selectedTime && selectedTime !== booking.time;
+            if (!dateHasChanged && !timeHasChanged) {
+                toast({
+                    title: "No changes were made to the date or time.",
+                    status: "info",
+                    duration: 3000,
+                    isClosable: true,
+                });
+                return;
+            }
 
-            const combinedDateTime = combineDateAndTime(selectedDate, selectedTime);
+            const combinedDateTime = combineDateAndTime(dateToUse, timeToUse);
 
             console.log("Data+Hora final:", combinedDateTime);
 
@@ -148,8 +158,21 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                 updates
             );
             console.log("Update successful:", response.data);
+            toast({
+                title: "Arrival date and time updated successfully!",
+                status: "info",
+                duration: 3000,
+                isClosable: true,
+            });
+            window.location.reload();
         } catch (error) {
-            console.error("Error combining date and time:", error);
+            console.error("Error updating reservation:", error);
+            toast({
+                title: "Failed to update arrival date and time. Please try again.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
         } finally {
             onClose();
         }

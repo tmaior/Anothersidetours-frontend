@@ -48,6 +48,7 @@ import CancelConfirmationModal from "../../../components/CancelConfirmationModal
 import PurchaseNotes from "../../../components/PurchaseNotes";
 import useWindowWidth from "../../../hooks/useWindowWidth";
 import withAuth from "../../../utils/withAuth";
+import PurchaseSummaryDetailed from "../../../components/PurchaseSummaryDetailed";
 
 type GuestItemProps = {
     name: string;
@@ -56,6 +57,7 @@ type GuestItemProps = {
     avatarUrl: string;
     onClick?: () => void;
     isSelected?: boolean;
+    toggleDetailedSummary?: () => void;
 };
 
 type GroupCardProps = {
@@ -66,33 +68,50 @@ type GroupCardProps = {
     onSelectReservation: (reservation: any) => void;
     selectedReservation: any;
     formatDate: (dateString: string) => string;
+    toggleDetailedSummary?: () => void;
 };
-const GuestItem: React.FC<GuestItemProps> = ({name, date, guests, avatarUrl, onClick, isSelected}) => (
-    <HStack
-        p={3}
-        borderRadius="md"
-        bg={isSelected ? 'blue.100' : 'white'}
-        _hover={{bg: 'blue.50', cursor: 'pointer'}}
-        justifyContent="space-between"
-        width="100%"
-        onClick={onClick}
-    >
-        <HStack>
-            <Image
-                boxSize="50px"
-                src={avatarUrl || "https://via.placeholder.com/50"}
-                title={name}
-                alt={name ? `Avatar of ${name}` : "Default avatar"}
-                borderRadius="md"
-            />
-            <VStack align="start" spacing={0}>
-                <Text fontWeight="bold" fontSize={"sm"}>{name}</Text>
-                <Text fontSize="sm">⦿ {guests} Guests</Text>
-            </VStack>
+const GuestItem: React.FC<GuestItemProps> = ({
+    name, 
+    date, 
+    guests, 
+    avatarUrl, 
+    onClick, 
+    isSelected,
+    toggleDetailedSummary
+}) => {
+    const handleClick = () => {
+        if (onClick) {
+            onClick();
+        }
+    };
+
+    return (
+        <HStack
+            p={3}
+            borderRadius="md"
+            bg={isSelected ? 'blue.100' : 'white'}
+            _hover={{bg: 'blue.50', cursor: 'pointer'}}
+            justifyContent="space-between"
+            width="100%"
+            onClick={handleClick}
+        >
+            <HStack>
+                <Image
+                    boxSize="50px"
+                    src={avatarUrl || "https://via.placeholder.com/50"}
+                    title={name}
+                    alt={name ? `Avatar of ${name}` : "Default avatar"}
+                    borderRadius="md"
+                />
+                <VStack align="start" spacing={0}>
+                    <Text fontWeight="bold" fontSize={"sm"}>{name}</Text>
+                    <Text fontSize="sm">⦿ {guests} Guests</Text>
+                </VStack>
+            </HStack>
+            <Text fontSize="xs" color="gray.500">{date}</Text>
         </HStack>
-        <Text fontSize="xs" color="gray.500">{date}</Text>
-    </HStack>
-);
+    );
+};
 const GroupCard: React.FC<GroupCardProps> = ({
     groupId,
     items,
@@ -100,7 +119,8 @@ const GroupCard: React.FC<GroupCardProps> = ({
     onToggle,
     onSelectReservation,
     selectedReservation,
-    formatDate
+    formatDate,
+    toggleDetailedSummary
 }) => {
     const totalGuests = items.reduce((sum, item) => sum + (item.guestQuantity || 0), 0);
     const earliestDate = items.reduce((earliest, item) => {
@@ -109,6 +129,19 @@ const GroupCard: React.FC<GroupCardProps> = ({
     }, null);
     const groupImage = items[0]?.tour?.imageUrl || 'https://via.placeholder.com/50';
     
+    const handleGroupClick = () => {
+        onToggle();
+
+        if (toggleDetailedSummary && items.length > 0) {
+            const groupReservation = {
+                ...items[0],
+                isGroupBooking: true,
+                groupItems: items
+            };
+            onSelectReservation(groupReservation);
+            toggleDetailedSummary();
+        }
+    };
     return (
         <Box 
             borderWidth="1px" 
@@ -123,7 +156,7 @@ const GroupCard: React.FC<GroupCardProps> = ({
                 p={3}
                 justifyContent="space-between"
                 width="100%"
-                onClick={onToggle}
+                onClick={handleGroupClick}
                 cursor="pointer"
                 bg={isExpanded ? 'blue.50' : 'white'}
                 _hover={{ bg: 'blue.50' }}
@@ -188,6 +221,7 @@ const GroupCard: React.FC<GroupCardProps> = ({
                             date={formatDate(item.reservation_date)}
                             isSelected={selectedReservation?.id === item.id}
                             onClick={() => onSelectReservation(item)}
+                            toggleDetailedSummary={toggleDetailedSummary}
                         />
                     ))}
                 </VStack>
@@ -196,7 +230,12 @@ const GroupCard: React.FC<GroupCardProps> = ({
     );
 };
 
-const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) => {
+const PurchaseList = ({
+    onSelectReservation, 
+    selectedReservation, 
+    searchTerm, 
+    toggleDetailedSummary = () => {}
+}) => {
     const [reservations, setReservations] = useState([]);
     const [displayedReservations, setDisplayedReservations] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -380,6 +419,7 @@ const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) =>
                     onSelectReservation={onSelectReservation}
                     selectedReservation={selectedReservation}
                     formatDate={formatDate}
+                    toggleDetailedSummary={toggleDetailedSummary}
                 />
             ))}
             {ungrouped.map((purchase) => (
@@ -391,6 +431,7 @@ const PurchaseList = ({onSelectReservation, selectedReservation, searchTerm}) =>
                     date={formatDate(purchase.reservation_date)}
                     isSelected={selectedReservation?.id === purchase.id}
                     onClick={() => onSelectReservation(purchase)}
+                    toggleDetailedSummary={toggleDetailedSummary}
                 />
             ))}
             {isLoading && (
@@ -1004,9 +1045,112 @@ const PurchasesPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const {tenantId} = useGuest();
+    const [showDetailedSummary, setShowDetailedSummary] = useState(false);
+    const [detailedSummaryData, setDetailedSummaryData] = useState({
+        tours: [],
+        payments: []
+    });
+    const fetchAddonsForReservation = async (reservationId, tourId) => {
+        try {
+            const reservationAddonsResponse = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${reservationId}`
+            );
+            
+            const allAddonsResponse = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`
+            );
+            
+            const reservationAddons = reservationAddonsResponse.data;
+            const allAddons = allAddonsResponse.data;
 
-    const handleSelectReservation = (reservation) => {
+            return reservationAddons.map((selectedAddon) => {
+                const addonDetails = allAddons.find(
+                    (addon) => addon.id === selectedAddon.addonId
+                );
+                return {
+                    name: addonDetails?.label || 'Add-on',
+                    price: Number(addonDetails?.price || 0),
+                    quantity: Number(selectedAddon.value || 0)
+                };
+            });
+        } catch (error) {
+            console.error(`Error fetching add-ons for reservation ${reservationId}:`, error);
+            return [];
+        }
+    };
+
+    const handleSelectReservation = async (reservation) => {
         setSelectedReservation(reservation);
+        setShowDetailedSummary(!!reservation.isGroupBooking);
+
+        if (reservation) {
+            const formattedDate = new Date(reservation.createdAt || reservation.reservation_date).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            
+            try {
+                if (reservation.isGroupBooking && reservation.groupItems) {
+                    const groupToursPromises = reservation.groupItems.map(async (item) => {
+                        const tourPrice = Number(item.valuePerGuest || item.tour?.price || 0);
+                        const guestCount = Number(item.guestQuantity || 0);
+                        const gratuityAmount = Number(item.gratuityAmount || 0);
+                        const addons = await fetchAddonsForReservation(item.id, item.tour?.id);
+                        const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
+                        const tourTotal = (tourPrice * guestCount) + gratuityAmount + addonsTotal;
+                        
+                        return {
+                            name: item.tour?.name || 'Unknown Tour',
+                            bookingFeePercent: 6,
+                            pricePerGuest: tourPrice,
+                            guestCount: guestCount,
+                            gratuityAmount: gratuityAmount,
+                            gratuityPercent: Number(item.gratuityPercent || 18),
+                            addons: addons,
+                            total: tourTotal
+                        };
+                    });
+                    
+                    const groupTours = await Promise.all(groupToursPromises);
+                    const totalAmount = groupTours.reduce((sum, tour) => sum + tour.total, 0);
+                    
+                    setDetailedSummaryData({
+                        tours: groupTours,
+                        payments: [{
+                            date: formattedDate,
+                            amount: totalAmount
+                        }]
+                    });
+                } else {
+                    const tourPrice = Number(reservation.valuePerGuest || reservation.tour?.price || 0);
+                    const guestCount = Number(reservation.guestQuantity || 0);
+                    const gratuityAmount = Number(reservation.gratuityAmount || 0);
+                    const addons = await fetchAddonsForReservation(reservation.id, reservation.tour?.id);
+                    const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
+                    const tourTotal = (tourPrice * guestCount) + gratuityAmount + addonsTotal;
+                    
+                    setDetailedSummaryData({
+                        tours: [{
+                            name: reservation.tour?.name || 'Unknown Tour',
+                            bookingFeePercent: 6,
+                            pricePerGuest: tourPrice,
+                            guestCount: guestCount,
+                            gratuityAmount: gratuityAmount,
+                            gratuityPercent: Number(reservation.gratuityPercent || 18),
+                            addons: addons,
+                            total: tourTotal
+                        }],
+                        payments: [{
+                            date: formattedDate,
+                            amount: Number(reservation.total_price || tourTotal)
+                        }]
+                    });
+                }
+            } catch (error) {
+                console.error("Error preparing detailed summary data:", error);
+            }
+        }
     };
 
     const handleSearch = (e) => {
@@ -1022,7 +1166,8 @@ const PurchasesPage = () => {
                 const data = await response.json();
 
                 if (data.length > 0 && !selectedReservation) {
-                    setSelectedReservation(data[0]);
+                    await handleSelectReservation(data[0]);
+                    setShowDetailedSummary(false);
                 }
             } catch (error) {
                 console.error("Error fetching reservations:", error);
@@ -1034,15 +1179,7 @@ const PurchasesPage = () => {
         if (tenantId) {
             fetchReservations();
         }
-    }, [tenantId, selectedReservation]);
-
-    // if (isLoading) {
-    //     return (
-    //         <Center width="100vw" height="100vh">
-    //             <CircularProgress isIndeterminate color="blue.500"/>
-    //         </Center>
-    //     );
-    // }
+    }, [tenantId]);
 
     const handlePurchaseClick = () => {
         router.push("/dashboard/choose-a-product");
@@ -1106,9 +1243,13 @@ const PurchasesPage = () => {
                 </Flex>
                 <HStack height="100vh" width="100%">
                     <Box>
-                        <PurchaseList onSelectReservation={handleSelectReservation}
-                                      selectedReservation={selectedReservation}
-                                      searchTerm={searchTerm}
+                        <PurchaseList 
+                            onSelectReservation={handleSelectReservation}
+                            selectedReservation={selectedReservation}
+                            searchTerm={searchTerm}
+                            toggleDetailedSummary={() => {
+                                setShowDetailedSummary(true);
+                            }}
                         />
                     </Box>
                     <Box
@@ -1142,10 +1283,18 @@ const PurchasesPage = () => {
                         </Box>
                         <Box
                             padding="20px"
-                            maxWidth="400px"
+                            maxWidth="500px"
                             mx="auto"
                         >
-                            <PaymentSummary reservation={selectedReservation}/>
+                            {showDetailedSummary ? (
+                                <PurchaseSummaryDetailed 
+                                    tours={detailedSummaryData.tours}
+                                    payments={detailedSummaryData.payments}
+                                    onApplyCode={() => console.log("Apply code clicked")}
+                                />
+                            ) : (
+                                <PaymentSummary reservation={selectedReservation}/>
+                            )}
                         </Box>
                         <Divider mb={4}/>
                         <Box>
@@ -1160,7 +1309,6 @@ const PurchasesPage = () => {
                             )}
                         </Box>
                     </Box>
-
                 </HStack>
             </DashboardLayout>
         </Box>

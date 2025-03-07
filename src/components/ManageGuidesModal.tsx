@@ -10,7 +10,6 @@ import {
     ModalContent,
     ModalFooter,
     ModalHeader,
-    ModalOverlay,
     Text,
     useToast,
     VStack,
@@ -88,7 +87,6 @@ const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="md">
-            <ModalOverlay/>
             <ModalContent>
                 <ModalHeader>Assign Guides</ModalHeader>
                 <ModalCloseButton/>

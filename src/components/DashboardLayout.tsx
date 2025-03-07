@@ -167,7 +167,8 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                 <Box
                     as="nav"
                     width="250px"
-                    h={"1000px"}
+                    position="fixed"
+                    height="100vh"
                     bg="#222324"
                     p={4}
                     borderRight="1px solid #333"
@@ -730,7 +731,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     </Box>
                 </Box>
 
-                <Box flex="1" p={8}>
+                <Box flex="1" p={8} marginLeft="250px" maxW="calc(100% - 250px)" overflowY="auto" minH="100vh">
                     {isLoading ? (
                         <Text color="white">Loading...</Text>
                     ) : (

@@ -11,7 +11,6 @@ import {
     Heading,
     HStack,
     IconButton,
-    Image,
     Input,
     Modal,
     ModalBody,
@@ -24,6 +23,7 @@ import {
     Spinner,
     Switch,
     Text,
+    Textarea,
     useToast,
     VStack,
 } from '@chakra-ui/react'
@@ -32,6 +32,8 @@ import {useRouter} from "next/router";
 import {CardElement, useElements, useStripe} from '@stripe/react-stripe-js';
 import {AddIcon, DeleteIcon, MinusIcon} from "@chakra-ui/icons";
 import {useGuest} from "../../../contexts/GuestContext";
+import PurchaseSummary from '../../../components/PurchaseSummary';
+import {useCart} from "../../../contexts/CartContext";
 
 interface AddOn {
     id: string;
@@ -57,6 +59,21 @@ interface Tour {
     description?: string;
 }
 
+interface FormData {
+    quantity: number;
+    date: string;
+    time: string;
+    organizerName: string;
+    emailEnabled: boolean;
+    organizerEmail: string;
+    phoneEnabled: boolean;
+    organizerPhone: string;
+    organizerAttending: boolean;
+    attendees: Array<{ name: string, info: string }>;
+    purchaseTags: string;
+    purchaseNote: string;
+    selectedAddOns: SelectedAddOn[];
+}
 
 const PurchasePage = () => {
     const router = useRouter();
@@ -67,56 +84,249 @@ const PurchasePage = () => {
 
     const [tour, setTour] = useState<Tour>(null);
     const [addons, setAddons] = useState<AddOn[]>([]);
+    const [addonsMap, setAddonsMap] = useState<{ [key: string]: AddOn[] }>({});
     const [selectedAddOns, setSelectedAddOns] = useState<SelectedAddOn[]>([]);
+    const [combinedAddons, setCombinedAddons] = useState<(AddOn & { quantity: number })[]>([]);
     const [loading, setLoading] = useState(true);
     const [, setLoadingAddons] = useState(true);
 
     const [schedules, setSchedules] = useState<{ value: string; label: string }[]>([]);
     const [loadingSchedules, setLoadingSchedules] = useState(true);
+    const [formDataMap, setFormDataMap] = useState<{ [key: string]: FormData }>({});
+    const [selectedCartItemIndex, setSelectedCartItemIndex] = useState<number>(0);
 
     const [quantity, setQuantity] = useState(1);
+    const [quantityError, setQuantityError] = useState(false);
     const [date, setDate] = useState('2024-12-20');
     const [time, setTime] = useState('08:00');
-
     const [organizerName, setOrganizerName] = useState("");
     const [emailEnabled, setEmailEnabled] = useState(true);
     const [organizerEmail, setOrganizerEmail] = useState("");
     const [phoneEnabled, setPhoneEnabled] = useState(true);
     const [organizerPhone, setOrganizerPhone] = useState("");
     const [organizerAttending, setOrganizerAttending] = useState(true);
-
-    const [attendees, setAttendees] = useState([
-        {name: "Guests #1", info: ""},
-        {name: "Guests #2", info: ""}
-    ]);
-
+    const [attendees, setAttendees] = useState([{name: "", info: ""}, {name: "", info: ""}]);
     const [doNotCharge, setDoNotCharge] = useState(false);
-
-    const [bookingFee,] = useState(false);
-    const [gratuity,] = useState('');
-
+    const [bookingFee, setBookingFee] = useState(false);
+    const [gratuity, setGratuity] = useState('');
     const [internalNotesEnabled, setInternalNotesEnabled] = useState(true);
     const [purchaseTags, setPurchaseTags] = useState("");
     const [purchaseNote, setPurchaseNote] = useState("");
     const [isCustomLineItemsEnabled, setIsCustomLineItemsEnabled] = useState(false);
     const [customLineItems, setCustomLineItems] = useState([]);
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [pickUpAddOn, setPickUpAddOn] = useState(0);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [privateTourAddOn, setPrivateTourAddOn] = useState(0);
     const toast = useToast();
-    const [, setFinalPrice] = useState(298);
+    const [finalPrice, setFinalPrice] = useState(0);
     const [voucherDiscount, setVoucherDiscount] = useState(0);
     const [voucherCode, setVoucherCode] = useState('');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [voucherValid, setVoucherValid] = useState(false);
     const [voucherError, setVoucherError] = useState('');
     const [appliedVoucherCode, setAppliedVoucherCode] = useState<string | null>(null);
-    const [selectedAddons, setSelectedAddons] = useState({});
+    const [submitting, setSubmitting] = useState(false);
     const {tenantId} = useGuest();
+    const {
+        cart,
+        setCart,
+        addToCart,
+        newCart,
+        setNavigationSource,
+        navigationSource,
+        removeFromCart,
+        clearCart
+    } = useCart();
 
     const [items, setItems] = useState([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
+
+    const fetchAddOnsForTour = async (tourId: string) => {
+        try {
+            if (!tourId) return;
+
+            setLoadingAddons(true);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`);
+            const data = await res.json();
+            setAddonsMap(prev => ({
+                ...prev,
+                [tourId]: data
+            }));
+            setAddons(data);
+
+            const existingFormData = formDataMap[tourId];
+            if (existingFormData && existingFormData.selectedAddOns && existingFormData.selectedAddOns.length > 0) {
+                setSelectedAddOns(existingFormData.selectedAddOns);
+            } else {
+                const initSelected = data.map((addon: AddOn) => ({
+                    addOnId: addon.id,
+                    quantity: 0,
+                    checked: false
+                }));
+                setSelectedAddOns(initSelected);
+            }
+
+            setLoadingAddons(false);
+        } catch (error) {
+            console.error('Failed to fetch addons:', error);
+            setLoadingAddons(false);
+        }
+    };
+
+    const loadFormData = (index: number) => {
+        if (cart.length === 0) return;
+        const cartItem = cart[index];
+        if (!cartItem) return;
+
+        if (selectedCartItemIndex >= 0 && selectedCartItemIndex < cart.length) {
+            const currentTourId = cart[selectedCartItemIndex].id;
+            setFormDataMap(prev => ({
+                ...prev,
+                [currentTourId]: {
+                    ...prev[currentTourId],
+                    quantity,
+                    date,
+                    time,
+                    organizerName,
+                    emailEnabled,
+                    organizerEmail,
+                    phoneEnabled,
+                    organizerPhone,
+                    organizerAttending,
+                    attendees,
+                    purchaseTags,
+                    purchaseNote,
+                    selectedAddOns,
+                }
+            }));
+        }
+        setSelectedCartItemIndex(index);
+        const formData = formDataMap[cartItem.id];
+        if (!formData) {
+            const initialFormData: FormData = {
+                quantity: 1,
+                date: '2024-12-20',
+                time: '08:00',
+                organizerName: "",
+                emailEnabled: true,
+                organizerEmail: "",
+                phoneEnabled: true,
+                organizerPhone: "",
+                organizerAttending: true,
+                attendees: [
+                    {name: "Guests #1", info: ""},
+                    {name: "Guests #2", info: ""}
+                ],
+                purchaseTags: "",
+                purchaseNote: "",
+                selectedAddOns: [],
+            };
+
+            setFormDataMap(prev => ({
+                ...prev,
+                [cartItem.id]: initialFormData
+            }));
+            setQuantity(initialFormData.quantity);
+            setDate(initialFormData.date);
+            setTime(initialFormData.time);
+            setOrganizerName(initialFormData.organizerName);
+            setEmailEnabled(initialFormData.emailEnabled);
+            setOrganizerEmail(initialFormData.organizerEmail);
+            setPhoneEnabled(initialFormData.phoneEnabled);
+            setOrganizerPhone(initialFormData.organizerPhone);
+            setOrganizerAttending(initialFormData.organizerAttending);
+            setAttendees(initialFormData.attendees);
+            setPurchaseTags(initialFormData.purchaseTags);
+            setPurchaseNote(initialFormData.purchaseNote);
+            fetchAddOnsForTour(cartItem.id);
+            return;
+        }
+        setQuantity(formData.quantity);
+        setDate(formData.date);
+        setTime(formData.time);
+        setOrganizerName(formData.organizerName);
+        setEmailEnabled(formData.emailEnabled);
+        setOrganizerEmail(formData.organizerEmail);
+        setPhoneEnabled(formData.phoneEnabled);
+        setOrganizerPhone(formData.organizerPhone);
+        setOrganizerAttending(formData.organizerAttending);
+        setAttendees(formData.attendees);
+        setPurchaseTags(formData.purchaseTags);
+        setPurchaseNote(formData.purchaseNote);
+        fetchAddOnsForTour(cartItem.id);
+    };
+    useEffect(() => {
+        if (cart.length === 0) return;
+        let hasNewItems = false;
+        cart.forEach((item) => {
+            if (!formDataMap[item.id]) {
+                hasNewItems = true;
+                const initialFormData: FormData = {
+                    quantity: 1,
+                    date: '2024-12-20',
+                    time: '08:00',
+                    organizerName: "",
+                    emailEnabled: true,
+                    organizerEmail: "",
+                    phoneEnabled: true,
+                    organizerPhone: "",
+                    organizerAttending: true,
+                    attendees: [
+                        {name: "Guests #1", info: ""},
+                        {name: "Guests #2", info: ""}
+                    ],
+                    purchaseTags: "",
+                    purchaseNote: "",
+                    selectedAddOns: [],
+                };
+                setFormDataMap(prev => ({
+                    ...prev,
+                    [item.id]: initialFormData
+                }));
+            }
+        });
+        if (hasNewItems) {
+            const newItemIndex = cart.findIndex(item => !formDataMap[item.id]);
+            if (newItemIndex >= 0) {
+                setSelectedCartItemIndex(newItemIndex);
+                const newItem = cart[newItemIndex];
+                if (newItem) {
+                    fetchAddOnsForTour(newItem.id);
+                }
+            }
+        } else if (selectedCartItemIndex >= cart.length && cart.length > 0) {
+            setSelectedCartItemIndex(0);
+        }
+    }, [cart]);
+    useEffect(() => {
+        if (cart.length > 0) {
+            if (cart.length > 0 && selectedCartItemIndex < cart.length) {
+                const currentTourId = cart[selectedCartItemIndex].id;
+                setFormDataMap(prev => ({
+                    ...prev,
+                    [currentTourId]: {
+                        ...prev[currentTourId],
+                        quantity,
+                        date,
+                        time,
+                        organizerName,
+                        emailEnabled,
+                        organizerEmail,
+                        phoneEnabled,
+                        organizerPhone,
+                        organizerAttending,
+                        attendees,
+                        purchaseTags,
+                        purchaseNote,
+                    }
+                }));
+            }
+        }
+    }, [
+        quantity, date, time, organizerName,
+        emailEnabled, organizerEmail, phoneEnabled,
+        organizerPhone, organizerAttending, attendees,
+        purchaseTags, purchaseNote,
+        selectedCartItemIndex
+    ]);
 
     const addItem = () => {
         setItems([...items, {id: Date.now(), type: "Charge", amount: 0, quantity: 1, name: ""}]);
@@ -153,47 +363,50 @@ const PurchasePage = () => {
         setNewLineItem({type: "Charge", amount: "", quantity: 1, isTaxed: false});
     };
 
+    const handleNavigateToProducts = () => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('navigationSource', 'make-a-purchase');
+            window.location.href = '/dashboard/choose-a-product?source=make-a-purchase';
+        }
+        router.push("/dashboard/choose-a-product");
+        setNavigationSource('make-a-purchase');
+    };
 
     useEffect(() => {
-        const fetchTour = async () => {
+        if (!id) return;
+        const fetchTourData = async () => {
             try {
-                if (!id) return;
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`);
-                if (!res.ok) throw new Error('Tour not found');
-                const data = await res.json();
-                setTour(data);
+                setLoading(true);
+                const existingTour = cart.find(item => item.id === id);
+                const directAccess = !navigationSource || navigationSource !== 'make-a-purchase';
+                if (existingTour) {
+                    setTour(existingTour);
+                } else {
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`);
+                    if (!res.ok) throw new Error('Tour not found');
+                    const data = await res.json();
+                    setTour(data);
+                    if (directAccess) {
+                        newCart(data);
+                    } else {
+                        addToCart(data);
+                    }
+                }
             } catch (error) {
                 console.error('Failed to fetch tour:', error);
+                toast({
+                    title: "Error",
+                    description: "Failed to load tour information",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
             } finally {
                 setLoading(false);
             }
         };
-        fetchTour();
-    }, [id]);
-
-    useEffect(() => {
-        const fetchAddOns = async () => {
-            try {
-                if (!id) return;
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${id}`);
-                const data = await res.json();
-                setAddons(data);
-
-                const initSelected = data.map((addon: AddOn) => ({
-                    addOnId: addon.id,
-                    quantity: 0,
-                    checked: false
-                }));
-                setSelectedAddOns(initSelected);
-
-                setLoadingAddons(false);
-            } catch (error) {
-                console.error('Failed to fetch addons:', error);
-                setLoadingAddons(false);
-            }
-        };
-        fetchAddOns();
-    }, [id]);
+        fetchTourData();
+    }, [id, cart, addToCart, newCart, navigationSource, toast]);
 
     useEffect(() => {
         const fetchSchedules = async () => {
@@ -244,7 +457,7 @@ const PurchasePage = () => {
     };
 
 
-    const basePrice = tour?.price
+    const basePrice = cart.length > 0 ? cart[0].price : 0;
     const totalBase = quantity * basePrice;
 
     useEffect(() => {
@@ -303,45 +516,67 @@ const PurchasePage = () => {
         return finalDate.toISOString();
     };
 
-    let combinedAddons: (AddOn & { quantity: number })[] = [];
-    if (addons.length > 0) {
-        combinedAddons = addons.reduce((acc: (AddOn & { quantity: number })[], addon) => {
-            const selectedValue = selectedAddons[addon.id];
-            if (addon.type === 'SELECT' && typeof selectedValue === 'number' && selectedValue > 0) {
+    useEffect(() => {
+        if (addons.length === 0) return;
+        const updatedCombinedAddons = selectedAddOns.reduce((acc: (AddOn & { quantity: number })[], selectedAddon) => {
+            const addonInfo = addons.find(a => a.id === selectedAddon.addOnId);
+            if (!addonInfo) return acc;
+
+            if (addonInfo.type === 'CHECKBOX' && selectedAddon.checked) {
                 acc.push({
-                    ...addon,
-                    quantity: selectedValue,
+                    ...addonInfo,
+                    quantity: 1
                 });
-            } else if (addon.type === 'CHECKBOX' && selectedValue === true) {
+            } else if (addonInfo.type === 'SELECT' && selectedAddon.quantity > 0) {
                 acc.push({
-                    ...addon,
-                    quantity: 1,
+                    ...addonInfo,
+                    quantity: selectedAddon.quantity
                 });
             }
             return acc;
         }, []);
-    }
+        setCombinedAddons(updatedCombinedAddons);
+    }, [selectedAddOns, addons]);
 
     const addonsTotalPrice = combinedAddons.reduce(
         (sum, addon) => sum + (addon.price * addon.quantity),
         0
     );
 
-    const finalTotalPrice = tour
-        ? ((tour.valuePerGuest || tour.price) * quantity) + addonsTotalPrice
+    const finalTotalPrice = cart.length > 0
+        ? ((cart[0].valuePerGuest || cart[0].price) * quantity) + addonsTotalPrice
         : 0;
 
     const totalWithDiscount = Math.max(finalTotalPrice - voucherDiscount, 0);
 
     const handleCreateReservationAndPay = async () => {
-        if (!stripe || !elements) {
-            alert("Stripe has not yet been loaded.");
-            return;
+        if (selectedCartItemIndex >= 0 && selectedCartItemIndex < cart.length) {
+            const currentTourId = cart[selectedCartItemIndex].id;
+            setFormDataMap(prev => ({
+                ...prev,
+                [currentTourId]: {
+                    ...prev[currentTourId],
+                    quantity,
+                    date,
+                    time,
+                    organizerName,
+                    emailEnabled,
+                    organizerEmail,
+                    phoneEnabled,
+                    organizerPhone,
+                    organizerAttending,
+                    attendees,
+                    purchaseTags,
+                    purchaseNote,
+                    selectedAddOns,
+                }
+            }));
         }
-
+        
+        setSubmitting(true);
+        const formattedAttendees = [];
         let reservationId: string | null = null;
         let userId: string | null = null;
-
         try {
             const userPayload = {
                 name: organizerName,
@@ -367,9 +602,7 @@ const PurchasePage = () => {
             userId = userResult.id;
             const updateUserResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({statusCheckout: "COMPLETED"}),
             });
 
@@ -377,123 +610,152 @@ const PurchasePage = () => {
                 throw new Error("Failed to update user status.");
             }
 
-            const reservationDateTime = combineDateAndTime(date, time);
+            cart.forEach((cartItem, index) => {
+                const tourFormData = formDataMap[cartItem.id];
+                if (!tourFormData) return;
+                const tourAttendees = tourFormData.attendees.filter(a => a.name && a.name.trim() !== '');
+                tourAttendees.forEach(attendee => {
+                    formattedAttendees.push({
+                        name: attendee.name,
+                        additionalInfo: attendee.info || '',
+                    });
+                });
+            });
 
-            const reservationData = {
-                tourId: id,
+            const cartPayload = cart.map((cartItem) => {
+                const formData = formDataMap[cartItem.id];
+                return {
+                    tourId: cartItem.id,
+                    reservationData: {
+                        status: "ACCEPTED",
+                        reservation_date: combineDateAndTime(formData.date, formData.time),
+                        guestQuantity: formData.quantity,
+                        purchaseTags: formData.purchaseTags,
+                        purchaseNote: formData.purchaseNote,
+                    },
+                    addons: selectedAddOns.map(addonItem => {
+                        if (addonItem.checked) {
+                            return {
+                                addonId: addonItem.addOnId,
+                                value: "1",
+                            };
+                        } else if (addonItem.quantity > 0) {
+                            return {
+                                addonId: addonItem.addOnId,
+                                value: addonItem.quantity.toString(),
+                            };
+                        }
+                        return null;
+                    }).filter(Boolean),
+                    total_price: totalWithDiscount,
+                    guestQuantity: quantity,
+                    createdBy: "Back Office",
+                    purchaseTags,
+                    purchaseNote,
+                };
+            });
+
+            const requestBody = {
+                cart: cartPayload,
                 userId: userId,
-                reservation_date: reservationDateTime,
-                addons: Object.entries(selectedAddons).map(([addonId, value]) => {
-                    if (typeof value === "boolean") {
-                        return {
-                            addonId,
-                            quantity: value ? 1 : 0,
-                        };
-                    }
-
-                    return {
-                        addonId,
-                        quantity: value,
-                    };
-                }),
-                total_price: totalWithDiscount,
-                guestQuantity: quantity,
-                status: "ACCEPTED",
                 createdBy: "Back Office",
-                purchaseTags,
-                purchaseNote,
             };
 
             const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(reservationData),
+                body: JSON.stringify(requestBody),
             });
 
             if (!reservationResponse.ok) {
                 throw new Error("Failed to create reservation.");
             }
 
-            const reservationResult = await reservationResponse.json();
-            reservationId = reservationResult.id;
-            console.log("Reservation created with ID:", reservationId);
+            const reservationResults = await reservationResponse.json();
 
-            if (customLineItems.length > 0) {
-                const customItemsPayload = customLineItems.map(item => ({
-                    tenantId: tenantId,
-                    tourId: id,
-                    label: item.name,
-                    description: item.type,
-                    amount: item.amount,
-                    quantity: item.quantity,
-                }));
+            for (const reservation of reservationResults) {
+                const reservationId = reservation.id;
 
-                const customItemsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/custom-items`, {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({items: customItemsPayload, reservationId}),
-                });
+                if (customLineItems.length > 0) {
+                    const customItemsPayload = customLineItems.map(item => ({
+                        tenantId: tenantId,
+                        tourId: id,
+                        label: item.name,
+                        description: item.type,
+                        amount: item.amount,
+                        quantity: item.quantity,
+                    }));
 
-                if (!customItemsResponse.ok) throw new Error("Failed to create custom items.");
-            }
-
-            if (!doNotCharge) {
-                const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({reservationId}),
-                });
-
-                if (!setupIntentRes.ok) {
-                    throw new Error("Failed to create SetupIntent.");
-                }
-
-                const {clientSecret} = await setupIntentRes.json();
-
-                const cardElement = elements.getElement(CardElement);
-                if (!cardElement) {
-                    throw new Error("CardElement is not available.");
-                }
-
-                const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
-                    payment_method: {
-                        card: cardElement,
-                        billing_details: {
-                            name: organizerName || "Guest Organizer",
-                            email: emailEnabled ? organizerEmail : "",
-                        },
-                    },
-                });
-
-                if (paymentMethodResponse.error) {
-                    throw new Error(paymentMethodResponse.error.message);
-                }
-
-                const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
-
-                const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({paymentMethodId, reservationId}),
-                });
-
-                if (!savePMRes.ok) {
-                    throw new Error("Failed to save PaymentMethod.");
-                }
-
-                if (voucherValid && appliedVoucherCode) {
-                    const redeemResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/redeem`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            code: appliedVoucherCode,
-                            reservationId: reservationResult.id,
-                        }),
+                    const customItemsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/custom-items`, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({items: customItemsPayload, reservationId}),
                     });
 
-                    if (redeemResponse.ok) {
+                    if (!customItemsResponse.ok) {
+                        throw new Error("Failed to create custom items.");
+                    }
+                }
+
+                if (!doNotCharge) {
+                    const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({reservationId}),
+                    });
+
+                    if (!setupIntentRes.ok) {
+                        throw new Error("Failed to create SetupIntent.");
+                    }
+
+                    const {clientSecret} = await setupIntentRes.json();
+
+                    const cardElement = elements.getElement(CardElement);
+                    if (!cardElement) {
+                        throw new Error("CardElement is not available.");
+                    }
+
+                    const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
+                        payment_method: {
+                            card: cardElement,
+                            billing_details: {
+                                name: organizerName || "Guest Organizer",
+                                email: emailEnabled ? organizerEmail : "",
+                            },
+                        },
+                    });
+
+                    if (paymentMethodResponse.error) {
+                        throw new Error(paymentMethodResponse.error.message);
+                    }
+
+                    const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
+
+                    const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({paymentMethodId, reservationId}),
+                    });
+
+                    if (!savePMRes.ok) {
+                        throw new Error("Failed to save PaymentMethod.");
+                    }
+
+                    if (voucherValid && appliedVoucherCode) {
+                        const redeemResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/redeem`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                code: appliedVoucherCode,
+                                reservationId,
+                            }),
+                        });
+
+                        if (!redeemResponse.ok) {
+                            throw new Error('Failed to redeem voucher');
+                        }
                         toast({
                             title: 'Voucher Redeemed',
                             description: 'The voucher has been successfully redeemed.',
@@ -501,26 +763,22 @@ const PurchasePage = () => {
                             duration: 4000,
                             isClosable: true,
                         });
-                        setAppliedVoucherCode("")
-                    } else {
-                        throw new Error('Failed to redeem voucher');
+                        setAppliedVoucherCode("");
                     }
                 }
-
-                toast({
-                    title: "Reservation Complete!",
-                    description: "Your reservation and payment were successful.",
-                    status: "success",
-                    duration: 5000,
-                    isClosable: true,
-                });
-                setTimeout(() => {
-                    router.push("/dashboard/reservation");
-                }, 1000);
-            } else {
-                alert("Reservation created without immediate charge (Do Not Charge).");
             }
 
+            toast({
+                title: "Reservation Complete!",
+                description: "Your reservation and payment were successful.",
+                status: "success",
+                duration: 5000,
+                isClosable: true,
+            });
+            clearCart();
+            setTimeout(() => {
+                router.push("/dashboard/purchases");
+            }, 1000);
         } catch (error) {
             console.error("Error creating reservation/payment:", error);
             if (error instanceof Error) {
@@ -528,6 +786,8 @@ const PurchasePage = () => {
             } else {
                 setErrorMessage("An unexpected error has occurred.");
             }
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -578,6 +838,21 @@ const PurchasePage = () => {
         }
     };
 
+    useEffect(() => {
+        const fetchInitialAddOns = async () => {
+            const currentTourId = cart.length > 0 && selectedCartItemIndex < cart.length
+                ? cart[selectedCartItemIndex].id
+                : typeof id === 'string' ? id : Array.isArray(id) ? id[0] : null;
+            const shouldFetchAddons = 
+                !formDataMap[currentTourId]?.selectedAddOns || 
+                formDataMap[currentTourId]?.selectedAddOns.length === 0;
+            if (currentTourId && shouldFetchAddons) {
+                await fetchAddOnsForTour(currentTourId);
+            }
+        };
+        fetchInitialAddOns();
+    }, [id, cart, selectedCartItemIndex, formDataMap]);
+
     if (loading) {
         return (
             <DashboardLayout>
@@ -589,7 +864,7 @@ const PurchasePage = () => {
         );
     }
 
-    if (!tour) {
+    if (cart.length === 0) {
         return (
             <DashboardLayout>
                 <Box p={8} textAlign="center">
@@ -602,30 +877,112 @@ const PurchasePage = () => {
 
 
     const handleIncrement = (addonId) => {
-        setSelectedAddons((prev) => ({
-            ...prev,
-            [addonId]: (prev[addonId] || 0) + 1,
-        }));
+        setSelectedAddOns((prev) => {
+            const existingAddonIndex = prev.findIndex(addon => addon.addOnId === addonId);
+            let updatedAddons;
+
+            if (existingAddonIndex >= 0) {
+                updatedAddons = [...prev];
+                updatedAddons[existingAddonIndex] = {
+                    ...updatedAddons[existingAddonIndex],
+                    quantity: (updatedAddons[existingAddonIndex].quantity || 0) + 1
+                };
+            } else {
+                updatedAddons = [...prev, {
+                    addOnId: addonId,
+                    quantity: 1,
+                    checked: false
+                }];
+            }
+            if (cart.length > 0 && selectedCartItemIndex < cart.length) {
+                const currentTourId = cart[selectedCartItemIndex].id;
+                setFormDataMap(prevMap => ({
+                    ...prevMap,
+                    [currentTourId]: {
+                        ...prevMap[currentTourId],
+                        selectedAddOns: updatedAddons
+                    }
+                }));
+            }
+            return updatedAddons;
+        });
     };
 
     const handleDecrement = (addonId) => {
-        setSelectedAddons((prev) => ({
-            ...prev,
-            [addonId]: Math.max((prev[addonId] || 0) - 1, 0),
-        }));
+        setSelectedAddOns((prev) => {
+            const existingAddonIndex = prev.findIndex(addon => addon.addOnId === addonId);
+            let updatedAddons = [...prev];
+
+            if (existingAddonIndex >= 0) {
+                const newQuantity = Math.max((updatedAddons[existingAddonIndex].quantity || 0) - 1, 0);
+
+                if (newQuantity === 0) {
+                    updatedAddons = prev.filter(addon => addon.addOnId !== addonId);
+                } else {
+                    updatedAddons[existingAddonIndex] = {
+                        ...updatedAddons[existingAddonIndex],
+                        quantity: newQuantity
+                    };
+                }
+                if (cart.length > 0 && selectedCartItemIndex < cart.length) {
+                    const currentTourId = cart[selectedCartItemIndex].id;
+                    setFormDataMap(prevMap => ({
+                        ...prevMap,
+                        [currentTourId]: {
+                            ...prevMap[currentTourId],
+                            selectedAddOns: updatedAddons
+                        }
+                    }));
+                }
+            }
+            return updatedAddons;
+        });
     };
 
     const handleCheckboxChange = (addonId) => {
-        setSelectedAddons((prev) => ({
-            ...prev,
-            [addonId]: !prev[addonId],
-        }));
+        setSelectedAddOns((prev) => {
+            const existingAddonIndex = prev.findIndex(addon => addon.addOnId === addonId);
+            let updatedAddons;
+
+            if (existingAddonIndex >= 0) {
+                const newChecked = !prev[existingAddonIndex].checked;
+
+                if (!newChecked) {
+                    updatedAddons = prev.filter(addon => addon.addOnId !== addonId);
+                } else {
+                    updatedAddons = [...prev];
+                    updatedAddons[existingAddonIndex] = {
+                        ...updatedAddons[existingAddonIndex],
+                        checked: newChecked
+                    };
+                }
+            } else {
+                updatedAddons = [...prev, {
+                    addOnId: addonId,
+                    quantity: 0,
+                    checked: true
+                }];
+            }
+            if (cart.length > 0 && selectedCartItemIndex < cart.length) {
+                const currentTourId = cart[selectedCartItemIndex].id;
+                setFormDataMap(prevMap => ({
+                    ...prevMap,
+                    [currentTourId]: {
+                        ...prevMap[currentTourId],
+                        selectedAddOns: updatedAddons
+                    }
+                }));
+            }
+            return updatedAddons;
+        });
     };
 
     return (
         <DashboardLayout>
             <Box p={8}>
-                <Heading size="lg" mb={6}>Make a Purchase</Heading>
+                <HStack justifyContent="space-between" mb={6}>
+                    <Heading size="lg">Make a Purchase</Heading>
+                </HStack>
                 <Flex direction={{base: 'column', md: 'row'}} gap={8}>
 
                     <Box flex="1" bg="gray.50" p={6} borderRadius="md" boxShadow="sm">
@@ -690,11 +1047,12 @@ const PurchasePage = () => {
                                     {addon.type === 'SELECT' ? (
                                         <Flex align="center">
                                             <Button size="sm" onClick={() => handleDecrement(addon.id)}
-                                                    disabled={selectedAddons[addon.id] <= 0}>
+                                                    disabled={!selectedAddOns.find(s => s.addOnId === addon.id) ||
+                                                        (selectedAddOns.find(s => s.addOnId === addon.id)?.quantity || 0) <= 0}>
                                                 -
                                             </Button>
                                             <Input
-                                                value={selectedAddons[addon.id] || 0}
+                                                value={selectedAddOns.find(s => s.addOnId === addon.id)?.quantity || 0}
                                                 readOnly
                                                 w="50px"
                                                 textAlign="center"
@@ -706,7 +1064,7 @@ const PurchasePage = () => {
                                         </Flex>
                                     ) : addon.type === 'CHECKBOX' ? (
                                         <Switch
-                                            isChecked={selectedAddons[addon.id] || false}
+                                            isChecked={selectedAddOns.find(s => s.addOnId === addon.id)?.checked || false}
                                             onChange={() => handleCheckboxChange(addon.id)}
                                         />
                                     ) : null}
@@ -1043,10 +1401,10 @@ const PurchasePage = () => {
                                 </FormControl>
                                 <FormControl>
                                     <FormLabel>Purchase Note</FormLabel>
-                                    <Input
-                                        placeholder=""
+                                    <Textarea
                                         value={purchaseNote}
                                         onChange={(e) => setPurchaseNote(e.target.value)}
+                                        placeholder="Enter Notes"
                                     />
                                 </FormControl>
                             </VStack>
@@ -1057,11 +1415,14 @@ const PurchasePage = () => {
                         <HStack justify="space-between">
                             <Button variant="outline" onClick={handleCancel}>Cancel</Button>
                             <HStack spacing={4}>
-                                <Button variant="outline">Add Another Product</Button>
+                                <Button variant="outline" onClick={handleNavigateToProducts}>Add Another
+                                    Product</Button>
                                 <Button
                                     colorScheme="green"
                                     onClick={handleCreateReservationAndPay}
-                                    loadingText="Processing"
+                                    loadingText="Processing Payment"
+                                    isLoading={submitting}
+                                    isDisabled={submitting}
                                 >
                                     Pay US${(totalWithDiscount +
                                     items.reduce((acc, item) => {
@@ -1074,89 +1435,30 @@ const PurchasePage = () => {
                         </HStack>
                     </Box>
 
-                    <Box w={{base: "100%", md: "400px"}} bg="white" p={6} borderRadius="md" boxShadow="sm">
+                    <Box w={{base: "100%", md: "400px"}} bg="white" p={6} borderRadius="md">
                         <Heading size="md" mb={4}>Purchase Summary</Heading>
-                        <Box
-                            bg="blue.50"
-                            p={4}
-                            borderRadius="md"
-                            mb={4}
-                            w="120%"
-                            ml="-10%"
-                        >
-                            <HStack>
-                                <Image
-                                    src={tour.imageUrl}
-                                    boxSize="40px"
-                                    borderRadius="md"
-                                    alt="Tour Icon"
-                                    objectFit="fill"
-                                />
-                                <Text fontWeight="bold">{tour.name}</Text>
-                            </HStack>
-                            <Text fontSize="sm">
-                                {date} - {time}
-                            </Text>
-                            <HStack justify={"space-between"}>
-                                <Text mt={2}>
-                                    Guests (${basePrice} × {quantity})
-                                </Text>
-                                <Text>
-                                    ${(quantity * basePrice).toFixed(2)}
-                                </Text>
-                            </HStack>
-                            {combinedAddons.length > 0 ? (
-                                combinedAddons.map((addon) => (
-                                    <HStack key={addon.id} justifyContent="space-between">
-                                        <Text>{addon.label} (${addon.price} x {addon.quantity})</Text>
-                                        <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
-                                    </HStack>
-                                ))
-                            ) : (
-                                <Text>No add-ons selected.</Text>
-                            )}
-                            {isCustomLineItemsEnabled && customLineItems.length > 0 && (
-                                <Box>
-                                    {customLineItems.map((item, index) => (
-                                        <HStack key={index} justify="space-between">
-                                            <Text>
-                                                {item.name || "Unnamed"} ({item.type === "Discount" ? "-" : ""}${item.amount} × {item.quantity})
-                                            </Text>
-                                            <Text fontWeight="semibold">
-                                                {item.type === "Discount" ? "-" : ""}${(item.amount * item.quantity).toFixed(2)}
-                                            </Text>
-                                        </HStack>
-                                    ))}
-                                </Box>
-                            )}
-                        </Box>
-                        {voucherDiscount > 0 && (
-                            <Box bg="green.50" p={4} borderRadius="md" mb={4}>
-                                <Text fontWeight="bold" color="green.600">
-                                    Discount Applied
-                                </Text>
-                                <Text>- ${voucherDiscount.toFixed(2)}</Text>
-                            </Box>
-                        )}
-                        <Divider mb={4}/>
-                        <Text fontWeight="bold" mb={2}>Grand Total</Text>
-                        <Text fontSize="xl" mb={4}>US${(totalWithDiscount +
-                            items.reduce((acc, item) => {
-                                const totalItem = item.amount * item.quantity;
-                                return item.type === "Discount" ? acc - totalItem : acc + totalItem;
-                            }, 0)
-                        ).toFixed(2)}</Text>
-                        <FormControl mb={4}>
-                            <FormLabel>Code</FormLabel>
-                            <HStack>
-                                <Input
-                                    value={voucherCode}
-                                    onChange={(e) => setVoucherCode(e.target.value)}
-                                    placeholder="Enter code"/>
-                                <Button onClick={handleValidateVoucher}>Apply Code</Button>
-                            </HStack>
-                            {voucherError && <Text color="red.500">{voucherError}</Text>}
-                        </FormControl>
+                        <PurchaseSummary
+                            cart={cart}
+                            date={date}
+                            time={time}
+                            quantity={quantity}
+                            combinedAddons={combinedAddons}
+                            isCustomLineItemsEnabled={isCustomLineItemsEnabled}
+                            customLineItems={customLineItems}
+                            voucherDiscount={voucherDiscount}
+                            totalWithDiscount={totalWithDiscount}
+                            items={items}
+                            voucherCode={voucherCode}
+                            setVoucherCode={setVoucherCode}
+                            voucherError={voucherError}
+                            handleValidateVoucher={handleValidateVoucher}
+                            removeFromCart={removeFromCart}
+                            selectedCartItemIndex={selectedCartItemIndex}
+                            onSelectCartItem={loadFormData}
+                            formDataMap={formDataMap}
+                            addons={addons}
+                            addonsMap={addonsMap}
+                        />
                     </Box>
                 </Flex>
             </Box>

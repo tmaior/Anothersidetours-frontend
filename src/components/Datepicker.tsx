@@ -66,7 +66,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             const dayKey = format(day, 'yyyy-MM-dd');
             newMonthDayData[dayKey] = (
                 <span>
-                    <sup>$ </sup>{originalPrice}
+                    <sup>$</sup>{originalPrice}
                 </span>
             );
         });
@@ -128,8 +128,10 @@ const DatePicker: React.FC<DatePickerProps> = ({
                     const categoryData = await categoryResponse.json();
 
                     categoryData.forEach((b: BlackoutDate) => {
-                        if (b.startDate && b.endDate) {
-                            const intervalDates = getDateRange(b.startDate, b.endDate);
+                        if (b.startDate) {
+                            const intervalDates = b.endDate
+                                ? getDateRange(b.startDate, b.endDate)
+                                : [formatDate(new Date(b.startDate))];
                             if (b.startTime && b.endTime) {
                                 intervalDates.forEach(date => {
                                     categoryBlockedTimes.push({
@@ -206,7 +208,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
     }, [tourId]);
 
     const renderHeader = () => (
-        <Box display="flex" justifyContent="space-between" alignItems="center" p={2} bg="gray.100">
+        <Box display="flex" justifyContent="space-between" alignItems="center" p={2} bg="white">
             <Text
                 cursor="pointer"
                 onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
@@ -215,7 +217,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             >
                 {'<'}
             </Text>
-            <Text fontSize="lg" fontWeight="bold">
+            <Text fontSize="lg" fontWeight="normal">
                 {format(currentMonth, 'MMMM yyyy')}
             </Text>
             <Text
@@ -236,7 +238,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
         for (let i = 0; i < 7; i++) {
             days.push(
-                <Text key={i} textAlign="center" fontWeight="bold">
+                <Text key={i} textAlign="center" fontWeight="normal">
                     {format(addDays(startDate, i), dateFormat)}
                 </Text>
             );
@@ -269,9 +271,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
                     days.push(
                         <Box key={day.toISOString() + i}>
                             <Flex
-                                w="full"
+                                w="60px"
                                 h="40px"
-                                p="2px"
+                                p="1px"
                                 position="relative"
                                 onClick={() => {
                                     if (!isPast && !isBlocked) {
@@ -282,43 +284,28 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                     isSelected
                                         ? '#337AB7'
                                         : isPast || isBlocked
-                                            ? 'gray.300'
+                                            ? 'white.300'
                                             : '#E9F7D4'
                                 }
                                 color={
                                     isSelected
                                         ? 'white'
                                         : isPast || isBlocked
-                                            ? 'gray.500'
+                                            ? 'gray.300'
                                             : '#337AB7'
                                 }
-                                cursor={
-                                    isBlocked
-                                        ? 'not-allowed'
-                                        : isPast
-                                            ? 'not-allowed'
-                                            : 'pointer'
-                                }
-                                _hover={
-                                    isBlocked
-                                        ? {}
-                                        : isPast
-                                            ? {}
-                                            : {bg: '#337AB7', color: 'white'}
-                                }
-                                pointerEvents={
-                                    isBlocked
-                                        ? 'none'
-                                        : isPast
-                                            ? 'none'
-                                            : 'auto'
-                                }
+                                cursor={isBlocked || isPast ? 'not-allowed' : 'pointer'}
+                                _hover={{
+                                    bg: isBlocked || isPast ? undefined : '#337AB7',
+                                    color: isBlocked || isPast ? undefined : 'white'
+                                }}
                             >
-                                <Text w="full" textAlign="end" fontSize="10px">
+                                <Text w="full" textAlign="end" fontSize="10px" marginLeft={"-7px"}>
                                     {formattedDate}
                                 </Text>
                                 <Text
                                     position="absolute"
+                                    marginLeft={"-6px"}
                                     top="50%"
                                     left="50%"
                                     transform="translate(-50%, -50%)"
@@ -336,7 +323,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                                     lineHeight="normal"
                                                     textAlign="center"
                                                 >
-                                                    call for
+                                                    Call For
                                                     <br/>
                                                     Info
                                                 </Text>

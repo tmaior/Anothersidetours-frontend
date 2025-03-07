@@ -13,6 +13,12 @@ interface BookingDetailsProps {
     description: string;
     originalPrice: string;
     addons: Array<{ id: string; label: string; type: string; description: string; price: number }>;
+    minGuests?:number;
+    name?: string;
+    email?: string;
+    phone?: string;
+    selectedDate?: string;
+    selectedTime?: string;
 }
 
 export default function BookingDetails({
@@ -22,6 +28,7 @@ export default function BookingDetails({
                                            description,
                                            originalPrice,
                                            addons,
+                                           minGuests,
                                        }: BookingDetailsProps) {
     const formInfoRef = useRef<HTMLFormElement>(null);
     const [localSelectedDate, setLocalSelectedDate] = useState<Date | null>(null);
@@ -82,7 +89,7 @@ export default function BookingDetails({
         return () => {
             debouncedUpsert.cancel();
         };
-    }, [normalizedEmail, tourId,email, name, phone, guestQuantity, localSelectedDate, localSelectedTime]);
+    }, [normalizedEmail, tourId, email, name, phone, guestQuantity, localSelectedDate, localSelectedTime]);
 
 
     const handleValidation = async () => {
@@ -165,6 +172,7 @@ export default function BookingDetails({
             <Grid
                 originalPrice={originalPrice}
                 formInfoRef={formInfoRef}
+                minGuest={minGuests}
                 selectedDate={localSelectedDate}
                 setSelectedDate={setLocalSelectedDate}
                 selectedTime={localSelectedTime}

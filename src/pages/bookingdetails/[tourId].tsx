@@ -6,11 +6,11 @@ import CheckoutModal from "../../components/CheckoutModal";
 import {useGuest} from "../../contexts/GuestContext";
 import ModalPageLayout from "../../components/ModalPageLayout";
 
-export default function BookingDetailsPage() {
+export default function BookingDetailsPage({reservationData}) {
     const router = useRouter();
     const {tourId} = router.query;
     const {setTourId, setImageUrl} = useGuest();
-    const tourIdAsString = Array.isArray(tourId) ? tourId[0] : (tourId || "");
+    const tourIdAsString = reservationData ? reservationData.tourId : (Array.isArray(tourId) ? tourId[0] : (tourId || ""));
 
     const {
         isOpen: isBookingOpen,
@@ -23,13 +23,17 @@ export default function BookingDetailsPage() {
         onClose: closeCheckout,
     } = useDisclosure();
 
-    const [tourData, setTourData] = useState(null);
+    const [tourData, setTourData] = useState(reservationData || null);
     const [loadingStatus, setLoadingStatus] = useState(null);
     const [errorMessage, setErrorMessage] = useState(null);
 
     useEffect(() => {
-        if (router.isReady && tourId) {
-            const id = Array.isArray(tourId) ? tourId[0] : tourId;
+
+
+        const tourIdToFetch = reservationData?.tourId || tourId;
+
+        if (router.isReady && tourIdToFetch) {
+            const id = Array.isArray(tourIdToFetch) ? tourIdToFetch[0] : tourIdToFetch;
             openBooking();
             fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`)
                 .then(async (res) => {
@@ -49,7 +53,7 @@ export default function BookingDetailsPage() {
                     setErrorMessage(err.message);
                 });
         }
-    }, [router.isReady, tourId,setImageUrl ,setTourId, openBooking]);
+    }, [reservationData, router.isReady, tourId, setImageUrl, setTourId, openBooking]);
 
     if (!tourData) {
         return (
@@ -81,9 +85,15 @@ export default function BookingDetailsPage() {
                 <BookingDetails
                     tourId={tourIdAsString}
                     title={tourData.name}
+                    minGuests={tourData.minPerEventLimit}
                     description={tourData.description}
                     originalPrice={tourData.price}
                     addons={tourData.addons}
+                    name={reservationData?.name || ""}
+                    email={reservationData?.email || ""}
+                    phone={reservationData?.phone || ""}
+                    selectedDate={reservationData?.date || ""}
+                    selectedTime={reservationData?.time || ""}
                     onContinue={handleContinueToCheckout}
                 />
             </ModalPageLayout>

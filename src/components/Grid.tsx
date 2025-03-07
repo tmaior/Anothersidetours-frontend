@@ -13,6 +13,7 @@ interface GridProps {
     errorMessage?: string | null;
     originalPrice?: string;
     title?: string;
+    minGuest:number;
 }
 
 const Grid: React.FC<GridProps> = ({
@@ -23,7 +24,8 @@ const Grid: React.FC<GridProps> = ({
                                        setSelectedTime,
                                        errorMessage,
                                        originalPrice,
-                                       title
+                                       title,
+                                       minGuest
 }) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [dayData, setDayData] = useState<{ [key: string]: string }>({});
@@ -54,7 +56,7 @@ const Grid: React.FC<GridProps> = ({
     return (
         <SimpleGrid columns={{ base: 1, md: 2, lg: 2 }} spacing={150} p={"25px"} h={"400px"}>
             <VStack align="start" spacing={5} marginTop={"-50px"}>
-                <Quantity />
+                <Quantity minGuest={minGuest} />
                 <FormInfo ref={formInfoRef} />
             </VStack>
 

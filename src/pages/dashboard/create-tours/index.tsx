@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useRef} from "react";
 import {
     Box,
     Button,
@@ -47,7 +47,7 @@ import DashboardLayout from "../../../components/DashboardLayout";
 import ProgressBar from "../../../components/ProgressBar";
 import withAuth from "../../../utils/withAuth";
 import {useRouter} from "next/router";
-import CustomerQuestionnaire from "../../../components/CustomerQuestionnaire";
+import CustomerQuestionnaire, {QuestionnaireRef} from "../../../components/CustomerQuestionnaire";
 import {useDemographics} from "../../../contexts/DemographicsContext";
 
 function DescriptionContentStep({onNext}: { onNext: () => void }) {
@@ -554,6 +554,7 @@ function SchedulesAvailabilityStep({
     const [minPerEventLimit, setMinPerEventLimit] = useState(1);
     const [maxPerEventLimit, setMaxPerEventLimit] = useState(0);
 
+    const questionnaireRef = useRef<QuestionnaireRef>(null);
     const resetFields = () => {
         setSchedule([]);
         setEventDuration('');
@@ -566,6 +567,10 @@ function SchedulesAvailabilityStep({
         setBringItems([]);
         setImagePreview(null);
         setOperationProcedures("");
+
+        if (questionnaireRef.current) {
+            questionnaireRef.current.resetQuestions();
+        }
     };
 
     function handleAddTimeRange() {
@@ -714,6 +719,25 @@ function SchedulesAvailabilityStep({
                         })
                     )
                 );
+            }
+
+            if (questionnaireRef.current) {
+                const questions = questionnaireRef.current.getQuestions();
+                
+                if (questions.length > 0) {
+                    await Promise.all(
+                        questions.map(question => 
+                            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information`, {
+                                method: "POST",
+                                headers: {"Content-Type": "application/json"},
+                                body: JSON.stringify({
+                                    tourId,
+                                    title: question.label
+                                })
+                            })
+                        )
+                    );
+                }
             }
 
             toast({
@@ -1777,7 +1801,7 @@ function SchedulesAvailabilityStep({
                                     </ModalContent>
                                 </Modal>
                             </Box>
-                            <CustomerQuestionnaire/>
+                            <CustomerQuestionnaire ref={questionnaireRef}/>
                         </Box>
                         <Divider/>
                         <HStack justify="space-between">

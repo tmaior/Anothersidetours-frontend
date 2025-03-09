@@ -1,10 +1,20 @@
-import React, {useState} from "react";
+import React, {useState, forwardRef, useImperativeHandle, ForwardedRef} from "react";
 import {Badge, Box, Button, HStack, IconButton, Input, Text, VStack} from "@chakra-ui/react";
 import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
 import {FaUser} from "react-icons/fa";
 
-const CustomerQuestionnaire = () => {
-    const [questions, setQuestions] = useState([]);
+export interface QuestionnaireRef {
+    getQuestions: () => Array<{id: number, label: string, required: boolean}>;
+    resetQuestions: () => void;
+}
+
+const CustomerQuestionnaire = forwardRef((props, ref: ForwardedRef<QuestionnaireRef>) => {
+    const [questions, setQuestions] = useState<Array<{id: number, label: string, required: boolean}>>([]);
+
+    useImperativeHandle(ref, () => ({
+        getQuestions: () => questions,
+        resetQuestions: () => setQuestions([])
+    }));
 
     const handleAddQuestion = () => {
         setQuestions((prev) => [
@@ -91,6 +101,6 @@ const CustomerQuestionnaire = () => {
             </VStack>
         </Box>
     );
-};
+});
 
 export default CustomerQuestionnaire;

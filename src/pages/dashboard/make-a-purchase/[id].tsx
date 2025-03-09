@@ -73,6 +73,7 @@ interface FormData {
     purchaseTags: string;
     purchaseNote: string;
     selectedAddOns: SelectedAddOn[];
+    additionalInformation?: { [key: string]: string };
 }
 
 const PurchasePage = () => {
@@ -138,6 +139,8 @@ const PurchasePage = () => {
     } = useCart();
 
     const [items, setItems] = useState([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
+    const [additionalInformationQuestions, setAdditionalInformationQuestions] = useState([]);
+    const [additionalInformationResponses, setAdditionalInformationResponses] = useState<{[key: string]: string}>({});
 
     const fetchAddOnsForTour = async (tourId: string) => {
         try {
@@ -569,6 +572,7 @@ const PurchasePage = () => {
                     purchaseTags,
                     purchaseNote,
                     selectedAddOns,
+                    additionalInformation: additionalInformationResponses
                 }
             }));
         }
@@ -698,7 +702,7 @@ const PurchasePage = () => {
                         throw new Error("Failed to create custom items.");
                     }
                 }
-
+                
                 if (!doNotCharge) {
                     const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
                         method: 'POST',
@@ -767,6 +771,24 @@ const PurchasePage = () => {
                         });
                         setAppliedVoucherCode("");
                     }
+                }
+                
+                if (additionalInformationQuestions.length > 0) {
+                    await Promise.all(
+                        Object.entries(additionalInformationResponses).map(([additionalInformationId, value]) =>
+                            fetch(`${process.env.NEXT_PUBLIC_API_URL}/customer-additional-information`, {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({
+                                    additionalInformationId,
+                                    reservationId,
+                                    value,
+                                }),
+                            })
+                        )
+                    );
                 }
             }
 
@@ -854,6 +876,47 @@ const PurchasePage = () => {
         };
         fetchInitialAddOns();
     }, [id, cart, selectedCartItemIndex, formDataMap]);
+
+    useEffect(() => {
+        const fetchAdditionalInfo = async () => {
+            if (cart.length === 0) return;
+            
+            const currentTourId = cart.length > 0 && selectedCartItemIndex < cart.length
+                ? cart[selectedCartItemIndex].id
+                : typeof id === 'string' ? id : Array.isArray(id) ? id[0] : null;
+                
+            if (!currentTourId) return;
+            
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${currentTourId}`);
+                const data = await response.json();
+                setAdditionalInformationQuestions(data);
+
+                const initialValues = data.reduce(
+                    (acc, input) => ({ ...acc, [input.id]: "" }),
+                    {}
+                );
+                setAdditionalInformationResponses(initialValues);
+            } catch (error) {
+                console.error("Failed to fetch additional information questions:", error);
+            }
+        };
+        
+        fetchAdditionalInfo();
+    }, [id, cart, selectedCartItemIndex]);
+
+    const areAllAdditionalInfoFieldsFilled = () => {
+        if (additionalInformationQuestions.length === 0) return true;
+        
+        return additionalInformationQuestions.every(question => 
+            additionalInformationResponses[question.id] && 
+            additionalInformationResponses[question.id].trim() !== ""
+        );
+    };
+
+    const handleAdditionalInfoChange = (id: string, value: string) => {
+        setAdditionalInformationResponses(prev => ({...prev, [id]: value}));
+    };
 
     if (loading) {
         return (
@@ -1110,6 +1173,37 @@ const PurchasePage = () => {
 
                         {isCustomLineItemsEnabled && (
                             <Button onClick={() => setIsLineItemModalOpen(true)}>+ Line Item</Button>
+                        )}
+
+                        {additionalInformationQuestions.length > 0 && (
+                            <>
+                                <Heading size="md" mt={6} mb={4}>Questionnaire</Heading>
+                                <Text fontSize="sm" color="gray.600" mb={4}>
+                                    All fields are required. Please provide the requested information.
+                                </Text>
+                                <VStack spacing={4} align="stretch">
+                                    {additionalInformationQuestions.map((question) => (
+                                        <FormControl key={question.id} isRequired>
+                                            <FormLabel fontWeight="bold">{question.title}</FormLabel>
+                                            <Textarea
+                                                placeholder={`Enter ${question.title}`}
+                                                value={additionalInformationResponses[question.id] || ""}
+                                                onChange={(e) => handleAdditionalInfoChange(question.id, e.target.value)}
+                                                minHeight="6em"
+                                                maxHeight="12em"
+                                                maxLength={500}
+                                                _focus={{ borderColor: "blue.400" }}
+                                                isInvalid={!additionalInformationResponses[question.id] || additionalInformationResponses[question.id].trim() === ""}
+                                            />
+                                            {(!additionalInformationResponses[question.id] || additionalInformationResponses[question.id].trim() === "") && (
+                                                <Text color="red.500" fontSize="sm" mt={1}>
+                                                    This field is required
+                                                </Text>
+                                            )}
+                                        </FormControl>
+                                    ))}
+                                </VStack>
+                            </>
                         )}
 
                         <Modal isOpen={isLineItemModalOpen} onClose={() => setIsLineItemModalOpen(false)} size="2xl">
@@ -1424,7 +1518,7 @@ const PurchasePage = () => {
                                     onClick={handleCreateReservationAndPay}
                                     loadingText="Processing Payment"
                                     isLoading={submitting}
-                                    isDisabled={submitting}
+                                    isDisabled={submitting || !areAllAdditionalInfoFieldsFilled()}
                                 >
                                     Pay US${(totalWithDiscount +
                                     items.reduce((acc, item) => {

@@ -1424,7 +1424,7 @@ const PurchasePage = () => {
                             </HStack>
                             {phoneEnabled && (
                                 <Input
-                                    placeholder="(999) 999-9999"
+                                    placeholder="Phone Number"
                                     mt={2}
                                     value={organizerPhone}
                                     onChange={(e) => setOrganizerPhone(e.target.value)}

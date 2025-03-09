@@ -1185,21 +1185,30 @@ const PurchasePage = () => {
                                     {additionalInformationQuestions.map((question) => (
                                         <FormControl key={question.id} isRequired>
                                             <FormLabel fontWeight="bold">{question.title}</FormLabel>
-                                            <Textarea
-                                                placeholder={`Enter ${question.title}`}
-                                                value={additionalInformationResponses[question.id] || ""}
-                                                onChange={(e) => handleAdditionalInfoChange(question.id, e.target.value)}
-                                                minHeight="6em"
-                                                maxHeight="12em"
-                                                maxLength={500}
-                                                _focus={{ borderColor: "blue.400" }}
-                                                isInvalid={!additionalInformationResponses[question.id] || additionalInformationResponses[question.id].trim() === ""}
-                                            />
-                                            {(!additionalInformationResponses[question.id] || additionalInformationResponses[question.id].trim() === "") && (
-                                                <Text color="red.500" fontSize="sm" mt={1}>
-                                                    This field is required
-                                                </Text>
-                                            )}
+                                            <Box position="relative">
+                                                <Textarea
+                                                    placeholder={`Enter ${question.title}`}
+                                                    value={additionalInformationResponses[question.id] || ""}
+                                                    onChange={(e) => handleAdditionalInfoChange(question.id, e.target.value)}
+                                                    resize="none"
+                                                    minHeight="6em"
+                                                    maxHeight="12em"
+                                                    maxLength={500}
+                                                    _focus={{ borderColor: "blue.400" }}
+                                                    pr="30px"
+                                                />
+                                                {(!additionalInformationResponses[question.id] || additionalInformationResponses[question.id].trim() === "") && (
+                                                    <Box 
+                                                        position="absolute" 
+                                                        top="10px" 
+                                                        right="10px" 
+                                                        w="8px" 
+                                                        h="8px" 
+                                                        borderRadius="50%" 
+                                                        bg="red.500"
+                                                    />
+                                                )}
+                                            </Box>
                                         </FormControl>
                                     ))}
                                 </VStack>

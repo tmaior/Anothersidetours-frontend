@@ -133,7 +133,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                 createdBy:"Client"
             };
 
-            const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations`, {
+            const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/booking-details`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

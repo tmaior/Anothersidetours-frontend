@@ -26,11 +26,13 @@ import {
     Textarea,
     useToast,
     VStack,
+    InputGroup,
+    InputRightElement,
 } from '@chakra-ui/react'
 import DashboardLayout from "../../../components/DashboardLayout";
 import {useRouter} from "next/router";
 import {CardElement, useElements, useStripe} from '@stripe/react-stripe-js';
-import {AddIcon, DeleteIcon, MinusIcon} from "@chakra-ui/icons";
+import {AddIcon, DeleteIcon, MinusIcon, CalendarIcon} from "@chakra-ui/icons";
 import {useGuest} from "../../../contexts/GuestContext";
 import PurchaseSummary from '../../../components/PurchaseSummary';
 import {useCart} from "../../../contexts/CartContext";
@@ -98,7 +100,10 @@ const PurchasePage = () => {
 
     const [quantity, setQuantity] = useState(1);
     const [quantityError, setQuantityError] = useState(false);
-    const [date, setDate] = useState('2024-12-20');
+    const [date, setDate] = useState(() => {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    });
     const [time, setTime] = useState('08:00');
     const [organizerName, setOrganizerName] = useState("");
     const [emailEnabled, setEmailEnabled] = useState(true);
@@ -918,6 +923,23 @@ const PurchasePage = () => {
         setAdditionalInformationResponses(prev => ({...prev, [id]: value}));
     };
 
+    const formatDateDisplay = (dateString: string) => {
+        if (!dateString) return '';
+        
+        const [year, month, day] = dateString.split('-').map(num => parseInt(num, 10));
+        
+        const date = new Date(year, month - 1, day);
+        
+        const options: Intl.DateTimeFormatOptions = { 
+            weekday: 'short', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        
+        return date.toLocaleDateString('en-US', options);
+    };
+
     if (loading) {
         return (
             <DashboardLayout>
@@ -1071,13 +1093,38 @@ const PurchasePage = () => {
                             </HStack>
                         </FormControl>
 
-                        <FormControl mb={4} w={"150px"}>
+                        <FormControl mb={4} w={{base: "100%", md: "300px"}}>
                             <FormLabel>Date</FormLabel>
-                            <Input
-                                type="date"
-                                value={date}
-                                onChange={(e) => setDate(e.target.value)}
-                            />
+                            <InputGroup>
+                                <Input
+                                    placeholder="Select date"
+                                    value={formatDateDisplay(date)}
+                                    onClick={(e) => {
+                                        const dateInput = e.currentTarget.parentElement?.querySelector('input[type="date"]');
+                                        if (dateInput) {
+                                            (dateInput as HTMLInputElement).showPicker();
+                                        }
+                                    }}
+                                    readOnly
+                                    cursor="pointer"
+                                />
+                                <InputRightElement>
+                                    <CalendarIcon color="gray.500" />
+                                </InputRightElement>
+                                <Input
+                                    type="date"
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
+                                    position="absolute"
+                                    opacity="0"
+                                    top="0"
+                                    left="0"
+                                    width="100%"
+                                    height="100%"
+                                    cursor="pointer"
+                                    zIndex="-1"
+                                />
+                            </InputGroup>
                         </FormControl>
 
                         <FormControl mb={4}>

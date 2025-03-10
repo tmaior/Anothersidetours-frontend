@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {
     Box,
     Button,
@@ -127,7 +127,9 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
         sopNotes,
         meetingLocation,
         mapEnabled,
-        operationProcedures
+        operationProcedures,
+        cancellationPolicy,
+        considerations
     ]);
 
     function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -210,6 +212,8 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
         setNewIncludedItem("");
         setNewBringItem("");
         setOperationProcedures("");
+        setCancellationPolicy("");
+        setConsiderations("");
         setImagePreview(null);
         setImageFile(null);
     }
@@ -309,6 +313,42 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
                                     isRequired
                                     value={operationProcedures}
                                     onChange={(e) => setOperationProcedures(e.target.value)}
+                                />
+                                <Text fontSize="xs" color="gray.500">
+                                    0 characters | 0 words
+                                </Text>
+                            </Box>
+
+                            <Box>
+                                <Text fontSize="sm" mb={1}>
+                                    Cancellation Policy
+                                </Text>
+                                <Textarea
+                                    placeholder="Write the cancellation policy"
+                                    isRequired
+                                    value={cancellationPolicy}
+                                    onChange={(e) => {
+                                        setCancellationPolicy(e.target.value);
+                                        setGuestCancellationPolicy(e.target.value);
+                                    }}
+                                />
+                                <Text fontSize="xs" color="gray.500">
+                                    0 characters | 0 words
+                                </Text>
+                            </Box>
+
+                            <Box>
+                                <Text fontSize="sm" mb={1}>
+                                    Considerations
+                                </Text>
+                                <Textarea
+                                    placeholder="Write any special considerations"
+                                    isRequired
+                                    value={considerations}
+                                    onChange={(e) => {
+                                        setConsiderations(e.target.value);
+                                        setGuestConsiderations(e.target.value);
+                                    }}
                                 />
                                 <Text fontSize="xs" color="gray.500">
                                     0 characters | 0 words
@@ -602,7 +642,7 @@ function SchedulesAvailabilityStep({
             if (period === "PM" && hours < 12) adjustedHours += 12;
             if (period === "AM" && hours === 12) adjustedHours = 0;
 
-            return { hours: adjustedHours, minutes };
+            return {hours: adjustedHours, minutes};
         };
 
         const formatTime = (hours, minutes) => {
@@ -616,7 +656,7 @@ function SchedulesAvailabilityStep({
         const end = convertTo24Hour(endTime, endPeriod);
 
         const timeSlots = [];
-        const current = { ...start };
+        const current = {...start};
 
         while (
             current.hours < end.hours ||
@@ -659,6 +699,8 @@ function SchedulesAvailabilityStep({
                     price: Number(price),
                     guestLimit: Number(guestLimit),
                     StandardOperation: operationProcedures,
+                    cancellationPolicy: cancellationPolicy,
+                    considerations: considerations,
                     minPerEventLimit: minPerEventLimit,
                     maxPerEventLimit: maxPerEventLimit,
                     tenantId: tenantId
@@ -726,7 +768,7 @@ function SchedulesAvailabilityStep({
                 
                 if (questions.length > 0) {
                     await Promise.all(
-                        questions.map(question => 
+                        questions.map(question =>
                             fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information`, {
                                 method: "POST",
                                 headers: {"Content-Type": "application/json"},
@@ -920,7 +962,7 @@ function SchedulesAvailabilityStep({
 
                     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing`, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {"Content-Type": "application/json"},
                         body: JSON.stringify(bodyData),
                     });
 

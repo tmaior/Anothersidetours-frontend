@@ -9,11 +9,10 @@ import SelectDateTypeSwitch from '../../../components/SelectDateTypeSwitch'
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'
 import { AgGridReact } from 'ag-grid-react'
 
-// Import ag-grid styles
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-alpine.css'
-import ModalPageLayout from '../../../components/ModalPageLayout'
 import ModalReport from '../../../components/ModalReport'
+import { ColDef } from 'ag-grid-community'
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
@@ -28,7 +27,14 @@ export default function Reports() {
     { make: 'Toyota', model: 'Corolla', price: 29600, electric: false }
   ])
 
-  const [colDefs, setColDefs] = useState([
+  type CarData = {
+    make: string;
+    model: string;
+    price: number;
+    electric: boolean
+  }
+
+  const [colDefs, setColDefs] = useState<ColDef<CarData>[]>([
     { field: 'make' },
     { field: 'model' },
     { field: 'price' },
@@ -144,7 +150,7 @@ export default function Reports() {
               className="ag-theme-alpine"
               style={{ height: 500, width: '100%' }}
             >
-              <AgGridReact rowData={rowData} columnDefs={colDefs} />
+              <AgGridReact<CarData> rowData={rowData} columnDefs={colDefs} />
             </div>
           </Flex>
         </Flex>

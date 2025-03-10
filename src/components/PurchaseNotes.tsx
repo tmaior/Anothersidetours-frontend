@@ -38,39 +38,63 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
         customerNotes: true,
     });
     const [purchaseNotes, setPurchaseNotes] = useState<Note[]>([]);
+    const [eventNotes, setEventNotes] = useState<Note[]>([]);
     const [newNoteText, setNewNoteText] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const {isOpen, onOpen, onClose} = useDisclosure();
+    const {
+        isOpen: isEventNoteOpen,
+        onOpen: onEventNoteOpen,
+        onClose: onEventNoteClose
+    } = useDisclosure();
     const toast = useToast();
 
-    const eventNotes = [];
     const customerNotes = [];
 
     useEffect(() => {
         if (reservationId) {
-            fetchNotes();
+            fetchPurchaseNotes();
+            fetchEventNotes();
         }
     }, [reservationId]);
 
-    const fetchNotes = async () => {
+    const fetchPurchaseNotes = async () => {
         try {
             setIsLoading(true);
             const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/purchase-notes/${reservationId}`);
             setPurchaseNotes(response.data);
         } catch (error) {
             toast({
-                title: "Error fetching notes",
+                title: "Error fetching purchase notes",
                 status: "error",
                 duration: 3000,
                 isClosable: true,
             });
-            console.error("Error fetching notes:", error);
+            console.error("Error fetching purchase notes:", error);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleCreateNote = async () => {
+    const fetchEventNotes = async () => {
+        try {
+            setIsLoading(true);
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/notes/${reservationId}`);
+            setEventNotes(response.data);
+        } catch (error) {
+            toast({
+                title: "Error fetching event notes",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            console.error("Error fetching event notes:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleCreatePurchaseNote = async () => {
         if (!newNoteText.trim()) return;
 
         try {
@@ -82,7 +106,7 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
 
             setNewNoteText("");
             onClose();
-            fetchNotes();
+            fetchPurchaseNotes();
             toast({
                 title: "Note created",
                 status: "success",
@@ -102,11 +126,43 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
         }
     };
 
-    const handleDeleteNote = async (id: string) => {
+    const handleCreateEventNote = async () => {
+        if (!newNoteText.trim()) return;
+
+        try {
+            setIsLoading(true);
+            await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/notes`, {
+                reservationId,
+                description: newNoteText
+            });
+
+            setNewNoteText("");
+            onEventNoteClose();
+            fetchEventNotes();
+            toast({
+                title: "Event note created",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            toast({
+                title: "Error creating event note",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            console.error("Error creating event note:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDeletePurchaseNote = async (id: string) => {
         try {
             setIsLoading(true);
             await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/purchase-notes/${id}`);
-            fetchNotes();
+            fetchPurchaseNotes();
             toast({
                 title: "Note deleted",
                 status: "success",
@@ -121,6 +177,30 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
                 isClosable: true,
             });
             console.error("Error deleting note:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDeleteEventNote = async (id: string) => {
+        try {
+            setIsLoading(true);
+            await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/notes/${id}`);
+            fetchEventNotes();
+            toast({
+                title: "Event note deleted",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            toast({
+                title: "Error deleting event note",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            console.error("Error deleting event note:", error);
         } finally {
             setIsLoading(false);
         }
@@ -190,15 +270,44 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
                                     </Box>
                                 )}
                             </HStack>
-                            <Button size="sm" variant="outline">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={onEventNoteOpen}
+                                isDisabled={!reservationId}
+                            >
                                 + Add Note
                             </Button>
                         </HStack>
                         {sections.eventNotes && (
-                            <VStack align="start">
-                                {eventNotes.length > 0 ? (
-                                    eventNotes.map((note, index) => (
-                                        <Text key={index}>{note}</Text>
+                            <VStack align="start" w="100%">
+                                {isLoading ? (
+                                    <Text>Loading notes...</Text>
+                                ) : eventNotes.length > 0 ? (
+                                    eventNotes.map((note) => (
+                                        <Box
+                                            key={note.id}
+                                            p={3}
+                                            bg="gray.50"
+                                            borderRadius="md"
+                                            w="100%"
+                                            position="relative"
+                                        >
+                                            <HStack justify="space-between" mb={2}>
+                                                <Text fontSize="xs" color="gray.500">
+                                                    {new Date(note.createdAt).toLocaleString()}
+                                                </Text>
+                                                <IconButton
+                                                    icon={<DeleteIcon/>}
+                                                    size="xs"
+                                                    colorScheme="red"
+                                                    variant="ghost"
+                                                    onClick={() => handleDeleteEventNote(note.id)}
+                                                    aria-label="Delete note"
+                                                />
+                                            </HStack>
+                                            <Text>{note.description}</Text>
+                                        </Box>
                                     ))
                                 ) : (
                                     <Text>No Event Notes</Text>
@@ -263,7 +372,7 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
                                                     size="xs"
                                                     colorScheme="red"
                                                     variant="ghost"
-                                                    onClick={() => handleDeleteNote(note.id)}
+                                                    onClick={() => handleDeletePurchaseNote(note.id)}
                                                     aria-label="Delete note"
                                                 />
                                             </HStack>
@@ -339,13 +448,43 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
                         <Button
                             colorScheme="blue"
                             mr={3}
-                            onClick={handleCreateNote}
+                            onClick={handleCreatePurchaseNote}
                             isLoading={isLoading}
                             isDisabled={!newNoteText.trim()}
                         >
                             Save Note
                         </Button>
                         <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+
+            <Modal isOpen={isEventNoteOpen} onClose={onEventNoteClose}>
+                <ModalOverlay/>
+                <ModalContent>
+                    <ModalHeader>Add Event Note</ModalHeader>
+                    <ModalCloseButton/>
+                    <ModalBody>
+                        <Textarea
+                            value={newNoteText}
+                            onChange={(e) => setNewNoteText(e.target.value)}
+                            placeholder="Enter your event note here..."
+                            size="md"
+                            resize="vertical"
+                            rows={5}
+                        />
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button
+                            colorScheme="blue"
+                            mr={3}
+                            onClick={handleCreateEventNote}
+                            isLoading={isLoading}
+                            isDisabled={!newNoteText.trim()}
+                        >
+                            Save Note
+                        </Button>
+                        <Button variant="ghost" onClick={onEventNoteClose}>Cancel</Button>
                     </ModalFooter>
                 </ModalContent>
             </Modal>

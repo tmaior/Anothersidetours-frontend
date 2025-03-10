@@ -1299,7 +1299,7 @@ const PurchasesPage = () => {
                         </Box>
                         <Divider mb={4}/>
                         <Box>
-                            <PurchaseNotes/>
+                            <PurchaseNotes reservationId={selectedReservation?.id} />
                         </Box>
                         <Divider mb={4}/>
                         <Box flex="1" overflowY="auto" padding="20px" paddingBottom="50px">

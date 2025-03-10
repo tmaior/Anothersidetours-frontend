@@ -18,6 +18,7 @@ import {
     ModalFooter,
     ModalHeader,
     ModalOverlay,
+    Portal,
     Text,
     Textarea,
     useDisclosure,
@@ -163,7 +164,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
 
     return (
         <CartProvider>
-            <Box display="flex" minH="100vh">
+            <Box display="flex" minH="100vh" position="relative">
                 <Box
                     as="nav"
                     width="250px"
@@ -175,6 +176,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     display="flex"
                     flexDirection="column"
                     alignItems="stretch"
+                    zIndex={10}
                 >
                     <VStack spacing={4} align="stretch" marginTop={"-50px"}>
                         <Box
@@ -615,9 +617,16 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         </Text>
                     </VStack>
 
-                    <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"} marginTop={"-60px"}>
-                        {/*{!isLoading && selectedTenant && (*/}
-                        <Menu placement="right-start" offset={[0, 0]} closeOnSelect={false}>
+                    <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"} marginTop={"-60px"} position="relative" zIndex={100}>
+                        <Menu 
+                            placement="right-start" 
+                            offset={[0, 0]} 
+                            closeOnSelect={false} 
+                            isLazy 
+                            lazyBehavior="keepMounted" 
+                            gutter={0} 
+                            strategy="fixed"
+                        >
                             <MenuButton
                                 color="white"
                                 variant="ghost"
@@ -659,79 +668,91 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                     </Box>
                                 </HStack>
                             </MenuButton>
-                            <MenuList minW="300px" bg="#222324"
-                                      maxH="calc(100vh - 120px)"
-                                      overflowY="auto">
-                                {tenants.map((tenant) => (
+                            <Portal>
+                                <MenuList 
+                                    minW="300px" 
+                                    bg="#222324"
+                                    maxH="calc(100vh - 120px)"
+                                    overflowY="auto"
+                                    zIndex={9999}
+                                    position="relative"
+                                    boxShadow="0px 0px 15px rgba(0, 0, 0, 0.5)"
+                                >
+                                    {tenants.map((tenant) => (
+                                        <MenuItem
+                                            key={tenant.id}
+                                            bg="#222324"
+                                            color="white"
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            onClick={() => handleSelectTenant(tenant)}
+                                        >
+                                            <HStack spacing={3}>
+                                                <Avatar size="sm" src={tenant.imageUrl}/>
+                                                <Box>
+                                                    <Text fontSize="sm" fontWeight="bold">
+                                                        {tenant.name}
+                                                    </Text>
+                                                    <Text fontSize="xs" color="gray.400">
+                                                        {tenant.location}
+                                                    </Text>
+                                                </Box>
+                                            </HStack>
+                                        </MenuItem>
+                                    ))}
+                                    <MenuDivider borderColor="#333" bg="#222324"/>
+                                    <MenuItem bg="#222324" color={"white"} _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}>Privacy Policy</MenuItem>
+                                    <MenuItem bg="#222324" color={"white"} _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}>Support</MenuItem>
+                                    <MenuItem bg="#222324" color={"white"} _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}>Help Center</MenuItem>
+                                    <MenuDivider borderColor="#333"/>
                                     <MenuItem
-                                        key={tenant.id}
                                         bg="#222324"
-                                        color="white"
+                                        color={"white"}
                                         _hover={{
                                             background: "rgba(255, 255, 255, 0.1)",
                                             transition: "background 0.2s ease-in-out",
                                         }}
-                                        onClick={() => handleSelectTenant(tenant)}
+                                        onClick={() => {
+                                            localStorage.removeItem("user");
+                                            router.push("/login");
+                                        }}
                                     >
-                                        <HStack spacing={3}>
-                                            <Avatar size="sm" src={tenant.imageUrl}/>
-                                            <Box>
-                                                <Text fontSize="sm" fontWeight="bold">
-                                                    {tenant.name}
-                                                </Text>
-                                                <Text fontSize="xs" color="gray.400">
-                                                    {tenant.location}
-                                                </Text>
-                                            </Box>
-                                        </HStack>
+                                        Logout
                                     </MenuItem>
-                                ))}
-                                <MenuDivider borderColor="#333" bg="#222324"/>
-                                <MenuItem bg="#222324" color={"white"} _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}>Privacy Policy</MenuItem>
-                                <MenuItem bg="#222324" color={"white"} _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}>Support</MenuItem>
-                                <MenuItem bg="#222324" color={"white"} _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}>Help Center</MenuItem>
-                                <MenuDivider borderColor="#333"/>
-                                {/*<MenuItem bg="#222324" color={"white"} _hover={{*/}
-                                {/*    background: "rgba(255, 255, 255, 0.1)",*/}
-                                {/*    transition: "background 0.2s ease-in-out",*/}
-                                {/*}}>Another Side Of San Diego Tours</MenuItem>*/}
-                                <MenuItem
-                                    bg="#222324"
-                                    color={"white"}
-                                    _hover={{
+                                    <MenuDivider borderColor="#333"/>
+                                    <MenuItem bg="#222324" color={"white"} icon={<AiOutlinePlus/>} _hover={{
                                         background: "rgba(255, 255, 255, 0.1)",
                                         transition: "background 0.2s ease-in-out",
-                                    }}
-                                    onClick={() => {
-                                        localStorage.removeItem("user");
-                                        router.push("/login");
-                                    }}
-                                >
-                                    Logout
-                                </MenuItem>
-                                <MenuDivider borderColor="#333"/>
-                                <MenuItem bg="#222324" color={"white"} icon={<AiOutlinePlus/>} _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }} onClick={onOpen}>
-                                    Add New City
-                                </MenuItem>
-                            </MenuList>
+                                    }} onClick={onOpen}>
+                                        Add New City
+                                    </MenuItem>
+                                </MenuList>
+                            </Portal>
                         </Menu>
-                        {/*)}*/}
                     </Box>
                 </Box>
 
-                <Box flex="1" p={8} marginLeft="250px" maxW="calc(100% - 250px)" overflowY="auto" minH="100vh">
+                <Box 
+                    flex="1" 
+                    p={8} 
+                    marginLeft="250px" 
+                    maxW="calc(100% - 250px)" 
+                    overflowY="auto" 
+                    minH="100vh"
+                    position="relative"
+                    zIndex={1}
+                >
                     {isLoading ? (
                         <Text color="white">Loading...</Text>
                     ) : (

@@ -12,6 +12,8 @@ import {
     HStack,
     IconButton,
     Input,
+    InputGroup,
+    InputRightElement,
     Modal,
     ModalBody,
     ModalCloseButton,
@@ -26,16 +28,15 @@ import {
     Textarea,
     useToast,
     VStack,
-    InputGroup,
-    InputRightElement,
 } from '@chakra-ui/react'
 import DashboardLayout from "../../../components/DashboardLayout";
 import {useRouter} from "next/router";
 import {CardElement, useElements, useStripe} from '@stripe/react-stripe-js';
-import {AddIcon, DeleteIcon, MinusIcon, CalendarIcon} from "@chakra-ui/icons";
+import {AddIcon, CalendarIcon, DeleteIcon, MinusIcon} from "@chakra-ui/icons";
 import {useGuest} from "../../../contexts/GuestContext";
 import PurchaseSummary from '../../../components/PurchaseSummary';
 import {useCart} from "../../../contexts/CartContext";
+import axios from 'axios';
 
 interface AddOn {
     id: string;
@@ -145,7 +146,7 @@ const PurchasePage = () => {
 
     const [items, setItems] = useState([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
     const [additionalInformationQuestions, setAdditionalInformationQuestions] = useState([]);
-    const [additionalInformationResponses, setAdditionalInformationResponses] = useState<{[key: string]: string}>({});
+    const [additionalInformationResponses, setAdditionalInformationResponses] = useState<{ [key: string]: string }>({});
 
     const fetchAddOnsForTour = async (tourId: string) => {
         try {
@@ -687,6 +688,17 @@ const PurchasePage = () => {
             for (const reservation of reservationResults) {
                 const reservationId = reservation.id;
 
+                if (purchaseNote && purchaseNote.trim() !== '') {
+                    try {
+                        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/purchase-notes`, {
+                            reservationId,
+                            description: purchaseNote
+                        });
+                    } catch (noteError) {
+                        console.error("Error saving purchase note:", noteError);
+                    }
+                }
+
                 if (customLineItems.length > 0) {
                     const customItemsPayload = customLineItems.map(item => ({
                         tenantId: tenantId,
@@ -872,8 +884,8 @@ const PurchasePage = () => {
             const currentTourId = cart.length > 0 && selectedCartItemIndex < cart.length
                 ? cart[selectedCartItemIndex].id
                 : typeof id === 'string' ? id : Array.isArray(id) ? id[0] : null;
-            const shouldFetchAddons = 
-                !formDataMap[currentTourId]?.selectedAddOns || 
+            const shouldFetchAddons =
+                !formDataMap[currentTourId]?.selectedAddOns ||
                 formDataMap[currentTourId]?.selectedAddOns.length === 0;
             if (currentTourId && shouldFetchAddons) {
                 await fetchAddOnsForTour(currentTourId);
@@ -898,7 +910,7 @@ const PurchasePage = () => {
                 setAdditionalInformationQuestions(data);
 
                 const initialValues = data.reduce(
-                    (acc, input) => ({ ...acc, [input.id]: "" }),
+                    (acc, input) => ({...acc, [input.id]: ""}),
                     {}
                 );
                 setAdditionalInformationResponses(initialValues);
@@ -929,12 +941,12 @@ const PurchasePage = () => {
         const [year, month, day] = dateString.split('-').map(num => parseInt(num, 10));
         
         const date = new Date(year, month - 1, day);
-        
-        const options: Intl.DateTimeFormatOptions = { 
-            weekday: 'short', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+
+        const options: Intl.DateTimeFormatOptions = {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
         };
         
         return date.toLocaleDateString('en-US', options);
@@ -1109,7 +1121,7 @@ const PurchasePage = () => {
                                     cursor="pointer"
                                 />
                                 <InputRightElement>
-                                    <CalendarIcon color="gray.500" />
+                                    <CalendarIcon color="gray.500"/>
                                 </InputRightElement>
                                 <Input
                                     type="date"
@@ -1241,17 +1253,17 @@ const PurchasePage = () => {
                                                     minHeight="6em"
                                                     maxHeight="12em"
                                                     maxLength={500}
-                                                    _focus={{ borderColor: "blue.400" }}
+                                                    _focus={{borderColor: "blue.400"}}
                                                     pr="30px"
                                                 />
                                                 {(!additionalInformationResponses[question.id] || additionalInformationResponses[question.id].trim() === "") && (
-                                                    <Box 
-                                                        position="absolute" 
-                                                        top="10px" 
-                                                        right="10px" 
-                                                        w="8px" 
-                                                        h="8px" 
-                                                        borderRadius="50%" 
+                                                    <Box
+                                                        position="absolute"
+                                                        top="10px"
+                                                        right="10px"
+                                                        w="8px"
+                                                        h="8px"
+                                                        borderRadius="50%"
                                                         bg="red.500"
                                                     />
                                                 )}

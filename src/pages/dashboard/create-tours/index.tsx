@@ -73,7 +73,11 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
         imagePreview,
         setImagePreview,
         price,
-        setPrice
+        setPrice,
+        cancellationPolicy,
+        setCancellationPolicy,
+        considerations,
+        setConsiderations
     } = useGuest();
 
     const toast = useToast();
@@ -100,6 +104,8 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
         setNewBringItem("");
         setSopNotes(operationProcedures || "");
         setMeetingLocation(meetingLocation || "");
+        setCancellationPolicy(cancellationPolicy || "");
+        setConsiderations(considerations || "");
         setMapEnabled(false);
     }, []);
 
@@ -195,6 +201,9 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
         setTitle(formData.title);
         setDescription(formData.description);
         setPrice(formData.price);
+        setOperationProcedures(sopNotes);
+        setCancellationPolicy(cancellationPolicy);
+        setConsiderations(considerations);
         onNext();
     }
 
@@ -327,10 +336,7 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
                                     placeholder="Write the cancellation policy"
                                     isRequired
                                     value={cancellationPolicy}
-                                    onChange={(e) => {
-                                        setCancellationPolicy(e.target.value);
-                                        setGuestCancellationPolicy(e.target.value);
-                                    }}
+                                    onChange={(e) => setCancellationPolicy(e.target.value)}
                                 />
                                 <Text fontSize="xs" color="gray.500">
                                     0 characters | 0 words
@@ -345,10 +351,7 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
                                     placeholder="Write any special considerations"
                                     isRequired
                                     value={considerations}
-                                    onChange={(e) => {
-                                        setConsiderations(e.target.value);
-                                        setGuestConsiderations(e.target.value);
-                                    }}
+                                    onChange={(e) => setConsiderations(e.target.value)}
                                 />
                                 <Text fontSize="xs" color="gray.500">
                                     0 characters | 0 words
@@ -586,7 +589,11 @@ function SchedulesAvailabilityStep({
         setOperationProcedures,
         tenantId,
         setTourId,
-        tourId
+        tourId,
+        cancellationPolicy,
+        considerations,
+        setCancellationPolicy,
+        setConsiderations
     } = useGuest();
 
     const toast = useToast();
@@ -607,6 +614,8 @@ function SchedulesAvailabilityStep({
         setBringItems([]);
         setImagePreview(null);
         setOperationProcedures("");
+        setCancellationPolicy("");
+        setConsiderations("");
 
         if (questionnaireRef.current) {
             questionnaireRef.current.resetQuestions();
@@ -699,8 +708,8 @@ function SchedulesAvailabilityStep({
                     price: Number(price),
                     guestLimit: Number(guestLimit),
                     StandardOperation: operationProcedures,
-                    cancellationPolicy: cancellationPolicy,
-                    considerations: considerations,
+                    Cancellation_Policy: cancellationPolicy,
+                    Considerations: considerations,
                     minPerEventLimit: minPerEventLimit,
                     maxPerEventLimit: maxPerEventLimit,
                     tenantId: tenantId
@@ -1888,6 +1897,8 @@ function CreateToursPage({isEditing = false}: { isEditing?: boolean }) {
         setImagePreview,
         setImageFile,
         setOperationProcedures,
+        setCancellationPolicy,
+        setConsiderations
     } = useGuest();
 
     const resetFields = () => {
@@ -1908,19 +1919,10 @@ function CreateToursPage({isEditing = false}: { isEditing?: boolean }) {
         setIncludedItems([]);
         setBringItems([]);
         setOperationProcedures("");
+        setCancellationPolicy("");
+        setConsiderations("");
         setImagePreview(null);
         setImageFile(null);
-        setSchedule([]);
-        setEventDuration('');
-        setGuestLimit(0);
-        setEarlyArrival(false);
-        setTitle("");
-        setDescription("");
-        setPrice(0);
-        setIncludedItems([]);
-        setBringItems([]);
-        setImagePreview(null);
-        setOperationProcedures("");
     };
 
     useEffect(() => {

@@ -67,6 +67,10 @@ interface GuestContextType {
     setImageUrl: React.Dispatch<React.SetStateAction<string | null>>;
     price: number;
     setPrice: (price: number) => void;
+    cancellationPolicy: string;
+    setCancellationPolicy: (value: string) => void;
+    considerations: string;
+    setConsiderations: (value: string) => void;
 }
 
 const GuestContext = createContext<GuestContextType | undefined>(undefined);
@@ -106,6 +110,8 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [price, setPrice] = useState<number>(0);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [cancellationPolicy, setCancellationPolicy] = useState<string>("");
+    const [considerations, setConsiderations] = useState<string>("");
 
     const resetGuestQuantity = () => {
         setGuestQuantity(0);
@@ -181,7 +187,11 @@ export function GuestProvider({children}: { children: ReactNode }) {
                 price,
                 setPrice,
                 imageUrl,
-                setImageUrl
+                setImageUrl,
+                cancellationPolicy,
+                setCancellationPolicy,
+                considerations,
+                setConsiderations
             }}
         >
             {children}

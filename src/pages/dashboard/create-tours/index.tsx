@@ -49,6 +49,7 @@ import withAuth from "../../../utils/withAuth";
 import {useRouter} from "next/router";
 import CustomerQuestionnaire, {QuestionnaireRef} from "../../../components/CustomerQuestionnaire";
 import {useDemographics} from "../../../contexts/DemographicsContext";
+import axios from "axios";
 
 function DescriptionContentStep({onNext}: { onNext: () => void }) {
     const [newIncludedItem, setNewIncludedItem] = useState("");
@@ -578,6 +579,7 @@ function SchedulesAvailabilityStep({
         includedItems,
         bringItems,
         imagePreview,
+        imageFile,
         price,
         setTitle,
         setDescription,
@@ -691,6 +693,37 @@ function SchedulesAvailabilityStep({
             const method = isEditing ? "PUT" : "POST";
             const {id} = router.query;
 
+            let imageUrlToSave = imagePreview;
+            if (imageFile) {
+                try {
+                    const formData = new FormData();
+                    formData.append("file", imageFile);
+                    
+                    const uploadResponse = await axios.post(
+                        `${process.env.NEXT_PUBLIC_API_URL}/upload`,
+                        formData,
+                        {
+                            headers: {
+                                "Content-Type": "multipart/form-data",
+                            },
+                        }
+                    );
+                    
+                    if (uploadResponse.data && uploadResponse.data.url) {
+                        imageUrlToSave = uploadResponse.data.url;
+                    }
+                } catch (error) {
+                    console.error("Error uploading image:", error);
+                    toast({
+                        title: "Error sending image",
+                        description: "The tour will be saved without an image.",
+                        status: "warning",
+                        duration: 3000,
+                        isClosable: true,
+                    });
+                }
+            }
+
             const url = isEditing
                 ? `${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`
                 : `${process.env.NEXT_PUBLIC_API_URL}/tours`;
@@ -704,7 +737,7 @@ function SchedulesAvailabilityStep({
                     name: title,
                     description,
                     duration: Number(eventDuration),
-                    imageUrl: imagePreview,
+                    imageUrl: imageUrlToSave,
                     price: Number(price),
                     guestLimit: Number(guestLimit),
                     StandardOperation: operationProcedures,

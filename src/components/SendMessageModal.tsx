@@ -23,6 +23,7 @@ import {
 } from "@chakra-ui/react";
 import "react-quill/dist/quill.snow.css";
 import dynamic from "next/dynamic";
+import axios from "axios";
 
 const ReactQuill = dynamic(() => import("react-quill"), {
     ssr: false,
@@ -34,10 +35,10 @@ const SendMessageModal = ({isOpen, onClose, eventDetails}) => {
     const [emailSubject, setEmailSubject] = useState("");
     const [emailBody, setEmailBody] = useState("");
     const [smsMessage, setSmsMessage] = useState("");
-    // const [selectedTemplate, setSelectedTemplate] = useState("");
+    const [isSending, setIsSending] = useState(false);
     const toast = useToast();
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (emailEnabled && (!emailSubject || !emailBody)) {
             toast({
                 title: "Email Error",
@@ -60,23 +61,43 @@ const SendMessageModal = ({isOpen, onClose, eventDetails}) => {
             return;
         }
 
-        // if (emailEnabled) {
-        //
-        // }
-        //
-        // if (smsEnabled) {
-        //
-        // }
+        setIsSending(true);
 
-        toast({
-            title: "Success",
-            description: "Message sent successfully.",
-            status: "success",
-            duration: 3000,
-            isClosable: true,
-        });
+        try {
+            if (emailEnabled) {
+                await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/mail/send`, {
+                    to: eventDetails.email,
+                    subject: emailSubject,
+                    text: emailBody.replace(/<[^>]*>/g, ''),
+                    html: emailBody,
+                });
+            }
 
-        onClose();
+            // if (smsEnabled) {
+            //
+            // }
+
+            toast({
+                title: "Success",
+                description: "Message sent successfully.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+
+            onClose();
+        } catch (error) {
+            console.error("Error sending message:", error);
+            toast({
+                title: "Error",
+                description: "Failed to send message. Please try again.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        } finally {
+            setIsSending(false);
+        }
     };
 
     const formatDateTime = (isoDateTime: string): string => {
@@ -119,13 +140,18 @@ const SendMessageModal = ({isOpen, onClose, eventDetails}) => {
                                 alt="Tour Icon"
                                 objectFit="fill"
                             />
-                            <VStack>
+                            <VStack align="start" spacing={0} w="100%">
                                 <Text fontWeight="bold">{eventDetails.title}</Text>
                                 <Text color="gray.600">
                                     {eventDetails.date && eventDetails.time
                                         ? `${eventDetails.date} at ${eventDetails.time}`
                                         : formattedDateTime}
                                 </Text>
+                                {eventDetails.email && (
+                                    <Text color="gray.600" fontSize="sm">
+                                        Recipient: {eventDetails.email}
+                                    </Text>
+                                )}
                             </VStack>
                         </HStack>
                         <FormControl display="flex" alignItems="center">
@@ -140,17 +166,6 @@ const SendMessageModal = ({isOpen, onClose, eventDetails}) => {
                         </FormControl>
                         {emailEnabled && (
                             <>
-                                {/*<FormControl>*/}
-                                {/*    <FormLabel>Load Template</FormLabel>*/}
-                                {/*    <Select*/}
-                                {/*        placeholder="Load Template"*/}
-                                {/*        value={selectedTemplate}*/}
-                                {/*        onChange={(e) => setSelectedTemplate(e.target.value)}*/}
-                                {/*    >*/}
-                                {/*        <option value="template1">Template 1</option>*/}
-                                {/*        <option value="template2">Template 2</option>*/}
-                                {/*    </Select>*/}
-                                {/*</FormControl>*/}
                                 <FormControl isRequired>
                                     <FormLabel>Subject</FormLabel>
                                     <Input
@@ -226,7 +241,12 @@ const SendMessageModal = ({isOpen, onClose, eventDetails}) => {
                     <Button variant="outline" mr={3} onClick={onClose}>
                         Cancel
                     </Button>
-                    <Button colorScheme="blue" onClick={handleSend}>
+                    <Button 
+                        colorScheme="blue" 
+                        onClick={handleSend} 
+                        isLoading={isSending}
+                        loadingText="Sending"
+                    >
                         Send
                     </Button>
                 </ModalFooter>

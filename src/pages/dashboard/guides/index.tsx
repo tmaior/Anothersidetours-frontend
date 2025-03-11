@@ -12,6 +12,7 @@ interface Guide {
     name: string;
     status: string;
     initials: string;
+    imageUrl?: string;
 }
 
 function GuidesPage() {
@@ -94,6 +95,7 @@ function GuidesPage() {
                             key={guide.id}
                             name={guide.name}
                             status={guide.status}
+                            imageUrl={guide.imageUrl}
                             onEdit={() => handleEdit(guide.id)}
                             onDelete={() => handleDelete(guide.id)}
                         />

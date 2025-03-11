@@ -7,14 +7,24 @@ import {
     Input,
     FormLabel,
     Icon,
+    useToast,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { FaImage } from "react-icons/fa";
+import axios from "axios";
 
-export default function PhotoUpload() {
-    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+interface PhotoUploadProps {
+    onImageUploaded?: (imageUrl: string) => void;
+    onFileSelected?: (file: File) => void;
+    imageUrl?: string;
+}
 
-    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+export default function PhotoUpload({ onImageUploaded, onFileSelected, imageUrl }: PhotoUploadProps) {
+    const [selectedImage, setSelectedImage] = useState<string | null>(imageUrl || null);
+    const [isUploading, setIsUploading] = useState(false);
+    const toast = useToast();
+
+    const handleImageSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
@@ -22,6 +32,48 @@ export default function PhotoUpload() {
                 setSelectedImage(reader.result as string);
             };
             reader.readAsDataURL(file);
+            if (onFileSelected) {
+                onFileSelected(file);
+            }
+        }
+    };
+    const uploadFile = async (file: File): Promise<string | null> => {
+        if (!file) return null;
+        
+        try {
+            setIsUploading(true);
+            const formData = new FormData();
+            formData.append("file", file);
+            
+            const response = await axios.post(
+                `${process.env.NEXT_PUBLIC_API_URL}/upload`,
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                }
+            );
+            
+            if (response.data && response.data.url) {
+                if (onImageUploaded) {
+                    onImageUploaded(response.data.url);
+                }
+                return response.data.url;
+            }
+            return null;
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            toast({
+                title: "Error sending image",
+                description: "Unable to upload image to server.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return null;
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -60,10 +112,16 @@ export default function PhotoUpload() {
                         accept="image/png, image/jpeg"
                         hidden
                         id="file-upload"
-                        onChange={handleImageUpload}
+                        onChange={handleImageSelection}
                     />
-                    <Button as="label" htmlFor="file-upload" colorScheme="blue">
-                        Upload New Photo
+                    <Button 
+                        as="label" 
+                        htmlFor="file-upload" 
+                        colorScheme="blue"
+                        isLoading={isUploading}
+                        loadingText="Sending..."
+                    >
+                        Select Photo
                     </Button>
                     <Text fontSize="sm" color="gray.500">
                         Check that the image is in <b>PNG</b> or <b>JPG</b> format and does

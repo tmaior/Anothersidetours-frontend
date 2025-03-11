@@ -4,6 +4,7 @@ import {DeleteIcon, EditIcon} from "@chakra-ui/icons";
 interface GuideItemProps {
     name: string;
     status: string;
+    imageUrl?: string;
     onEdit: () => void;
     onDelete: () => void;
 }
@@ -11,6 +12,7 @@ interface GuideItemProps {
 export default function GuideItem({
                                       name,
                                       status,
+                                      imageUrl,
                                       onEdit,
                                       onDelete,
                                   }: GuideItemProps) {
@@ -29,7 +31,7 @@ export default function GuideItem({
             >
                 <GridItem>
                     <Box display="flex" alignItems="center">
-                        <Avatar name={name} src="https://bit.ly/broken-link" mr={4}/>
+                        <Avatar name={name} src={imageUrl || undefined} mr={4}/>
                         <Text fontWeight="bold">{name}</Text>
                     </Box>
                 </GridItem>

@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 import PhotoUpload from "../../../components/PhotoUpload";
 import DashboardLayout from "../../../components/DashboardLayout";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import withAuth from "../../../utils/withAuth";
 import {useRouter} from "next/router";
 import axios from "axios";
@@ -27,11 +27,14 @@ function GuideForm() {
         email: "",
         phone: "",
         bio: "",
+        imageUrl: "",
     });
     const [loading, setLoading] = useState(false);
     const toast = useToast();
     const [isEditing, setIsEditing] = useState(false);
     const {tenantId} = useGuest();
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const photoUploadRef = useRef<{ uploadFile?: (file: File) => Promise<string | null> }>(null);
 
     useEffect(() => {
         if (id && id !== "new") {
@@ -64,6 +67,17 @@ function GuideForm() {
         }));
     };
 
+    const handleFileSelected = (file: File) => {
+        setSelectedFile(file);
+    };
+
+    const handleImageUploaded = (imageUrl: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            imageUrl: imageUrl,
+        }));
+    };
+
     const handleSave = async () => {
         if (!formData.name || !formData.email) {
             toast({
@@ -78,8 +92,47 @@ function GuideForm() {
 
         try {
             setLoading(true);
+            
+            let imageUrl = formData.imageUrl;
+
+            if (selectedFile) {
+                try {
+                    const formData = new FormData();
+                    formData.append("file", selectedFile);
+                    
+                    const response = await axios.post(
+                        `${process.env.NEXT_PUBLIC_API_URL}/upload`,
+                        formData,
+                        {
+                            headers: {
+                                "Content-Type": "multipart/form-data",
+                            },
+                        }
+                    );
+                    
+                    if (response.data && response.data.url) {
+                        imageUrl = response.data.url;
+                    }
+                } catch (error) {
+                    console.error("Error uploading image:", error);
+                    toast({
+                        title: "Error sending image",
+                        description: "The guide will be saved without an image.",
+                        status: "warning",
+                        duration: 3000,
+                        isClosable: true,
+                    });
+                }
+            }
+            
+            const guideData = {
+                ...formData,
+                imageUrl,
+                tenantId,
+            };
+            
             if (isEditing) {
-                await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/guides/${id}`, formData);
+                await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/guides/${id}`, guideData);
                 toast({
                     title: "Guide Updated",
                     description: "The guide was successfully updated.",
@@ -88,10 +141,7 @@ function GuideForm() {
                     isClosable: true,
                 });
             } else {
-                await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/guides`, {
-                    ...formData,
-                    tenantId,
-                });
+                await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/guides`, guideData);
                 toast({
                     title: "Guide Created",
                     description: "The guide was successfully created.",
@@ -176,7 +226,11 @@ function GuideForm() {
                 </Box>
 
                 <Box mb={8}>
-                    <PhotoUpload/>
+                    <PhotoUpload 
+                        onImageUploaded={handleImageUploaded} 
+                        onFileSelected={handleFileSelected}
+                        imageUrl={formData.imageUrl}
+                    />
                 </Box>
                 <Divider marginBottom={"10px"}/>
                 <Flex justifyContent="center" mt={8}>

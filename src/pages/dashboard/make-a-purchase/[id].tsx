@@ -1,7 +1,5 @@
 import React, {useEffect, useState} from 'react'
 import {
-    Alert,
-    AlertIcon,
     Box,
     Button,
     Divider,
@@ -37,6 +35,7 @@ import {useGuest} from "../../../contexts/GuestContext";
 import PurchaseSummary from '../../../components/PurchaseSummary';
 import {useCart} from "../../../contexts/CartContext";
 import axios from 'axios';
+import PaymentWorkflow from "../../../components/PaymentWorkflow";
 
 interface AddOn {
     id: string;
@@ -147,6 +146,10 @@ const PurchasePage = () => {
     const [items, setItems] = useState([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
     const [additionalInformationQuestions, setAdditionalInformationQuestions] = useState([]);
     const [additionalInformationResponses, setAdditionalInformationResponses] = useState<{ [key: string]: string }>({});
+
+    const [paymentWorkflowType, setPaymentWorkflowType] = useState<string>('now');
+    const [paymentMethod, setPaymentMethod] = useState<string>('credit_card');
+    const [cardNumber, setCardNumber] = useState<string>('');
 
     const fetchAddOnsForTour = async (tourId: string) => {
         try {
@@ -924,9 +927,9 @@ const PurchasePage = () => {
 
     const areAllAdditionalInfoFieldsFilled = () => {
         if (additionalInformationQuestions.length === 0) return true;
-        
-        return additionalInformationQuestions.every(question => 
-            additionalInformationResponses[question.id] && 
+
+        return additionalInformationQuestions.every(question =>
+            additionalInformationResponses[question.id] &&
             additionalInformationResponses[question.id].trim() !== ""
         );
     };
@@ -950,6 +953,22 @@ const PurchasePage = () => {
         };
         
         return date.toLocaleDateString('en-US', options);
+    };
+
+    const handlePaymentWorkflowTypeChange = (type: string) => {
+        setPaymentWorkflowType(type);
+
+        if (type !== 'now') {
+            setDoNotCharge(true);
+        }
+    };
+
+    const handlePaymentMethodChange = (method: string) => {
+        setPaymentMethod(method);
+
+        if (method !== 'credit_card') {
+            setDoNotCharge(true);
+        }
     };
 
     if (loading) {
@@ -1487,63 +1506,16 @@ const PurchasePage = () => {
 
                         <Heading size="md" mb={4}>Payment</Heading>
 
-                        <FormControl display="flex" alignItems="center" mb={4}>
-                            <Switch
-                                isChecked={doNotCharge}
-                                onChange={(e) => setDoNotCharge(e.target.checked)}
-                                colorScheme="blue"
-                                mr={2}
-                            />
-                            <FormLabel mb="0">Do Not Charge Card Now</FormLabel>
-                        </FormControl>
-
-                        {!doNotCharge && (
-                            <Box mb={4}>
-                                <Text mb={2}>Card Details</Text>
-                                <div style={{
-                                    border: '1px solid #9E9E9E',
-                                    paddingBottom: '8px',
-                                    marginBottom: '16px',
-                                    padding: '4px 8px',
-                                    width: '100%',
-                                    borderRadius: '4px'
-                                }}>
-                                    <CardElement
-                                        options={{
-                                            hidePostalCode: true,
-                                            style: {
-                                                base: {
-                                                    iconColor: '#0c0e0e',
-                                                    color: '#000',
-                                                    fontWeight: '500',
-                                                    fontFamily: 'Arial, sans-serif',
-                                                    fontSize: '16px',
-                                                    fontSmoothing: 'antialiased',
-                                                    '::placeholder': {
-                                                        color: '#aab7c4',
-                                                    },
-                                                },
-                                                invalid: {
-                                                    color: '#9e2146',
-                                                    iconColor: '#fa755a',
-                                                },
-                                            },
-                                        }}
-                                    />
-                                </div>
-                                {errorMessage && (
-                                    <Box mt={2}>
-                                        <Alert status="error">
-                                            <AlertIcon/>
-                                            {errorMessage}
-                                        </Alert>
-                                    </Box>
-                                )}
-                            </Box>
-                        )}
-
+                        <PaymentWorkflow
+                            onWorkflowTypeChange={handlePaymentWorkflowTypeChange}
+                            onPaymentMethodChange={handlePaymentMethodChange}
+                            cardNumber={cardNumber}
+                            onCardNumberChange={(value) => setCardNumber(value)}
+                            doNotCharge={doNotCharge}
+                            onDoNotChargeChange={(value) => setDoNotCharge(value)}
+                            errorMessage={errorMessage}
+                        />
                         <Divider my={6}/>
-
                         <FormControl display="flex" alignItems="center" mb={4}>
                             <Text mr={4} fontWeight="medium">Internal Notes</Text>
                             <Switch

@@ -589,6 +589,16 @@ const PurchasePage = () => {
                 }
             }));
         }
+        if (isPurchaseNoteRequired() && (!purchaseNote || purchaseNote.trim() === "")) {
+            toast({
+                title: "Purchase Note Required",
+                description: `A purchase note is required when using ${paymentMethod} as the payment method.`,
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
 
         if (paymentMethod === 'cash' && paymentWorkflowType === 'now' && cashAmountReceived === 0) {
             setIsCashModalOpen(true);
@@ -960,6 +970,14 @@ const PurchasePage = () => {
             additionalInformationResponses[question.id] &&
             additionalInformationResponses[question.id].trim() !== ""
         );
+    };
+    const isPurchaseNoteRequired = () => {
+        return ['check', 'invoice', 'other'].includes(paymentMethod.toLowerCase());
+    };
+    const areAllFieldsValid = () => {
+        const additionalInfoValid = areAllAdditionalInfoFieldsFilled();
+        const purchaseNoteValid = !isPurchaseNoteRequired() || (purchaseNote && purchaseNote.trim() !== "");
+        return additionalInfoValid && purchaseNoteValid;
     };
 
     const handleAdditionalInfoChange = (id: string, value: string) => {
@@ -1578,12 +1596,19 @@ const PurchasePage = () => {
                                         onChange={(e) => setPurchaseTags(e.target.value)}
                                     />
                                 </FormControl>
-                                <FormControl>
-                                    <FormLabel>Purchase Note</FormLabel>
+                                <FormControl isRequired={isPurchaseNoteRequired()}>
+                                    <HStack justify="space-between">
+                                        <FormLabel>Purchase Note</FormLabel>
+                                        {isPurchaseNoteRequired() && purchaseNote.trim() === "" && (
+                                            <Text color="red.500" fontSize="sm">Required for {paymentMethod}</Text>
+                                        )}
+                                    </HStack>
                                     <Textarea
                                         value={purchaseNote}
                                         onChange={(e) => setPurchaseNote(e.target.value)}
-                                        placeholder="Enter Notes"
+                                        placeholder={isPurchaseNoteRequired() ? "Required for this payment method" : "Enter Notes"}
+                                        borderColor={isPurchaseNoteRequired() && purchaseNote.trim() === "" ? "red.300" : undefined}
+                                        _hover={{ borderColor: isPurchaseNoteRequired() && purchaseNote.trim() === "" ? "red.400" : undefined }}
                                     />
                                 </FormControl>
                             </VStack>
@@ -1601,7 +1626,7 @@ const PurchasePage = () => {
                                     onClick={handleCreateReservationAndPay}
                                     loadingText="Processing Payment"
                                     isLoading={submitting}
-                                    isDisabled={submitting || !areAllAdditionalInfoFieldsFilled()}
+                                    isDisabled={submitting || !areAllFieldsValid()}
                                 >
                                     Pay US${(totalWithDiscount +
                                     items.reduce((acc, item) => {

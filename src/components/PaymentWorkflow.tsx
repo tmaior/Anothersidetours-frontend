@@ -65,8 +65,6 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
 
     return (
         <Box>
-            <Text fontWeight="bold" mb={2}>Payment</Text>
-
             <Box mb={4}>
                 <Text fontSize="sm" mb={2}>Payment Workflow</Text>
                 <HStack spacing={2}>

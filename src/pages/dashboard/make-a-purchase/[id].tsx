@@ -957,15 +957,16 @@ const PurchasePage = () => {
 
     const handlePaymentWorkflowTypeChange = (type: string) => {
         setPaymentWorkflowType(type);
-
-        if (type !== 'now') {
+        if (type === 'later') {
+            setDoNotCharge(true);
+            setPaymentMethod('none');
+        } else if (type !== 'now') {
             setDoNotCharge(true);
         }
     };
 
     const handlePaymentMethodChange = (method: string) => {
         setPaymentMethod(method);
-
         if (method !== 'credit_card') {
             setDoNotCharge(true);
         }

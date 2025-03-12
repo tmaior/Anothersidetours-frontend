@@ -144,156 +144,167 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
                 </HStack>
             </Box>
 
-            <Box mb={4}>
-                <Text fontSize="sm" mb={2}>Payment Method</Text>
-                <HStack spacing={2}>
-                    <Button
-                        leftIcon={<FaCreditCard size="1.2em"/>}
-                        size="md"
-                        variant={paymentMethod === 'credit_card' ? 'solid' : 'outline'}
-                        colorScheme={paymentMethod === 'credit_card' ? 'blue' : 'gray'}
-                        onClick={() => handlePaymentMethodChange('credit_card')}
-                        aria-label="Credit Card"
-                        borderRadius="md"
-                        px={4}
-                        py={2}
-                        border="1px solid"
-                        borderColor={paymentMethod === 'credit_card' ? 'blue.500' : 'gray.200'}
-                        bg={paymentMethod === 'credit_card' ? 'blue.500' : 'white'}
-                        color={paymentMethod === 'credit_card' ? 'white' : 'black'}
-                    >
-                        <Text>Credit Card</Text>
-                    </Button>
-
-                    <Button
-                        leftIcon={<FaMoneyBill size="1.2em"/>}
-                        size="md"
-                        variant={paymentMethod === 'cash' ? 'solid' : 'outline'}
-                        colorScheme={paymentMethod === 'cash' ? 'blue' : 'gray'}
-                        onClick={() => handlePaymentMethodChange('cash')}
-                        aria-label="Cash"
-                        borderRadius="md"
-                        px={4}
-                        py={2}
-                        border="1px solid"
-                        borderColor={paymentMethod === 'cash' ? 'blue.500' : 'gray.200'}
-                        bg={paymentMethod === 'cash' ? 'blue.500' : 'white'}
-                        color={paymentMethod === 'cash' ? 'white' : 'black'}
-                    >
-                        <Text>Cash</Text>
-                    </Button>
-
-                    <Button
-                        leftIcon={<FaMoneyCheckAlt size="1.2em"/>}
-                        size="md"
-                        variant={paymentMethod === 'check' ? 'solid' : 'outline'}
-                        colorScheme={paymentMethod === 'check' ? 'blue' : 'gray'}
-                        onClick={() => handlePaymentMethodChange('check')}
-                        aria-label="Check"
-                        borderRadius="md"
-                        px={4}
-                        py={2}
-                        border="1px solid"
-                        borderColor={paymentMethod === 'check' ? 'blue.500' : 'gray.200'}
-                        bg={paymentMethod === 'check' ? 'blue.500' : 'white'}
-                        color={paymentMethod === 'check' ? 'white' : 'black'}
-                    >
-                        <Text>Check</Text>
-                    </Button>
-
-                    <Button
-                        leftIcon={<PiInvoice size="1.2em"/>}
-                        size="md"
-                        variant={paymentMethod === 'invoice' ? 'solid' : 'outline'}
-                        colorScheme={paymentMethod === 'invoice' ? 'blue' : 'gray'}
-                        onClick={() => handlePaymentMethodChange('invoice')}
-                        aria-label="Invoice"
-                        borderRadius="md"
-                        px={4}
-                        py={2}
-                        border="1px solid"
-                        borderColor={paymentMethod === 'invoice' ? 'blue.500' : 'gray.200'}
-                        bg={paymentMethod === 'invoice' ? 'blue.500' : 'white'}
-                        color={paymentMethod === 'invoice' ? 'white' : 'black'}
-                    >
-                        <Text>Invoice</Text>
-                    </Button>
-
-                    <Button
-                        size="md"
-                        variant={paymentMethod === 'other' ? 'solid' : 'outline'}
-                        colorScheme={paymentMethod === 'other' ? 'blue' : 'gray'}
-                        onClick={() => handlePaymentMethodChange('other')}
-                        aria-label="Other"
-                        borderRadius="md"
-                        px={4}
-                        py={2}
-                        border="1px solid"
-                        borderColor={paymentMethod === 'other' ? 'blue.500' : 'gray.200'}
-                        bg={paymentMethod === 'other' ? 'blue.500' : 'white'}
-                        color={paymentMethod === 'other' ? 'white' : 'black'}
-                    >
-                        <Text>Other</Text>
-                    </Button>
-                </HStack>
-            </Box>
-
-            <Stack direction="row" spacing={2} alignItems="center" mb={4}>
-                <Switch
-                    id="doNotChargeCard"
-                    isChecked={doNotCharge}
-                    onChange={handleDoNotChargeChange}
-                    size="sm"
-                    colorScheme="blue"
-                />
-                <Text fontSize="sm">Do Not Charge Card Now</Text>
-            </Stack>
-
-            {workflowType === 'now' && paymentMethod === 'credit_card' && !doNotCharge && (
-                <FormControl mb={4}>
+            {workflowType !== 'later' && (
+                <>
                     <Box mb={4}>
-                        <Text mb={2}>Card Details</Text>
-                        <div style={{
-                            border: '1px solid #9E9E9E',
-                            paddingBottom: '8px',
-                            marginBottom: '16px',
-                            padding: '4px 8px',
-                            width: '100%',
-                            borderRadius: '4px'
-                        }}>
-                            <CardElement
-                                options={{
-                                    hidePostalCode: true,
-                                    style: {
-                                        base: {
-                                            iconColor: '#0c0e0e',
-                                            color: '#000',
-                                            fontWeight: '500',
-                                            fontFamily: 'Arial, sans-serif',
-                                            fontSize: '16px',
-                                            fontSmoothing: 'antialiased',
-                                            '::placeholder': {
-                                                color: '#aab7c4',
-                                            },
-                                        },
-                                        invalid: {
-                                            color: '#9e2146',
-                                            iconColor: '#fa755a',
-                                        },
-                                    },
-                                }}
-                            />
-                        </div>
-                        {errorMessage && (
-                            <Box mt={2}>
-                                <Alert status="error">
-                                    <AlertIcon/>
-                                    {errorMessage}
-                                </Alert>
-                            </Box>
-                        )}
+                        <Text fontSize="sm" mb={2}>Payment Method</Text>
+                        <HStack spacing={2}>
+                            <Button
+                                leftIcon={<FaCreditCard size="1.2em"/>}
+                                size="md"
+                                variant={paymentMethod === 'credit_card' ? 'solid' : 'outline'}
+                                colorScheme={paymentMethod === 'credit_card' ? 'blue' : 'gray'}
+                                onClick={() => handlePaymentMethodChange('credit_card')}
+                                aria-label="Credit Card"
+                                borderRadius="md"
+                                px={4}
+                                py={2}
+                                border="1px solid"
+                                borderColor={paymentMethod === 'credit_card' ? 'blue.500' : 'gray.200'}
+                                bg={paymentMethod === 'credit_card' ? 'blue.500' : 'white'}
+                                color={paymentMethod === 'credit_card' ? 'white' : 'black'}
+                            >
+                                <Text>Credit Card</Text>
+                            </Button>
+
+                            <Button
+                                leftIcon={<FaMoneyBill size="1.2em"/>}
+                                size="md"
+                                variant={paymentMethod === 'cash' ? 'solid' : 'outline'}
+                                colorScheme={paymentMethod === 'cash' ? 'blue' : 'gray'}
+                                onClick={() => handlePaymentMethodChange('cash')}
+                                aria-label="Cash"
+                                borderRadius="md"
+                                px={4}
+                                py={2}
+                                border="1px solid"
+                                borderColor={paymentMethod === 'cash' ? 'blue.500' : 'gray.200'}
+                                bg={paymentMethod === 'cash' ? 'blue.500' : 'white'}
+                                color={paymentMethod === 'cash' ? 'white' : 'black'}
+                            >
+                                <Text>Cash</Text>
+                            </Button>
+
+                            <Button
+                                leftIcon={<FaMoneyCheckAlt size="1.2em"/>}
+                                size="md"
+                                variant={paymentMethod === 'check' ? 'solid' : 'outline'}
+                                colorScheme={paymentMethod === 'check' ? 'blue' : 'gray'}
+                                onClick={() => handlePaymentMethodChange('check')}
+                                aria-label="Check"
+                                borderRadius="md"
+                                px={4}
+                                py={2}
+                                border="1px solid"
+                                borderColor={paymentMethod === 'check' ? 'blue.500' : 'gray.200'}
+                                bg={paymentMethod === 'check' ? 'blue.500' : 'white'}
+                                color={paymentMethod === 'check' ? 'white' : 'black'}
+                            >
+                                <Text>Check</Text>
+                            </Button>
+
+                            <Button
+                                leftIcon={<PiInvoice size="1.2em"/>}
+                                size="md"
+                                variant={paymentMethod === 'invoice' ? 'solid' : 'outline'}
+                                colorScheme={paymentMethod === 'invoice' ? 'blue' : 'gray'}
+                                onClick={() => handlePaymentMethodChange('invoice')}
+                                aria-label="Invoice"
+                                borderRadius="md"
+                                px={4}
+                                py={2}
+                                border="1px solid"
+                                borderColor={paymentMethod === 'invoice' ? 'blue.500' : 'gray.200'}
+                                bg={paymentMethod === 'invoice' ? 'blue.500' : 'white'}
+                                color={paymentMethod === 'invoice' ? 'white' : 'black'}
+                            >
+                                <Text>Invoice</Text>
+                            </Button>
+
+                            <Button
+                                size="md"
+                                variant={paymentMethod === 'other' ? 'solid' : 'outline'}
+                                colorScheme={paymentMethod === 'other' ? 'blue' : 'gray'}
+                                onClick={() => handlePaymentMethodChange('other')}
+                                aria-label="Other"
+                                borderRadius="md"
+                                px={4}
+                                py={2}
+                                border="1px solid"
+                                borderColor={paymentMethod === 'other' ? 'blue.500' : 'gray.200'}
+                                bg={paymentMethod === 'other' ? 'blue.500' : 'white'}
+                                color={paymentMethod === 'other' ? 'white' : 'black'}
+                            >
+                                <Text>Other</Text>
+                            </Button>
+                        </HStack>
                     </Box>
-                </FormControl>
+
+                    <Stack direction="row" spacing={2} alignItems="center" mb={4}>
+                        <Switch
+                            id="doNotChargeCard"
+                            isChecked={doNotCharge}
+                            onChange={handleDoNotChargeChange}
+                            size="sm"
+                            colorScheme="blue"
+                        />
+                        <Text fontSize="sm">Do Not Charge Card Now</Text>
+                    </Stack>
+
+                    {workflowType === 'now' && paymentMethod === 'credit_card' && !doNotCharge && (
+                        <FormControl mb={4}>
+                            <Box mb={4}>
+                                <Text mb={2}>Card Details</Text>
+                                <div style={{
+                                    border: '1px solid #9E9E9E',
+                                    paddingBottom: '8px',
+                                    marginBottom: '16px',
+                                    padding: '4px 8px',
+                                    width: '100%',
+                                    borderRadius: '4px'
+                                }}>
+                                    <CardElement
+                                        options={{
+                                            hidePostalCode: true,
+                                            style: {
+                                                base: {
+                                                    iconColor: '#0c0e0e',
+                                                    color: '#000',
+                                                    fontWeight: '500',
+                                                    fontFamily: 'Arial, sans-serif',
+                                                    fontSize: '16px',
+                                                    fontSmoothing: 'antialiased',
+                                                    '::placeholder': {
+                                                        color: '#aab7c4',
+                                                    },
+                                                },
+                                                invalid: {
+                                                    color: '#9e2146',
+                                                    iconColor: '#fa755a',
+                                                },
+                                            },
+                                        }}
+                                    />
+                                </div>
+                                {errorMessage && (
+                                    <Box mt={2}>
+                                        <Alert status="error">
+                                            <AlertIcon/>
+                                            {errorMessage}
+                                        </Alert>
+                                    </Box>
+                                )}
+                            </Box>
+                        </FormControl>
+                    )}
+                </>
+            )}
+            {workflowType === 'later' && (
+                <Box mt={4} mb={4} p={4} bg="blue.50" borderRadius="md">
+                    <Text fontSize="sm" color="blue.700">
+                        Payment will be collected later.
+                    </Text>
+                </Box>
             )}
         </Box>
     );

@@ -993,8 +993,6 @@ const PurchasePage = () => {
         }
         if (type !== 'now') {
             setIsCashModalOpen(false);
-        } else if (type === 'now' && paymentMethod === 'cash') {
-            setIsCashModalOpen(true);
         }
     };
 
@@ -1006,8 +1004,6 @@ const PurchasePage = () => {
 
         if (method !== 'cash') {
             setIsCashModalOpen(false);
-        } else if (method === 'cash' && paymentWorkflowType === 'now') {
-            setIsCashModalOpen(true);
         }
     };
 

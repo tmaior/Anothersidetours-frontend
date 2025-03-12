@@ -21,7 +21,8 @@ import {
     Spinner,
     Text,
     useDisclosure,
-    VStack
+    VStack,
+    useToast
 } from '@chakra-ui/react';
 import {SearchIcon} from '@chakra-ui/icons';
 import DashboardLayout from "../../../components/DashboardLayout";
@@ -49,6 +50,7 @@ import PurchaseNotes from "../../../components/PurchaseNotes";
 import useWindowWidth from "../../../hooks/useWindowWidth";
 import withAuth from "../../../utils/withAuth";
 import PurchaseSummaryDetailed from "../../../components/PurchaseSummaryDetailed";
+import CustomLineItemsModal, { LineItem } from "../../../components/CustomLineItemsModal";
 
 type GuestItemProps = {
     name: string;
@@ -855,6 +857,9 @@ const PaymentSummary = ({reservation}) => {
     const [isLoadingGroup, setIsLoadingGroup] = useState(false);
     const [isChangeGuestQuantityModalOpen, setChangeGuestQuantityModalOpen] = useState(false);
     const [guestCount, setGuestCount] = useState(reservation?.guestQuantity || 0);
+    const [isCustomLineItemsModalOpen, setIsCustomLineItemsModalOpen] = useState(false);
+    const [customLineItems, setCustomLineItems] = useState<LineItem[]>([]);
+    const toast = useToast();
 
     useEffect(() => {
         const fetchGroupReservations = async () => {
@@ -918,12 +923,87 @@ const PaymentSummary = ({reservation}) => {
         };
     }) || [];
 
+    useEffect(() => {
+        const fetchCustomLineItems = async () => {
+            if (!reservation?.id) return;
+            
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${reservation.id}`
+                );
+                
+                const customItems = response.data.map(item => ({
+                    id: item.id,
+                    name: item.label,
+                    type: item.description as 'Charge' | 'Discount',
+                    amount: Number(item.amount),
+                    quantity: Number(item.quantity)
+                }));
+                
+                setCustomLineItems(customItems);
+            } catch (error) {
+                console.error('Error fetching custom line items:', error);
+            }
+        };
+        
+        fetchCustomLineItems();
+    }, [reservation?.id]);
+
+    const handleSaveCustomLineItems = async (items: LineItem[]) => {
+        if (!reservation?.id) return;
+        
+        setCustomLineItems(items);
+        
+        try {
+            // await axios.delete(
+            //     `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${reservation.id}`
+            // );
+
+            if (items.length > 0) {
+                const customItemsPayload = items.map(item => ({
+                    tenantId: reservation.tenantId,
+                    tourId: reservation.tourId,
+                    label: item.name,
+                    description: item.type,
+                    amount: item.amount,
+                    quantity: item.quantity,
+                }));
+                
+                await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/custom-items`,
+                    { items: customItemsPayload, reservationId: reservation.id }
+                );
+                
+                toast({
+                    title: "Custom line items updated",
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true,
+                });
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error("Error saving custom line items:", error);
+            toast({
+                title: "Error",
+                description: "Failed to update custom line items",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
     const addonsTotalPrice = combinedAddons.reduce(
         (sum, addon) => sum + (addon.price * addon.quantity || 0),
         0
     );
+    const customLineItemsTotal = customLineItems.reduce((sum, item) => {
+        const itemTotal = item.amount * item.quantity;
+        return item.type === "Discount" ? sum - itemTotal : sum + itemTotal;
+    }, 0);
     const tourPrice = (reservation?.valuePerGuest || reservation?.tour?.price || 0) * (reservation?.guestQuantity || 0);
-    const finalTotalPrice = (tourPrice + addonsTotalPrice).toFixed(2);
+    const finalTotalPrice = (tourPrice + addonsTotalPrice + customLineItemsTotal).toFixed(2);
 
     useEffect(() => {
         const fetchCardDetails = async () => {
@@ -1006,6 +1086,18 @@ const PaymentSummary = ({reservation}) => {
                         </HStack>
                     ))
                 )}
+                {customLineItems.map((item) => (
+                    <HStack key={item.id} justifyContent="space-between">
+                        <Text>
+                            {item.name || 'Unnamed'} (${item.amount} x {item.quantity})
+                            {item.type === "Discount" && " - Discount"}
+                        </Text>
+                        <Text>
+                            {item.type === "Discount" ? "-" : ""}
+                            ${(item.amount * item.quantity).toFixed(2)}
+                        </Text>
+                    </HStack>
+                ))}
                 <Divider/>
                 <HStack justifyContent="space-between">
                     <Text fontWeight="bold">Total</Text>
@@ -1022,7 +1114,10 @@ const PaymentSummary = ({reservation}) => {
                         >
                             Guests
                         </MenuItem>
-                        <MenuItem icon={<BsBox2 size={15}/>}>
+                        <MenuItem 
+                            icon={<BsBox2 size={15}/>}
+                            onClick={() => setIsCustomLineItemsModalOpen(true)}
+                        >
                             Custom Line Items
                         </MenuItem>
                     </MenuList>
@@ -1061,6 +1156,15 @@ const PaymentSummary = ({reservation}) => {
                 onClose={() => setChangeGuestQuantityModalOpen(false)}
                 guestCount={guestCount}
                 setGuestCount={setGuestCount}
+            />
+            <CustomLineItemsModal
+                isOpen={isCustomLineItemsModalOpen}
+                onClose={() => setIsCustomLineItemsModalOpen(false)}
+                onSave={handleSaveCustomLineItems}
+                initialItems={customLineItems}
+                basePrice={reservation?.tour?.price || 0}
+                quantity={reservation?.guestQuantity || 1}
+                reservationId={reservation?.id}
             />
         </Box>
     );

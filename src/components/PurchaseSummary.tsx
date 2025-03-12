@@ -90,10 +90,17 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
     addons,
     addonsMap,
 }) => {
-    const formatDateToUS = (dateString: string) => {
+    const formatDate = (dateString: string) => {
         if (!dateString) return '';
-        const [year, month, day] = dateString.split('-');
-        return `${month}/${day}/${year}`;
+        const [year, month, day] = dateString.split('-').map(num => parseInt(num, 10));
+        const date = new Date(year, month - 1, day);
+        const options: Intl.DateTimeFormatOptions = {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        return date.toLocaleDateString('en-US', options);
     };
     const calculateCartTotal = () => {
         return cart.reduce((total, tour, index) => {
@@ -183,7 +190,7 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                                 <Text fontWeight="bold">{tour.name}</Text>
                             </HStack>
                             <Text fontSize="sm">
-                                {formatDateToUS(itemDate)} - {itemTime}
+                                {formatDate(itemDate)} - {itemTime}
                             </Text>
                             <HStack justify="space-between">
                                 <Text mt={2}>

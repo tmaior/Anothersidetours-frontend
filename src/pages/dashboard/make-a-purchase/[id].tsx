@@ -36,6 +36,7 @@ import PurchaseSummary from '../../../components/PurchaseSummary';
 import {useCart} from "../../../contexts/CartContext";
 import axios from 'axios';
 import PaymentWorkflow from "../../../components/PaymentWorkflow";
+import CashPaymentModal from "../../../components/CashPaymentModal";
 
 interface AddOn {
     id: string;
@@ -150,6 +151,9 @@ const PurchasePage = () => {
     const [paymentWorkflowType, setPaymentWorkflowType] = useState<string>('now');
     const [paymentMethod, setPaymentMethod] = useState<string>('credit_card');
     const [cardNumber, setCardNumber] = useState<string>('');
+
+    const [isCashModalOpen, setIsCashModalOpen] = useState<boolean>(false);
+    const [cashAmountReceived, setCashAmountReceived] = useState<number>(0);
 
     const fetchAddOnsForTour = async (tourId: string) => {
         try {
@@ -585,6 +589,11 @@ const PurchasePage = () => {
                 }
             }));
         }
+
+        if (paymentMethod === 'cash' && paymentWorkflowType === 'now' && cashAmountReceived === 0) {
+            setIsCashModalOpen(true);
+            return;
+        }
         
         setSubmitting(true);
         const formattedAttendees = [];
@@ -674,6 +683,9 @@ const PurchasePage = () => {
                 cart: cartPayload,
                 userId: userId,
                 createdBy: "Back Office",
+                paymentMethod: paymentMethod,
+                cashReceived: paymentMethod === 'cash' ? cashAmountReceived : undefined,
+                changeDue: paymentMethod === 'cash' ? (cashAmountReceived - totalWithDiscount) : undefined,
             };
 
             const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations`, {
@@ -724,72 +736,88 @@ const PurchasePage = () => {
                 }
                 
                 if (!doNotCharge) {
-                    const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({reservationId}),
-                    });
-
-                    if (!setupIntentRes.ok) {
-                        throw new Error("Failed to create SetupIntent.");
-                    }
-
-                    const {clientSecret} = await setupIntentRes.json();
-
-                    const cardElement = elements.getElement(CardElement);
-                    if (!cardElement) {
-                        throw new Error("CardElement is not available.");
-                    }
-
-                    const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
-                        payment_method: {
-                            card: cardElement,
-                            billing_details: {
-                                name: organizerName || "Guest Organizer",
-                                email: emailEnabled ? organizerEmail : "",
-                            },
-                        },
-                    });
-
-                    if (paymentMethodResponse.error) {
-                        throw new Error(paymentMethodResponse.error.message);
-                    }
-
-                    const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
-
-                    const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({paymentMethodId, reservationId}),
-                    });
-
-                    if (!savePMRes.ok) {
-                        throw new Error("Failed to save PaymentMethod.");
-                    }
-
-                    if (voucherValid && appliedVoucherCode) {
-                        const redeemResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/redeem`, {
+                    if (paymentMethod === 'cash') {
+                        const cashPaymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/record-cash-payment`, {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
+                            headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({
-                                code: appliedVoucherCode,
                                 reservationId,
+                                amountReceived: cashAmountReceived,
+                                changeDue: cashAmountReceived - totalWithDiscount,
                             }),
                         });
-
-                        if (!redeemResponse.ok) {
-                            throw new Error('Failed to redeem voucher');
+                        
+                        if (!cashPaymentResponse.ok) {
+                            throw new Error("Failed to record cash payment.");
                         }
-                        toast({
-                            title: 'Voucher Redeemed',
-                            description: 'The voucher has been successfully redeemed.',
-                            status: 'success',
-                            duration: 4000,
-                            isClosable: true,
+                    } else {
+                        const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({reservationId}),
                         });
-                        setAppliedVoucherCode("");
+
+                        if (!setupIntentRes.ok) {
+                            throw new Error("Failed to create SetupIntent.");
+                        }
+
+                        const {clientSecret} = await setupIntentRes.json();
+
+                        const cardElement = elements.getElement(CardElement);
+                        if (!cardElement) {
+                            throw new Error("CardElement is not available.");
+                        }
+
+                        const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
+                            payment_method: {
+                                card: cardElement,
+                                billing_details: {
+                                    name: organizerName || "Guest Organizer",
+                                    email: emailEnabled ? organizerEmail : "",
+                                },
+                            },
+                        });
+
+                        if (paymentMethodResponse.error) {
+                            throw new Error(paymentMethodResponse.error.message);
+                        }
+
+                        const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
+
+                        const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({paymentMethodId, reservationId}),
+                        });
+
+                        if (!savePMRes.ok) {
+                            throw new Error("Failed to save PaymentMethod.");
+                        }
+
+                        if (voucherValid && appliedVoucherCode) {
+                            const redeemResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/redeem`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    code: appliedVoucherCode,
+                                    reservationId,
+                                }),
+                            });
+
+                            if (!redeemResponse.ok) {
+                                throw new Error('Failed to redeem voucher');
+                            }
+                            toast({
+                                title: 'Voucher Redeemed',
+                                description: 'The voucher has been successfully redeemed.',
+                                status: 'success',
+                                duration: 4000,
+                                isClosable: true,
+                            });
+                            setAppliedVoucherCode("");
+                        }
                     }
                 }
                 
@@ -963,6 +991,11 @@ const PurchasePage = () => {
         } else if (type !== 'now') {
             setDoNotCharge(true);
         }
+        if (type !== 'now') {
+            setIsCashModalOpen(false);
+        } else if (type === 'now' && paymentMethod === 'cash') {
+            setIsCashModalOpen(true);
+        }
     };
 
     const handlePaymentMethodChange = (method: string) => {
@@ -970,6 +1003,17 @@ const PurchasePage = () => {
         if (method !== 'credit_card') {
             setDoNotCharge(true);
         }
+
+        if (method !== 'cash') {
+            setIsCashModalOpen(false);
+        } else if (method === 'cash' && paymentWorkflowType === 'now') {
+            setIsCashModalOpen(true);
+        }
+    };
+
+    const handleCashPaymentComplete = (cashAmount: number) => {
+        setCashAmountReceived(cashAmount);
+        setIsCashModalOpen(false);
     };
 
     if (loading) {
@@ -1599,6 +1643,16 @@ const PurchasePage = () => {
                     </Box>
                 </Flex>
             </Box>
+            <CashPaymentModal
+                isOpen={isCashModalOpen}
+                onClose={() => setIsCashModalOpen(false)}
+                totalAmount={totalWithDiscount +
+                    items.reduce((acc, item) => {
+                        const totalItem = item.amount * item.quantity;
+                        return item.type === "Discount" ? acc - totalItem : acc + totalItem;
+                    }, 0)}
+                onComplete={handleCashPaymentComplete}
+            />
         </DashboardLayout>
     )
 }

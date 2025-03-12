@@ -853,6 +853,8 @@ const PaymentSummary = ({reservation}) => {
     const isGroupBooking = reservation?.groupId;
     const [groupReservations, setGroupReservations] = useState([]);
     const [isLoadingGroup, setIsLoadingGroup] = useState(false);
+    const [isChangeGuestQuantityModalOpen, setChangeGuestQuantityModalOpen] = useState(false);
+    const [guestCount, setGuestCount] = useState(reservation?.guestQuantity || 0);
 
     useEffect(() => {
         const fetchGroupReservations = async () => {
@@ -876,6 +878,11 @@ const PaymentSummary = ({reservation}) => {
         }
     }, [isGroupBooking, reservation?.groupId]);
 
+    useEffect(() => {
+        if (reservation) {
+            setGuestCount(reservation.guestQuantity || 0);
+        }
+    }, [reservation]);
     useEffect(() => {
         const fetchAddons = async () => {
             if (!reservation?.id || !reservation?.tourId) return;
@@ -958,8 +965,6 @@ const PaymentSummary = ({reservation}) => {
     }
 
     return (
-
-
         <Box
             bg="gray.100"
             borderRadius="md"
@@ -1006,7 +1011,22 @@ const PaymentSummary = ({reservation}) => {
                     <Text fontWeight="bold">Total</Text>
                     <Text fontWeight="bold">${finalTotalPrice}</Text>
                 </HStack>
-                <Button size={"sm"} mt={1} w="70px">Modify</Button>
+                <Menu>
+                    <MenuButton as={Button} size={"sm"} mt={1} w="70px">
+                        Modify
+                    </MenuButton>
+                    <MenuList zIndex={1000}>
+                        <MenuItem 
+                            icon={<IoPersonOutline size={18}/>} 
+                            onClick={() => setChangeGuestQuantityModalOpen(true)}
+                        >
+                            Guests
+                        </MenuItem>
+                        <MenuItem icon={<BsBox2 size={15}/>}>
+                            Custom Line Items
+                        </MenuItem>
+                    </MenuList>
+                </Menu>
             </VStack>
 
             <Box mt={8}>
@@ -1035,6 +1055,13 @@ const PaymentSummary = ({reservation}) => {
                     <Text fontWeight="bold">${finalTotalPrice}</Text>
                 </HStack>
             </Box>
+            <ChangeGuestQuantityModal
+                booking={reservation}
+                isOpen={isChangeGuestQuantityModalOpen}
+                onClose={() => setChangeGuestQuantityModalOpen(false)}
+                guestCount={guestCount}
+                setGuestCount={setGuestCount}
+            />
         </Box>
     );
 };

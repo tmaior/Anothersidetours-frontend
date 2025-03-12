@@ -998,7 +998,9 @@ const PurchasePage = () => {
 
     const handlePaymentMethodChange = (method: string) => {
         setPaymentMethod(method);
-        if (method !== 'credit_card') {
+        if (method === 'credit_card') {
+            setDoNotCharge(false);
+        } else {
             setDoNotCharge(true);
         }
 

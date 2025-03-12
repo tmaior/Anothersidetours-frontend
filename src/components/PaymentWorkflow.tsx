@@ -240,16 +240,18 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
                         </HStack>
                     </Box>
 
-                    <Stack direction="row" spacing={2} alignItems="center" mb={4}>
-                        <Switch
-                            id="doNotChargeCard"
-                            isChecked={doNotCharge}
-                            onChange={handleDoNotChargeChange}
-                            size="sm"
-                            colorScheme="blue"
-                        />
-                        <Text fontSize="sm">Do Not Charge Card Now</Text>
-                    </Stack>
+                    {paymentMethod === 'credit_card' && (
+                        <Stack direction="row" spacing={2} alignItems="center" mb={4}>
+                            <Switch
+                                id="doNotChargeCard"
+                                isChecked={doNotCharge}
+                                onChange={handleDoNotChargeChange}
+                                size="sm"
+                                colorScheme="blue"
+                            />
+                            <Text fontSize="sm" color="gray.600">Do Not Charge Card Now</Text>
+                        </Stack>
+                    )}
 
                     {workflowType === 'now' && paymentMethod === 'credit_card' && !doNotCharge && (
                         <FormControl mb={4}>

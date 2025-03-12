@@ -90,6 +90,11 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
     addons,
     addonsMap,
 }) => {
+    const formatDateToUS = (dateString: string) => {
+        if (!dateString) return '';
+        const [year, month, day] = dateString.split('-');
+        return `${month}/${day}/${year}`;
+    };
     const calculateCartTotal = () => {
         return cart.reduce((total, tour, index) => {
             const tourFormData = formDataMap[tour.id];
@@ -178,7 +183,7 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                                 <Text fontWeight="bold">{tour.name}</Text>
                             </HStack>
                             <Text fontSize="sm">
-                                {itemDate} - {itemTime}
+                                {formatDateToUS(itemDate)} - {itemTime}
                             </Text>
                             <HStack justify="space-between">
                                 <Text mt={2}>

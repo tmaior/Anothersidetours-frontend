@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from 'react'
+import React, {useCallback, useEffect, useState} from 'react'
 import {
     Box,
     Button,
@@ -113,15 +113,15 @@ const PurchasePage = () => {
     const [organizerAttending, setOrganizerAttending] = useState(true);
     const [attendees, setAttendees] = useState([{name: "", info: ""}, {name: "", info: ""}]);
     const [doNotCharge, setDoNotCharge] = useState(false);
-    const [bookingFee, ] = useState(false);
-    const [gratuity, ] = useState('');
+    const [bookingFee,] = useState(false);
+    const [gratuity,] = useState('');
     const [internalNotesEnabled, setInternalNotesEnabled] = useState(true);
     const [purchaseTags, setPurchaseTags] = useState("");
     const [purchaseNote, setPurchaseNote] = useState("");
     const [isCustomLineItemsEnabled, setIsCustomLineItemsEnabled] = useState(false);
     const [customLineItems, setCustomLineItems] = useState([]);
-    const [pickUpAddOn, ] = useState(0);
-    const [privateTourAddOn, ] = useState(0);
+    const [pickUpAddOn,] = useState(0);
+    const [privateTourAddOn,] = useState(0);
     const toast = useToast();
     const [, setFinalPrice] = useState(0);
     const [voucherDiscount, setVoucherDiscount] = useState(0);
@@ -177,7 +177,7 @@ const PurchasePage = () => {
                 }));
             }
         }
-    }, [date, time, paymentMethod,invoiceData.daysBeforeEvent]);
+    }, [date, time, paymentMethod, invoiceData.daysBeforeEvent]);
 
     useEffect(() => {
         if (paymentMethod !== 'invoice') {
@@ -348,7 +348,7 @@ const PurchasePage = () => {
         } else if (selectedCartItemIndex >= cart.length && cart.length > 0) {
             setSelectedCartItemIndex(0);
         }
-    }, [selectedCartItemIndex,formDataMap,fetchAddOnsForTour,cart]);
+    }, [selectedCartItemIndex, formDataMap, fetchAddOnsForTour, cart]);
     useEffect(() => {
         if (cart.length > 0) {
             if (cart.length > 0 && selectedCartItemIndex < cart.length) {
@@ -641,7 +641,7 @@ const PurchasePage = () => {
             setIsCashModalOpen(true);
             return;
         }
-        
+
         setSubmitting(true);
         const formattedAttendees = [];
         let userId: string | null = null;
@@ -780,7 +780,7 @@ const PurchasePage = () => {
                         throw new Error("Failed to create custom items.");
                     }
                 }
-                
+
                 if (!doNotCharge) {
                     if (paymentMethod === 'cash') {
                         const cashPaymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/record-cash-payment`, {
@@ -792,7 +792,7 @@ const PurchasePage = () => {
                                 changeDue: cashAmountReceived - totalWithDiscount,
                             }),
                         });
-                        
+
                         if (!cashPaymentResponse.ok) {
                             throw new Error("Failed to record cash payment.");
                         }
@@ -921,7 +921,7 @@ const PurchasePage = () => {
                         }
                     }
                 }
-                
+
                 if (additionalInformationQuestions.length > 0) {
                     await Promise.all(
                         Object.entries(additionalInformationResponses).map(([additionalInformationId, value]) =>
@@ -1024,18 +1024,18 @@ const PurchasePage = () => {
             }
         };
         fetchInitialAddOns();
-    }, [fetchAddOnsForTour,id, cart, selectedCartItemIndex, formDataMap]);
+    }, [fetchAddOnsForTour, id, cart, selectedCartItemIndex, formDataMap]);
 
     useEffect(() => {
         const fetchAdditionalInfo = async () => {
             if (cart.length === 0) return;
-            
+
             const currentTourId = cart.length > 0 && selectedCartItemIndex < cart.length
                 ? cart[selectedCartItemIndex].id
                 : typeof id === 'string' ? id : Array.isArray(id) ? id[0] : null;
-                
+
             if (!currentTourId) return;
-            
+
             try {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${currentTourId}`);
                 const data = await response.json();
@@ -1050,7 +1050,7 @@ const PurchasePage = () => {
                 console.error("Failed to fetch additional information questions:", error);
             }
         };
-        
+
         fetchAdditionalInfo();
     }, [id, cart, selectedCartItemIndex]);
 
@@ -1067,7 +1067,12 @@ const PurchasePage = () => {
     };
     const areAllFieldsValid = () => {
         const additionalInfoValid = areAllAdditionalInfoFieldsFilled();
-        const purchaseNoteValid = !isPurchaseNoteRequired() || (purchaseNote && purchaseNote.trim() !== "");
+        const purchaseNoteValid = !isPurchaseNoteRequired() ||
+            (internalNotesEnabled && purchaseNote && purchaseNote.trim() !== "");
+
+        if (isPurchaseNoteRequired() && !internalNotesEnabled) {
+            return false;
+        }
         return additionalInfoValid && purchaseNoteValid;
     };
 
@@ -1111,6 +1116,9 @@ const PurchasePage = () => {
             setDoNotCharge(false);
         } else {
             setDoNotCharge(true);
+        }
+        if (['check', 'invoice', 'other'].includes(method.toLowerCase()) && !internalNotesEnabled) {
+            setInternalNotesEnabled(true);
         }
 
         if (method !== 'cash') {
@@ -1674,6 +1682,14 @@ const PurchasePage = () => {
                             reservationDate={getFormattedEventDate()}
                             onInvoiceDataChange={(data) => setInvoiceData(data)}
                         />
+                        {isPurchaseNoteRequired() && (
+                            <Box mt={4} mb={2} p={3} bg="red.50" borderRadius="md" borderLeft="4px solid"
+                                 borderColor="red.500">
+                                <Text color="red.700" fontWeight="medium">
+                                    Attention: The &quot;Purchase Note&quot; field is required when the payment method is {paymentMethod}.
+                                </Text>
+                            </Box>
+                        )}
                         <Divider my={6}/>
                         <FormControl display="flex" alignItems="center" mb={4}>
                             <Text mr={4} fontWeight="medium">Internal Notes</Text>
@@ -1696,18 +1712,30 @@ const PurchasePage = () => {
                                 </FormControl>
                                 <FormControl isRequired={isPurchaseNoteRequired()}>
                                     <HStack justify="space-between">
-                                        <FormLabel>Purchase Note</FormLabel>
+                                        <FormLabel>
+                                            Purchase Note
+                                            {isPurchaseNoteRequired() && (
+                                                <Text as="span" color="red.500" ml={1}>*</Text>
+                                            )}
+                                        </FormLabel>
                                         {isPurchaseNoteRequired() && purchaseNote.trim() === "" && (
-                                            <Text color="red.500" fontSize="sm">Required for {paymentMethod}</Text>
+                                            <Text color="red.500" fontSize="sm" fontWeight="bold">Required
+                                                for {paymentMethod}</Text>
                                         )}
                                     </HStack>
                                     <Textarea
                                         value={purchaseNote}
                                         onChange={(e) => setPurchaseNote(e.target.value)}
-                                        placeholder={isPurchaseNoteRequired() ? "Required for this payment method" : "Enter Notes"}
+                                        placeholder={isPurchaseNoteRequired() ? `Required for ${paymentMethod} payment` : "Enter Notes"}
                                         borderColor={isPurchaseNoteRequired() && purchaseNote.trim() === "" ? "red.300" : undefined}
                                         _hover={{borderColor: isPurchaseNoteRequired() && purchaseNote.trim() === "" ? "red.400" : undefined}}
+                                        _focus={{borderColor: isPurchaseNoteRequired() && purchaseNote.trim() === "" ? "red.400" : "blue.400"}}
                                     />
+                                    {isPurchaseNoteRequired() && purchaseNote.trim() === "" && (
+                                        <Text color="red.500" fontSize="sm" mt={1}>
+                                            This field is required when paying with {paymentMethod}
+                                        </Text>
+                                    )}
                                 </FormControl>
                             </VStack>
                         )}

@@ -46,10 +46,7 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
         if (onWorkflowTypeChange) {
             onWorkflowTypeChange('now');
         }
-        if (onPaymentMethodChange) {
-            onPaymentMethodChange('credit_card');
-        }
-    }, [onWorkflowTypeChange, onPaymentMethodChange]);
+    }, [onWorkflowTypeChange]);
 
     const handleWorkflowTypeChange = (type: string) => {
         setWorkflowType(type);

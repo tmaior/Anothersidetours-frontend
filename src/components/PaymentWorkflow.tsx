@@ -5,6 +5,7 @@ import {CardElement} from "@stripe/react-stripe-js";
 import {AiOutlineDollar} from 'react-icons/ai';
 import {MdOutlineCallSplit} from "react-icons/md";
 import {PiInvoice} from "react-icons/pi";
+import InvoicePaymentForm, { InvoiceFormData } from './InvoicePaymentForm';
 
 interface PaymentWorkflowProps {
     onPaymentMethodChange?: (method: string) => void;
@@ -14,6 +15,9 @@ interface PaymentWorkflowProps {
     doNotCharge?: boolean;
     onDoNotChargeChange?: (value: boolean) => void;
     errorMessage?: string | null;
+    totalAmount?: number;
+    reservationDate?: string;
+    onInvoiceDataChange?: (data: InvoiceFormData) => void;
 }
 
 const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
@@ -24,9 +28,17 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
                                                              doNotCharge = false,
                                                              onDoNotChargeChange,
                                                              errorMessage,
+                                                             totalAmount = 0,
+                                                             reservationDate = '',
+                                                             onInvoiceDataChange,
                                                          }) => {
     const [workflowType, setWorkflowType] = useState<string>('now');
     const [paymentMethod, setPaymentMethod] = useState<string>('credit_card');
+    const [invoiceData, setInvoiceData] = useState<InvoiceFormData>({
+        daysBeforeEvent: 0,
+        dueDate: '',
+        message: ''
+    });
 
     useEffect(() => {
         if (onWorkflowTypeChange) {
@@ -60,6 +72,13 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
     const handleDoNotChargeChange = () => {
         if (onDoNotChargeChange) {
             onDoNotChargeChange(!doNotCharge);
+        }
+    };
+
+    const handleInvoiceFormChange = (data: InvoiceFormData) => {
+        setInvoiceData(data);
+        if (onInvoiceDataChange) {
+            onInvoiceDataChange(data);
         }
     };
 
@@ -251,51 +270,43 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
                         </Stack>
                     )}
 
-                    {workflowType === 'now' && paymentMethod === 'credit_card' && !doNotCharge && (
-                        <FormControl mb={4}>
-                            <Box mb={4}>
-                                <Text mb={2}>Card Details</Text>
-                                <div style={{
-                                    border: '1px solid #9E9E9E',
-                                    paddingBottom: '8px',
-                                    marginBottom: '16px',
-                                    padding: '4px 8px',
-                                    width: '100%',
-                                    borderRadius: '4px'
-                                }}>
-                                    <CardElement
-                                        options={{
-                                            hidePostalCode: true,
-                                            style: {
-                                                base: {
-                                                    iconColor: '#0c0e0e',
-                                                    color: '#000',
-                                                    fontWeight: '500',
-                                                    fontFamily: 'Arial, sans-serif',
-                                                    fontSize: '16px',
-                                                    fontSmoothing: 'antialiased',
-                                                    '::placeholder': {
-                                                        color: '#aab7c4',
-                                                    },
-                                                },
-                                                invalid: {
-                                                    color: '#9e2146',
-                                                    iconColor: '#fa755a',
-                                                },
-                                            },
-                                        }}
-                                    />
-                                </div>
-                                {errorMessage && (
-                                    <Box mt={2}>
-                                        <Alert status="error">
-                                            <AlertIcon/>
-                                            {errorMessage}
-                                        </Alert>
-                                    </Box>
-                                )}
+                    {paymentMethod === 'credit_card' && !doNotCharge && (
+                        <Box mt={4} p={4} border="1px solid" borderColor="gray.200" borderRadius="md">
+                            <Text fontSize="sm" mb={4}>
+                                Enter credit card details:
+                            </Text>
+                            <Box p={3} borderWidth="1px" borderRadius="md" borderColor="#e2e8f0">
+                                <CardElement options={{
+                                    style: {
+                                        base: {
+                                            fontSize: '16px',
+                                            color: '#424770',
+                                            fontFamily: 'Arial, sans-serif',
+                                        },
+                                        invalid: {
+                                            color: '#9e2146',
+                                        },
+                                    },
+                                }}/>
                             </Box>
-                        </FormControl>
+                        </Box>
+                    )}
+
+                    {paymentMethod === 'invoice' && (
+                        <Box mt={4}>
+                            <InvoicePaymentForm
+                                totalAmount={totalAmount}
+                                reservationDate={reservationDate}
+                                onFormChange={handleInvoiceFormChange}
+                            />
+                        </Box>
+                    )}
+
+                    {errorMessage && (
+                        <Alert status="error" mt={4} borderRadius="md">
+                            <AlertIcon/>
+                            {errorMessage}
+                        </Alert>
                     )}
                 </>
             )}

@@ -155,6 +155,42 @@ const PurchasePage = () => {
     const [isCashModalOpen, setIsCashModalOpen] = useState<boolean>(false);
     const [cashAmountReceived, setCashAmountReceived] = useState<number>(0);
 
+    const [invoiceData, setInvoiceData] = useState({
+        daysBeforeEvent: 0,
+        dueDate: '',
+        message: ''
+    });
+
+    useEffect(() => {
+        if (date && paymentMethod === 'invoice') {
+            const eventDate = new Date(date);
+
+            if (invoiceData.daysBeforeEvent > 0) {
+                const dueDateObj = new Date(eventDate);
+                dueDateObj.setDate(eventDate.getDate() - invoiceData.daysBeforeEvent);
+                setInvoiceData(prev => ({
+                    ...prev,
+                    dueDate: dueDateObj.toISOString().split('T')[0]
+                }));
+            } else {
+                setInvoiceData(prev => ({
+                    ...prev,
+                    dueDate: eventDate.toISOString().split('T')[0]
+                }));
+            }
+        }
+    }, [date, time, paymentMethod]);
+
+    useEffect(() => {
+        if (paymentMethod !== 'invoice') {
+            setInvoiceData({
+                daysBeforeEvent: 0,
+                dueDate: date ? new Date(date).toISOString().split('T')[0] : '',
+                message: ''
+            });
+        }
+    }, [paymentMethod, date]);
+
     const fetchAddOnsForTour = async (tourId: string) => {
         try {
             if (!tourId) return;
@@ -760,7 +796,62 @@ const PurchasePage = () => {
                         if (!cashPaymentResponse.ok) {
                             throw new Error("Failed to record cash payment.");
                         }
-                    } else {
+                    } else if (paymentMethod === 'check' || paymentMethod === 'invoice' || paymentMethod === 'other') {
+                        const paymentDetails: any = {
+                            paymentNote: purchaseNote
+                        };
+                        if (paymentMethod === 'invoice') {
+                            paymentDetails.invoiceMessage = invoiceData.message;
+                            let dueDateToUse = invoiceData.dueDate;
+                            if (!dueDateToUse && date) {
+                                const eventDate = new Date(combineDateAndTime(date, time));
+                                if (invoiceData.daysBeforeEvent > 0) {
+                                    eventDate.setDate(eventDate.getDate() - invoiceData.daysBeforeEvent);
+                                }
+                                dueDateToUse = eventDate.toISOString().split('T')[0];
+                            }
+
+                            const paymentTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    tenant_id: tenantId,
+                                    reservation_id: reservationId,
+                                    payment_method: 'invoice',
+                                    amount: totalWithDiscount,
+                                    payment_status: 'pending',
+                                    payment_details: paymentDetails,
+                                    reference_number: `INV-${Date.now()}`,
+                                    is_split_payment: false,
+                                    due_date: dueDateToUse ? new Date(dueDateToUse).toISOString() : new Date(combineDateAndTime(date, time)).toISOString(),
+                                    invoice_message: invoiceData.message,
+                                    days_before_event: invoiceData.daysBeforeEvent,
+                                    created_by: "Back Office",
+                                }),
+                            });
+
+                            if (!paymentTransactionResponse.ok) {
+                                throw new Error("Failed to create invoice.");
+                            }
+                        } else {
+                            const paymentTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    reservationId,
+                                    paymentMethod: paymentMethod,
+                                    amount: totalWithDiscount,
+                                    paymentStatus: 'completed',
+                                    paymentDetails,
+                                    referenceNumber: purchaseNote,
+                                    isSplitPayment: false,
+                                }),
+                            });
+                            if (!paymentTransactionResponse.ok) {
+                                throw new Error(`Failed to record ${paymentMethod} payment transaction.`);
+                            }
+                        }
+                    } else if (paymentMethod === 'credit_card') {
                         const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
@@ -1030,6 +1121,10 @@ const PurchasePage = () => {
     const handleCashPaymentComplete = (cashAmount: number) => {
         setCashAmountReceived(cashAmount);
         setIsCashModalOpen(false);
+    };
+    const getFormattedEventDate = (): string => {
+        if (!date) return '';
+        return combineDateAndTime(date, time);
     };
 
     if (loading) {
@@ -1575,6 +1670,9 @@ const PurchasePage = () => {
                             doNotCharge={doNotCharge}
                             onDoNotChargeChange={(value) => setDoNotCharge(value)}
                             errorMessage={errorMessage}
+                            totalAmount={totalWithDiscount}
+                            reservationDate={getFormattedEventDate()}
+                            onInvoiceDataChange={(data) => setInvoiceData(data)}
                         />
                         <Divider my={6}/>
                         <FormControl display="flex" alignItems="center" mb={4}>
@@ -1608,7 +1706,7 @@ const PurchasePage = () => {
                                         onChange={(e) => setPurchaseNote(e.target.value)}
                                         placeholder={isPurchaseNoteRequired() ? "Required for this payment method" : "Enter Notes"}
                                         borderColor={isPurchaseNoteRequired() && purchaseNote.trim() === "" ? "red.300" : undefined}
-                                        _hover={{ borderColor: isPurchaseNoteRequired() && purchaseNote.trim() === "" ? "red.400" : undefined }}
+                                        _hover={{borderColor: isPurchaseNoteRequired() && purchaseNote.trim() === "" ? "red.400" : undefined}}
                                     />
                                 </FormControl>
                             </VStack>

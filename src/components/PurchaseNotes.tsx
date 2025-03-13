@@ -51,13 +51,6 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
 
     const customerNotes = [];
 
-    useEffect(() => {
-        if (reservationId) {
-            fetchPurchaseNotes();
-            fetchEventNotes();
-        }
-    }, [reservationId]);
-
     const fetchPurchaseNotes = async () => {
         try {
             setIsLoading(true);
@@ -93,6 +86,13 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (reservationId) {
+            fetchPurchaseNotes();
+            fetchEventNotes();
+        }
+    }, [reservationId,fetchEventNotes,fetchPurchaseNotes]);
 
     const handleCreatePurchaseNote = async () => {
         if (!newNoteText.trim()) return;

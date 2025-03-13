@@ -17,11 +17,11 @@ import { ColDef } from 'ag-grid-community'
 ModuleRegistry.registerModules([AllCommunityModule])
 
 export default function Reports() {
-  const [startDate, setStartDate] = useState(new Date())
-  const [endDate, setEndDate] = useState(new Date())
+  const [startDate, ] = useState(new Date())
+  const [endDate, ] = useState(new Date())
   const [selectedDateType, setSelectedDateType] = useState('booking')
   const [isScheduleNowOpen, setIsScheduleNowOpen] = useState(false)
-  const [rowData, setRowData] = useState([
+  const [rowData, ] = useState([
     { make: 'Tesla', model: 'Model Y', price: 64950, electric: true },
     { make: 'Ford', model: 'F-Series', price: 33850, electric: false },
     { make: 'Toyota', model: 'Corolla', price: 29600, electric: false }
@@ -34,7 +34,7 @@ export default function Reports() {
     electric: boolean
   }
 
-  const [colDefs, setColDefs] = useState<ColDef<CarData>[]>([
+  const [colDefs, ] = useState<ColDef<CarData>[]>([
     { field: 'make' },
     { field: 'model' },
     { field: 'price' },

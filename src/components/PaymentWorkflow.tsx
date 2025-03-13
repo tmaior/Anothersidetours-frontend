@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Alert, AlertIcon, Box, Button, FormControl, HStack, Stack, Switch, Text,} from '@chakra-ui/react';
+import {Alert, AlertIcon, Box, Button, HStack, Stack, Switch, Text,} from '@chakra-ui/react';
 import {FaClock, FaCreditCard, FaHandHoldingUsd, FaMoneyBill, FaMoneyCheckAlt} from 'react-icons/fa';
 import {CardElement} from "@stripe/react-stripe-js";
 import {AiOutlineDollar} from 'react-icons/ai';
@@ -23,6 +23,7 @@ interface PaymentWorkflowProps {
 const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
                                                              onPaymentMethodChange,
                                                              onWorkflowTypeChange,
+                                                             // eslint-disable-next-line @typescript-eslint/no-unused-vars
                                                              cardNumber = '',
                                                              onCardNumberChange,
                                                              doNotCharge = false,
@@ -34,6 +35,7 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
                                                          }) => {
     const [workflowType, setWorkflowType] = useState<string>('now');
     const [paymentMethod, setPaymentMethod] = useState<string>('credit_card');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [invoiceData, setInvoiceData] = useState<InvoiceFormData>({
         daysBeforeEvent: 0,
         dueDate: '',
@@ -47,7 +49,7 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
         if (onPaymentMethodChange) {
             onPaymentMethodChange('credit_card');
         }
-    }, []);
+    }, [onWorkflowTypeChange, onPaymentMethodChange]);
 
     const handleWorkflowTypeChange = (type: string) => {
         setWorkflowType(type);
@@ -63,6 +65,7 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
         }
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (onCardNumberChange) {
             onCardNumberChange(e.target.value);

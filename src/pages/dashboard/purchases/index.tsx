@@ -79,7 +79,6 @@ const GuestItem: React.FC<GuestItemProps> = ({
     avatarUrl, 
     onClick, 
     isSelected,
-    toggleDetailedSummary
 }) => {
     const handleClick = () => {
         if (onClick) {
@@ -115,7 +114,7 @@ const GuestItem: React.FC<GuestItemProps> = ({
     );
 };
 const GroupCard: React.FC<GroupCardProps> = ({
-    groupId,
+
     items,
     isExpanded,
     onToggle,
@@ -853,8 +852,8 @@ const PaymentSummary = ({reservation}) => {
     const [allAddons, setAllAddons] = useState([]);
     const [isLoadingAddons, setIsLoadingAddons] = useState(true);
     const isGroupBooking = reservation?.groupId;
-    const [groupReservations, setGroupReservations] = useState([]);
-    const [isLoadingGroup, setIsLoadingGroup] = useState(false);
+    const [, setGroupReservations] = useState([]);
+    const [, setIsLoadingGroup] = useState(false);
     const [isChangeGuestQuantityModalOpen, setChangeGuestQuantityModalOpen] = useState(false);
     const [guestCount, setGuestCount] = useState(reservation?.guestQuantity || 0);
     const [isCustomLineItemsModalOpen, setIsCustomLineItemsModalOpen] = useState(false);
@@ -1173,7 +1172,7 @@ const PaymentSummary = ({reservation}) => {
 const PurchasesPage = () => {
     const router = useRouter();
     const [selectedReservation, setSelectedReservation] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const {tenantId} = useGuest();
     const [showDetailedSummary, setShowDetailedSummary] = useState(false);
@@ -1310,7 +1309,7 @@ const PurchasesPage = () => {
         if (tenantId) {
             fetchReservations();
         }
-    }, [tenantId]);
+    }, [tenantId,handleSelectReservation,selectedReservation]);
 
     const handlePurchaseClick = () => {
         router.push("/dashboard/choose-a-product");

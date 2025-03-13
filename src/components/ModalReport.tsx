@@ -10,8 +10,7 @@ import {
     Button,
     Text,
     Heading,
-    useDisclosure,
-    Select, 
+    Select,
     Flex
   } from '@chakra-ui/react'
 

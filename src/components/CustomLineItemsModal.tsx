@@ -44,6 +44,7 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
     initialItems = [],
     basePrice = 0,
     quantity = 1,
+                                                                       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     reservationId,
 }) => {
     const [items, setItems] = useState<LineItem[]>([]);

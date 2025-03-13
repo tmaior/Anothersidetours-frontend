@@ -108,7 +108,7 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
         setCancellationPolicy(cancellationPolicy || "");
         setConsiderations(considerations || "");
         setMapEnabled(false);
-    }, []);
+    }, [cancellationPolicy, considerations, description, meetingLocation, operationProcedures, price, setCancellationPolicy,setConsiderations, title]);
 
     useEffect(() => {
         const data = {
@@ -1131,7 +1131,7 @@ function SchedulesAvailabilityStep({
             };
         });
         setTiers(updatedTiers);
-    }, [basePrices]);
+    }, [demographics,tiers,basePrices]);
 
     const handlePricingChange = (value) => {
         setPricingStructure(value);

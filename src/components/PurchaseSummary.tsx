@@ -77,8 +77,6 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
     isCustomLineItemsEnabled,
     customLineItems,
     voucherDiscount,
-    totalWithDiscount,
-    items,
     voucherCode,
     setVoucherCode,
     voucherError,
@@ -103,7 +101,7 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
         return date.toLocaleDateString('en-US', options);
     };
     const calculateCartTotal = () => {
-        return cart.reduce((total, tour, index) => {
+        return cart.reduce((total, tour,) => {
             const tourFormData = formDataMap[tour.id];
             const itemQuantity = tourFormData ? tourFormData.quantity : quantity;
             const itemTotal = tour.price * itemQuantity;

@@ -1,5 +1,5 @@
 import { Box, Text, Flex } from '@chakra-ui/react'
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import DashboardLayout from '../../../components/DashboardLayout'
 import MyProfileForm from '../../../components/MyProfileForm'
 import SettingsList from '../../../components/SettingsList'
@@ -9,9 +9,9 @@ enum SettingsPage {
 }
 
 
-export default function settings() {
+export default function Settings() {
 
-    const [currentPage, setCurrentPage] = useState(SettingsPage.MyProfile)
+    const [currentPage] = useState(SettingsPage.MyProfile);
 
 
     return (

@@ -86,7 +86,7 @@ const PurchasePage = () => {
     const stripe = useStripe();
     const elements = useElements();
 
-    const [tour, setTour] = useState<Tour>(null);
+    const [, setTour] = useState<Tour>(null);
     const [addons, setAddons] = useState<AddOn[]>([]);
     const [addonsMap, setAddonsMap] = useState<{ [key: string]: AddOn[] }>({});
     const [selectedAddOns, setSelectedAddOns] = useState<SelectedAddOn[]>([]);
@@ -100,7 +100,6 @@ const PurchasePage = () => {
     const [selectedCartItemIndex, setSelectedCartItemIndex] = useState<number>(0);
 
     const [quantity, setQuantity] = useState(1);
-    const [quantityError, setQuantityError] = useState(false);
     const [date, setDate] = useState(() => {
         const today = new Date();
         return today.toISOString().split('T')[0];
@@ -114,17 +113,17 @@ const PurchasePage = () => {
     const [organizerAttending, setOrganizerAttending] = useState(true);
     const [attendees, setAttendees] = useState([{name: "", info: ""}, {name: "", info: ""}]);
     const [doNotCharge, setDoNotCharge] = useState(false);
-    const [bookingFee, setBookingFee] = useState(false);
-    const [gratuity, setGratuity] = useState('');
+    const [bookingFee, ] = useState(false);
+    const [gratuity, ] = useState('');
     const [internalNotesEnabled, setInternalNotesEnabled] = useState(true);
     const [purchaseTags, setPurchaseTags] = useState("");
     const [purchaseNote, setPurchaseNote] = useState("");
     const [isCustomLineItemsEnabled, setIsCustomLineItemsEnabled] = useState(false);
     const [customLineItems, setCustomLineItems] = useState([]);
-    const [pickUpAddOn, setPickUpAddOn] = useState(0);
-    const [privateTourAddOn, setPrivateTourAddOn] = useState(0);
+    const [pickUpAddOn, ] = useState(0);
+    const [privateTourAddOn, ] = useState(0);
     const toast = useToast();
-    const [finalPrice, setFinalPrice] = useState(0);
+    const [, setFinalPrice] = useState(0);
     const [voucherDiscount, setVoucherDiscount] = useState(0);
     const [voucherCode, setVoucherCode] = useState('');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -135,7 +134,6 @@ const PurchasePage = () => {
     const {tenantId} = useGuest();
     const {
         cart,
-        setCart,
         addToCart,
         newCart,
         setNavigationSource,
@@ -179,7 +177,7 @@ const PurchasePage = () => {
                 }));
             }
         }
-    }, [date, time, paymentMethod]);
+    }, [date, time, paymentMethod,invoiceData.daysBeforeEvent]);
 
     useEffect(() => {
         if (paymentMethod !== 'invoice') {
@@ -347,7 +345,7 @@ const PurchasePage = () => {
         } else if (selectedCartItemIndex >= cart.length && cart.length > 0) {
             setSelectedCartItemIndex(0);
         }
-    }, [cart]);
+    }, [selectedCartItemIndex,formDataMap,fetchAddOnsForTour,cart]);
     useEffect(() => {
         if (cart.length > 0) {
             if (cart.length > 0 && selectedCartItemIndex < cart.length) {
@@ -372,7 +370,7 @@ const PurchasePage = () => {
                 }));
             }
         }
-    }, [
+    }, [cart,
         quantity, date, time, organizerName,
         emailEnabled, organizerEmail, phoneEnabled,
         organizerPhone, organizerAttending, attendees,
@@ -643,7 +641,6 @@ const PurchasePage = () => {
         
         setSubmitting(true);
         const formattedAttendees = [];
-        let reservationId: string | null = null;
         let userId: string | null = null;
         try {
             const userPayload = {
@@ -678,7 +675,7 @@ const PurchasePage = () => {
                 throw new Error("Failed to update user status.");
             }
 
-            cart.forEach((cartItem, index) => {
+            cart.forEach((cartItem,) => {
                 const tourFormData = formDataMap[cartItem.id];
                 if (!tourFormData) return;
                 const tourAttendees = tourFormData.attendees.filter(a => a.name && a.name.trim() !== '');
@@ -1024,7 +1021,7 @@ const PurchasePage = () => {
             }
         };
         fetchInitialAddOns();
-    }, [id, cart, selectedCartItemIndex, formDataMap]);
+    }, [fetchAddOnsForTour,id, cart, selectedCartItemIndex, formDataMap]);
 
     useEffect(() => {
         const fetchAdditionalInfo = async () => {

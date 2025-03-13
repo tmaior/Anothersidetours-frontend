@@ -102,5 +102,5 @@ const CustomerQuestionnaire = forwardRef((props, ref: ForwardedRef<Questionnaire
         </Box>
     );
 });
-
+CustomerQuestionnaire.displayName = "CustomerQuestionnaire";
 export default CustomerQuestionnaire;

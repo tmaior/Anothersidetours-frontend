@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 import PhotoUpload from "../../../components/PhotoUpload";
 import DashboardLayout from "../../../components/DashboardLayout";
-import {useEffect, useRef, useState} from "react";
+import {useEffect, useState} from "react";
 import withAuth from "../../../utils/withAuth";
 import {useRouter} from "next/router";
 import axios from "axios";
@@ -34,7 +34,6 @@ function GuideForm() {
     const [isEditing, setIsEditing] = useState(false);
     const {tenantId} = useGuest();
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const photoUploadRef = useRef<{ uploadFile?: (file: File) => Promise<string | null> }>(null);
 
     useEffect(() => {
         if (id && id !== "new") {

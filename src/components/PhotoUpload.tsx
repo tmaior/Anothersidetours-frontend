@@ -37,6 +37,7 @@ export default function PhotoUpload({ onImageUploaded, onFileSelected, imageUrl 
             }
         }
     };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const uploadFile = async (file: File): Promise<string | null> => {
         if (!file) return null;
         

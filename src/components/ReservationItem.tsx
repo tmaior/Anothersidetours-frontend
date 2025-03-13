@@ -15,7 +15,6 @@ const ReservationItem = ({
                              availableSummary,
                              reservedSummary,
                              reservations,
-                             reservationId,
                              onNoteClick,
                              onSelectReservation,
                              isCompactView,

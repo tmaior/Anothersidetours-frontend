@@ -16,7 +16,7 @@ type AddTourContextType = {
 const AddTourContext = createContext<AddTourContextType | undefined>(undefined);
 
 export const AddTourProvider = ({ children }: { children: ReactNode }) => {
-    const [selectedTours, setSelectedTours] = useState<Tour[]>([]);
+    const [, setSelectedTours] = useState<Tour[]>([]);
 
     const addTour = (newTour: Tour) => {
         setSelectedTours((prevTours) => [...prevTours, newTour]);

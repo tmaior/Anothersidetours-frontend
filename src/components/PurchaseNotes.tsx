@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useCallback} from "react";
 import {
     Box,
     Button,
@@ -51,7 +51,7 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
 
     const customerNotes = [];
 
-    const fetchPurchaseNotes = async () => {
+    const fetchPurchaseNotes = useCallback(async () => {
         try {
             setIsLoading(true);
             const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/purchase-notes/${reservationId}`);
@@ -67,9 +67,9 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [reservationId, toast]);
 
-    const fetchEventNotes = async () => {
+    const fetchEventNotes = useCallback(async () => {
         try {
             setIsLoading(true);
             const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/notes/${reservationId}`);
@@ -85,14 +85,14 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [reservationId, toast]);
 
     useEffect(() => {
         if (reservationId) {
             fetchPurchaseNotes();
             fetchEventNotes();
         }
-    }, [reservationId,fetchEventNotes,fetchPurchaseNotes]);
+    }, [reservationId, fetchPurchaseNotes, fetchEventNotes]);
 
     const handleCreatePurchaseNote = async () => {
         if (!newNoteText.trim()) return;

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useCallback} from "react";
 import {
     Box,
     Button,
@@ -69,7 +69,7 @@ function CategoryManagement() {
         }
     }, [tenantId]);
 
-    const fetchCategories = async (tenantId) => {
+    const fetchCategories = useCallback(async (tenantId) => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/byTenantId/${tenantId}`);
             if (!response.ok) throw new Error("Failed to fetch categories");
@@ -85,9 +85,9 @@ function CategoryManagement() {
                 isClosable: true,
             });
         }
-    };
+    }, [toast]);
 
-    const fetchTours = async (tenantId) => {
+    const fetchTours = useCallback(async (tenantId) => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`);
             if (!response.ok) throw new Error("Failed to fetch tours");
@@ -103,13 +103,13 @@ function CategoryManagement() {
                 isClosable: true,
             });
         }
-    };
+    }, [toast]);
 
     useEffect(() => {
         if (!tenantId) return;
         fetchCategories(tenantId);
         fetchTours(tenantId);
-    }, [fetchCategories,fetchTours,tenantId]);
+    }, [fetchCategories, fetchTours, tenantId]);
 
     const handleCreateCategory = async () => {
         if (!newCategory.name) {

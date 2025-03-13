@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState, useCallback} from "react";
 import {
     Box,
     Button,
@@ -213,7 +213,7 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
         router.push("/dashboard/list-tours");
     }
 
-    function resetFields() {
+    const resetFields = useCallback(() => {
         setTitle("");
         setDescription("");
         setPrice(0);
@@ -226,7 +226,10 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
         setConsiderations("");
         setImagePreview(null);
         setImageFile(null);
-    }
+    }, [setTitle, setDescription, setPrice, setIncludedItems, setBringItems, setNewIncludedItem, setNewBringItem, setOperationProcedures, setCancellationPolicy, setConsiderations, setImagePreview, setImageFile]);
+    useEffect(() => {
+        resetFields();
+    }, [resetFields]);
 
     function handleFormChange(field: keyof typeof formData, value: string | number) {
         let numericValue = 0;
@@ -604,7 +607,7 @@ function SchedulesAvailabilityStep({
     const [maxPerEventLimit, setMaxPerEventLimit] = useState(0);
 
     const questionnaireRef = useRef<QuestionnaireRef>(null);
-    const resetFields = () => {
+    const resetFields = useCallback(() => {
         setSchedule([]);
         setEventDuration('');
         setGuestLimit(0);
@@ -622,7 +625,9 @@ function SchedulesAvailabilityStep({
         if (questionnaireRef.current) {
             questionnaireRef.current.resetQuestions();
         }
-    };
+    }, [setSchedule, setEventDuration, setGuestLimit, setEarlyArrival, setTitle, setDescription, 
+       setPrice, setIncludedItems, setBringItems, setImagePreview, setOperationProcedures, 
+       setCancellationPolicy, setConsiderations]);
 
     function handleAddTimeRange() {
         setSchedule([
@@ -845,6 +850,7 @@ function SchedulesAvailabilityStep({
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [tourDemographics, setTourDemographics] = useState<Demographic[]>([]);
     const [availableDemographics, setAvailableDemographics] = useState<Demographic[]>([]);
     const [selectedDemographics, setSelectedDemographics] = useState<Demographic[]>([]);
@@ -853,21 +859,30 @@ function SchedulesAvailabilityStep({
     const [newDemographic, setNewDemographic] = useState({name: "", caption: ""});
     const {addDemographic, removeDemographic} = useDemographics();
 
+    const fetchTourDemographics = useCallback(async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics/demographicByTourId/${tourId}`);
+            const data = await response.json();
+            if (data && Array.isArray(data)) {
+                setSelectedDemographics(data);
+            }
+        } catch (error) {
+            console.error("Error fetching tour demographics:", error);
+            toast({
+                title: "Error",
+                description: "Failed to load tour demographics",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    }, [tourId, toast]);
+
     useEffect(() => {
         if (tourId) {
             fetchTourDemographics();
         }
-    }, [tourId]);
-
-    const fetchTourDemographics = async () => {
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics/demographicByTourId/${tourId}`);
-            const data = await response.json();
-            setTourDemographics(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error("Error fetching tour demographics:", error);
-        }
-    };
+    }, [tourId, fetchTourDemographics]);
 
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics/tenant/${tenantId}`)
@@ -1275,6 +1290,16 @@ function SchedulesAvailabilityStep({
         flatPriceModal.onClose();
     };
 
+    useEffect(() => {
+        if (!isEditing) {
+            resetFields();
+        }
+    }, [isEditing, resetFields]);
+    
+    useEffect(() => {
+        resetFields();
+    }, [resetFields]);
+
     return (
         <Box
             width="100vw"
@@ -1528,7 +1553,7 @@ function SchedulesAvailabilityStep({
                                         </Tr>
                                     </Thead>
                                     <Tbody>
-                                        {tourDemographics.length === 0 && selectedDemographics.length === 0 ? (
+                                        {selectedDemographics.length === 0 ? (
                                             <Tr>
                                                 <Td colSpan={2} textAlign="center" p={4} color="gray.500">
                                                     No demographics available
@@ -1536,7 +1561,7 @@ function SchedulesAvailabilityStep({
                                             </Tr>
                                         ) : (
                                             <>
-                                                {tourDemographics.map((demo) => (
+                                                {selectedDemographics.map((demo) => (
                                                     <Tr key={demo.id} fontSize="sm">
                                                         <Td p={2}>
                                                             <HStack spacing={2}>
@@ -1911,11 +1936,6 @@ function SchedulesAvailabilityStep({
 function CreateToursPage({isEditing = false}: { isEditing?: boolean }) {
     const [currentStep, setCurrentStep] = useState(1);
 
-    useEffect(() => {
-        if (!isEditing) {
-            resetFields();
-        }
-    }, [isEditing]);
 
     const {
         setSchedule,
@@ -1934,7 +1954,7 @@ function CreateToursPage({isEditing = false}: { isEditing?: boolean }) {
         setConsiderations
     } = useGuest();
 
-    const resetFields = () => {
+    const resetFields = useCallback(() => {
         setSchedule([]);
         setEventDuration('');
         setGuestLimit(0);
@@ -1956,11 +1976,19 @@ function CreateToursPage({isEditing = false}: { isEditing?: boolean }) {
         setConsiderations("");
         setImagePreview(null);
         setImageFile(null);
-    };
+    }, [setSchedule, setEventDuration, setGuestLimit, setEarlyArrival, setTitle, setDescription, 
+        setPrice, setIncludedItems, setBringItems, setImagePreview, setImageFile, 
+        setOperationProcedures, setCancellationPolicy, setConsiderations]);
+
+    useEffect(() => {
+        if (!isEditing) {
+            resetFields();
+        }
+    }, [isEditing, resetFields]);
 
     useEffect(() => {
         resetFields();
-    }, []);
+    }, [resetFields]);
 
     if (currentStep === 1) {
         return <DescriptionContentStep onNext={() => setCurrentStep(2)}/>;

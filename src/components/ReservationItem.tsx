@@ -9,18 +9,52 @@ import {useGuideAssignment} from "../hooks/useGuideAssignment";
 import DashBoardMenu from "./DashboardMenuList";
 import useGuidesStore from "../utils/store";
 
+interface ReservationItemData {
+    id: string;
+    guestQuantity?: number;
+    time: string;
+    notes?: string[];
+    imageUrl: string;
+    title: string;
+    available: string;
+    reservedDetails: string;
+    statusColor: string;
+    capacity: string;
+    guide: string;
+    hasNotes: boolean;
+    user?: {
+        name: string;
+        email: string;
+        phone: string;
+    };
+    [key: string]: unknown;
+}
+
+interface ReservationItemProps {
+    date: string;
+    day: string;
+    availableSummary: string;
+    reservedSummary: string;
+    reservations: ReservationItemData[];
+    reservationId?: string;
+    onNoteClick: (notes: string[], reservationId: string) => void;
+    onSelectReservation: (reservation: ReservationItemData) => void;
+    isCompactView: boolean;
+}
+
 const ReservationItem = ({
                              date,
                              day,
                              availableSummary,
                              reservedSummary,
                              reservations,
+                             reservationId,
                              onNoteClick,
                              onSelectReservation,
                              isCompactView,
-                         }) => {
+                         }: ReservationItemProps) => {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
-    const [activeReservationItem, setActiveReservationItem] = useState(null);
+    const [activeReservationItem, setActiveReservationItem] = useState<ReservationItemData | null>(null);
     const {guidesList, loadingGuides} = useGuides();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {assignGuides, isAssigning,} = useGuideAssignment();
@@ -77,6 +111,12 @@ const ReservationItem = ({
             });
         }
     }, [reservations, fetchGuidesForItem]);
+
+    useEffect(() => {
+        if (reservationId) {
+            console.debug('Reservation ID provided:', reservationId);
+        }
+    }, [reservationId]);
 
     const handleGuideSelection = async (selectedGuides: { id: string; name: string }[]) => {
         if (!activeReservationItem) return;
@@ -158,7 +198,7 @@ const ReservationItem = ({
                     <HStack spacing={{base: 2, md: 3}} flexShrink={0}>
                         <Box minWidth="40px" textAlign="center">
                             <Text fontWeight="medium" fontSize="sm" color="gray.600">
-                                {item.time.split(' ')[0]}
+                                {item.time?.split(' ')[0]}
                             </Text>
                             <Text fontWeight="light" fontSize="xs" color="gray.500" mt="-1">
                                 {item.time.split(' ')[1]}

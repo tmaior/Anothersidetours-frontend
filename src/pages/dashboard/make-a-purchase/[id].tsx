@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useState, useCallback} from 'react'
 import {
     Box,
     Button,
@@ -189,7 +189,7 @@ const PurchasePage = () => {
         }
     }, [paymentMethod, date]);
 
-    const fetchAddOnsForTour = async (tourId: string) => {
+    const fetchAddOnsForTour = useCallback(async (tourId: string) => {
         try {
             if (!tourId) return;
 
@@ -215,11 +215,14 @@ const PurchasePage = () => {
             }
 
             setLoadingAddons(false);
+            return data;
         } catch (error) {
-            console.error('Failed to fetch addons:', error);
+            console.error("Error fetching add-ons:", error);
+            return [];
+        } finally {
             setLoadingAddons(false);
         }
-    };
+    }, [formDataMap]);
 
     const loadFormData = (index: number) => {
         if (cart.length === 0) return;
@@ -794,7 +797,7 @@ const PurchasePage = () => {
                             throw new Error("Failed to record cash payment.");
                         }
                     } else if (paymentMethod === 'check' || paymentMethod === 'invoice' || paymentMethod === 'other') {
-                        const paymentDetails: any = {
+                        const paymentDetails: Record<string, string | number> = {
                             paymentNote: purchaseNote
                         };
                         if (paymentMethod === 'invoice') {

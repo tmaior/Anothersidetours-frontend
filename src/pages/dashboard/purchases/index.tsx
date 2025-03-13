@@ -64,14 +64,45 @@ type GuestItemProps = {
 
 type GroupCardProps = {
     groupId: string;
-    items: any[];
+    items: ReservationItem[];
     isExpanded: boolean;
     onToggle: () => void;
-    onSelectReservation: (reservation: any) => void;
-    selectedReservation: any;
+    onSelectReservation: (reservation: ReservationItem) => void;
+    selectedReservation: ReservationItem | null;
     formatDate: (dateString: string) => string;
     toggleDetailedSummary?: () => void;
 };
+interface ReservationItem {
+    id: string;
+    name?: string;
+    createdAt?: string;
+    reservation_date?: string;
+    isGroupBooking?: boolean;
+    groupItems?: ReservationItem[];
+    tour?: {
+        id: string;
+        name: string;
+        price: number;
+        imageUrl?: string;
+    };
+    valuePerGuest?: number;
+    guestQuantity?: number;
+    gratuityAmount?: number;
+    gratuityPercent?: number;
+    total_price?: number;
+    user?: {
+        id: string;
+        name?: string;
+        email?: string;
+        phone?: string;
+    };
+    status?: string;
+    tenantId?: string;
+    tourId?: string;
+    groupId?: string;
+    reservationAddons?: Array<{addonId: string; value: number}>;
+    [key: string]: unknown;
+}
 const GuestItem: React.FC<GuestItemProps> = ({
     name, 
     date, 
@@ -124,9 +155,14 @@ const GroupCard: React.FC<GroupCardProps> = ({
     toggleDetailedSummary
 }) => {
     const totalGuests = items.reduce((sum, item) => sum + (item.guestQuantity || 0), 0);
-    const earliestDate = items.reduce((earliest, item) => {
+    const earliestDate = items.reduce((earliest: string | null, item) => {
+        if (!item.reservation_date) return earliest;
+        
         const currentDate = new Date(item.reservation_date);
-        return earliest && earliest < currentDate ? earliest : currentDate;
+        
+        if (!earliest) return item.reservation_date;
+        
+        return new Date(earliest) < currentDate ? earliest : item.reservation_date;
     }, null);
     const groupImage = items[0]?.tour?.imageUrl || 'https://via.placeholder.com/50';
     
@@ -198,7 +234,7 @@ const GroupCard: React.FC<GroupCardProps> = ({
                 </HStack>
                 <Box>
                     <Text fontSize="xs" color="gray.500">
-                        {earliestDate ? formatDate(earliestDate.toISOString()) : 'N/A'}
+                        {earliestDate ? formatDate(earliestDate) : 'N/A'}
                     </Text>
                 </Box>
             </HStack>
@@ -350,9 +386,9 @@ const PurchaseList = ({
             container?.removeEventListener("scroll", handleScroll);
         };
     }, [displayedReservations, hasMore, isLoading, handleScroll]);
-    const groupReservations = (reservations) => {
-        const grouped: { [groupId: string]: any[] } = {};
-        const ungrouped = [];
+    const groupReservations = (reservations: ReservationItem[]) => {
+        const grouped: { [groupId: string]: ReservationItem[] } = {};
+        const ungrouped: ReservationItem[] = [];
         
         reservations.forEach(reservation => {
             if (reservation.groupId) {
@@ -1180,7 +1216,7 @@ const PurchasesPage = () => {
         tours: [],
         payments: []
     });
-    const fetchAddonsForReservation = async (reservationId, tourId) => {
+    const fetchAddonsForReservation = useCallback(async (reservationId: string, tourId?: string) => {
         try {
             const reservationAddonsResponse = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${reservationId}`
@@ -1193,9 +1229,9 @@ const PurchasesPage = () => {
             const reservationAddons = reservationAddonsResponse.data;
             const allAddons = allAddonsResponse.data;
 
-            return reservationAddons.map((selectedAddon) => {
+            return reservationAddons.map((selectedAddon: {addonId: string; value: number}) => {
                 const addonDetails = allAddons.find(
-                    (addon) => addon.id === selectedAddon.addonId
+                    (addon: {id: string; price: number; label: string}) => addon.id === selectedAddon.addonId
                 );
                 return {
                     name: addonDetails?.label || 'Add-on',
@@ -1207,9 +1243,9 @@ const PurchasesPage = () => {
             console.error(`Error fetching add-ons for reservation ${reservationId}:`, error);
             return [];
         }
-    };
+    }, []);
 
-    const handleSelectReservation = async (reservation) => {
+    const handleSelectReservation = useCallback(async (reservation: ReservationItem) => {
         setSelectedReservation(reservation);
         setShowDetailedSummary(!!reservation.isGroupBooking);
 
@@ -1281,7 +1317,7 @@ const PurchasesPage = () => {
                 console.error("Error preparing detailed summary data:", error);
             }
         }
-    };
+    }, [fetchAddonsForReservation, setDetailedSummaryData, setSelectedReservation, setShowDetailedSummary]);
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value.toLowerCase());

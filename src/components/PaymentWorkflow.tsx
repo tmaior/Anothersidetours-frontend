@@ -287,6 +287,7 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
                                             color: '#9e2146',
                                         },
                                     },
+                                    hidePostalCode: true,
                                 }}/>
                             </Box>
                         </Box>

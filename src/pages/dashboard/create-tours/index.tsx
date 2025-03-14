@@ -227,9 +227,6 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
         setImagePreview(null);
         setImageFile(null);
     }, [setTitle, setDescription, setPrice, setIncludedItems, setBringItems, setNewIncludedItem, setNewBringItem, setOperationProcedures, setCancellationPolicy, setConsiderations, setImagePreview, setImageFile]);
-    useEffect(() => {
-        resetFields();
-    }, [resetFields]);
 
     function handleFormChange(field: keyof typeof formData, value: string | number) {
         let numericValue = 0;
@@ -621,13 +618,13 @@ function SchedulesAvailabilityStep({
         setOperationProcedures("");
         setCancellationPolicy("");
         setConsiderations("");
-
+        
         if (questionnaireRef.current) {
             questionnaireRef.current.resetQuestions();
         }
     }, [setSchedule, setEventDuration, setGuestLimit, setEarlyArrival, setTitle, setDescription, 
-       setPrice, setIncludedItems, setBringItems, setImagePreview, setOperationProcedures, 
-       setCancellationPolicy, setConsiderations]);
+        setPrice, setIncludedItems, setBringItems, setImagePreview, 
+        setOperationProcedures, setCancellationPolicy, setConsiderations]);
 
     function handleAddTimeRange() {
         setSchedule([
@@ -1289,16 +1286,6 @@ function SchedulesAvailabilityStep({
     const handleSaveFlatPrices = () => {
         flatPriceModal.onClose();
     };
-
-    useEffect(() => {
-        if (!isEditing) {
-            resetFields();
-        }
-    }, [isEditing, resetFields]);
-    
-    useEffect(() => {
-        resetFields();
-    }, [resetFields]);
 
     return (
         <Box
@@ -1979,16 +1966,6 @@ function CreateToursPage({isEditing = false}: { isEditing?: boolean }) {
     }, [setSchedule, setEventDuration, setGuestLimit, setEarlyArrival, setTitle, setDescription, 
         setPrice, setIncludedItems, setBringItems, setImagePreview, setImageFile, 
         setOperationProcedures, setCancellationPolicy, setConsiderations]);
-
-    useEffect(() => {
-        if (!isEditing) {
-            resetFields();
-        }
-    }, [isEditing, resetFields]);
-
-    useEffect(() => {
-        resetFields();
-    }, [resetFields]);
 
     if (currentStep === 1) {
         return <DescriptionContentStep onNext={() => setCurrentStep(2)}/>;

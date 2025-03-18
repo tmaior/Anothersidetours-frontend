@@ -874,10 +874,38 @@ const PurchasePage = () => {
                             }
                         }
                     } else if (paymentMethod === 'credit_card') {
+
+                        const paymentTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                tenant_id: tenantId,
+                                reservation_id: reservationId,
+                                payment_method: paymentMethod,
+                                amount: totalWithDiscount,
+                                payment_status: 'paid',
+                                payment_details: {
+                                    note: purchaseNote,
+                                    payment_type: paymentMethod
+                                },
+                                reference_number: `${paymentMethod.toUpperCase()}-${Date.now()}`,
+                                is_split_payment: false,
+                                created_by: "Back Office",
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString(),
+                            }),
+                        });
+                        if (!paymentTransactionResponse.ok) {
+                            throw new Error(`Failed to record ${paymentMethod} payment transaction.`);
+                        }
+
+                        const data = await paymentTransactionResponse.json();
+                        const transactionId = data.id;
+
                         const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({reservationId}),
+                            body: JSON.stringify({transactionId}),
                         });
 
                         if (!setupIntentRes.ok) {
@@ -910,7 +938,7 @@ const PurchasePage = () => {
                         const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`, {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({paymentMethodId, reservationId}),
+                            body: JSON.stringify({paymentMethodId, transactionId}),
                         });
 
                         if (!savePMRes.ok) {

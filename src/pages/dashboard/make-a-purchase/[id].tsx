@@ -781,15 +781,25 @@ const PurchasePage = () => {
                     }
                 }
 
-                if (!doNotCharge) {
                     if (paymentMethod === 'cash') {
-                        const cashPaymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/record-cash-payment`, {
+                        const cashPaymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({
-                                reservationId,
-                                amountReceived: cashAmountReceived,
-                                changeDue: cashAmountReceived - totalWithDiscount,
+                                tenant_id: tenantId,
+                                reservation_id: reservationId,
+                                payment_method: 'cash',
+                                amount: totalWithDiscount,
+                                payment_status: 'paid',
+                                payment_details: {
+                                    cash_received: cashAmountReceived,
+                                    change_due: cashAmountReceived - totalWithDiscount
+                                },
+                                reference_number: `CASH-${Date.now()}`,
+                                is_split_payment: false,
+                                created_by: "Back Office",
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString(),
                             }),
                         });
 
@@ -820,13 +830,18 @@ const PurchasePage = () => {
                                     payment_method: 'invoice',
                                     amount: totalWithDiscount,
                                     payment_status: 'pending',
-                                    payment_details: paymentDetails,
+                                    payment_details: {
+                                        note: purchaseNote,
+                                        invoice_message: invoiceData.message
+                                    },
                                     reference_number: `INV-${Date.now()}`,
                                     is_split_payment: false,
                                     due_date: dueDateToUse ? new Date(dueDateToUse).toISOString() : new Date(combineDateAndTime(date, time)).toISOString(),
                                     invoice_message: invoiceData.message,
                                     days_before_event: invoiceData.daysBeforeEvent,
                                     created_by: "Back Office",
+                                    created_at: new Date().toISOString(),
+                                    updated_at: new Date().toISOString(),
                                 }),
                             });
 
@@ -838,13 +853,20 @@ const PurchasePage = () => {
                                 method: 'POST',
                                 headers: {'Content-Type': 'application/json'},
                                 body: JSON.stringify({
-                                    reservationId,
-                                    paymentMethod: paymentMethod,
+                                    tenant_id: tenantId,
+                                    reservation_id: reservationId,
+                                    payment_method: paymentMethod,
                                     amount: totalWithDiscount,
-                                    paymentStatus: 'completed',
-                                    paymentDetails,
-                                    referenceNumber: purchaseNote,
-                                    isSplitPayment: false,
+                                    payment_status: 'paid',
+                                    payment_details: {
+                                        note: purchaseNote,
+                                        payment_type: paymentMethod
+                                    },
+                                    reference_number: `${paymentMethod.toUpperCase()}-${Date.now()}`,
+                                    is_split_payment: false,
+                                    created_by: "Back Office",
+                                    created_at: new Date().toISOString(),
+                                    updated_at: new Date().toISOString(),
                                 }),
                             });
                             if (!paymentTransactionResponse.ok) {
@@ -895,6 +917,33 @@ const PurchasePage = () => {
                             throw new Error("Failed to save PaymentMethod.");
                         }
 
+                        const paymentTransactionRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                tenant_id: tenantId,
+                                reservation_id: reservationId,
+                                payment_method: 'credit_card',
+                                amount: totalWithDiscount,
+                                payment_status: 'paid',
+                                payment_details: {
+                                    card_number: cardNumber ? `**** **** **** ${cardNumber.slice(-4)}` : "****",
+                                    cardholder_name: organizerName || "Guest Organizer",
+                                    stripe_payment_method_id: paymentMethodId
+                                },
+                                reference_number: `CC-${Date.now()}`,
+                                stripe_payment_id: paymentMethodId,
+                                is_split_payment: false,
+                                created_by: "Back Office",
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString(),
+                            }),
+                        });
+                        
+                        if (!paymentTransactionRes.ok) {
+                            throw new Error("Failed to record credit card payment transaction.");
+                        }
+
                         if (voucherValid && appliedVoucherCode) {
                             const redeemResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/redeem`, {
                                 method: 'POST',
@@ -920,7 +969,6 @@ const PurchasePage = () => {
                             setAppliedVoucherCode("");
                         }
                     }
-                }
 
                 if (additionalInformationQuestions.length > 0) {
                     await Promise.all(

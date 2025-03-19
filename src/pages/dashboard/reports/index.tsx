@@ -1,4 +1,12 @@
-import { Box, Flex, Text, Button } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  Text,
+  Button,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ScheduleNowIcon from "../../../assets/icons/ScheduleNowIcon";
@@ -8,11 +16,17 @@ import ReportsSelectedDatesChip from "../../../components/ReportsSelectedDatesCh
 import SelectDateTypeSwitch from "../../../components/SelectDateTypeSwitch";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
+import { format } from "date-fns";
+import { DateRangePicker } from "react-date-range";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 import ModalReport from "../../../components/ModalReport";
 import { ColDef } from "ag-grid-community";
+import { useRef } from "react";
+
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -22,6 +36,7 @@ export default function Reports() {
   const [selectedDateType, setSelectedDateType] = useState("booking");
   const [isScheduleNowOpen, setIsScheduleNowOpen] = useState(false);
   const [rowData, setRowData] = useState([]);
+  const gridRef = useRef(null);
 
   const fetchReservations = async () => {
     try {
@@ -42,17 +57,14 @@ export default function Reports() {
       }
 
       const formattedData = data.map((reservation) => ({
-        id: reservation.id,
-        customerName: reservation.customerName || "N/A",
         tourName: reservation.tour?.name || "N/A",
-        date: reservation.date
-          ? new Date(reservation.date).toISOString().split("T")[0]
-          : "Unknown",
-        status: reservation.status || "Unknown",
-        addons:
-          reservation.reservationAddons
-            ?.map((addon) => addon.addon.name)
-            .join(", ") || "None",
+        totalValue: `$${reservation.total_price.toFixed(2)}`,
+        hours: reservation.tour?.duration
+          ? (reservation.tour.duration / 60).toString()
+          : "N/A",
+        electricBikeUpgrade: "No",
+        tipPercentage: `$${(reservation.total_price * 0.18).toFixed(2)}`,
+        roundTripShuttle: "Not included",
       }));
 
       setRowData(formattedData);
@@ -66,17 +78,50 @@ export default function Reports() {
   }, []);
 
   const [colDefs, setColDefs] = useState([
-    { field: "id", headerName: "ID", sortable: true },
-    { field: "customerName", headerName: "Customer" },
-    { field: "tourName", headerName: "Tour" },
-    { field: "date", headerName: "Date" },
-    { field: "status", headerName: "Status" },
-    { field: "addons", headerName: "Add-ons" },
+    {
+      field: "tourName",
+      headerName: "Tour",
+      flex: 2,
+      cellRenderer: (params) => `<strong>${params.value}</strong>`,
+    },
+    {
+      field: "totalValue",
+      headerName: "Total Value",
+      flex: 1,
+    },
+    {
+      field: "hours",
+      headerName: "Hour(s)",
+      flex: 1,
+    },
+    {
+      field: "electricBikeUpgrade",
+      headerName: "Upgrade to an Electric Bike for FREE?",
+      flex: 2,
+    },
+    {
+      field: "tipPercentage",
+      headerName: "18%",
+      flex: 1,
+    },
+    {
+      field: "roundTripShuttle",
+      headerName: "Round-Trip Shuttle @ $50 per guest. (10 Miles Max.)",
+      flex: 2,
+    },
   ]);
 
   const onCloseModal = () => {
     setIsScheduleNowOpen(false);
   };
+
+  const [dateRange, setDateRange] = useState([
+    {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: "selection",
+    },
+  ]);
 
   return (
     <Box
@@ -124,7 +169,24 @@ export default function Reports() {
                 selectedDateType={selectedDateType}
                 selectedOption={(value) => setSelectedDateType(value)}
               />
-              <Button> date</Button>
+              <Popover placement="bottom-start">
+                <PopoverTrigger>
+                  <Button>
+                    {format(dateRange[0].startDate, "MMM dd, yyyy")} -{" "}
+                    {format(dateRange[0].endDate, "MMM dd, yyyy")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent p={0} width="auto">
+                  <DateRangePicker
+                    ranges={dateRange}
+                    onChange={(item) => setDateRange([item.selection])}
+                    showSelectionPreview={true}
+                    moveRangeOnFirstSelection={false}
+                    months={2}
+                    direction="horizontal"
+                  />
+                </PopoverContent>
+              </Popover>
               <Button> select columns </Button>
             </Flex>
 
@@ -140,16 +202,21 @@ export default function Reports() {
                   <ScheduleNowIcon /> Schedule Now
                 </Flex>
               </Button>
-              <Button
-                variant="outline"
-                height="42px"
-                padding="18px"
-                fontSize="18px"
-              >
-                <Flex gap={4} align="center">
-                  <ExportIcon /> Export
-                </Flex>
-              </Button>
+
+              <Flex gap={4} align="center">
+                <Button
+                  variant="outline"
+                  height="42px"
+                  padding="18px"
+                  fontSize="18px"
+                  onClick={() => gridRef.current.api.exportDataAsCsv()}
+                >
+                  <Flex gap={4} align="center">
+                    <ExportIcon /> Export
+                  </Flex>
+                </Button>
+              </Flex>
+
               <Button
                 colorScheme="yellow"
                 height="42px"
@@ -183,9 +250,29 @@ export default function Reports() {
           <Flex sx={{ border: "1px solid #e0e3e7" }} padding="10px">
             <div
               className="ag-theme-alpine"
-              style={{ height: 500, width: "100%" }}
+              style={{
+                height: "auto",
+                width: "100%",
+                fontSize: "16px",
+                border: "none",
+                background: "transparent",
+              }}
             >
-              <AgGridReact rowData={rowData} columnDefs={colDefs} />
+              <AgGridReact
+                ref={gridRef}
+                rowData={rowData}
+                columnDefs={colDefs}
+                defaultColDef={{
+                  flex: 1,
+                  cellStyle: {
+                    display: "flex",
+                    alignItems: "center",
+                    border: "none",
+                    padding: "10px",
+                  },
+                }}
+                domLayout="autoHeight"
+              />
             </div>
           </Flex>
         </Flex>

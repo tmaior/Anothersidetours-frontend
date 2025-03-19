@@ -31,7 +31,6 @@ import InformationAdditionalModal from "./InformationAditionalModal";
 import {FaPhoneAlt} from "react-icons/fa";
 import InputMask from "react-input-mask";
 import {CardElement, useElements, useStripe} from "@stripe/react-stripe-js";
-import {string} from "prop-types";
 import React, {useEffect, useState} from "react";
 
 interface CheckoutModalProps {
@@ -39,10 +38,12 @@ interface CheckoutModalProps {
     onClose: () => void;
     title?: string;
     onBack?: () => void;
-    valuePrice: number;
+    valuePrice: number | string;
+    reservationId?: string;
+    isInvoicePayment?: boolean;
 }
 
-export default function CheckoutModal({isOpen, onClose, onBack, title, valuePrice}: CheckoutModalProps) {
+export default function CheckoutModal({isOpen, onClose, onBack, title, valuePrice, reservationId: propReservationId, isInvoicePayment = false}: CheckoutModalProps) {
     const {isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal} = useDisclosure();
     const {
         tourId,
@@ -53,119 +54,159 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
         phone,
         selectedDate,
         selectedTime,
-        detailedAddons
+        detailedAddons,
+        reservationId: contextReservationId, 
+        setReservationId,
+        imageUrl
     } = useGuest();
     const {isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal} = useDisclosure();
 
-    const pricePerGuest = valuePrice || 0;
+    const pricePerGuest = typeof valuePrice === 'string' ? parseFloat(valuePrice) : valuePrice || 0;
     const guestTotal = guestQuantity * pricePerGuest;
     const addonsTotal = detailedAddons.reduce((acc, addon) => acc + addon.total, 0);
     const totalAmount = guestTotal + addonsTotal;
     const stripe = useStripe();
     const elements = useElements();
-    let reservationId = string;
-    const { setReservationId,imageUrl } = useGuest();
+
+    const reservationId = propReservationId || contextReservationId;
 
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [transactionId, setTransactionId] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen) {
             setErrorMessage(null);
+            setIsProcessing(false);
         }
     }, [isOpen]);
 
+    useEffect(() => {
+        if (isInvoicePayment && reservationId && isOpen) {
+            fetchTransactionId();
+        }
+    }, [isInvoicePayment, reservationId, isOpen]);
+
+    const fetchTransactionId = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservationId}?payment_method=invoice&payment_status=pending`);
+            if (!response.ok) {
+                throw new Error("Failed to fetch transaction data");
+            }
+            const transactions = await response.json();
+            if (transactions && transactions.length > 0) {
+                setTransactionId(transactions[0].id);
+            }
+        } catch (error) {
+            console.error("Error fetching transaction ID:", error);
+            setErrorMessage("Could not retrieve invoice information");
+        }
+    };
+
     const handlePayAndOpenAdditional = async () => {
+        setIsProcessing(true);
+        setErrorMessage(null);
 
         try {
-            if (!userId) {
-                console.error("User ID is not available.");
+            let reservation;
+            if (isInvoicePayment && reservationId) {
+                reservation = { id: reservationId };
+            } else {
+                if (!userId) {
+                    console.error("User ID is not available.");
+                    setIsProcessing(false);
+                    return;
+                }
+
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ statusCheckout: "COMPLETED" }),
+                });
+
+                if (!response.ok) throw new Error("Failed to update user status");
+
+                const combineDateAndTime = (date: Date, time: string): string => {
+                    const datePart = date.toISOString().split('T')[0];
+                    const timeParts = time.match(/(\d{1,2}):(\d{2})\s?([AP]M)?/);
+
+                    if (!timeParts) throw new Error(`Invalid time format: ${time}`);
+
+                    const hoursMatch = timeParts[1];
+                    const minutesMatch = timeParts[2];
+                    const meridianMatch = timeParts[3];
+
+                    const hours = meridianMatch === "PM" && parseInt(hoursMatch) !== 12
+                        ? (parseInt(hoursMatch) + 12).toString()
+                        : meridianMatch === "AM" && parseInt(hoursMatch) === 12
+                            ? "00"
+                            : hoursMatch;
+
+                    const formattedTime = `${hours.padStart(2, '0')}:${minutesMatch.padStart(2, '0')}:00`;
+                    const combinedDateTime = `${datePart}T${formattedTime}.000Z`;
+
+                    return new Date(combinedDateTime).toISOString();
+                };
+
+                const reservationDateTime = selectedDate && selectedTime
+                    ? combineDateAndTime(selectedDate, selectedTime)
+                    : new Date().toISOString().replace('T', ' ').split('.')[0] + '.000';
+
+                const reservationData = {
+                    tourId,
+                    userId,
+                    reservation_date: reservationDateTime,
+                    addons: detailedAddons.map(addon => ({
+                        addonId: addon.id,
+                        quantity: addon.quantity
+                    })),
+                    total_price: totalAmount,
+                    guestQuantity,
+                    status: "PENDING",
+                    createdBy: "Client"
+                };
+
+                const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/booking-details`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(reservationData),
+                });
+
+                if (reservationResponse.ok) {
+                    reservation = await reservationResponse.json();
+                    setReservationId(reservation.id);
+                } else {
+                    console.error('Failed to create reservation');
+                    throw new Error('Failed to create reservation');
+                }
+            }
+
+            const cardElement = elements.getElement(CardElement);
+
+            if (!cardElement) {
+                setErrorMessage("Card element is not available.");
+                setIsProcessing(false);
                 return;
             }
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ statusCheckout: "COMPLETED" }),
-            });
+            const setupIntentEndpoint = isInvoicePayment && transactionId
+                ? `${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent-for-transaction`
+                : `${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`;
+                
+            const setupIntentData = isInvoicePayment && transactionId
+                ? { transactionId: transactionId }
+                : { reservationId: reservation.id };
 
-            if (!response.ok) throw new Error("Failed to update user status");
-
-            const combineDateAndTime = (date: Date, time: string): string => {
-                const datePart = date.toISOString().split('T')[0];
-                const timeParts = time.match(/(\d{1,2}):(\d{2})\s?([AP]M)?/);
-
-                if (!timeParts) throw new Error(`Invalid time format: ${time}`);
-
-                const hoursMatch = timeParts[1];
-                const minutesMatch = timeParts[2];
-                const meridianMatch = timeParts[3];
-
-                const hours = meridianMatch === "PM" && parseInt(hoursMatch) !== 12
-                    ? (parseInt(hoursMatch) + 12).toString()
-                    : meridianMatch === "AM" && parseInt(hoursMatch) === 12
-                        ? "00"
-                        : hoursMatch;
-
-                const formattedTime = `${hours.padStart(2, '0')}:${minutesMatch.padStart(2, '0')}:00`;
-                const combinedDateTime = `${datePart}T${formattedTime}.000Z`;
-
-                return new Date(combinedDateTime).toISOString();
-            };
-
-            const reservationDateTime = selectedDate && selectedTime
-                ? combineDateAndTime(selectedDate, selectedTime)
-                : new Date().toISOString().replace('T', ' ').split('.')[0] + '.000';
-
-            const reservationData = {
-                tourId,
-                userId,
-                reservation_date: reservationDateTime,
-                addons: detailedAddons.map(addon => ({
-                    addonId: addon.id,
-                    quantity: addon.quantity
-                })),
-                total_price: totalAmount,
-                guestQuantity,
-                status: "PENDING",
-                createdBy:"Client"
-            };
-
-            const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/booking-details`, {
+            const setupIntentResponse = await fetch(setupIntentEndpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(reservationData),
-            });
-
-            if (reservationResponse.ok) {
-                const reservationResult = await reservationResponse.json();
-                reservationId = reservationResult.id;
-                setReservationId(reservationResult.id);
-            } else {
-                console.error('Failed to create reservation');
-            }
-        } catch (error) {
-            console.error('Error in the checkout process:', error);
-        }
-
-        const cardElement = elements.getElement(CardElement);
-
-        if (!cardElement) {
-            alert("Card element is not available.");
-            return;
-        }
-
-        try {
-            const setupIntentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({reservationId: reservationId}),
+                body: JSON.stringify(setupIntentData),
             });
 
             if (!setupIntentResponse.ok) {
@@ -186,32 +227,52 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
 
             if (paymentMethodResponse.error) {
                 setErrorMessage(`Payment failed: ${paymentMethodResponse.error.message}`);
+                setIsProcessing(false);
                 return;
             }
 
-            if (paymentMethodResponse.error) {
-                console.error('Erro ao confirmar o SetupIntent:', paymentMethodResponse.error.message);
-            }
             const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
 
-            const savePaymentMethodResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`, {
+            const saveEndpoint = isInvoicePayment && transactionId
+                ? `${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method-for-transaction`
+                : `${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`;
+                
+            const savePaymentData = isInvoicePayment && transactionId
+                ? { paymentMethodId, transactionId: transactionId }
+                : { paymentMethodId, reservationId: reservation.id };
+
+            const savePaymentMethodResponse = await fetch(saveEndpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    paymentMethodId,
-                    reservationId: reservationId,
-                }),
+                body: JSON.stringify(savePaymentData),
             });
 
             if (!savePaymentMethodResponse.ok) {
                 setErrorMessage("Failed to save payment method.");
+                setIsProcessing(false);
                 return;
             }
 
-            // const parsedDate = parse(selectedDate, 'MMM dd, yyyy', new Date());
-            // const formattedDate = format(parsedDate, 'yyyy-MM-dd');
+            if (isInvoicePayment && transactionId) {
+                const updateTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${transactionId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        payment_status: 'completed',
+                        paymentMethodId: paymentMethodId
+                    }),
+                });
+
+                if (!updateTransactionResponse.ok) {
+                    setErrorMessage("Failed to update transaction status.");
+                    setIsProcessing(false);
+                    return;
+                }
+            }
 
             const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mail/send-reservation-email`, {
                 method: "POST",
@@ -220,8 +281,8 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                     toEmail: email,
                     emailData: {
                         userType: "customer",
-                        title: "booking email",
-                        status: "pending",
+                        title: isInvoicePayment ? "Invoice Payment Confirmation" : "Booking Confirmation",
+                        status: isInvoicePayment ? "approved" : "pending",
                         name: name,
                         email: email,
                         phone: phone,
@@ -230,11 +291,14 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                         duration: 2,
                         quantity: guestQuantity,
                         tourTitle: title,
-                        description: "your reservation is pending",
+                        description: isInvoicePayment 
+                            ? "Your invoice payment has been received" 
+                            : "Your reservation is pending",
                         totals: [
                             {label: "total", amount: `$${totalAmount.toFixed(2)}`},
                             {label: "paid", amount: `$${totalAmount.toFixed(2)}`}
-                        ]
+                        ],
+                        reservationImageUrl: imageUrl
                     }
                 }),
             });
@@ -242,16 +306,30 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
             if (!emailResponse.ok) throw new Error("Failed to send email");
 
             onClose();
-            openAdditionalModal();
+
+            if (!isInvoicePayment) {
+                openAdditionalModal();
+            } else {
+                window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/payment-success?reservation=${reservation.id}`;
+            }
         } catch (error) {
             console.error("Error during payment setup:", error.message || error);
             setErrorMessage(`An error occurred: ${error.message || "Unexpected error"}`);
+            setIsProcessing(false);
+        }
+    };
+
+    const handleClose = () => {
+        if (isInvoicePayment && reservationId) {
+            window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/payment-success?reservation=${reservationId}`;
+        } else {
+            onClose();
         }
     };
 
     return (
         <>
-            <Modal isOpen={isOpen} onClose={onClose} isCentered size="6xl">
+            <Modal isOpen={isOpen} onClose={handleClose} isCentered size="6xl">
                 <ModalOverlay/>
                 <Flex
                     justifyContent="center"

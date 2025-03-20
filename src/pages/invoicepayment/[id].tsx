@@ -9,7 +9,7 @@ import ModalPageLayout from "../../components/ModalPageLayout";
 export default function InvoicePaymentPage() {
   const router = useRouter();
   const { id } = router.query;
-  const { setTourId, setImageUrl, setReservationId, setName, setEmail, setPhone, setGuestQuantity } = useGuest();
+  const { setTourId, setImageUrl, setReservationId, setName, setEmail, setPhone, setGuestQuantity, setSelectedDate, setSelectedTime } = useGuest();
 
   const {
     isOpen: isBookingOpen,
@@ -48,6 +48,17 @@ export default function InvoicePaymentPage() {
           }
 
           setGuestQuantity(data.guestQuantity);
+
+          if (data.reservation_date) {
+            const reservationDate = new Date(data.reservation_date);
+            setSelectedDate(reservationDate);
+            const hours = reservationDate.getUTCHours();
+            const minutes = reservationDate.getUTCMinutes();
+            const period = hours >= 12 ? "PM" : "AM";
+            const hours12 = hours % 12 || 12;
+            const timeString = `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+            setSelectedTime(timeString);
+          }
           return fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${data.tourId}`);
         })
         .then(async (res) => {
@@ -68,7 +79,7 @@ export default function InvoicePaymentPage() {
           console.error("Error fetching data:", err);
         });
     }
-  }, [router.isReady, id, setTourId, setImageUrl, setReservationId, setName, setEmail, setPhone, setGuestQuantity, openBooking, openCheckout]);
+  }, [router.isReady, id, setTourId, setImageUrl, setReservationId, setName, setEmail, setPhone, setGuestQuantity, openBooking, openCheckout, setSelectedDate, setSelectedTime]);
 
   if (!tourData || !reservation) {
     return (
@@ -108,6 +119,15 @@ export default function InvoicePaymentPage() {
     return date.toISOString().split('T')[0];
   };
 
+  const extractTimeFromDate = (dateString) => {
+    const date = new Date(dateString);
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+    const period = hours >= 12 ? "PM" : "AM";
+    const hours12 = hours % 12 || 12;
+    return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+  };
+
   return (
     <>
       <ModalPageLayout isOpen={isBookingOpen}>
@@ -122,7 +142,7 @@ export default function InvoicePaymentPage() {
           email={reservation.user?.email || ""}
           phone={reservation.user?.phone || ""}
           selectedDate={formatReservationDate(reservation.reservation_date)}
-          selectedTime={reservation.time || "12:00 PM"}
+          selectedTime={extractTimeFromDate(reservation.reservation_date)}
           onContinue={handleContinueToCheckout}
         />
       </ModalPageLayout>

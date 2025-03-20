@@ -490,6 +490,13 @@ const PurchaseList = ({
 
 
 const PurchaseDetails = ({reservation}) => {
+    if (!reservation) {
+        return <Text>No reservation Available</Text>;
+    }
+    
+    if (!reservation.tour) {
+        return <Text>No tour details available for this reservation</Text>;
+    }
 
     const dateObject = reservation?.reservation_date
         ? new Date(reservation.reservation_date)
@@ -722,10 +729,6 @@ const PurchaseDetails = ({reservation}) => {
     const [guestCount, setGuestCount] = useState(reservation?.guestQuantity || 0);
     const [isCancelConfirmationOpen, setCancelConfirmationOpen] = useState(false);
 
-    if (!reservation) {
-        return <Text>No reservation Available</Text>;
-    }
-
     return (
         <VStack>
             <Box
@@ -925,7 +928,7 @@ const PaymentSummary = ({reservation}) => {
     }, [reservation]);
     useEffect(() => {
         const fetchAddons = async () => {
-            if (!reservation?.id || !reservation?.tourId) return;
+            if (!reservation?.id || !reservation?.tourId || !reservation?.tour?.id) return;
 
             try {
                 const reservationAddonsResponse = await axios.get(
@@ -985,23 +988,28 @@ const PaymentSummary = ({reservation}) => {
     }, [reservation?.id]);
 
     const handleSaveCustomLineItems = async (items: LineItem[]) => {
-        if (!reservation?.id) return;
+        if (!reservation?.id || !reservation?.tenantId || !reservation?.tourId) {
+            toast({
+                title: "Error",
+                description: "Reservation details incomplete",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
         
         setCustomLineItems(items);
         
         try {
-            // await axios.delete(
-            //     `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${reservation.id}`
-            // );
-
             if (items.length > 0) {
                 const customItemsPayload = items.map(item => ({
                     tenantId: reservation.tenantId,
                     tourId: reservation.tourId,
-                    label: item.name,
-                    description: item.type,
-                    amount: item.amount,
-                    quantity: item.quantity,
+                    label: item.name || 'Unnamed Item',
+                    description: item.type || 'Charge',
+                    amount: item.amount || 0,
+                    quantity: item.quantity || 1,
                 }));
                 
                 await axios.post(
@@ -1029,20 +1037,30 @@ const PaymentSummary = ({reservation}) => {
         }
     };
 
-    const addonsTotalPrice = combinedAddons.reduce(
-        (sum, addon) => sum + (addon.price * addon.quantity || 0),
-        0
-    );
-    const customLineItemsTotal = customLineItems.reduce((sum, item) => {
-        const itemTotal = item.amount * item.quantity;
-        return item.type === "Discount" ? sum - itemTotal : sum + itemTotal;
-    }, 0);
+    const addonsTotalPrice = combinedAddons && combinedAddons.length > 0 
+        ? combinedAddons.reduce(
+            (sum, addon) => sum + ((addon?.price || 0) * (addon?.quantity || 0)), 
+            0
+        )
+        : 0;
+        
+    const customLineItemsTotal = customLineItems && customLineItems.length > 0 
+        ? customLineItems.reduce((sum, item) => {
+            if (!item) return sum;
+            const itemTotal = (item.amount || 0) * (item.quantity || 0);
+            return item.type === "Discount" ? sum - itemTotal : sum + itemTotal;
+        }, 0)
+        : 0;
+        
     const tourPrice = (reservation?.valuePerGuest || reservation?.tour?.price || 0) * (reservation?.guestQuantity || 0);
     const finalTotalPrice = (tourPrice + addonsTotalPrice + customLineItemsTotal).toFixed(2);
 
     useEffect(() => {
         const fetchCardDetails = async () => {
-            if (!reservation?.paymentMethodId) return;
+            if (!reservation?.paymentMethodId) {
+                setIsLoading(false);
+                return;
+            }
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${reservation.paymentMethodId}`
@@ -1074,7 +1092,16 @@ const PaymentSummary = ({reservation}) => {
         );
     }
 
+    if (!reservation || !reservation.tour) {
+        return (
+            <Box p={5} textAlign="center">
+                <Text>No reservation details available</Text>
+            </Box>
+        );
+    }
+
     function formatDateToAmerican(date) {
+        if (!date) return '';
         const [year, month, day] = date.split("-");
         return `${month}/${day}/${year}`;
     }
@@ -1095,41 +1122,32 @@ const PaymentSummary = ({reservation}) => {
         >
             <Text fontSize="xl" fontWeight="bold">Purchase Summary</Text>
             <VStack spacing={4} align="stretch" mt={4}>
-                {/*<HStack justifyContent="space-between">*/}
-                {/*    <Text>6% Booking Fee</Text>*/}
-                {/*    <Text>$71.52</Text>*/}
-                {/*</HStack>*/}
                 <HStack justifyContent="space-between">
-                    <Text>Guests (${reservation.tour.price} x {reservation.guestQuantity})</Text>
-                    {/*<Text>${reservation.total_price}</Text>*/}
-                    <Text>${((reservation.valuePerGuest || reservation.tour?.price) * reservation.guestQuantity).toFixed(2)}</Text>
+                    <Text>Guests (${reservation.tour?.price || 0} x {reservation.guestQuantity || 0})</Text>
+                    <Text>${((reservation.valuePerGuest || reservation.tour?.price || 0) * (reservation.guestQuantity || 0)).toFixed(2)}</Text>
                 </HStack>
-                {/*<HStack justifyContent="space-between">*/}
-                {/*    <Text>Gratuity: 18%</Text>*/}
-                {/*    <Text>$214.56</Text>*/}
-                {/*</HStack>*/}
                 {isLoadingAddons ? (
                     <HStack justifyContent="center">
                         <Spinner size="sm"/>
                         <Text>Loading Add-ons...</Text>
                     </HStack>
                 ) : (
-                    combinedAddons.map((addon) => (
-                        <HStack key={addon.id} justifyContent="space-between">
-                            <Text>{addon.label} (${addon.price} x {addon.quantity})</Text>
-                            <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
+                    combinedAddons && combinedAddons.map((addon) => (
+                        addon && <HStack key={addon.id} justifyContent="space-between">
+                            <Text>{addon.label || 'Unnamed Add-on'} (${addon.price || 0} x {addon.quantity || 0})</Text>
+                            <Text>${((addon.price || 0) * (addon.quantity || 0)).toFixed(2)}</Text>
                         </HStack>
                     ))
                 )}
-                {customLineItems.map((item) => (
-                    <HStack key={item.id} justifyContent="space-between">
+                {customLineItems && customLineItems.map((item) => (
+                    item && <HStack key={item.id} justifyContent="space-between">
                         <Text>
-                            {item.name || 'Unnamed'} (${item.amount} x {item.quantity})
+                            {item.name || 'Unnamed'} (${item.amount || 0} x {item.quantity || 0})
                             {item.type === "Discount" && " - Discount"}
                         </Text>
                         <Text>
                             {item.type === "Discount" ? "-" : ""}
-                            ${(item.amount * item.quantity).toFixed(2)}
+                            ${((item.amount || 0) * (item.quantity || 0)).toFixed(2)}
                         </Text>
                     </HStack>
                 ))}
@@ -1159,32 +1177,79 @@ const PaymentSummary = ({reservation}) => {
                 </Menu>
             </VStack>
 
-            <Box mt={8}>
-                <Text fontSize="xl" fontWeight="bold">Payment Summary</Text>
-                <HStack justifyContent="space-between" mt={4}>
-                    <Box as="span" role="img" aria-label="Card Icon" fontSize="lg">
-                        💳
-                    </Box>
-                    <Text>
-                        Payment
-                        <Box
-                            as="span"
-                            bg="white"
-                            px={1}
-                            py={1}
-                            borderRadius="md"
-                            boxShadow="sm"
-                        >
-                            *{cardDetails.last4}
-                        </Box>{" "}
-                        {formatDateToAmerican(formatDate(cardDetails.paymentDate))}
-                    </Text>
-                </HStack>
-                <HStack justifyContent="space-between">
-                    <Text>Paid</Text>
-                    <Text fontWeight="bold">${finalTotalPrice}</Text>
-                </HStack>
-            </Box>
+            {cardDetails ? (
+                <Box mt={8}>
+                    <Text fontSize="xl" fontWeight="bold">Payment Summary</Text>
+                    <HStack justifyContent="space-between" mt={4}>
+                        <Box as="span" role="img" aria-label="Card Icon" fontSize="lg">
+                            💳
+                        </Box>
+                        <Text>
+                            Payment
+                            <Box
+                                as="span"
+                                bg="white"
+                                px={1}
+                                py={1}
+                                borderRadius="md"
+                                boxShadow="sm"
+                            >
+                                *{cardDetails.last4}
+                            </Box>{" "}
+                            {formatDateToAmerican(formatDate(cardDetails.paymentDate))}
+                        </Text>
+                    </HStack>
+                    <HStack justifyContent="space-between">
+                        <Text>Paid</Text>
+                        <Text fontWeight="bold">${finalTotalPrice}</Text>
+                    </HStack>
+                    <Flex justify="space-between" mt={4} align="center">
+                        <Box>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                height="28px"
+                                fontSize="sm"
+                                fontWeight="normal"
+                                borderRadius="md"
+                                background="white"
+                            >
+                                <Text fontWeight="medium">
+                                    Apply Code
+                                </Text>
+                            </Button>
+                        </Box>
+                    </Flex>
+                </Box>
+            ) : (
+                <Box mt={8}>
+                    <Text fontSize="xl" fontWeight="bold">Payment Summary</Text>
+                    <HStack justifyContent="space-between" mt={4}>
+                        <Text color="gray.600">No payment method information available</Text>
+                    </HStack>
+                    <HStack justifyContent="space-between">
+                        <Text>Total Due</Text>
+                        <Text fontWeight="bold">${finalTotalPrice}</Text>
+                    </HStack>
+                    <Flex justify="space-between" mt={4} align="center">
+                        <Box>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                height="28px"
+                                fontSize="sm"
+                                fontWeight="normal"
+                                borderRadius="md"
+                                background="white"
+                            >
+                                <Text fontWeight="medium">
+                                    Apply Code
+                                </Text>
+                            </Button>
+                        </Box>
+                    </Flex>
+                </Box>
+            )}
             <ChangeGuestQuantityModal
                 booking={reservation}
                 isOpen={isChangeGuestQuantityModalOpen}

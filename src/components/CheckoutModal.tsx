@@ -67,7 +67,6 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
     const totalAmount = guestTotal + addonsTotal;
     const stripe = useStripe();
     const elements = useElements();
-
     const reservationId = propReservationId || contextReservationId;
 
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -109,6 +108,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
 
         try {
             let reservation;
+            let recipientEmail = email;
             if (isInvoicePayment && reservationId) {
                 reservation = { id: reservationId };
             } else {
@@ -192,7 +192,6 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                 setIsProcessing(false);
                 return;
             }
-
             const setupIntentEndpoint = isInvoicePayment && transactionId
                 ? `${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent-for-transaction`
                 : `${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`;
@@ -274,43 +273,65 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                 }
             }
 
-            const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mail/send-reservation-email`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    toEmail: email,
-                    emailData: {
-                        userType: "customer",
-                        title: isInvoicePayment ? "Invoice Payment Confirmation" : "Booking Confirmation",
-                        status: isInvoicePayment ? "approved" : "pending",
-                        name: name,
-                        email: email,
-                        phone: phone,
-                        date: selectedDate,
-                        time: selectedTime,
-                        duration: 2,
-                        quantity: guestQuantity,
-                        tourTitle: title,
-                        description: isInvoicePayment 
-                            ? "Your invoice payment has been received" 
-                            : "Your reservation is pending",
-                        totals: [
-                            {label: "total", amount: `$${totalAmount.toFixed(2)}`},
-                            {label: "paid", amount: `$${totalAmount.toFixed(2)}`}
-                        ],
-                        reservationImageUrl: imageUrl
+            try {
+                if (reservation && reservation.id) {
+                    const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservation.id}`);
+                    if (reservationResponse.ok) {
+                        const reservationData = await reservationResponse.json();
+                        if (reservationData.user && reservationData.user.email) {
+                            recipientEmail = reservationData.user.email;
+                            console.log("Using email from fetched reservation:", recipientEmail);
+                        }
                     }
-                }),
-            });
-
-            if (!emailResponse.ok) throw new Error("Failed to send email");
+                }
+            } catch (error) {
+                console.error("Error fetching reservation details:", error);
+            }
+            console.log("Sending confirmation email to:", recipientEmail);
+            try {
+                const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mail/send-reservation-email`, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        toEmail: recipientEmail,
+                        emailData: {
+                            userType: "customer",
+                            title: isInvoicePayment ? "Invoice Payment Confirmation" : "Booking Confirmation",
+                            status: isInvoicePayment ? "approved" : "pending",
+                            name: name,
+                            email: recipientEmail,
+                            phone: phone,
+                            date: selectedDate ? selectedDate.toISOString() : new Date().toISOString(),
+                            time: selectedTime || "12:00 PM",
+                            duration: "2",
+                            quantity: guestQuantity,
+                            tourTitle: title,
+                            description: isInvoicePayment 
+                                ? "Your invoice payment has been received" 
+                                : "Your reservation is pending",
+                            totals: [
+                                {label: "total", amount: `$${totalAmount.toFixed(2)}`},
+                                {label: "paid", amount: `$${totalAmount.toFixed(2)}`}
+                            ],
+                            reservationImageUrl: imageUrl
+                        }
+                    }),
+                });
+                
+                if (!emailResponse.ok) {
+                    const errorData = await emailResponse.text();
+                    console.error("Email sending failed:", errorData);
+                    throw new Error(`Failed to send email: ${errorData}`);
+                }
+            } catch (emailError) {
+                console.error("Error during email sending:", emailError);
+            }
 
             onClose();
-
             if (!isInvoicePayment) {
                 openAdditionalModal();
             } else {
-                window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/payment-success?reservation=${reservation.id}`;
+                window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_URL || window.location.origin}/payment-success?reservation=${reservation.id}`;
             }
         } catch (error) {
             console.error("Error during payment setup:", error.message || error);
@@ -321,7 +342,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
 
     const handleClose = () => {
         if (isInvoicePayment && reservationId) {
-            window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/payment-success?reservation=${reservationId}`;
+            window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_URL || window.location.origin}/payment-success?reservation=${reservationId}`;
         } else {
             onClose();
         }

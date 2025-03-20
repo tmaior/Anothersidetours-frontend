@@ -255,6 +255,26 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
             }
 
             if (isInvoicePayment && transactionId) {
+                const processPaymentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({transactionId}),
+                });
+
+                if (!processPaymentRes.ok) {
+                    setErrorMessage("Failed to process payment.");
+                    setIsProcessing(false);
+                    return;
+                }
+
+                const processPaymentResult = await processPaymentRes.json();
+                
+                if (!processPaymentResult.success) {
+                    setErrorMessage(`Payment failed with status: ${processPaymentResult.status}`);
+                    setIsProcessing(false);
+                    return;
+                }
+
                 const updateTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${transactionId}`, {
                     method: 'PUT',
                     headers: {
@@ -268,6 +288,26 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
 
                 if (!updateTransactionResponse.ok) {
                     setErrorMessage("Failed to update transaction status.");
+                    setIsProcessing(false);
+                    return;
+                }
+            } else if (reservation && reservation.id) {
+                const processPaymentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-reservation-payment`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({reservationId: reservation.id}),
+                });
+
+                if (!processPaymentRes.ok) {
+                    setErrorMessage("Failed to process payment.");
+                    setIsProcessing(false);
+                    return;
+                }
+
+                const processPaymentResult = await processPaymentRes.json();
+                
+                if (!processPaymentResult.success) {
+                    setErrorMessage(`Payment failed with status: ${processPaymentResult.status}`);
                     setIsProcessing(false);
                     return;
                 }

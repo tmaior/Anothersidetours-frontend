@@ -881,28 +881,30 @@ const PurchasePage = () => {
                             body: JSON.stringify({
                                 tenant_id: tenantId,
                                 reservation_id: reservationId,
-                                payment_method: paymentMethod,
+                                payment_method: 'credit_card',
                                 amount: totalWithDiscount,
-                                payment_status: 'paid',
+                                payment_status: 'pending',
                                 payment_details: {
                                     note: purchaseNote,
                                     payment_type: paymentMethod
                                 },
-                                reference_number: `${paymentMethod.toUpperCase()}-${Date.now()}`,
+                                reference_number: `CC-${Date.now()}`,
                                 is_split_payment: false,
                                 created_by: "Back Office",
                                 created_at: new Date().toISOString(),
                                 updated_at: new Date().toISOString(),
                             }),
                         });
+                        
                         if (!paymentTransactionResponse.ok) {
-                            throw new Error(`Failed to record ${paymentMethod} payment transaction.`);
+                            throw new Error("Failed to create payment transaction for credit card.");
                         }
 
                         const data = await paymentTransactionResponse.json();
+
                         const transactionId = data.id;
 
-                        const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`, {
+                        const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent-for-transaction`, {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({transactionId}),
@@ -935,7 +937,7 @@ const PurchasePage = () => {
 
                         const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
 
-                        const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`, {
+                        const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method-for-transaction`, {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({paymentMethodId, transactionId}),
@@ -943,6 +945,22 @@ const PurchasePage = () => {
 
                         if (!savePMRes.ok) {
                             throw new Error("Failed to save PaymentMethod.");
+                        }
+
+                        const processPaymentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({transactionId}),
+                        });
+
+                        if (!processPaymentRes.ok) {
+                            throw new Error("Failed to process payment.");
+                        }
+
+                        const processPaymentResult = await processPaymentRes.json();
+                        
+                        if (!processPaymentResult.success) {
+                            throw new Error(`Payment failed with status: ${processPaymentResult.status}`);
                         }
 
                         const paymentTransactionRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {

@@ -51,6 +51,7 @@ import useWindowWidth from "../../../hooks/useWindowWidth";
 import withAuth from "../../../utils/withAuth";
 import PurchaseSummaryDetailed from "../../../components/PurchaseSummaryDetailed";
 import CustomLineItemsModal, { LineItem } from "../../../components/CustomLineItemsModal";
+import ApplyCodeModal from '../../../components/ApplyCodeModal';
 
 type GuestItemProps = {
     name: string;
@@ -898,6 +899,7 @@ const PaymentSummary = ({reservation}) => {
     const [isCustomLineItemsModalOpen, setIsCustomLineItemsModalOpen] = useState(false);
     const [customLineItems, setCustomLineItems] = useState<LineItem[]>([]);
     const toast = useToast();
+    const [isApplyCodeModalOpen, setIsApplyCodeModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchGroupReservations = async () => {
@@ -1081,6 +1083,9 @@ const PaymentSummary = ({reservation}) => {
         return date.toISOString().split("T")[0];
     };
 
+    const handleApplyCode = (code) => {
+        console.log('Applying code:', code);
+    };
     if (isLoading) {
         if (!reservation) {
             return null;
@@ -1213,6 +1218,7 @@ const PaymentSummary = ({reservation}) => {
                                 fontWeight="normal"
                                 borderRadius="md"
                                 background="white"
+                                onClick={() => setIsApplyCodeModalOpen(true)}
                             >
                                 <Text fontWeight="medium">
                                     Apply Code
@@ -1241,6 +1247,7 @@ const PaymentSummary = ({reservation}) => {
                                 fontWeight="normal"
                                 borderRadius="md"
                                 background="white"
+                                onClick={() => setIsApplyCodeModalOpen(true)}
                             >
                                 <Text fontWeight="medium">
                                     Apply Code
@@ -1265,6 +1272,35 @@ const PaymentSummary = ({reservation}) => {
                 basePrice={reservation?.tour?.price || 0}
                 quantity={reservation?.guestQuantity || 1}
                 reservationId={reservation?.id}
+            />
+            <ApplyCodeModal
+                isOpen={isApplyCodeModalOpen}
+                onClose={() => setIsApplyCodeModalOpen(false)}
+                onApply={handleApplyCode}
+                purchaseSummary={{
+                    items: [
+                        ...(reservationAddons?.length > 0 ? reservationAddons.map(addon => {
+                            const addonDetails = allAddons.find(
+                                a => a.id === addon.addonId
+                            );
+                            return {
+                                name: addonDetails?.label || 'Add-on',
+                                price: Number(addonDetails?.price || 0) * Number(addon.value || 0)
+                            };
+                        }) : []),
+                        ...(customLineItems?.length > 0 ? customLineItems.map(item => ({
+                            name: item.name,
+                            price: (item.amount || 0) * (item.quantity || 0)
+                        })) : []),
+                        { name: `Guests (${reservation.tour?.price || 0} x ${reservation.guestQuantity || 0})`, price: (reservation.valuePerGuest || reservation.tour?.price || 0) * (reservation.guestQuantity || 0) }
+                    ],
+                    total: parseFloat(finalTotalPrice)
+                }}
+                paymentSummary={{
+                    last4: cardDetails?.last4,
+                    date: cardDetails ? formatDateToAmerican(formatDate(cardDetails.paymentDate)) : undefined,
+                    amount: parseFloat(finalTotalPrice)
+                }}
             />
         </Box>
     );

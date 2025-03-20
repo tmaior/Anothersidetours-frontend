@@ -22,7 +22,6 @@ import { DateRangePicker } from "react-date-range";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 import ModalReport from "../../../components/ModalReport";
-import { ColDef } from "ag-grid-community";
 import { useRef } from "react";
 
 import "react-date-range/dist/styles.css";
@@ -77,12 +76,12 @@ export default function Reports() {
     fetchReservations();
   }, []);
 
-  const [colDefs, setColDefs] = useState([
+  const [colDefs,] = useState([
     {
       field: "tourName",
       headerName: "Tour",
       flex: 2,
-      cellRenderer: (params) => `<strong>${params.value}</strong>`,
+      cellStyle: { fontWeight: 'bold' },
     },
     {
       field: "totalValue",

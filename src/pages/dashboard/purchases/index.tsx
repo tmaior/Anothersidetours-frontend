@@ -1004,6 +1004,9 @@ const PaymentSummary = ({reservation}) => {
         setCustomLineItems(items);
         
         try {
+            await axios.delete(
+                `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${reservation.id}`
+            );
             if (items.length > 0) {
                 const customItemsPayload = items.map(item => ({
                     tenantId: reservation.tenantId,
@@ -1018,15 +1021,14 @@ const PaymentSummary = ({reservation}) => {
                     `${process.env.NEXT_PUBLIC_API_URL}/custom-items`,
                     { items: customItemsPayload, reservationId: reservation.id }
                 );
-                
-                toast({
-                    title: "Custom line items updated",
-                    status: "success",
-                    duration: 3000,
-                    isClosable: true,
-                });
-                window.location.reload();
             }
+            toast({
+                title: "Custom line items updated",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+            window.location.reload();
         } catch (error) {
             console.error("Error saving custom line items:", error);
             toast({

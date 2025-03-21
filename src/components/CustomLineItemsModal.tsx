@@ -16,8 +16,10 @@ import {
     Select,
     IconButton,
     Divider,
+    useToast
 } from '@chakra-ui/react';
 import { AddIcon, DeleteIcon, MinusIcon } from '@chakra-ui/icons';
+import axios from 'axios';
 
 export interface LineItem {
     id: number | string;
@@ -44,10 +46,10 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
     initialItems = [],
     basePrice = 0,
     quantity = 1,
-                                                                       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     reservationId,
 }) => {
     const [items, setItems] = useState<LineItem[]>([]);
+    const toast = useToast();
 
     useEffect(() => {
         if (isOpen) {
@@ -62,7 +64,29 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
         setItems([...items, {id: Date.now(), type: "Charge", amount: 0, quantity: 1, name: ""}]);
     };
 
-    const removeItem = (id) => {
+    const removeItem = async (id) => {
+        const isExistingItem = typeof id === 'string';
+        
+        if (isExistingItem && reservationId) {
+            try {
+                await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/custom-items/item/${id}`);
+                toast({
+                    title: "Item removed successfully",
+                    status: "success",
+                    duration: 2000,
+                    isClosable: true,
+                });
+            } catch (error) {
+                console.error("Error removing item:", error);
+                toast({
+                    title: "Error removing item",
+                    description: "Could not remove item. Please try again.",
+                    status: "error",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            }
+        }
         setItems(items.filter((item) => item.id !== id));
     };
 

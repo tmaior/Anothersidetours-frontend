@@ -4,6 +4,7 @@ import DashboardLayout from '../../../components/DashboardLayout'
 import MyProfileForm from '../../../components/MyProfileForm'
 import SettingsList, { SettingsPage } from '../../../components/SettingsList'
 import UnderConstruction from '../../../components/UnderConstruction';
+import CompanyProfileForm from '../../../components/CompanyProfileForm';
 
 export default function Settings() {
     const [currentPage, setCurrentPage] = useState<SettingsPage>(SettingsPage.MyProfile);
@@ -16,6 +17,8 @@ export default function Settings() {
         switch (currentPage) {
             case SettingsPage.MyProfile:
                 return <MyProfileForm />;
+            case SettingsPage.CompanyProfile:
+                return <CompanyProfileForm />;
             default:
                 return <UnderConstruction pageName={currentPage} />;
         }

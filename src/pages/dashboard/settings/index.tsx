@@ -2,17 +2,24 @@ import { Box, Text, Flex } from '@chakra-ui/react'
 import React, { useState } from "react";
 import DashboardLayout from '../../../components/DashboardLayout'
 import MyProfileForm from '../../../components/MyProfileForm'
-import SettingsList from '../../../components/SettingsList'
-
-enum SettingsPage {
-    MyProfile = "My Profile",
-}
-
+import SettingsList, { SettingsPage } from '../../../components/SettingsList'
+import UnderConstruction from '../../../components/UnderConstruction';
 
 export default function Settings() {
+    const [currentPage, setCurrentPage] = useState<SettingsPage>(SettingsPage.MyProfile);
 
-    const [currentPage] = useState(SettingsPage.MyProfile);
+    const handlePageChange = (page: SettingsPage) => {
+        setCurrentPage(page);
+    };
 
+    const renderContent = () => {
+        switch (currentPage) {
+            case SettingsPage.MyProfile:
+                return <MyProfileForm />;
+            default:
+                return <UnderConstruction pageName={currentPage} />;
+        }
+    };
 
     return (
         <Box
@@ -21,7 +28,6 @@ export default function Settings() {
             overflowX={"hidden"}
             marginTop={0}
             padding={0}
-        // overflow="hidden"
         >
             <DashboardLayout>
                 <Flex 
@@ -46,7 +52,7 @@ export default function Settings() {
                         direction={{ base: "column", md: "row" }}
                         sx={{ borderRight: "1px solid #e0e3e7", width: "15%", margin: 0 }}
                     >
-                        <SettingsList />
+                        <SettingsList activePage={currentPage} onPageChange={handlePageChange} />
                     </Flex>
                     <Flex
                         direction="column"
@@ -54,9 +60,8 @@ export default function Settings() {
                         alignItems={"flex-start"}
                         sx={{ width: "75%", margin: 0 }}
                     >
-                        <MyProfileForm />
+                        {renderContent()}
                     </Flex>
-
                 </Box>
             </DashboardLayout>
         </Box>

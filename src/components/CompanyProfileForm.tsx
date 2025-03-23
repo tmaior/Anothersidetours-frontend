@@ -15,6 +15,7 @@ import {
 } from '@chakra-ui/react';
 import { FiInfo } from 'react-icons/fi';
 import axios from 'axios';
+import { useGuest } from '../contexts/GuestContext';
 
 interface CompanyProfile {
   id?: string;
@@ -44,6 +45,7 @@ export default function CompanyProfileForm() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const toast = useToast();
+  const { tenantId } = useGuest();
 
   useEffect(() => {
     fetchCompanyProfile();
@@ -52,11 +54,21 @@ export default function CompanyProfileForm() {
   const fetchCompanyProfile = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/company-profile`);
-      if (response.data) {
-        setCompanyProfile(response.data);
-        if (response.data.logoUrl) {
-          setPreviewUrl(response.data.logoUrl);
+      if (tenantId) {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/company-profile/tenant/${tenantId}`);
+        if (response.data) {
+          setCompanyProfile(response.data);
+          if (response.data.logoUrl) {
+            setPreviewUrl(`${process.env.NEXT_PUBLIC_API_URL}/${response.data.logoUrl}`);
+          }
+          return;
+        }
+      }
+      const fallbackResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/company-profile`);
+      if (fallbackResponse.data && fallbackResponse.data.length > 0) {
+        setCompanyProfile(fallbackResponse.data[0]);
+        if (fallbackResponse.data[0].logoUrl) {
+          setPreviewUrl(`${process.env.NEXT_PUBLIC_API_URL}/${fallbackResponse.data[0].logoUrl}`);
         }
       }
     } catch (error) {
@@ -109,8 +121,21 @@ export default function CompanyProfileForm() {
     
     try {
       const formData = new FormData();
+      if (!companyProfile.id && tenantId) {
+        formData.append('tenantId', tenantId);
+      } else if (!companyProfile.id) {
+        toast({
+          title: 'Error',
+          description: 'No tenant ID available. Please try again later.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        setLoading(false);
+        return;
+      }
       Object.entries(companyProfile).forEach(([key, value]) => {
-        if (key !== 'logoUrl') {
+        if (key !== 'logoUrl' && key !== 'id' && value !== undefined && value !== null) {
           formData.append(key, value);
         }
       });
@@ -141,13 +166,18 @@ export default function CompanyProfileForm() {
         isClosable: true,
       });
       setCompanyProfile(response.data);
+      fetchCompanyProfile();
     } catch (error) {
       console.error('Error saving company profile:', error);
+      let errorMessage = 'Failed to save company profile';
+      if (axios.isAxiosError(error) && error.response) {
+        errorMessage = `Error: ${error.response.status} - ${error.response.data?.message || errorMessage}`;
+      }
       toast({
         title: 'Error',
-        description: 'Failed to save company profile',
+        description: errorMessage,
         status: 'error',
-        duration: 3000,
+        duration: 5000,
         isClosable: true,
       });
     } finally {

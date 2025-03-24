@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import {Box, Button, Grid, HStack, IconButton, Select, Text, VStack,} from "@chakra-ui/react";
+import {Box, Button, Grid, HStack, IconButton, Select, Text, VStack, Center, Square} from "@chakra-ui/react";
 import {ChevronLeftIcon, ChevronRightIcon} from "@chakra-ui/icons";
 
 const DatePicker = ({prices, onDateSelect}) => {
@@ -52,8 +52,8 @@ const DatePicker = ({prices, onDateSelect}) => {
     ];
 
     return (
-        <Box p={4} borderWidth="1px" borderRadius="md" bg="white" maxW="400px">
-            <VStack spacing={4}>
+        <Box p={4} borderWidth="1px" borderRadius="md" bg="white" width="100%" maxW="600px">
+            <VStack spacing={4} width="100%">
                 <HStack justify="space-between" w="100%">
                     <HStack>
                         <Select
@@ -102,7 +102,7 @@ const DatePicker = ({prices, onDateSelect}) => {
 
                 <HStack justify="space-between" w="100%" px={2}>
                     {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-                        <Text key={day} fontSize="sm" fontWeight="bold" textAlign="center">
+                        <Text key={day} fontSize="sm" fontWeight="bold" textAlign="center" width="14%">
                             {day}
                         </Text>
                     ))}
@@ -111,41 +111,56 @@ const DatePicker = ({prices, onDateSelect}) => {
                     templateColumns="repeat(7, 1fr)"
                     gap={2}
                     w="100%"
-                    justifyItems="center"
                 >
                     {Array.from({length: firstDayOfMonth}).map((_, i) => (
                         <Box key={i}/>
                     ))}
 
-                    {daysArray.map((day) => (
-                        <VStack
-                            key={day}
-                            spacing={1}
-                            p={2}
-                            borderRadius="md"
-                            bg={
-                                selectedDate?.getDate() === day &&
-                                selectedDate?.getMonth() === currentMonth &&
-                                selectedDate?.getFullYear() === currentYear
-                                    ? "blue.500"
-                                    : "transparent"
-                            }
-                            color={
-                                selectedDate?.getDate() === day &&
-                                selectedDate?.getMonth() === currentMonth &&
-                                selectedDate?.getFullYear() === currentYear
-                                    ? "white"
-                                    : "black"
-                            }
-                            _hover={{bg: "blue.100", cursor: "pointer"}}
-                            onClick={() => handleDateSelect(day)}
-                        >
-                            <Text>{day}</Text>
-                            <Text fontSize="xs" color="gray.500">
-                                ${prices[day - 1] || "0.00"}
-                            </Text>
-                        </VStack>
-                    ))}
+                    {daysArray.map((day) => {
+                        const isSelected = 
+                            selectedDate?.getDate() === day &&
+                            selectedDate?.getMonth() === currentMonth &&
+                            selectedDate?.getFullYear() === currentYear;
+                            
+                        return (
+                            <Center key={day}>
+                                <Square
+                                    size="40px"
+                                    borderRadius="full"
+                                    bg={isSelected ? "blue.500" : "transparent"}
+                                    boxShadow={isSelected ? "0 0 0 2px #3182CE" : "none"}
+                                    transition="all 0.2s"
+                                    _hover={{
+                                        bg: isSelected ? "blue.600" : "blue.50", 
+                                        cursor: "pointer"
+                                    }}
+                                    onClick={() => handleDateSelect(day)}
+                                    position="relative"
+                                >
+                                    <VStack spacing={0} position="absolute">
+                                        <Text 
+                                            textAlign="center" 
+                                            fontWeight={isSelected ? "bold" : "normal"}
+                                            color={isSelected ? "white" : "black"}
+                                            fontSize="sm"
+                                            lineHeight="1.2"
+                                        >
+                                            {day}
+                                        </Text>
+                                        <Text 
+                                            fontSize="10px" 
+                                            textAlign="center"
+                                            color={isSelected ? "white" : "gray.500"}
+                                            fontWeight={isSelected ? "medium" : "normal"}
+                                            lineHeight="1"
+                                        >
+                                            ${prices[day - 1] || "0.00"}
+                                        </Text>
+                                    </VStack>
+                                </Square>
+                            </Center>
+                        );
+                    })}
                 </Grid>
             </VStack>
         </Box>

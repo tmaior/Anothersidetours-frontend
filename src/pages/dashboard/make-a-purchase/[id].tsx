@@ -24,6 +24,7 @@ import {
     Switch,
     Text,
     Textarea,
+    useDisclosure,
     useToast,
     VStack,
 } from '@chakra-ui/react'
@@ -37,6 +38,7 @@ import {useCart} from "../../../contexts/CartContext";
 import axios from 'axios';
 import PaymentWorkflow from "../../../components/PaymentWorkflow";
 import CashPaymentModal from "../../../components/CashPaymentModal";
+import DatePicker from "../../../components/TimePickerArrival";
 
 interface AddOn {
     id: string;
@@ -158,6 +160,20 @@ const PurchasePage = () => {
         dueDate: '',
         message: ''
     });
+    const {isOpen: isDatePickerOpen, onOpen: onDatePickerOpen, onClose: onDatePickerClose} = useDisclosure();
+
+    const getPricesForDatePicker = () => {
+        const pricePerGuest = cart.length > 0 ? (cart[selectedCartItemIndex]?.valuePerGuest || cart[selectedCartItemIndex]?.price || 0) : 0;
+        return Array(31).fill(pricePerGuest);
+    };
+
+    const handleDateSelect = (selectedDate: Date) => {
+        const year = selectedDate.getFullYear();
+        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(selectedDate.getDate()).padStart(2, '0');
+        setDate(`${year}-${month}-${day}`);
+        onDatePickerClose();
+    };
 
     useEffect(() => {
         if (date && paymentMethod === 'invoice') {
@@ -1388,17 +1404,12 @@ const PurchasePage = () => {
                                 <Input
                                     placeholder="Select date"
                                     value={formatDateDisplay(date)}
-                                    onClick={(e) => {
-                                        const dateInput = e.currentTarget.parentElement?.querySelector('input[type="date"]');
-                                        if (dateInput) {
-                                            (dateInput as HTMLInputElement).showPicker();
-                                        }
-                                    }}
+                                    onClick={onDatePickerOpen}
                                     readOnly
                                     cursor="pointer"
                                 />
                                 <InputRightElement>
-                                    <CalendarIcon color="gray.500"/>
+                                    <CalendarIcon color="gray.500" onClick={onDatePickerOpen} cursor="pointer"/>
                                 </InputRightElement>
                                 <Input
                                     type="date"
@@ -1896,6 +1907,19 @@ const PurchasePage = () => {
                     }, 0)}
                 onComplete={handleCashPaymentComplete}
             />
+            <Modal isOpen={isDatePickerOpen} onClose={onDatePickerClose} size="xl">
+                <ModalOverlay/>
+                <ModalContent>
+                    <ModalHeader>Select a Date</ModalHeader>
+                    <ModalCloseButton/>
+                    <ModalBody pb={6}>
+                        <DatePicker
+                            prices={getPricesForDatePicker()}
+                            onDateSelect={handleDateSelect}
+                        />
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
         </DashboardLayout>
     )
 }

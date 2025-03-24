@@ -52,6 +52,12 @@ import withAuth from "../../../utils/withAuth";
 import PurchaseSummaryDetailed from "../../../components/PurchaseSummaryDetailed";
 import CustomLineItemsModal, { LineItem } from "../../../components/CustomLineItemsModal";
 import ApplyCodeModal from '../../../components/ApplyCodeModal';
+import {AiOutlineCompass} from "react-icons/ai";
+import {CiSquarePlus} from "react-icons/ci";
+import ManageGuidesModal from "../../../components/ManageGuidesModal";
+import {useGuides} from "../../../hooks/useGuides";
+import {useGuideAssignment} from "../../../hooks/useGuideAssignment";
+import useGuidesStore from "../../../utils/store";
 
 type GuestItemProps = {
     name: string;
@@ -499,6 +505,7 @@ const PurchaseDetails = ({reservation}) => {
         return <Text>No tour details available for this reservation</Text>;
     }
 
+    const toast = useToast();
     const dateObject = reservation?.reservation_date
         ? new Date(reservation.reservation_date)
         : new Date();
@@ -729,6 +736,47 @@ const PurchaseDetails = ({reservation}) => {
     const [isChangeAddonsModalOpen, setChangeAddonsModalOpen] = useState(false);
     const [guestCount, setGuestCount] = useState(reservation?.guestQuantity || 0);
     const [isCancelConfirmationOpen, setCancelConfirmationOpen] = useState(false);
+    const [isGuideModalOpen, setGuideModalOpen] = useState(false);
+    const [selectedGuide, setSelectedGuide] = useState([]);
+    const {guidesList, loadingGuides} = useGuides();
+    const {assignGuides, isAssigning} = useGuideAssignment();
+    const {reservationGuides, setReservationGuides} = useGuidesStore();
+    const guides = reservationGuides[reservation?.id] || [];
+    const loading = false;
+    
+    const displayGuideText = () => {
+        if (loading) return "Loading guides...";
+        if (guides.length === 0) return "No Guide assigned";
+        return guides.map((guide) => guide.name).join(", ");
+    };
+
+    const handleSaveGuides = async (guides) => {
+        const guideIds = guides.map((guide) => guide.id);
+
+        setReservationGuides(reservation.id, guides);
+
+        try {
+            await assignGuides(reservation.id, guideIds);
+            toast({
+                title: "Guides Updated",
+                description: guideIds.length > 0
+                    ? "Guides successfully assigned to reservation"
+                    : "All guides removed from reservation",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch {
+            setReservationGuides(reservation.id, reservationGuides[reservation.id] || []);
+            toast({
+                title: "Error",
+                description: "Failed to update guides",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    };
 
     return (
         <VStack>
@@ -832,6 +880,39 @@ const PurchaseDetails = ({reservation}) => {
                                 </HStack>
                             </VStack>
                         </Box>
+
+                        <HStack spacing={8} mt={4}>
+                            <Box mt={6}>
+                                <HStack spacing={2}>
+                                    <AiOutlineCompass/>
+                                    <Text fontSize="xl" fontWeight="bold">Guide</Text>
+                                </HStack>
+                                <Text fontSize="sm" color="black.500">
+                                    {displayGuideText()}
+                                </Text>
+
+                                <Button
+                                    variant="link"
+                                    size="xs"
+                                    onClick={() => setGuideModalOpen(true)}
+                                    color="black"
+                                    fontWeight={"bold"}
+                                >
+                                    <CiSquarePlus size={"17px"}/>
+                                    Manage Guides
+                                </Button>
+                            </Box>
+                            <ManageGuidesModal
+                                isOpen={isGuideModalOpen}
+                                onClose={() => setGuideModalOpen(false)}
+                                onSelectGuide={(selected) => {
+                                    setSelectedGuide(selected);
+                                    setGuideModalOpen(false);
+                                    handleSaveGuides(selected);
+                                }} 
+                                reservationId={reservation.id}
+                            />
+                        </HStack>
                     </Box>
                 </Box>
             </Box>

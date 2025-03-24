@@ -497,6 +497,35 @@ const PurchaseList = ({
 
 
 const PurchaseDetails = ({reservation}) => {
+    const toast = useToast();
+    const {
+        onClose: onConfirmClose,
+    } = useDisclosure();
+
+    const {
+        onOpen: onCancelOpen,
+    } = useDisclosure();
+    const windowWidth = useWindowWidth();
+    const [isChangeGuestQuantityModalOpen, setChangeGuestQuantityModalOpen] = useState(false);
+    const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
+    const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
+    const [isChangeAddonsModalOpen, setChangeAddonsModalOpen] = useState(false);
+    const [guestCount, setGuestCount] = useState(reservation?.guestQuantity || 0);
+    const [isCancelConfirmationOpen, setCancelConfirmationOpen] = useState(false);
+    const [isGuideModalOpen, setGuideModalOpen] = useState(false);
+    const [selectedGuide, setSelectedGuide] = useState([]);
+    const {guidesList, loadingGuides} = useGuides();
+    const {assignGuides, isAssigning} = useGuideAssignment();
+    const {reservationGuides, setReservationGuides} = useGuidesStore();
+    const guides = reservationGuides[reservation?.id] || [];
+    const loading = false;
+    const [localGuides, setLocalGuides] = useState([]);
+
+    useEffect(() => {
+        if (reservation?.id) {
+            setLocalGuides(reservationGuides[reservation.id] || []);
+        }
+    }, [reservation, reservationGuides]);
     if (!reservation) {
         return <Text>No reservation Available</Text>;
     }
@@ -505,7 +534,6 @@ const PurchaseDetails = ({reservation}) => {
         return <Text>No tour details available for this reservation</Text>;
     }
 
-    const toast = useToast();
     const dateObject = reservation?.reservation_date
         ? new Date(reservation.reservation_date)
         : new Date();
@@ -531,20 +559,11 @@ const PurchaseDetails = ({reservation}) => {
         return `${monthNames[month - 1]} ${day}, ${year}`;
     };
 
-    const {
-        onClose: onConfirmClose,
-    } = useDisclosure();
-
-    const {
-        onOpen: onCancelOpen,
-    } = useDisclosure();
 
     const handleConfirmCancel = () => {
         onConfirmClose();
         onCancelOpen();
     };
-
-    const windowWidth = useWindowWidth();
 
     const isVisible = (minWidth, maxWidth) => {
         return windowWidth >= minWidth && windowWidth <= maxWidth;
@@ -730,30 +749,16 @@ const PurchaseDetails = ({reservation}) => {
     //
     // const hiddenItems = ACTION_ITEMS.filter((item) => !visibleItems.includes(item));
 
-    const [isChangeGuestQuantityModalOpen, setChangeGuestQuantityModalOpen] = useState(false);
-    const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
-    const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
-    const [isChangeAddonsModalOpen, setChangeAddonsModalOpen] = useState(false);
-    const [guestCount, setGuestCount] = useState(reservation?.guestQuantity || 0);
-    const [isCancelConfirmationOpen, setCancelConfirmationOpen] = useState(false);
-    const [isGuideModalOpen, setGuideModalOpen] = useState(false);
-    const [selectedGuide, setSelectedGuide] = useState([]);
-    const {guidesList, loadingGuides} = useGuides();
-    const {assignGuides, isAssigning} = useGuideAssignment();
-    const {reservationGuides, setReservationGuides} = useGuidesStore();
-    const guides = reservationGuides[reservation?.id] || [];
-    const loading = false;
-    
     const displayGuideText = () => {
         if (loading) return "Loading guides...";
-        if (guides.length === 0) return "No Guide assigned";
-        return guides.map((guide) => guide.name).join(", ");
+        if (!localGuides || localGuides.length === 0) return "No Guide assigned";
+        return localGuides.map((guide) => guide.name).join(", ");
     };
 
     const handleSaveGuides = async (guides) => {
         const guideIds = guides.map((guide) => guide.id);
-
         setReservationGuides(reservation.id, guides);
+        setLocalGuides(guides);
 
         try {
             await assignGuides(reservation.id, guideIds);
@@ -767,7 +772,9 @@ const PurchaseDetails = ({reservation}) => {
                 isClosable: true,
             });
         } catch {
-            setReservationGuides(reservation.id, reservationGuides[reservation.id] || []);
+            const previousGuides = reservationGuides[reservation.id] || [];
+            setReservationGuides(reservation.id, previousGuides);
+            setLocalGuides(previousGuides);
             toast({
                 title: "Error",
                 description: "Failed to update guides",
@@ -909,8 +916,8 @@ const PurchaseDetails = ({reservation}) => {
                                     setSelectedGuide(selected);
                                     setGuideModalOpen(false);
                                     handleSaveGuides(selected);
-                                }} 
-                                reservationId={reservation.id}
+                                }}
+                                reservationId={reservation?.id || ''}
                             />
                         </HStack>
                     </Box>

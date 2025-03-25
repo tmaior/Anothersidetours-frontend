@@ -800,7 +800,10 @@ function SchedulesAvailabilityStep({
                     savedDemographics.map(async (demo) => {
                         const tierData = tiers.map(tier => ({
                             quantity: parseInt(tier.guests.replace("+ Guests", "").trim()),
-                            price: tier.finalPrices[demo.id] || 0
+                            price: tier.finalPrices[demo.id] || 0,
+                            adjustmentType: tier.adjustmentTypes[demo.id] || "$",
+                            operation: tier.operations[demo.id] || "Markup",
+                            adjustment: tier.adjustments[demo.id] || 0
                         }));
 
                         await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing`, {
@@ -810,6 +813,7 @@ function SchedulesAvailabilityStep({
                                 tourId,
                                 demographicId: demo.id,
                                 pricingType: "tiered",
+                                basePrice: basePrices[demo.id] || 0,
                                 tiers: tierData
                             })
                         });
@@ -1060,6 +1064,9 @@ function SchedulesAvailabilityStep({
                             tiers: tiers.map((tier) => ({
                                 quantity: Number(tier.guests.replace("+ Guests", "").trim()),
                                 price: tier.finalPrices[demographicId] || 0,
+                                adjustmentType: tier.adjustmentTypes[demographicId] || "$",
+                                operation: tier.operations[demographicId] || "Markup",
+                                adjustment: tier.adjustments[demographicId] || 0
                             })),
                         };
                     } else {

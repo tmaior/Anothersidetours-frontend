@@ -1381,6 +1381,7 @@ function SchedulesAvailabilityStep({
     const [timeSlots, setTimeSlots] = useState<string[]>([]);
     const [isTimePickerOpen, setTimePickerOpen] = useState(false);
     const [editingTimeSlot, setEditingTimeSlot] = useState<{ index: number; time: string } | null>(null);
+    const [editingScheduleIndex, setEditingScheduleIndex] = useState<number | null>(null);
 
     const handleDayToggle = (day: string) => {
         setSelectedDays(prev => ({
@@ -1409,6 +1410,67 @@ function SchedulesAvailabilityStep({
         setEditingTimeSlot({ index, time });
         setTimePickerOpen(true);
     };
+    const handleDeleteSchedule = (index: number) => {
+        setSchedule(prevSchedules => prevSchedules.filter((_, i) => i !== index));
+    };
+
+    const handleEditSchedule = (index: number) => {
+        const scheduleToEdit = schedule[index];
+        setScheduleName(scheduleToEdit.name || "");
+        setSelectedDays(scheduleToEdit.days);
+        setTimeSlots(scheduleToEdit.timeSlots);
+        setEditingScheduleIndex(index);
+        openScheduleModal();
+    };
+
+    const handleApplySchedule = () => {
+        const newSchedule = {
+            ...(scheduleName && { name: scheduleName }),
+            days: selectedDays,
+            timeSlots: timeSlots
+        };
+        
+        if (editingScheduleIndex !== null) {
+            setSchedule(prevSchedules => 
+                prevSchedules.map((item, index) => 
+                    index === editingScheduleIndex ? newSchedule : item
+                )
+            );
+        } else {
+            setSchedule(prevSchedules => [...prevSchedules, newSchedule]);
+        }
+        
+        setScheduleName("");
+        setSelectedDays({
+            Sun: false,
+            Mon: false,
+            Tue: false,
+            Wed: false,
+            Thu: false,
+            Fri: false,
+            Sat: false
+        });
+        setTimeSlots([]);
+        setEditingScheduleIndex(null);
+        closeScheduleModal();
+    };
+
+    const handleCloseModal = () => {
+        setScheduleName("");
+        setSelectedDays({
+            Sun: false,
+            Mon: false,
+            Tue: false,
+            Wed: false,
+            Thu: false,
+            Fri: false,
+            Sat: false
+        });
+        setTimeSlots([]);
+        setEditingScheduleIndex(null);
+        closeScheduleModal();
+    };
+
     const formatScheduleDisplay = (days: Record<string, boolean>, timeSlots: string[]): string => {
         const sortedTimeSlots = [...timeSlots].sort((a, b) => {
             const timeA = new Date(`1970/01/01 ${a}`);
@@ -1445,28 +1507,6 @@ function SchedulesAvailabilityStep({
         return formattedTimes.join(', ');
     };
 
-    const handleApplySchedule = () => {
-        const newSchedule = {
-            ...(scheduleName && { name: scheduleName }),
-            days: selectedDays,
-            timeSlots: timeSlots
-        };
-        
-        setSchedule([...schedule, newSchedule]);
-        setScheduleName("");
-        setSelectedDays({
-            Sun: false,
-            Mon: false,
-            Tue: false,
-            Wed: false,
-            Thu: false,
-            Fri: false,
-            Sat: false
-        });
-        setTimeSlots([]);
-        
-        closeScheduleModal();
-    };
     return (
         <Box
             width="100vw"
@@ -1511,21 +1551,6 @@ function SchedulesAvailabilityStep({
                                 Build activity schedules that your Experiences are available to be booked by customers.
                             </Text>
 
-                            {/*<HStack spacing={2}>*/}
-                            {/*    <Button*/}
-                            {/*        colorScheme="blue"*/}
-                            {/*        variant="solid"*/}
-                            {/*        size="sm"*/}
-                            {/*    >*/}
-                            {/*        Active(1)*/}
-                            {/*    </Button>*/}
-                            {/*    <Button*/}
-                            {/*        variant="ghost"*/}
-                            {/*        size="sm"*/}
-                            {/*    >*/}
-                            {/*        All(1)*/}
-                            {/*    </Button>*/}
-                            {/*</HStack>*/}
                             <Box borderWidth="1px" borderRadius="lg" bg="white">
                                 <HStack p={4} borderBottomWidth="1px" justify="space-between">
                                     <Button
@@ -1568,12 +1593,14 @@ function SchedulesAvailabilityStep({
                                                             aria-label="Edit schedule"
                                                             size="sm"
                                                             variant="ghost"
+                                                            onClick={() => handleEditSchedule(index)}
                                                         />
                                                         <IconButton
                                                             icon={<DeleteIcon />}
                                                             aria-label="Delete schedule"
                                                             size="sm"
                                                             variant="ghost"
+                                                            onClick={() => handleDeleteSchedule(index)}
                                                         />
                                                     </HStack>
                                                 </Td>
@@ -2048,10 +2075,16 @@ function SchedulesAvailabilityStep({
                 </Box>
             </DashboardLayout>
 
-            <Modal isOpen={isScheduleModalOpen} onClose={closeScheduleModal} size="md">
+            <Modal 
+                isOpen={isScheduleModalOpen} 
+                onClose={handleCloseModal} 
+                size="md"
+            >
                 <ModalOverlay />
                 <ModalContent>
-                    <ModalHeader>Schedule</ModalHeader>
+                    <ModalHeader>
+                        {editingScheduleIndex !== null ? 'Edit Schedule' : 'Add Schedule'}
+                    </ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
                         <VStack spacing={4} align="stretch">
@@ -2114,7 +2147,10 @@ function SchedulesAvailabilityStep({
                                                         borderRadius="full"
                                                         bg="gray.100"
                                                         pr={1}
-                                                        onClick={() => handleEditTimeSlot(index, slot)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleEditTimeSlot(index, slot);
+                                                        }}
                                                         _hover={{ bg: 'gray.200' }}
                                                     >
                                                         {slot}
@@ -2148,7 +2184,7 @@ function SchedulesAvailabilityStep({
                     </ModalBody>
 
                     <ModalFooter>
-                        <Button variant="ghost" mr={3} onClick={closeScheduleModal}>
+                        <Button variant="ghost" mr={3} onClick={handleCloseModal}>
                             Cancel
                         </Button>
                         <Button 
@@ -2156,7 +2192,7 @@ function SchedulesAvailabilityStep({
                             onClick={handleApplySchedule}
                             isDisabled={timeSlots.length === 0 || !Object.values(selectedDays).some(day => day)}
                         >
-                            Apply
+                            {editingScheduleIndex !== null ? 'Save Changes' : 'Apply'}
                         </Button>
                     </ModalFooter>
                 </ModalContent>

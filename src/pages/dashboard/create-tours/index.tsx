@@ -1409,6 +1409,64 @@ function SchedulesAvailabilityStep({
         setEditingTimeSlot({ index, time });
         setTimePickerOpen(true);
     };
+    const formatScheduleDisplay = (days: Record<string, boolean>, timeSlots: string[]): string => {
+        const sortedTimeSlots = [...timeSlots].sort((a, b) => {
+            const timeA = new Date(`1970/01/01 ${a}`);
+            const timeB = new Date(`1970/01/01 ${b}`);
+            return timeA.getTime() - timeB.getTime();
+        });
+        const formattedTimes = sortedTimeSlots.map(slot => {
+            const [time, period] = slot.split(' ');
+            const [hours, minutes] = time.split(':');
+            return `${hours}:${minutes}${period.toLowerCase()}`;
+        });
+        const allDaysSelected = Object.values(days).every(day => day);
+        const anyDaySelected = Object.values(days).some(day => day);
+
+        if (allDaysSelected) {
+            if (formattedTimes.length > 3) {
+                return `Daily at ${formattedTimes.slice(0, 3).join(', ')}...`;
+            }
+            return `Daily at ${formattedTimes.join(', ')}`;
+        } else if (anyDaySelected) {
+            const selectedDays = Object.entries(days)
+                .filter(([_, isSelected]) => isSelected)
+                .map(([day]) => day)
+                .join(', ');
+
+            if (formattedTimes.length > 3) {
+                return `${selectedDays} at ${formattedTimes.slice(0, 3).join(', ')}...`;
+            }
+            return `${selectedDays} at ${formattedTimes.join(', ')}`;
+        }
+        if (formattedTimes.length > 3) {
+            return `${formattedTimes.slice(0, 3).join(', ')}...`;
+        }
+        return formattedTimes.join(', ');
+    };
+
+    const handleApplySchedule = () => {
+        const newSchedule = {
+            ...(scheduleName && { name: scheduleName }),
+            days: selectedDays,
+            timeSlots: timeSlots
+        };
+        
+        setSchedule([...schedule, newSchedule]);
+        setScheduleName("");
+        setSelectedDays({
+            Sun: false,
+            Mon: false,
+            Tue: false,
+            Wed: false,
+            Thu: false,
+            Fri: false,
+            Sat: false
+        });
+        setTimeSlots([]);
+        
+        closeScheduleModal();
+    };
     return (
         <Box
             width="100vw"
@@ -1489,28 +1547,38 @@ function SchedulesAvailabilityStep({
                                         </Tr>
                                     </Thead>
                                     <Tbody>
-                                        <Tr>
-                                            <Td color="blue.500" cursor="pointer">
-                                                Daily at 5:00 am, 6:00 am, 7:00 am, 8:00...
-                                            </Td>
-                                            <Td>-</Td>
-                                            <Td>
-                                                <HStack spacing={2}>
-                                        <IconButton
-                                                        icon={<EditIcon />}
-                                                        aria-label="Edit schedule"
-                                                        size="sm"
-                                                        variant="ghost"
-                                                    />
-                                                    <IconButton
-                                                        icon={<DeleteIcon />}
-                                                        aria-label="Delete schedule"
-                                                        size="sm"
-                                                        variant="ghost"
-                                        />
-                                    </HStack>
-                                            </Td>
-                                        </Tr>
+                                        {schedule.map((schedule, index) => (
+                                            <Tr key={index}>
+                                                <Td>
+                                                    <VStack align="start" spacing={1}>
+                                                        {schedule.name && (
+                                                            <Text color="blue.500" cursor="pointer">
+                                                                {schedule.name}
+                                                            </Text>
+                                                        )}
+                                                        <Text fontSize="sm" color="gray.600">
+                                                            {formatScheduleDisplay(schedule.days, schedule.timeSlots)}
+                                                        </Text>
+                                                    </VStack>
+                                                </Td>
+                                                <Td>
+                                                    <HStack spacing={2}>
+                                                        <IconButton
+                                                            icon={<EditIcon />}
+                                                            aria-label="Edit schedule"
+                                                            size="sm"
+                                                            variant="ghost"
+                                                        />
+                                                        <IconButton
+                                                            icon={<DeleteIcon />}
+                                                            aria-label="Delete schedule"
+                                                            size="sm"
+                                                            variant="ghost"
+                                                        />
+                                                    </HStack>
+                                                </Td>
+                                            </Tr>
+                                        ))}
                                     </Tbody>
                                 </Table>
                             </Box>
@@ -2083,7 +2151,11 @@ function SchedulesAvailabilityStep({
                         <Button variant="ghost" mr={3} onClick={closeScheduleModal}>
                             Cancel
                         </Button>
-                        <Button colorScheme="blue">
+                        <Button 
+                            colorScheme="blue" 
+                            onClick={handleApplySchedule}
+                            isDisabled={timeSlots.length === 0 || !Object.values(selectedDays).some(day => day)}
+                        >
                             Apply
                         </Button>
                     </ModalFooter>

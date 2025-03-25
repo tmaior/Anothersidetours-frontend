@@ -1401,137 +1401,67 @@ function SchedulesAvailabilityStep({
                             <Text fontSize="sm" color="gray.600" mb={4}>
                                 Build activity schedules that your Experiences are available to be booked by customers.
                             </Text>
-                            <Flex gap={4}>
-                                <FormControl w={"300px"}>
-                                    <FormLabel>Event Duration</FormLabel>
-                                    <Flex gap={2}>
-                                        <Input
-                                            type="number"
-                                            value={eventDuration}
-                                            onChange={(e) => setEventDuration(e.target.value)}
-                                        />
-                                        <Select>
-                                            <option value="hour">hour</option>
-                                            <option value="minute">minute</option>
-                                        </Select>
-                                    </Flex>
-                                </FormControl>
-                            </Flex>
-                        </Box>
 
-                        <Box>
-                            <Text fontSize="sm" fontWeight="bold" mb={2}>
-                                Schedule
-                            </Text>
-                            <Button leftIcon={<AddIcon/>} colorScheme="blue" onClick={handleAddTimeRange}>
-                                Add Time Range
-                            </Button>
-                            <VStack align="stretch" mt={4}>
-                                {schedule.map((timeRange, index) => (
-                                    <HStack key={index} spacing={4} align="center">
-                                        <Select
-                                            value={timeRange.startTime?.split(":")[0] || ""}
-                                            onChange={(e) =>
-                                                handleTimeChange(
-                                                    index,
-                                                    "startTime",
-                                                    `${e.target.value}:${timeRange.startTime?.split(":")[1] || "00"}`
-                                                )
-                                            }
-                                            width="100px"
-                                        >
-                                            {Array.from({length: 12}, (_, i) => i + 1).map((hour) => (
-                                                <option key={hour} value={hour.toString().padStart(2, "0")}>
-                                                    {hour}
-                                                </option>
-                                            ))}
-                                        </Select>
+                            <HStack spacing={2}>
+                                <Button
+                                    colorScheme="blue"
+                                    variant="solid"
+                                    size="sm"
+                                >
+                                    Active(1)
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                >
+                                    All(1)
+                                </Button>
+                            </HStack>
+                            <Box borderWidth="1px" borderRadius="lg" bg="white">
+                                <HStack p={4} borderBottomWidth="1px" justify="space-between">
+                                    <Button
+                                        rightIcon={<AddIcon />}
+                                        variant="outline"
+                                        size="sm"
+                                    >
+                                        Add Schedule
+                                    </Button>
+                                </HStack>
 
-                                        <Select
-                                            value={timeRange.startTime?.split(":")[1] || ""}
-                                            onChange={(e) =>
-                                                handleTimeChange(
-                                                    index,
-                                                    "startTime",
-                                                    `${timeRange.startTime?.split(":")[0] || "12"}:${e.target.value}`
-                                                )
-                                            }
-                                            width="100px"
-                                        >
-                                            {Array.from({length: 12}, (_, i) => i * 5)
-                                                .map((m) => m.toString().padStart(2, "0"))
-                                                .map((minute) => (
-                                                    <option key={minute} value={minute}>
-                                                        {minute}
-                                                    </option>
-                                                ))}
-                                        </Select>
-
-                                        <Select
-                                            value={timeRange.startPeriod}
-                                            onChange={(e) => handleTimeChange(index, "startPeriod", e.target.value)}
-                                            width="80px"
-                                        >
-                                            <option value="AM">AM</option>
-                                            <option value="PM">PM</option>
-                                        </Select>
-
-                                        <Select
-                                            value={timeRange.endTime?.split(":")[0] || ""}
-                                            onChange={(e) =>
-                                                handleTimeChange(
-                                                    index,
-                                                    "endTime",
-                                                    `${e.target.value}:${timeRange.endTime?.split(":")[1] || "00"}`
-                                                )
-                                            }
-                                            width="100px"
-                                        >
-                                            {Array.from({length: 12}, (_, i) => i + 1).map((hour) => (
-                                                <option key={hour} value={hour.toString().padStart(2, "0")}>
-                                                    {hour}
-                                                </option>
-                                            ))}
-                                        </Select>
-
-                                        <Select
-                                            value={timeRange.endTime?.split(":")[1] || ""}
-                                            onChange={(e) =>
-                                                handleTimeChange(
-                                                    index,
-                                                    "endTime",
-                                                    `${timeRange.endTime?.split(":")[0] || "12"}:${e.target.value}`
-                                                )
-                                            }
-                                            width="100px"
-                                        >
-                                            {Array.from({length: 12}, (_, i) => i * 5)
-                                                .map((m) => m.toString().padStart(2, "0"))
-                                                .map((minute) => (
-                                                    <option key={minute} value={minute}>
-                                                        {minute}
-                                                    </option>
-                                                ))}
-                                        </Select>
-
-                                        <Select
-                                            value={timeRange.endPeriod}
-                                            onChange={(e) => handleTimeChange(index, "endPeriod", e.target.value)}
-                                            width="80px"
-                                        >
-                                            <option value="AM">AM</option>
-                                            <option value="PM">PM</option>
-                                        </Select>
-
-                                        <IconButton
-                                            icon={<DeleteIcon/>}
-                                            colorScheme="red"
-                                            onClick={() => handleRemoveTimeRange(index)}
-                                            aria-label="Remove Time Range"
-                                        />
-                                    </HStack>
-                                ))}
-                            </VStack>
+                                <Table variant="simple">
+                                    <Thead>
+                                        <Tr>
+                                            <Th>Schedule Name</Th>
+                                            <Th>Price Variation</Th>
+                                            <Th width="100px">Actions</Th>
+                                        </Tr>
+                                    </Thead>
+                                    <Tbody>
+                                        <Tr>
+                                            <Td color="blue.500" cursor="pointer">
+                                                Daily at 5:00 am, 6:00 am, 7:00 am, 8:00...
+                                            </Td>
+                                            <Td>-</Td>
+                                            <Td>
+                                                <HStack spacing={2}>
+                                                    <IconButton
+                                                        icon={<EditIcon />}
+                                                        aria-label="Edit schedule"
+                                                        size="sm"
+                                                        variant="ghost"
+                                                    />
+                                                    <IconButton
+                                                        icon={<DeleteIcon />}
+                                                        aria-label="Delete schedule"
+                                                        size="sm"
+                                                        variant="ghost"
+                                                    />
+                                                </HStack>
+                                            </Td>
+                                        </Tr>
+                                    </Tbody>
+                                </Table>
+                            </Box>
                         </Box>
 
                         <Box>

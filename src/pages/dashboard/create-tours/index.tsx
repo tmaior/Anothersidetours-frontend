@@ -890,7 +890,7 @@ function SchedulesAvailabilityStep({
 
     const handleSelectDemographic = (selectedId) => {
         const selectedDemo = availableDemographics.find((demo) => demo.id === selectedId);
-        if (selectedDemo && !selectedDemographics.find((demo) => demo.id === selectedId)) {
+        if (selectedDemo && !selectedDemographics.some(demo => demo.id === selectedId)) {
             setSelectedDemographics([...selectedDemographics, selectedDemo]);
             addDemographic(selectedDemo);
         }
@@ -1059,6 +1059,19 @@ function SchedulesAvailabilityStep({
             });
             return;
         }
+        const nameExists = availableDemographics.some(
+            demo => demo.name.toLowerCase() === newDemographic.name.trim().toLowerCase()
+        );
+        if (nameExists) {
+            toast({
+                title: "Error",
+                description: "A demographic with this name already exists.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
 
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics`, {
@@ -1077,9 +1090,7 @@ function SchedulesAvailabilityStep({
             }
 
             const createdDemographic = await response.json();
-
             setAvailableDemographics([...availableDemographics, createdDemographic]);
-
             setNewDemographic({name: "", caption: ""});
             closeModal();
 
@@ -1547,44 +1558,22 @@ function SchedulesAvailabilityStep({
                                                 </Td>
                                             </Tr>
                                         ) : (
-                                            <>
-                                                {selectedDemographics.map((demo) => (
-                                                    <Tr key={demo.id} fontSize="sm">
-                                                        <Td p={2}>
-                                                            <HStack spacing={2}>
-                                                                <DragHandleIcon boxSize={3}/>
-                                                                <Text fontSize="sm">{demo.name}</Text>
-                                                            </HStack>
-                                                        </Td>
-                                                        <Td p={1}>
-                                                            <IconButton
-                                                                icon={<DeleteIcon/>}
-                                                                size="xs"
-                                                                colorScheme="gray"
-                                                                variant="outline"
-                                                                aria-label="Delete"
-                                                                onClick={() => handleRemoveDemographic(demo.id)}
-                                                            />
-                                                        </Td>
-                                                    </Tr>
-                                                ))}
-
-                                                {selectedDemographics.map((demo) => (
-                                                    <Tr key={demo.id} fontSize="sm" bg="gray.50">
-                                                        <Td p={2}>
-                                                            <HStack spacing={2}>
-                                                                <DragHandleIcon boxSize={3}/>
-                                                                <Text fontSize="sm">{demo.name} (Unsaved)</Text>
-                                                            </HStack>
-                                                        </Td>
-                                                        <HStack p={1}>
+                                            selectedDemographics.map((demo) => (
+                                                <Tr key={demo.id} fontSize="sm">
+                                                    <Td p={2}>
+                                                        <HStack spacing={2}>
+                                                            <DragHandleIcon boxSize={3}/>
+                                                            <Text fontSize="sm">{demo.name}</Text>
+                                                        </HStack>
+                                                    </Td>
+                                                    <Td p={1}>
+                                                        <HStack>
                                                             <IconButton
                                                                 icon={<EditIcon/>}
                                                                 size="xs"
                                                                 aria-label="Edit"
                                                                 colorScheme="gray"
                                                                 variant="outline"
-                                                                // onClick={() => handleEditDemographic(demo.id, demo.name)}
                                                             />
                                                             <IconButton
                                                                 icon={<DeleteIcon/>}
@@ -1595,9 +1584,9 @@ function SchedulesAvailabilityStep({
                                                                 onClick={() => handleRemoveDemographic(demo.id)}
                                                             />
                                                         </HStack>
-                                                    </Tr>
-                                                ))}
-                                            </>
+                                                    </Td>
+                                                </Tr>
+                                            ))
                                         )}
                                     </Tbody>
                                 </Table>

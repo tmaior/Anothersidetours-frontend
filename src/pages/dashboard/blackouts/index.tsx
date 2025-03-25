@@ -22,8 +22,7 @@ import {
     useToast,
     VStack,
 } from "@chakra-ui/react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import CustomDatePicker from "../../../components/DatePickerDefault";
 import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
 import DashboardLayout from "../../../components/DashboardLayout";
 import withAuth from "../../../utils/withAuth";
@@ -374,32 +373,27 @@ function BlackoutDatesManagement() {
                                     <HStack spacing={4}>
                                         <Box>
                                             <Text>Start Date</Text>
-                                            <DatePicker
+                                            <CustomDatePicker
                                                 selected={newBlackoutDate.startDate}
-                                                onChange={(date: Date | null) =>
+                                                onDateChange={(date) =>
                                                     setNewBlackoutDate((prev) => ({
                                                         ...prev,
                                                         startDate: date || new Date(),
                                                     }))
                                                 }
-                                                dateFormat="MM/dd/yyyy"
-                                                customInput={<Input/>}
                                             />
                                         </Box>
                                         <Box>
                                             <Text>End Date</Text>
-                                            <DatePicker
+                                            <CustomDatePicker
                                                 selected={newBlackoutDate.endDate}
-                                                onChange={(date: Date | null) =>
+                                                onDateChange={(date) =>
                                                     setNewBlackoutDate((prev) => ({
                                                         ...prev,
                                                         endDate: date,
                                                         noEnd: !date,
                                                     }))
                                                 }
-                                                dateFormat="MM/dd/yyyy"
-                                                customInput={<Input/>}
-                                                isClearable
                                             />
                                         </Box>
                                         <Switch
@@ -448,9 +442,9 @@ function BlackoutDatesManagement() {
                                     <VStack spacing={3} align="stretch">
                                         {newBlackoutDate.timeRanges.map((range, index) => (
                                             <HStack key={index} spacing={4}>
-                                                <DatePicker
+                                                <CustomDatePicker
                                                     selected={range.startTime}
-                                                    onChange={(time: Date | null) =>
+                                                    onDateChange={(time) =>
                                                         setNewBlackoutDate((prev) => {
                                                             const updatedRanges = [...prev.timeRanges];
                                                             updatedRanges[index].startTime = time;
@@ -461,12 +455,10 @@ function BlackoutDatesManagement() {
                                                     showTimeSelectOnly
                                                     timeIntervals={30}
                                                     timeCaption="Start Time"
-                                                    dateFormat="hh:mm aa"
-                                                    customInput={<Input/>}
                                                 />
-                                                <DatePicker
+                                                <CustomDatePicker
                                                     selected={range.endTime}
-                                                    onChange={(time: Date | null) =>
+                                                    onDateChange={(time) =>
                                                         setNewBlackoutDate((prev) => {
                                                             const updatedRanges = [...prev.timeRanges];
                                                             updatedRanges[index].endTime = time;
@@ -477,8 +469,6 @@ function BlackoutDatesManagement() {
                                                     showTimeSelectOnly
                                                     timeIntervals={30}
                                                     timeCaption="End Time"
-                                                    dateFormat="hh:mm aa"
-                                                    customInput={<Input/>}
                                                 />
                                                 <IconButton
                                                     icon={<DeleteIcon/>}

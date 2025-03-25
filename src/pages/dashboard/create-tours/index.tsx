@@ -50,6 +50,7 @@ import {useRouter} from "next/router";
 import CustomerQuestionnaire, {QuestionnaireRef} from "../../../components/CustomerQuestionnaire";
 import {useDemographics} from "../../../contexts/DemographicsContext";
 import axios from "axios";
+import TimeSlotPicker from "../../../components/TimeSlotPicker";
 
 function DescriptionContentStep({onNext}: { onNext: () => void }) {
     const [newIncludedItem, setNewIncludedItem] = useState("");
@@ -1375,6 +1376,8 @@ function SchedulesAvailabilityStep({
         Sat: false
     });
     const [timeSlotType, setTimeSlotType] = useState("fixed");
+    const [isTimePickerOpen, setTimePickerOpen] = useState(false);
+    const [timeSlots, setTimeSlots] = useState<string[]>([]);
 
     const handleDayToggle = (day: string) => {
         setSelectedDays(prev => ({
@@ -1470,7 +1473,7 @@ function SchedulesAvailabilityStep({
                                             <Td>-</Td>
                                             <Td>
                                                 <HStack spacing={2}>
-                                                    <IconButton
+                                        <IconButton
                                                         icon={<EditIcon />}
                                                         aria-label="Edit schedule"
                                                         size="sm"
@@ -1481,8 +1484,8 @@ function SchedulesAvailabilityStep({
                                                         aria-label="Delete schedule"
                                                         size="sm"
                                                         variant="ghost"
-                                                    />
-                                                </HStack>
+                                        />
+                                    </HStack>
                                             </Td>
                                         </Tr>
                                     </Tbody>
@@ -1996,9 +1999,36 @@ function SchedulesAvailabilityStep({
                             </FormControl>
 
                             {timeSlotType === "fixed" && (
-                                <Button leftIcon={<AddIcon />} variant="outline" size="sm">
-                                    Add Time Slot
-                                </Button>
+                                <>
+                                    <Button 
+                                        leftIcon={<AddIcon />} 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => setTimePickerOpen(true)}
+                                    >
+                                        Add Time Slot
+                                    </Button>
+                                    
+                                    {timeSlots.length > 0 && (
+                                        <VStack align="stretch" mt={2}>
+                                            {timeSlots.map((slot, index) => (
+                                                <HStack key={index} justify="space-between">
+                                                    <Text>{slot}</Text>
+                                                    <IconButton
+                                                        icon={<DeleteIcon />}
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        aria-label="Remove time slot"
+                                                        onClick={() => {
+                                                            const newSlots = timeSlots.filter((_, i) => i !== index);
+                                                            setTimeSlots(newSlots);
+                                                        }}
+                                                    />
+                                                </HStack>
+                                            ))}
+                                        </VStack>
+                                    )}
+                                </>
                             )}
 
                             <Box>
@@ -2018,6 +2048,25 @@ function SchedulesAvailabilityStep({
                             Apply
                         </Button>
                     </ModalFooter>
+                </ModalContent>
+            </Modal>
+            <Modal 
+                isOpen={isTimePickerOpen} 
+                onClose={() => setTimePickerOpen(false)} 
+                size="xl"
+            >
+                <ModalOverlay />
+                <ModalContent maxW="600px">
+                    <ModalHeader>Add Time Slot</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody pb={6}>
+                        <TimeSlotPicker
+                            onTimeSelect={(time) => {
+                                setTimeSlots([...timeSlots, time]);
+                                setTimePickerOpen(false);
+                            }}
+                        />
+                    </ModalBody>
                 </ModalContent>
             </Modal>
         </Box>

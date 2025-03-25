@@ -757,12 +757,65 @@ function SchedulesAvailabilityStep({
 
             const savedTour = await tourResponse.json();
             const tourId = savedTour.id;
-
             setTourId(tourId);
 
-            const demographics = await handleSaveDemographics(savedTour.id);
+            const savedDemographics = await Promise.all(
+                selectedDemographics.map(async (demo) => {
+                    const response = await fetch(
+                        `${process.env.NEXT_PUBLIC_API_URL}/demographics/assign-to-tour`,
+                        {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({
+                                tourId,
+                                demographicId: demo.id,
+                            }),
+                        }
+                    );
 
-            await handleSavePricing(savedTour.id, demographics, pricingStructure);
+                    if (!response.ok) {
+                        throw new Error(`Failed to assign demographic ${demo.name}`);
+                    }
+                    return demo;
+                })
+            );
+
+            if (pricingStructure === "flat") {
+                await Promise.all(
+                    savedDemographics.map(async (demo) => {
+                        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing`, {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({
+                                tourId,
+                                demographicId: demo.id,
+                                pricingType: "flat",
+                                basePrice: basePrices[demo.id] || 0
+                            })
+                        });
+                    })
+                );
+            } else if (pricingStructure === "tiered") {
+                await Promise.all(
+                    savedDemographics.map(async (demo) => {
+                        const tierData = tiers.map(tier => ({
+                            quantity: parseInt(tier.guests.replace("+ Guests", "").trim()),
+                            price: tier.finalPrices[demo.id] || 0
+                        }));
+
+                        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing`, {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({
+                                tourId,
+                                demographicId: demo.id,
+                                pricingType: "tiered",
+                                tiers: tierData
+                            })
+                        });
+                    })
+                );
+            }
 
             const expandedTimeSlots = schedule.flatMap((slot) =>
                 generateTimeSlots(slot.startTime, slot.startPeriod, slot.endTime, slot.endPeriod)

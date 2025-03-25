@@ -39,7 +39,9 @@ import {
     Tr,
     useDisclosure,
     useToast,
-    VStack
+    VStack,
+    Wrap,
+    WrapItem
 } from "@chakra-ui/react";
 import {AddIcon, DeleteIcon, DragHandleIcon, EditIcon} from "@chakra-ui/icons";
 import {useGuest} from "../../../contexts/GuestContext";
@@ -1376,8 +1378,9 @@ function SchedulesAvailabilityStep({
         Sat: false
     });
     const [timeSlotType, setTimeSlotType] = useState("fixed");
-    const [isTimePickerOpen, setTimePickerOpen] = useState(false);
     const [timeSlots, setTimeSlots] = useState<string[]>([]);
+    const [isTimePickerOpen, setTimePickerOpen] = useState(false);
+    const [editingTimeSlot, setEditingTimeSlot] = useState<{ index: number; time: string } | null>(null);
 
     const handleDayToggle = (day: string) => {
         setSelectedDays(prev => ({
@@ -1386,6 +1389,26 @@ function SchedulesAvailabilityStep({
         }));
     };
 
+    const handleAddTimeSlot = (time: string) => {
+        if (editingTimeSlot !== null) {
+            const newSlots = [...timeSlots];
+            newSlots[editingTimeSlot.index] = time;
+            setTimeSlots(newSlots);
+            setEditingTimeSlot(null);
+        } else {
+            setTimeSlots([...timeSlots, time]);
+        }
+        setTimePickerOpen(false);
+    };
+
+    const handleRemoveTimeSlot = (indexToRemove: number) => {
+        setTimeSlots(timeSlots.filter((_, index) => index !== indexToRemove));
+    };
+
+    const handleEditTimeSlot = (index: number, time: string) => {
+        setEditingTimeSlot({ index, time });
+        setTimePickerOpen(true);
+    };
     return (
         <Box
             width="100vw"
@@ -1999,36 +2022,52 @@ function SchedulesAvailabilityStep({
                             </FormControl>
 
                             {timeSlotType === "fixed" && (
-                                <>
+                                <Box>
                                     <Button 
                                         leftIcon={<AddIcon />} 
                                         variant="outline" 
                                         size="sm"
-                                        onClick={() => setTimePickerOpen(true)}
+                                        onClick={() => {
+                                            setEditingTimeSlot(null);
+                                            setTimePickerOpen(true);
+                                        }}
+                                        mb={4}
                                     >
                                         Add Time Slot
                                     </Button>
                                     
                                     {timeSlots.length > 0 && (
-                                        <VStack align="stretch" mt={2}>
+                                        <Wrap spacing={2}>
                                             {timeSlots.map((slot, index) => (
-                                                <HStack key={index} justify="space-between">
-                                                    <Text>{slot}</Text>
-                                                    <IconButton
-                                                        icon={<DeleteIcon />}
+                                                <WrapItem key={index}>
+                                                    <Button
                                                         size="sm"
-                                                        variant="ghost"
-                                                        aria-label="Remove time slot"
-                                                        onClick={() => {
-                                                            const newSlots = timeSlots.filter((_, i) => i !== index);
-                                                            setTimeSlots(newSlots);
-                                                        }}
-                                                    />
-                                                </HStack>
+                                                        variant="outline"
+                                                        borderRadius="full"
+                                                        bg="gray.100"
+                                                        pr={1}
+                                                        onClick={() => handleEditTimeSlot(index, slot)}
+                                                        _hover={{ bg: 'gray.200' }}
+                                                    >
+                                                        {slot}
+                                                        <Box
+                                                            as="span"
+                                                            ml={2}
+                                                            p={1}
+                                                            cursor="pointer"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleRemoveTimeSlot(index);
+                                                            }}
+                                                        >
+                                                            ×
+                                                        </Box>
+                                                    </Button>
+                                                </WrapItem>
                                             ))}
-                                        </VStack>
+                                        </Wrap>
                                     )}
-                                </>
+                                </Box>
                             )}
 
                             <Box>
@@ -2052,19 +2091,21 @@ function SchedulesAvailabilityStep({
             </Modal>
             <Modal 
                 isOpen={isTimePickerOpen} 
-                onClose={() => setTimePickerOpen(false)} 
+                onClose={() => {
+                    setTimePickerOpen(false);
+                    setEditingTimeSlot(null);
+                }}
                 size="xl"
             >
                 <ModalOverlay />
                 <ModalContent maxW="600px">
-                    <ModalHeader>Add Time Slot</ModalHeader>
+                    <ModalHeader>
+                        {editingTimeSlot !== null ? 'Edit Time Slot' : 'Add Time Slot'}
+                    </ModalHeader>
                     <ModalCloseButton />
                     <ModalBody pb={6}>
                         <TimeSlotPicker
-                            onTimeSelect={(time) => {
-                                setTimeSlots([...timeSlots, time]);
-                                setTimePickerOpen(false);
-                            }}
+                            onTimeSelect={handleAddTimeSlot}
                         />
                     </ModalBody>
                 </ModalContent>

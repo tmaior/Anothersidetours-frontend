@@ -57,11 +57,12 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
         detailedAddons,
         reservationId: contextReservationId, 
         setReservationId,
-        imageUrl
+        imageUrl,
+        price,
     } = useGuest();
     const {isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal} = useDisclosure();
 
-    const pricePerGuest = typeof valuePrice === 'string' ? parseFloat(valuePrice) : valuePrice || 0;
+    const pricePerGuest = price;
     const guestTotal = guestQuantity * pricePerGuest;
     const addonsTotal = detailedAddons.reduce((acc, addon) => acc + addon.total, 0);
     const totalAmount = guestTotal + addonsTotal;

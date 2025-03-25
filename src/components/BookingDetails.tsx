@@ -60,7 +60,7 @@ export default function BookingDetails({
     const [localSelectedDate, setLocalSelectedDate] = useState<Date | null>(null);
     const [localSelectedTime, setLocalSelectedTime] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const {setSelectedDate, setSelectedTime, setTitle, name, email, phone, guestQuantity, setUserId} = useGuest();
+    const {setSelectedDate, setSelectedTime, setTitle, name, email, phone, guestQuantity, setUserId, setPrice} = useGuest();
     const normalizedEmail = email?.trim().toLowerCase();
     const [tierPricing, setTierPricing] = useState<TierPricing | null>(null);
     const [calculatedPrice, setCalculatedPrice] = useState<number>(parseFloat(originalPrice));
@@ -89,8 +89,9 @@ export default function BookingDetails({
                 pricePerPerson = applicableTier.price;
             }
             setCalculatedPrice(pricePerPerson);
+            setPrice(pricePerPerson);
         }
-    }, [tierPricing, guestQuantity]);
+    }, [tierPricing, guestQuantity, setPrice]);
 
     function combineDateAndTime(date, time) {
         if (!date || !time) return null;

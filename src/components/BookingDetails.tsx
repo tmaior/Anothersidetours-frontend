@@ -21,6 +21,32 @@ interface BookingDetailsProps {
     selectedTime?: string;
 }
 
+interface TierEntry {
+    quantity: number;
+    price: number;
+    adjustmentType: string;
+    operation: string;
+    adjustment: number;
+}
+
+interface TierPricing {
+    pricingType: string;
+    basePrice: number;
+    tierEntries: TierEntry[];
+}
+
+// interface GridProps {
+//     originalPrice: string;
+//     totalPrice: string;
+//     formInfoRef: React.RefObject<HTMLFormElement>;
+//     minGuest: number | undefined;
+//     selectedDate: Date | null;
+//     setSelectedDate: React.Dispatch<React.SetStateAction<Date | null>>;
+//     selectedTime: string | null;
+//     setSelectedTime: React.Dispatch<React.SetStateAction<string | null>>;
+//     errorMessage: string | null;
+//     title: string;
+// }
 export default function BookingDetails({
                                            onContinue,
                                            tourId,
@@ -36,11 +62,35 @@ export default function BookingDetails({
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const {setSelectedDate, setSelectedTime, setTitle, name, email, phone, guestQuantity, setUserId} = useGuest();
     const normalizedEmail = email?.trim().toLowerCase();
+    const [tierPricing, setTierPricing] = useState<TierPricing | null>(null);
+    const [calculatedPrice, setCalculatedPrice] = useState<number>(parseFloat(originalPrice));
 
     useEffect(() => {
         setTitle(title);
     }, [title, setTitle]);
+    useEffect(() => {
+        if (tourId) {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourId}`)
+                .then(response => response.json())
+                .then(data => {
+                    setTierPricing(data[0]);
+                })
+                .catch(console.error);
+        }
+    }, [tourId]);
+    useEffect(() => {
+        if (tierPricing && guestQuantity) {
+            let pricePerPerson = tierPricing.basePrice;
+            const applicableTier = tierPricing.tierEntries
+                .filter(tier => tier.quantity <= guestQuantity)
+                .sort((a, b) => b.quantity - a.quantity)[0];
 
+            if (applicableTier) {
+                pricePerPerson = applicableTier.price;
+            }
+            setCalculatedPrice(pricePerPerson);
+        }
+    }, [tierPricing, guestQuantity]);
 
     function combineDateAndTime(date, time) {
         if (!date || !time) return null;
@@ -170,7 +220,7 @@ export default function BookingDetails({
         <>
             <Navbar title={title} description={description}/>
             <Grid
-                originalPrice={originalPrice}
+                originalPrice={calculatedPrice.toString()}
                 formInfoRef={formInfoRef}
                 minGuest={minGuests}
                 selectedDate={localSelectedDate}
@@ -179,6 +229,7 @@ export default function BookingDetails({
                 setSelectedTime={setLocalSelectedTime}
                 errorMessage={errorMessage}
                 title={title}
+                totalPrice={(calculatedPrice * (guestQuantity || 1)).toString()}
             />
             <AddOns addons={addons}/>
             <FooterBar onContinue={handleValidation} continueText={"CONTINUE"}/>

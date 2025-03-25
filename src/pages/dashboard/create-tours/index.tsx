@@ -1358,6 +1358,31 @@ function SchedulesAvailabilityStep({
         flatPriceModal.onClose();
     };
 
+    const { isOpen: isScheduleModalOpen, onOpen: openScheduleModal, onClose: closeScheduleModal } = useDisclosure();
+    const [scheduleName, setScheduleName] = useState("");
+    const [availability, setAvailability] = useState("available");
+    const [dateType, setDateType] = useState("dateRange");
+    const [startDate, setStartDate] = useState("now");
+    const [endDate, setEndDate] = useState("forever");
+    const [noEnd, setNoEnd] = useState(true);
+    const [selectedDays, setSelectedDays] = useState({
+        Sun: false,
+        Mon: false,
+        Tue: false,
+        Wed: false,
+        Thu: false,
+        Fri: false,
+        Sat: false
+    });
+    const [timeSlotType, setTimeSlotType] = useState("fixed");
+
+    const handleDayToggle = (day: string) => {
+        setSelectedDays(prev => ({
+            ...prev,
+            [day]: !prev[day]
+        }));
+    };
+
     return (
         <Box
             width="100vw"
@@ -1402,27 +1427,28 @@ function SchedulesAvailabilityStep({
                                 Build activity schedules that your Experiences are available to be booked by customers.
                             </Text>
 
-                            <HStack spacing={2}>
-                                <Button
-                                    colorScheme="blue"
-                                    variant="solid"
-                                    size="sm"
-                                >
-                                    Active(1)
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                >
-                                    All(1)
-                                </Button>
-                            </HStack>
+                            {/*<HStack spacing={2}>*/}
+                            {/*    <Button*/}
+                            {/*        colorScheme="blue"*/}
+                            {/*        variant="solid"*/}
+                            {/*        size="sm"*/}
+                            {/*    >*/}
+                            {/*        Active(1)*/}
+                            {/*    </Button>*/}
+                            {/*    <Button*/}
+                            {/*        variant="ghost"*/}
+                            {/*        size="sm"*/}
+                            {/*    >*/}
+                            {/*        All(1)*/}
+                            {/*    </Button>*/}
+                            {/*</HStack>*/}
                             <Box borderWidth="1px" borderRadius="lg" bg="white">
                                 <HStack p={4} borderBottomWidth="1px" justify="space-between">
                                     <Button
                                         rightIcon={<AddIcon />}
                                         variant="outline"
                                         size="sm"
+                                        onClick={openScheduleModal}
                                     >
                                         Add Schedule
                                     </Button>
@@ -1927,6 +1953,73 @@ function SchedulesAvailabilityStep({
                     </VStack>
                 </Box>
             </DashboardLayout>
+
+            <Modal isOpen={isScheduleModalOpen} onClose={closeScheduleModal} size="md">
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Schedule</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <VStack spacing={4} align="stretch">
+                            <FormControl>
+                                <FormLabel>Name</FormLabel>
+                                <Input 
+                                    value={scheduleName}
+                                    onChange={(e) => setScheduleName(e.target.value)}
+                                />
+                            </FormControl>
+
+                            <FormControl>
+                                <FormLabel>Days of Week</FormLabel>
+                                <HStack spacing={2}>
+                                    {Object.entries(selectedDays).map(([day, isSelected]) => (
+                                        <Button
+                                            key={day}
+                                            size="sm"
+                                            colorScheme={isSelected ? "blue" : "gray"}
+                                            variant={isSelected ? "solid" : "outline"}
+                                            onClick={() => handleDayToggle(day)}
+                                        >
+                                            {day}
+                                        </Button>
+                                    ))}
+                                </HStack>
+                            </FormControl>
+
+                            <FormControl>
+                                <FormLabel>Time Slots</FormLabel>
+                                <RadioGroup value={timeSlotType} onChange={setTimeSlotType}>
+                                    <HStack spacing={4}>
+                                        <Radio value="fixed">Fixed Times</Radio>
+                                    </HStack>
+                                </RadioGroup>
+                            </FormControl>
+
+                            {timeSlotType === "fixed" && (
+                                <Button leftIcon={<AddIcon />} variant="outline" size="sm">
+                                    Add Time Slot
+                                </Button>
+                            )}
+
+                            <Box>
+                                <Text fontWeight="semibold" mb={2}>Price Variation</Text>
+                                <Button leftIcon={<AddIcon />} variant="outline" size="sm">
+                                    Add Price Variation
+                                </Button>
+                            </Box>
+                        </VStack>
+                    </ModalBody>
+
+                    <ModalFooter>
+                        <Button variant="ghost" mr={3} onClick={closeScheduleModal}>
+                            Cancel
+                        </Button>
+                        <Button colorScheme="blue">
+                            Apply
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </Box>
     );
 }

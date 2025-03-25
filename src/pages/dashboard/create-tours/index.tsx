@@ -1771,10 +1771,64 @@ function SchedulesAvailabilityStep({
                                     </ModalContent>
                                 </Modal>
 
-                                <Modal isOpen={tierPriceModal.isOpen} onClose={tierPriceModal.onClose} isCentered>
+                                <Modal isOpen={tierPriceModal.isOpen && newTier.guests === "1+ Guests"} onClose={tierPriceModal.onClose} isCentered>
                                     <ModalOverlay/>
-                                    <ModalContent maxWidth="900px" width="90%">
-                                        <ModalHeader>Edit Tier</ModalHeader>
+                                    <ModalContent maxWidth="500px">
+                                        <ModalHeader>Tier 1</ModalHeader>
+                                        <ModalCloseButton/>
+                                        <ModalBody>
+                                            <Box bg="blue.50" p={4} mb={4} borderRadius="md">
+                                                <Text>These are Base Prices for each demographic</Text>
+                                            </Box>
+
+                                            <Text fontSize="md" fontWeight="bold" mb={4}>
+                                                Terms
+                                            </Text>
+                                            <Table variant="simple" size="sm">
+                                                <Thead>
+                                                    <Tr>
+                                                        <Th>Demographic</Th>
+                                                        <Th>Price</Th>
+                                                    </Tr>
+                                                </Thead>
+                                                <Tbody>
+                                                    {demographics.map((demo) => (
+                                                        <Tr key={demo.id}>
+                                                            <Td>
+                                                                <HStack>
+                                                                    <DragHandleIcon boxSize={3} color="gray.400"/>
+                                                                    <Text>{demo.name}</Text>
+                                                                </HStack>
+                                                            </Td>
+                                                            <Td>
+                                                                <Input
+                                                                    type="number"
+                                                                    value={basePrices[demo.id] || ""}
+                                                                    onChange={(e) => handleBasePriceChange(demo.id, e.target.value)}
+                                                                    size="sm"
+                                                                    width="120px"
+                                                                />
+                                                            </Td>
+                                                        </Tr>
+                                                    ))}
+                                                </Tbody>
+                                            </Table>
+                                        </ModalBody>
+                                        <ModalFooter>
+                                            <Button variant="outline" onClick={tierPriceModal.onClose}>
+                                                Cancel
+                                            </Button>
+                                            <Button colorScheme="blue" ml={3} onClick={handleSaveTier}>
+                                                Save
+                                            </Button>
+                                        </ModalFooter>
+                                    </ModalContent>
+                                </Modal>
+
+                                <Modal isOpen={tierPriceModal.isOpen && newTier.guests !== "1+ Guests"} onClose={tierPriceModal.onClose} isCentered>
+                                    <ModalOverlay/>
+                                    <ModalContent maxWidth="800px">
+                                        <ModalHeader>Tier {newTier.guests.replace("+ Guests", "").trim()}</ModalHeader>
                                         <ModalCloseButton/>
                                         <ModalBody>
                                             <Text fontSize="sm" mb={2}>
@@ -1790,20 +1844,18 @@ function SchedulesAvailabilityStep({
                                                         guests: `${e.target.value} + Guests`,
                                                     })
                                                 }
-                                                disabled={newTier.guests === "1+ Guests"}
+                                                mb={4}
                                             />
 
-                                            <Text fontSize="md" fontWeight="bold" mt={4} mb={2}>
+                                            <Text fontSize="md" fontWeight="bold" mb={2}>
                                                 Terms
                                             </Text>
                                             <Table variant="simple" size="sm">
-                                                <Thead bg="gray.100">
+                                                <Thead>
                                                     <Tr>
                                                         <Th>Demographic</Th>
                                                         <Th>Base Price</Th>
                                                         <Th>Adjustment</Th>
-                                                        <Th></Th>
-                                                        <Th></Th>
                                                         <Th>Final Price</Th>
                                                     </Tr>
                                                 </Thead>
@@ -1811,54 +1863,44 @@ function SchedulesAvailabilityStep({
                                                     {demographics.map((demo) => (
                                                         <Tr key={demo.id}>
                                                             <Td>{demo.name}</Td>
+                                                            <Td>${basePrices[demo.id]?.toFixed(2) || "0.00"}</Td>
                                                             <Td>
-                                                                <Input
-                                                                    type="number"
-                                                                    width="100px"
-                                                                    placeholder="Enter base price"
-                                                                    value={basePrices[demo.id] || ""}
-                                                                    onChange={(e) => handleBasePriceChange(demo.id, e.target.value)}
-                                                                    disabled={newTier.guests !== "1+ Guests"}
-                                                                />
+                                                                <HStack spacing={1}>
+                                                                    <Input
+                                                                        type="number"
+                                                                        size="sm"
+                                                                        width="80px"
+                                                                        value={newTier.adjustments[demo.id] || ""}
+                                                                        onChange={(e) => handleAdjustmentChange(demo.id, e.target.value)}
+                                                                    />
+                                                                    <Select
+                                                                        size="sm"
+                                                                        width="70px"
+                                                                        value={newTier.adjustmentTypes[demo.id] || "$"}
+                                                                        onChange={(e) => handleAdjustmentTypeChange(demo.id, e.target.value)}
+                                                                    >
+                                                                        <option value="$">$</option>
+                                                                        <option value="%">%</option>
+                                                                    </Select>
+                                                                    <Select
+                                                                        size="sm"
+                                                                        width="100px"
+                                                                        value={newTier.operations[demo.id] || "Markup"}
+                                                                        onChange={(e) => handleOperationChange(demo.id, e.target.value)}
+                                                                    >
+                                                                        <option value="Markup">Markup</option>
+                                                                        <option value="Markdown">Markdown</option>
+                                                                    </Select>
+                                                                </HStack>
                                                             </Td>
                                                             <Td>
-                                                                <Input
-                                                                    type="number"
-                                                                    width="80px"
-                                                                    value={newTier.adjustments[demo.id] || ""}
-                                                                    onChange={(e) => handleAdjustmentChange(demo.id, e.target.value)}
-                                                                    disabled={newTier.guests === "1+ Guests"}
-                                                                />
-                                                            </Td>
-                                                            <Td>
-                                                                <Select
-                                                                    value={newTier.adjustmentTypes[demo.id] || "$"}
-                                                                    onChange={(e) => handleAdjustmentTypeChange(demo.id, e.target.value)}
-                                                                    disabled={newTier.guests === "1+ Guests"}
-                                                                >
-                                                                    <option value="$">$</option>
-                                                                    <option value="%">%</option>
-                                                                </Select>
-                                                            </Td>
-                                                            <Td>
-                                                                <Select
-                                                                    value={newTier.operations[demo.id] || "Markup"}
-                                                                    onChange={(e) => handleOperationChange(demo.id, e.target.value)}
-                                                                    disabled={newTier.guests === "1+ Guests"}
-                                                                >
-                                                                    <option value="Markup">Markup</option>
-                                                                    <option value="Markdown">Markdown</option>
-                                                                </Select>
-                                                            </Td>
-                                                            <Td>
-                                                                $
-                                                                {newTier.operations[demo.id] === "Markup"
+                                                                ${(newTier.operations[demo.id] === "Markup"
                                                                     ? newTier.adjustmentTypes[demo.id] === "$"
                                                                         ? (basePrices[demo.id] || 0) + (newTier.adjustments[demo.id] || 0)
                                                                         : (basePrices[demo.id] || 0) + ((basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100
                                                                     : newTier.adjustmentTypes[demo.id] === "$"
                                                                         ? (basePrices[demo.id] || 0) - (newTier.adjustments[demo.id] || 0)
-                                                                        : (basePrices[demo.id] || 0) - ((basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100}
+                                                                        : (basePrices[demo.id] || 0) - ((basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100).toFixed(2)}
                                                             </Td>
                                                         </Tr>
                                                     ))}
@@ -1866,16 +1908,6 @@ function SchedulesAvailabilityStep({
                                             </Table>
                                         </ModalBody>
                                         <ModalFooter>
-                                            {newTier?.id && (
-                                                <Button
-                                                    colorScheme="gray"
-                                                    variant="outline"
-                                                    mr="auto"
-                                                    onClick={() => handleDeleteTier(newTier.id)}
-                                                >
-                                                    Delete
-                                                </Button>
-                                            )}
                                             <Button variant="outline" onClick={tierPriceModal.onClose}>
                                                 Cancel
                                             </Button>

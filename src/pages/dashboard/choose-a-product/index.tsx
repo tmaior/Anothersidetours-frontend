@@ -63,7 +63,7 @@ function ToursPage() {
     const filteredTours = tours.filter((tour) => {
         const normalizedTourName = tour.name.toLowerCase().trim();
         const normalizedSearch = searchTerm.toLowerCase().trim();
-        return normalizedTourName.includes(normalizedSearch);
+        return normalizedTourName.includes(normalizedSearch) && tour.isDeleted === false;
     });
 
     if (loading) {

@@ -58,8 +58,11 @@ function ListTours() {
                     `${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`
                 );
                 const toursData = await toursResponse.json();
-                setTours(Array.isArray(toursData) ? toursData : []);
-                setFilteredTours(Array.isArray(toursData) ? toursData : []);
+                const nonDeletedTours = Array.isArray(toursData) 
+                    ? toursData.filter(tour => !tour.isDeleted) 
+                    : [];
+                setTours(nonDeletedTours);
+                setFilteredTours(nonDeletedTours);
             } catch (error) {
                 console.error("Error fetching data:", error);
                 toast({
@@ -103,7 +106,11 @@ function ListTours() {
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/tours/${selectedTourId}`,
                 {
-                    method: "DELETE",
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ isDeleted: true }),
                 }
             );
 

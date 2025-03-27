@@ -36,6 +36,12 @@ interface BlackoutDate {
     endTime?: string;
 }
 
+interface Schedule {
+    id: string;
+    name: string;
+    days: string[];
+    timeSlots: string[];
+}
 const DatePicker: React.FC<DatePickerProps> = ({
                                                    selectedDate,
                                                    onChange,
@@ -44,6 +50,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                                }) => {
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
     const [monthDayData, setMonthDayData] = useState<{ [key: string]: React.ReactElement }>({});
+    const [availableSchedules, setAvailableSchedules] = useState<Schedule[]>([]);
     const [availableTimes, setAvailableTimes] = useState<string[]>([]);
     const [filteredTimes, setFilteredTimes] = useState<string[]>([]);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -246,6 +253,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
         return <SimpleGrid columns={7}>{days}</SimpleGrid>;
     };
 
+    const isDayAvailable = useCallback((date: Date) => {
+        const dayOfWeek = format(date, 'EEE');
+        return availableSchedules.some(schedule => 
+            schedule.days.includes(dayOfWeek)
+        );
+    }, [availableSchedules]);
     const renderCells = () => {
         const monthStart = startOfMonth(currentMonth);
         const monthEnd = endOfMonth(monthStart);
@@ -266,6 +279,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 const isCurrentMonthDay = isSameMonth(day, monthStart);
                 const isPast = isBefore(day, today);
                 const isBlocked = blockedDates.includes(dayKey);
+                const isDayUnavailable = !isDayAvailable(day);
 
                 if (isCurrentMonthDay) {
                     days.push(
@@ -276,25 +290,25 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                 p="1px"
                                 position="relative"
                                 onClick={() => {
-                                    if (!isPast && !isBlocked) {
+                                    if (!isPast && !isBlocked && !isDayUnavailable) {
                                         onChange(cloneDay);
                                     }
                                 }}
                                 bg={
                                     isSelected
                                         ? '#337AB7'
-                                        : isPast || isBlocked
+                                        : isPast || isBlocked || isDayUnavailable
                                             ? 'white.300'
                                             : '#E9F7D4'
                                 }
                                 color={
                                     isSelected
                                         ? 'white'
-                                        : isPast || isBlocked
+                                        : isPast || isBlocked || isDayUnavailable
                                             ? 'gray.300'
                                             : '#337AB7'
                                 }
-                                cursor={isBlocked || isPast ? 'not-allowed' : 'pointer'}
+                                cursor={isBlocked || isPast || isDayUnavailable ? 'not-allowed' : 'pointer'}
                                 _hover={{
                                     bg: isBlocked || isPast ? undefined : '#337AB7',
                                     color: isBlocked || isPast ? undefined : 'white'
@@ -313,9 +327,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                     fontWeight="medium"
                                     textAlign="center"
                                 >
-                                    {!isPast && !isBlocked
+                                    {!isPast && !isBlocked && !isDayUnavailable
                                         ? monthDayData[dayKey] || ''
-                                        : isBlocked && !isPast
+                                        : (isBlocked || isDayUnavailable) && !isPast
                                             ? (
                                                 <Text
                                                     fontSize="9px"
@@ -350,12 +364,14 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
     const fetchAvailableTimes = useCallback(async () => {
         try {
-            const response = await axios.get<string[]>(
-                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${tourId}`
+            const response = await axios.get<Schedule[]>(
+                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/schedules/${tourId}`
             );
 
             if (Array.isArray(response.data)) {
-                setAvailableTimes(response.data);
+                setAvailableSchedules(response.data);
+                const allTimeSlots = response.data.flatMap(schedule => schedule.timeSlots);
+                setAvailableTimes([...new Set(allTimeSlots)]);
             } else {
                 throw new Error('Invalid response format');
             }
@@ -363,6 +379,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             setError(null);
         } catch (error) {
             setError(error.response?.data?.message || 'Failed to fetch available times');
+            setAvailableSchedules([]);
             setAvailableTimes([]);
         }
     }, [tourId]);
@@ -394,14 +411,19 @@ const DatePicker: React.FC<DatePickerProps> = ({
         }
 
         const dayKey = format(selectedDate, 'yyyy-MM-dd');
+        const selectedDayOfWeek = format(selectedDate, 'EEE');
+        const applicableSchedules = availableSchedules.filter(schedule => 
+            schedule.days.includes(selectedDayOfWeek)
+        );
+        const timeSlotsForDay = applicableSchedules.flatMap(schedule => schedule.timeSlots);
         const dailyBlocked = blockedTimes.filter(bt => bt.date === dayKey);
-
+        
         if (dailyBlocked.length === 0) {
-            setFilteredTimes(availableTimes);
+            setFilteredTimes(timeSlotsForDay);
             return;
         }
 
-        const timesFiltered = availableTimes.filter(timeStr => {
+        const timesFiltered = timeSlotsForDay.filter(timeStr => {
             const timeInMinutes = parseTimeToMinutes(timeStr);
             return !dailyBlocked.some(bt => {
                 const start = parseTimeToMinutes(bt.startTime);
@@ -411,7 +433,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
         });
 
         setFilteredTimes(timesFiltered);
-    }, [selectedDate, blockedTimes, availableTimes]);
+    }, [selectedDate, blockedTimes, availableSchedules]);
 
     const handleTimeSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const selected = event.target.value;

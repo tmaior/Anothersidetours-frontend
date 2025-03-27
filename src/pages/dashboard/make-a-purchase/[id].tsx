@@ -831,99 +831,118 @@ const PurchasePage = () => {
                     }
                 }
 
-                    if (paymentMethod === 'cash') {
-                        const cashPaymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                                tenant_id: tenantId,
-                                reservation_id: reservationId,
-                                payment_method: 'cash',
-                                amount: totalWithDiscount,
-                                payment_status: 'paid',
-                                payment_details: {
-                                    cash_received: cashAmountReceived,
-                                    change_due: cashAmountReceived - totalWithDiscount
-                                },
-                                reference_number: `CASH-${Date.now()}`,
-                                is_split_payment: false,
-                                created_by: "Back Office",
-                                created_at: new Date().toISOString(),
-                                updated_at: new Date().toISOString(),
-                            }),
+                if (emailEnabled && organizerEmail && organizerEmail.trim() !== "") {
+                    try {
+                        const currentTour = cart[selectedCartItemIndex];
+                        
+                        const emailTotals = [
+                            { 
+                                label: `${currentTour.name} (${quantity} guests)`, 
+                                amount: `$${((currentTour.valuePerGuest || currentTour.price) * quantity).toFixed(2)}` 
+                            }
+                        ];
+                        
+                        if (combinedAddons.length > 0) {
+                            emailTotals.push({
+                                label: 'Add-ons',
+                                amount: `$${addonsTotalPrice.toFixed(2)}`
+                            });
+                        }
+                        
+                        if (isCustomLineItemsEnabled && customLineItems.length > 0) {
+                            customLineItems.forEach(item => {
+                                const itemTotal = item.amount * item.quantity;
+                                emailTotals.push({
+                                    label: `${item.name || 'Custom item'} (${item.quantity}x)`,
+                                    amount: `${item.type === 'Discount' ? '-' : ''}$${itemTotal.toFixed(2)}`
+                                });
+                            });
+                        }
+                        
+                        if (voucherDiscount > 0) {
+                            emailTotals.push({
+                                label: 'Discount',
+                                amount: `-$${voucherDiscount.toFixed(2)}`
+                            });
+                        }
+                        
+                        emailTotals.push({
+                            label: 'Total',
+                            amount: `$${totalWithDiscount.toFixed(2)}`
                         });
 
-                        if (!cashPaymentResponse.ok) {
-                            throw new Error("Failed to record cash payment.");
-                        }
-                    } else if (paymentMethod === 'check' || paymentMethod === 'invoice' || paymentMethod === 'other') {
-                        const paymentDetails: Record<string, string | number> = {
-                            paymentNote: purchaseNote
+                        const emailData = {
+                            title: "Reservation Confirmed",
+                            status: "approved",
+                            description: "Your reservation has been confirmed!",
+                            name: organizerName,
+                            email: organizerEmail,
+                            phone: phoneEnabled ? organizerPhone : "",
+                            date: combineDateAndTime(date, time),
+                            time: time,
+                            duration: "2 hours",
+                            quantity: quantity,
+                            totals: emailTotals,
+                            tourTitle: currentTour.name,
+                            reservationImageUrl: currentTour.imageUrl,
                         };
-                        if (paymentMethod === 'invoice') {
-                            paymentDetails.invoiceMessage = invoiceData.message;
-                            let dueDateToUse = invoiceData.dueDate;
-                            if (!dueDateToUse && date) {
-                                const eventDate = new Date(combineDateAndTime(date, time));
-                                if (invoiceData.daysBeforeEvent > 0) {
-                                    eventDate.setDate(eventDate.getDate() - invoiceData.daysBeforeEvent);
-                                }
-                                dueDateToUse = eventDate.toISOString().split('T')[0];
-                            }
 
-                            const paymentTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({
-                                    tenant_id: tenantId,
-                                    reservation_id: reservationId,
-                                    payment_method: 'invoice',
-                                    amount: totalWithDiscount,
-                                    payment_status: 'pending',
-                                    payment_details: {
-                                        note: purchaseNote,
-                                        invoice_message: invoiceData.message
-                                    },
-                                    reference_number: `INV-${Date.now()}`,
-                                    is_split_payment: false,
-                                    due_date: dueDateToUse ? new Date(dueDateToUse).toISOString() : new Date(combineDateAndTime(date, time)).toISOString(),
-                                    invoice_message: invoiceData.message,
-                                    days_before_event: invoiceData.daysBeforeEvent,
-                                    created_by: "Back Office",
-                                    created_at: new Date().toISOString(),
-                                    updated_at: new Date().toISOString(),
-                                }),
-                            });
+                        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mail/send-reservation-email`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                toEmail: organizerEmail,
+                                emailData: emailData
+                            }),
+                        });
+                        
+                        console.log('Confirmation email sent successfully');
+                    } catch (emailError) {
+                        console.error('Error sending confirmation email:', emailError);
+                    }
+                }
 
-                            if (!paymentTransactionResponse.ok) {
-                                throw new Error("Failed to create invoice.");
+                if (paymentMethod === 'cash') {
+                    const cashPaymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            tenant_id: tenantId,
+                            reservation_id: reservationId,
+                            payment_method: 'cash',
+                            amount: totalWithDiscount,
+                            payment_status: 'paid',
+                            payment_details: {
+                                cash_received: cashAmountReceived,
+                                change_due: cashAmountReceived - totalWithDiscount
+                            },
+                            reference_number: `CASH-${Date.now()}`,
+                            is_split_payment: false,
+                            created_by: "Back Office",
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                        }),
+                    });
+
+                    if (!cashPaymentResponse.ok) {
+                        throw new Error("Failed to record cash payment.");
+                    }
+                } else if (paymentMethod === 'check' || paymentMethod === 'invoice' || paymentMethod === 'other') {
+                    const paymentDetails: Record<string, string | number> = {
+                        paymentNote: purchaseNote
+                    };
+                    if (paymentMethod === 'invoice') {
+                        paymentDetails.invoiceMessage = invoiceData.message;
+                        let dueDateToUse = invoiceData.dueDate;
+                        if (!dueDateToUse && date) {
+                            const eventDate = new Date(combineDateAndTime(date, time));
+                            if (invoiceData.daysBeforeEvent > 0) {
+                                eventDate.setDate(eventDate.getDate() - invoiceData.daysBeforeEvent);
                             }
-                        } else {
-                            const paymentTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({
-                                    tenant_id: tenantId,
-                                    reservation_id: reservationId,
-                                    payment_method: paymentMethod,
-                                    amount: totalWithDiscount,
-                                    payment_status: 'paid',
-                                    payment_details: {
-                                        note: purchaseNote,
-                                        payment_type: paymentMethod
-                                    },
-                                    reference_number: `${paymentMethod.toUpperCase()}-${Date.now()}`,
-                                    is_split_payment: false,
-                                    created_by: "Back Office",
-                                    created_at: new Date().toISOString(),
-                                    updated_at: new Date().toISOString(),
-                                }),
-                            });
-                            if (!paymentTransactionResponse.ok) {
-                                throw new Error(`Failed to record ${paymentMethod} payment transaction.`);
-                            }
+                            dueDateToUse = eventDate.toISOString().split('T')[0];
                         }
-                    } else if (paymentMethod === 'credit_card') {
 
                         const paymentTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                             method: 'POST',
@@ -931,140 +950,194 @@ const PurchasePage = () => {
                             body: JSON.stringify({
                                 tenant_id: tenantId,
                                 reservation_id: reservationId,
-                                payment_method: 'credit_card',
+                                payment_method: 'invoice',
                                 amount: totalWithDiscount,
                                 payment_status: 'pending',
                                 payment_details: {
                                     note: purchaseNote,
-                                    payment_type: paymentMethod
+                                    invoice_message: invoiceData.message
                                 },
-                                reference_number: `CC-${Date.now()}`,
+                                reference_number: `INV-${Date.now()}`,
                                 is_split_payment: false,
+                                due_date: dueDateToUse ? new Date(dueDateToUse).toISOString() : new Date(combineDateAndTime(date, time)).toISOString(),
+                                invoice_message: invoiceData.message,
+                                days_before_event: invoiceData.daysBeforeEvent,
                                 created_by: "Back Office",
                                 created_at: new Date().toISOString(),
                                 updated_at: new Date().toISOString(),
                             }),
                         });
-                        
+
                         if (!paymentTransactionResponse.ok) {
-                            throw new Error("Failed to create payment transaction for credit card.");
+                            throw new Error("Failed to create invoice.");
                         }
-
-                        const data = await paymentTransactionResponse.json();
-
-                        const transactionId = data.id;
-
-                        const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent-for-transaction`, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({transactionId}),
-                        });
-
-                        if (!setupIntentRes.ok) {
-                            throw new Error("Failed to create SetupIntent.");
-                        }
-
-                        const {clientSecret} = await setupIntentRes.json();
-
-                        const cardElement = elements.getElement(CardElement);
-                        if (!cardElement) {
-                            throw new Error("CardElement is not available.");
-                        }
-
-                        const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
-                            payment_method: {
-                                card: cardElement,
-                                billing_details: {
-                                    name: organizerName || "Guest Organizer",
-                                    email: emailEnabled ? organizerEmail : "",
-                                },
-                            },
-                        });
-
-                        if (paymentMethodResponse.error) {
-                            throw new Error(paymentMethodResponse.error.message);
-                        }
-
-                        const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
-
-                        const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method-for-transaction`, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({paymentMethodId, transactionId}),
-                        });
-
-                        if (!savePMRes.ok) {
-                            throw new Error("Failed to save PaymentMethod.");
-                        }
-
-                        const processPaymentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({transactionId}),
-                        });
-
-                        if (!processPaymentRes.ok) {
-                            throw new Error("Failed to process payment.");
-                        }
-
-                        const processPaymentResult = await processPaymentRes.json();
-                        
-                        if (!processPaymentResult.success) {
-                            throw new Error(`Payment failed with status: ${processPaymentResult.status}`);
-                        }
-
-                        const paymentTransactionRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
+                    } else {
+                        const paymentTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({
                                 tenant_id: tenantId,
                                 reservation_id: reservationId,
-                                payment_method: 'credit_card',
+                                payment_method: paymentMethod,
                                 amount: totalWithDiscount,
                                 payment_status: 'paid',
                                 payment_details: {
-                                    card_number: cardNumber ? `**** **** **** ${cardNumber.slice(-4)}` : "****",
-                                    cardholder_name: organizerName || "Guest Organizer",
-                                    stripe_payment_method_id: paymentMethodId
+                                    note: purchaseNote,
+                                    payment_type: paymentMethod
                                 },
-                                reference_number: `CC-${Date.now()}`,
-                                stripe_payment_id: paymentMethodId,
+                                reference_number: `${paymentMethod.toUpperCase()}-${Date.now()}`,
                                 is_split_payment: false,
                                 created_by: "Back Office",
                                 created_at: new Date().toISOString(),
                                 updated_at: new Date().toISOString(),
                             }),
                         });
-                        
-                        if (!paymentTransactionRes.ok) {
-                            throw new Error("Failed to record credit card payment transaction.");
-                        }
-
-                        if (voucherValid && appliedVoucherCode) {
-                            const redeemResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/redeem`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    code: appliedVoucherCode,
-                                    reservationId,
-                                }),
-                            });
-
-                            if (!redeemResponse.ok) {
-                                throw new Error('Failed to redeem voucher');
-                            }
-                            toast({
-                                title: 'Voucher Redeemed',
-                                description: 'The voucher has been successfully redeemed.',
-                                status: 'success',
-                                duration: 4000,
-                                isClosable: true,
-                            });
-                            setAppliedVoucherCode("");
+                        if (!paymentTransactionResponse.ok) {
+                            throw new Error(`Failed to record ${paymentMethod} payment transaction.`);
                         }
                     }
+                } else if (paymentMethod === 'credit_card') {
+
+                    const paymentTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            tenant_id: tenantId,
+                            reservation_id: reservationId,
+                            payment_method: 'credit_card',
+                            amount: totalWithDiscount,
+                            payment_status: 'pending',
+                            payment_details: {
+                                note: purchaseNote,
+                                payment_type: paymentMethod
+                            },
+                            reference_number: `CC-${Date.now()}`,
+                            is_split_payment: false,
+                            created_by: "Back Office",
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                        }),
+                    });
+                    
+                    if (!paymentTransactionResponse.ok) {
+                        throw new Error("Failed to create payment transaction for credit card.");
+                    }
+
+                    const data = await paymentTransactionResponse.json();
+
+                    const transactionId = data.id;
+
+                    const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent-for-transaction`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({transactionId}),
+                    });
+
+                    if (!setupIntentRes.ok) {
+                        throw new Error("Failed to create SetupIntent.");
+                    }
+
+                    const {clientSecret} = await setupIntentRes.json();
+
+                    const cardElement = elements.getElement(CardElement);
+                    if (!cardElement) {
+                        throw new Error("CardElement is not available.");
+                    }
+
+                    const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
+                        payment_method: {
+                            card: cardElement,
+                            billing_details: {
+                                name: organizerName || "Guest Organizer",
+                                email: emailEnabled ? organizerEmail : "",
+                            },
+                        },
+                    });
+
+                    if (paymentMethodResponse.error) {
+                        throw new Error(paymentMethodResponse.error.message);
+                    }
+
+                    const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
+
+                    const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method-for-transaction`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({paymentMethodId, transactionId}),
+                    });
+
+                    if (!savePMRes.ok) {
+                        throw new Error("Failed to save PaymentMethod.");
+                    }
+
+                    const processPaymentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({transactionId}),
+                    });
+
+                    if (!processPaymentRes.ok) {
+                        throw new Error("Failed to process payment.");
+                    }
+
+                    const processPaymentResult = await processPaymentRes.json();
+                    
+                    if (!processPaymentResult.success) {
+                        throw new Error(`Payment failed with status: ${processPaymentResult.status}`);
+                    }
+
+                    const paymentTransactionRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            tenant_id: tenantId,
+                            reservation_id: reservationId,
+                            payment_method: 'credit_card',
+                            amount: totalWithDiscount,
+                            payment_status: 'paid',
+                            payment_details: {
+                                card_number: cardNumber ? `**** **** **** ${cardNumber.slice(-4)}` : "****",
+                                cardholder_name: organizerName || "Guest Organizer",
+                                stripe_payment_method_id: paymentMethodId
+                            },
+                            reference_number: `CC-${Date.now()}`,
+                            stripe_payment_id: paymentMethodId,
+                            is_split_payment: false,
+                            created_by: "Back Office",
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                        }),
+                    });
+                    
+                    if (!paymentTransactionRes.ok) {
+                        throw new Error("Failed to record credit card payment transaction.");
+                    }
+
+                    if (voucherValid && appliedVoucherCode) {
+                        const redeemResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/redeem`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                code: appliedVoucherCode,
+                                reservationId,
+                            }),
+                        });
+
+                        if (!redeemResponse.ok) {
+                            throw new Error('Failed to redeem voucher');
+                        }
+                        toast({
+                            title: 'Voucher Redeemed',
+                            description: 'The voucher has been successfully redeemed.',
+                            status: 'success',
+                            duration: 4000,
+                            isClosable: true,
+                        });
+                        setAppliedVoucherCode("");
+                    }
+                }
 
                 if (additionalInformationQuestions.length > 0) {
                     await Promise.all(

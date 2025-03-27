@@ -27,6 +27,7 @@ function ToursPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const {addToCart, setNavigationSource, resetCart} = useCart();
     const router = useRouter();
+    const [tourPricing, setTourPricing] = useState({});
 
     const handleNavigateToProduct = (tour) => {
         resetCart();
@@ -48,6 +49,21 @@ function ToursPage() {
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`);
                 const data = await res.json();
                 setTours(data);
+                const pricingData = {};
+                for (const tour of data) {
+                    try {
+                        const pricingRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tour.id}`);
+                        if (pricingRes.ok) {
+                            const pricingInfo = await pricingRes.json();
+                            if (pricingInfo && pricingInfo.length > 0) {
+                                pricingData[tour.id] = pricingInfo[0];
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Failed to fetch pricing for tour ${tour.id}:`, error);
+                    }
+                }
+                setTourPricing(pricingData);
                 setLoading(false);
             } catch (error) {
                 console.error('Failed to fetch tours:', error);
@@ -65,6 +81,13 @@ function ToursPage() {
         const normalizedSearch = searchTerm.toLowerCase().trim();
         return normalizedTourName.includes(normalizedSearch) && tour.isDeleted === false;
     });
+
+    const getTourPrice = (tour) => {
+        if (tourPricing[tour.id]) {
+            return tourPricing[tour.id].basePrice;
+        }
+        return tour.price;
+    };
 
     if (loading) {
         return (
@@ -127,7 +150,7 @@ function ToursPage() {
                                         {tour.name}
                                     </Heading>
                                     <Text color="gray.600">
-                                        {`$${tour.price} / hour`}
+                                        {`$${getTourPrice(tour)} / hour`}
                                     </Text>
                                 </Box>
                             </Flex>

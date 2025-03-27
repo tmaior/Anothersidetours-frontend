@@ -824,23 +824,37 @@ function SchedulesAvailabilityStep({
                 );
             }
 
-            const expandedTimeSlots = schedule.flatMap((slot) =>
-                generateTimeSlots(slot.startTime, slot.startPeriod, slot.endTime, slot.endPeriod)
-            );
+            if (schedule.length > 0) {
+                const scheduleData = schedule.map(scheduleItem => {
+                    const selectedDays = Object.entries(scheduleItem.days)
+                        .filter(([_, isSelected]) => isSelected)
+                        .map(([day]) => day);
+                    
+                    const formattedTimeSlots = scheduleItem.timeSlots.map(slot => {
+                        return slot;
+                    });
+                    
+                    return {
+                        name: scheduleItem.name || "",
+                        days: selectedDays,
+                        timeSlots: formattedTimeSlots
+                    };
+                });
 
-            const scheduleResponse = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/${tourId}`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({timeSlots: expandedTimeSlots})
+                const scheduleResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/${tourId}`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ schedules: scheduleData })
+                    }
+                );
+
+                if (!scheduleResponse.ok) {
+                    throw new Error("Failed to save schedule");
                 }
-            );
-
-            if (!scheduleResponse.ok) {
-                throw new Error("Failed to save schedule");
             }
 
             if (bringItems.length > 0) {

@@ -39,6 +39,7 @@ import axios from 'axios';
 import PaymentWorkflow from "../../../components/PaymentWorkflow";
 import CashPaymentModal from "../../../components/CashPaymentModal";
 import DatePicker from "../../../components/TimePickerArrival";
+import {CiSquarePlus} from "react-icons/ci";
 
 interface AddOn {
     id: string;
@@ -1447,6 +1448,16 @@ const PurchasePage = () => {
                                 <Text>No schedules available</Text>
                             )}
                         </FormControl>
+                        <Button
+                            variant="link"
+                            size="xs"
+                            onClick={() => setTimeslotModalOpen(true)}
+                            color="black"
+                            fontWeight={"bold"}
+                        >
+                            <CiSquarePlus size={"17px"}/>
+                            Add a new time
+                        </Button>
 
                         <Heading size="md" mt={8} mb={4}>Add-ons</Heading>
                         <VStack spacing={4} align="stretch">

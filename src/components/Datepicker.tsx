@@ -371,7 +371,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
             if (Array.isArray(response.data)) {
                 setAvailableSchedules(response.data);
                 const allTimeSlots = response.data.flatMap(schedule => schedule.timeSlots);
-                setAvailableTimes([...new Set(allTimeSlots)]);
+                const uniqueTimeSlots = [...new Set(allTimeSlots)];
+                const sortedTimeSlots = sortTimeSlots(uniqueTimeSlots);
+                setAvailableTimes(sortedTimeSlots);
             } else {
                 throw new Error('Invalid response format');
             }
@@ -418,27 +420,52 @@ const DatePicker: React.FC<DatePickerProps> = ({
         const timeSlotsForDay = applicableSchedules.flatMap(schedule => schedule.timeSlots);
         const dailyBlocked = blockedTimes.filter(bt => bt.date === dayKey);
         
+        let availableTimeSlots = [];
+        
         if (dailyBlocked.length === 0) {
-            setFilteredTimes(timeSlotsForDay);
-            return;
-        }
-
-        const timesFiltered = timeSlotsForDay.filter(timeStr => {
-            const timeInMinutes = parseTimeToMinutes(timeStr);
-            return !dailyBlocked.some(bt => {
-                const start = parseTimeToMinutes(bt.startTime);
-                const end = parseTimeToMinutes(bt.endTime);
-                return timeInMinutes >= start && timeInMinutes <= end;
+            availableTimeSlots = timeSlotsForDay;
+        } else {
+            availableTimeSlots = timeSlotsForDay.filter(timeStr => {
+                const timeInMinutes = parseTimeToMinutes(timeStr);
+                return !dailyBlocked.some(bt => {
+                    const start = parseTimeToMinutes(bt.startTime);
+                    const end = parseTimeToMinutes(bt.endTime);
+                    return timeInMinutes >= start && timeInMinutes <= end;
+                });
             });
-        });
-
-        setFilteredTimes(timesFiltered);
+        }
+        const sortedTimeSlots = sortTimeSlots(availableTimeSlots);
+        setFilteredTimes(sortedTimeSlots);
     }, [selectedDate, blockedTimes, availableSchedules]);
 
     const handleTimeSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const selected = event.target.value;
         setSelectedTime(selected);
         onTimeChange(selected);
+    };
+
+    const sortTimeSlots = (times: string[]): string[] => {
+        return [...times].sort((a, b) => {
+            const [timeA, periodA] = a.split(' ');
+            const [timeB, periodB] = b.split(' ');
+
+            if (periodA === 'AM' && periodB === 'PM') return -1;
+            if (periodA === 'PM' && periodB === 'AM') return 1;
+
+            if (periodA === periodB) {
+                const [hoursA, minutesA] = timeA.split(':').map(Number);
+                const [hoursB, minutesB] = timeB.split(':').map(Number);
+
+                const normalizedHoursA = hoursA === 12 ? 0 : hoursA;
+                const normalizedHoursB = hoursB === 12 ? 0 : hoursB;
+
+                if (normalizedHoursA !== normalizedHoursB) {
+                    return normalizedHoursA - normalizedHoursB;
+                }
+                return minutesA - minutesB;
+            }
+            return 0;
+        });
     };
 
     return (
@@ -455,7 +482,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 onChange={handleTimeSelection}
                 value={selectedTime ?? undefined}
             >
-                {filteredTimes.map((time, index) => {
+                {availableTimes.map((time, index) => {
                     let formattedTime = "";
                     try {
                         if (time.includes(":")) {

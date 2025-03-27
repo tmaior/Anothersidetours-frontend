@@ -481,6 +481,34 @@ const PurchasePage = () => {
         fetchTourData();
     }, [id, cart, addToCart, newCart, navigationSource, toast]);
 
+    const sortTimeSlots = (schedules: { value: string; label: string }[]): { value: string; label: string }[] => {
+        return [...schedules].sort((a, b) => {
+            const timeA = a.label.split(' ')[0] + ' ' + a.label.split(' ')[1];
+            const timeB = b.label.split(' ')[0] + ' ' + b.label.split(' ')[1];
+
+            const periodA = timeA.includes('AM') ? 'AM' : timeA.includes('PM') ? 'PM' : '';
+            const periodB = timeB.includes('AM') ? 'AM' : timeB.includes('PM') ? 'PM' : '';
+
+            if (periodA === 'AM' && periodB === 'PM') return -1;
+            if (periodA === 'PM' && periodB === 'AM') return 1;
+
+            if (periodA === periodB) {
+                const timePartA = timeA.replace(periodA, '').trim();
+                const timePartB = timeB.replace(periodB, '').trim();
+
+                const [hoursA, minutesA] = timePartA.split(':').map(Number);
+                const [hoursB, minutesB] = timePartB.split(':').map(Number);
+                const normalizedHoursA = hoursA === 12 ? 0 : hoursA;
+                const normalizedHoursB = hoursB === 12 ? 0 : hoursB;
+                if (normalizedHoursA !== normalizedHoursB) {
+                    return normalizedHoursA - normalizedHoursB;
+                }
+                return minutesA - minutesB;
+            }
+            return 0;
+        });
+    };
+
     useEffect(() => {
         const fetchSchedules = async () => {
             if (!id) return;
@@ -1526,34 +1554,6 @@ const PurchasePage = () => {
             }
             return updatedAddons;
         });
-    };
-
-    const sortTimeSlots = (schedules: { value: string; label: string }[]): { value: string; label: string }[] => {
-      return [...schedules].sort((a, b) => {
-        const timeA = a.label.split(' ')[0] + ' ' + a.label.split(' ')[1];
-        const timeB = b.label.split(' ')[0] + ' ' + b.label.split(' ')[1];
-
-        const periodA = timeA.includes('AM') ? 'AM' : timeA.includes('PM') ? 'PM' : '';
-        const periodB = timeB.includes('AM') ? 'AM' : timeB.includes('PM') ? 'PM' : '';
-
-        if (periodA === 'AM' && periodB === 'PM') return -1;
-        if (periodA === 'PM' && periodB === 'AM') return 1;
-
-        if (periodA === periodB) {
-          const timePartA = timeA.replace(periodA, '').trim();
-          const timePartB = timeB.replace(periodB, '').trim();
-          
-          const [hoursA, minutesA] = timePartA.split(':').map(Number);
-          const [hoursB, minutesB] = timePartB.split(':').map(Number);
-          const normalizedHoursA = hoursA === 12 ? 0 : hoursA;
-          const normalizedHoursB = hoursB === 12 ? 0 : hoursB;
-          if (normalizedHoursA !== normalizedHoursB) {
-            return normalizedHoursA - normalizedHoursB;
-          }
-          return minutesA - minutesB;
-        }
-        return 0;
-      });
     };
 
     return (

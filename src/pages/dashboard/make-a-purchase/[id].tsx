@@ -40,6 +40,7 @@ import PaymentWorkflow from "../../../components/PaymentWorkflow";
 import CashPaymentModal from "../../../components/CashPaymentModal";
 import DatePicker from "../../../components/TimePickerArrival";
 import {CiSquarePlus} from "react-icons/ci";
+import TimeSlotPicker from "../../../components/TimeSlotPicker";
 
 interface AddOn {
     id: string;
@@ -163,6 +164,8 @@ const PurchasePage = () => {
     });
     const {isOpen: isDatePickerOpen, onOpen: onDatePickerOpen, onClose: onDatePickerClose} = useDisclosure();
 
+    const [isTimeslotModalOpen, setIsTimeslotModalOpen] = useState(false);
+    const [newSelectedTime, setNewSelectedTime] = useState<string>('');
     const getPricesForDatePicker = () => {
         const pricePerGuest = cart.length > 0 ? (cart[selectedCartItemIndex]?.valuePerGuest || cart[selectedCartItemIndex]?.price || 0) : 0;
         return Array(31).fill(pricePerGuest);
@@ -557,33 +560,63 @@ const PurchasePage = () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const grandTotalFinal = totalBase + dynamicAddOnsPrice + totalManualAddOns + gratuityAmount + feeAmount;
     const combineDateAndTime = (dateStr: string, timeStr: string): string => {
-        const [year, month, day] = dateStr.split("-").map(Number);
-
-        const amPmMatch = timeStr.match(/(AM|PM)$/i);
-
-        let hour = 0;
-        let minute = 0;
-
-        if (amPmMatch) {
-            const meridian = amPmMatch[1].toUpperCase();
-            const timeWithoutAmPm = timeStr.replace(/(AM|PM)/i, '').trim();
-            const [hStr, mStr] = timeWithoutAmPm.split(":");
-            hour = parseInt(hStr, 10);
-            minute = parseInt(mStr, 10);
-
-            if (meridian === "PM" && hour < 12) {
-                hour += 12;
-            } else if (meridian === "AM" && hour === 12) {
-                hour = 0;
+        try {
+            const [year, month, day] = dateStr.split("-").map(Number);
+            let hour = 0;
+            let minute = 0;
+            
+            if (!timeStr) {
+                return new Date(Date.UTC(year, month - 1, day, 0, 0)).toISOString();
             }
-        } else {
-            const [hStr, mStr] = timeStr.split(":");
-            hour = parseInt(hStr, 10);
-            minute = parseInt(mStr, 10);
+            
+            const amPmMatch = timeStr.match(/(AM|PM)$/i);
+            
+            if (amPmMatch) {
+                const meridian = amPmMatch[1].toUpperCase();
+                const timeWithoutAmPm = timeStr.replace(/(AM|PM)/i, '').trim();
+                const [hStr, mStr] = timeWithoutAmPm.split(":");
+                
+                if (!hStr || !mStr) {
+                    return new Date(Date.UTC(year, month - 1, day, 0, 0)).toISOString();
+                }
+                
+                hour = parseInt(hStr, 10);
+                minute = parseInt(mStr, 10);
+                
+                if (isNaN(hour) || isNaN(minute)) {
+                    return new Date(Date.UTC(year, month - 1, day, 0, 0)).toISOString();
+                }
+                if (meridian === "PM" && hour < 12) {
+                    hour += 12;
+                } else if (meridian === "AM" && hour === 12) {
+                    hour = 0;
+                }
+            } else {
+                const [hStr, mStr] = timeStr.split(":");
+                
+                if (!hStr || !mStr) {
+                    return new Date(Date.UTC(year, month - 1, day, 0, 0)).toISOString();
+                }
+                
+                hour = parseInt(hStr, 10);
+                minute = parseInt(mStr, 10);
+                
+                if (isNaN(hour) || isNaN(minute)) {
+                    return new Date(Date.UTC(year, month - 1, day, 0, 0)).toISOString();
+                }
+            }
+            hour = Math.min(Math.max(hour, 0), 23);
+            minute = Math.min(Math.max(minute, 0), 59);
+            
+            const finalDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
+            if (isNaN(finalDate.getTime())) {
+                return new Date().toISOString();
+            }
+            return finalDate.toISOString();
+        } catch (error) {
+            console.error("Error combining date and time:", error);
+            return new Date().toISOString();
         }
-
-        const finalDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
-        return finalDate.toISOString();
     };
 
     useEffect(() => {
@@ -1246,6 +1279,57 @@ const PurchasePage = () => {
         return combineDateAndTime(date, time);
     };
 
+    const handleTimeSelect = (selectedTime: string) => {
+        setNewSelectedTime(selectedTime);
+    };
+    const handleAddNewTime = () => {
+        if (newSelectedTime) {
+            const formattedSchedules = [...schedules, {
+                value: convertTimeFormat(newSelectedTime),
+                label: newSelectedTime
+            }];
+            
+            setSchedules(formattedSchedules);
+            setTime(convertTimeFormat(newSelectedTime));
+            setIsTimeslotModalOpen(false);
+            setNewSelectedTime('');
+        }
+    };
+    const convertTimeFormat = (timeString: string) => {
+        if (!timeString) return '';
+        try {
+            const timeParts = timeString.split(' ');
+            if (timeParts.length !== 2) {
+                return timeString;
+            }
+            
+            const [time, period] = timeParts;
+            const [hoursStr, minutesStr] = time.split(':');
+            
+            if (!hoursStr || !minutesStr) {
+                return timeString;
+            }
+            
+            const hours = parseInt(hoursStr, 10);
+            const minutes = parseInt(minutesStr, 10);
+            
+            if (isNaN(hours) || isNaN(minutes)) {
+                return timeString;
+            }
+            
+            let formattedHours = hours;
+            
+            if (period === 'PM' && hours < 12) {
+                formattedHours = hours + 12;
+            } else if (period === 'AM' && hours === 12) {
+                formattedHours = 0;
+            }
+            return `${formattedHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        } catch (error) {
+            console.error("Error converting time format:", error);
+            return timeString;
+        }
+    };
     if (loading) {
         return (
             <DashboardLayout>
@@ -1436,7 +1520,12 @@ const PurchasePage = () => {
                                 <Select
                                     placeholder="Select time"
                                     value={time}
-                                    onChange={(e) => setTime(e.target.value)}
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            setTime(e.target.value);
+                                        }
+                                    }}
+                                    isDisabled={schedules.length === 0}
                                 >
                                     {schedules.map((s, i) => (
                                         <option key={i} value={s.value}>
@@ -1445,13 +1534,19 @@ const PurchasePage = () => {
                                     ))}
                                 </Select>
                             ) : (
-                                <Text>No schedules available</Text>
+                                <Input 
+                                    value="No times available" 
+                                    readOnly 
+                                    disabled 
+                                    bg="gray.100"
+                                    _hover={{ cursor: "not-allowed" }}
+                                />
                             )}
                         </FormControl>
                         <Button
                             variant="link"
                             size="xs"
-                            onClick={() => setTimeslotModalOpen(true)}
+                            onClick={() => setIsTimeslotModalOpen(true)}
                             color="black"
                             fontWeight={"bold"}
                         >
@@ -1929,6 +2024,31 @@ const PurchasePage = () => {
                             onDateSelect={handleDateSelect}
                         />
                     </ModalBody>
+                </ModalContent>
+            </Modal>
+            <Modal isOpen={isTimeslotModalOpen} onClose={() => setIsTimeslotModalOpen(false)} size="md">
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Select a Time</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <TimeSlotPicker onTimeSelect={handleTimeSelect} />
+                        {newSelectedTime && (
+                            <Text mt={4} fontWeight="medium">Selected time: {newSelectedTime}</Text>
+                        )}
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button variant="outline" mr={3} onClick={() => setIsTimeslotModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button 
+                            colorScheme="blue" 
+                            onClick={handleAddNewTime}
+                            isDisabled={!newSelectedTime}
+                        >
+                            Add Time
+                        </Button>
+                    </ModalFooter>
                 </ModalContent>
             </Modal>
         </DashboardLayout>

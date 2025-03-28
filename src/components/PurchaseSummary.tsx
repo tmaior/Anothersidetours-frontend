@@ -52,7 +52,7 @@ interface PurchaseSummaryProps {
     quantity: number;
     combinedAddons: Addon[];
     isCustomLineItemsEnabled: boolean;
-    customLineItems: LineItem[];
+    customLineItems: {[tourId: string]: any[]};
     voucherDiscount: number;
     totalWithDiscount: number;
     items: { type: string; amount: number; quantity: number; name: string }[];
@@ -131,13 +131,14 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                 addonTotal = combinedAddons.reduce((sum, addon) => 
                     sum + (addon.price * (addon.quantity || 1)), 0);
             }
-            const customItemsTotal = isCustomLineItemsEnabled 
-                ? customLineItems.reduce((sum, item) => {
+            let customItemsTotal = 0;
+            if (isCustomLineItemsEnabled && customLineItems[tour.id]) {
+                customItemsTotal = customLineItems[tour.id].reduce((sum, item) => {
                     const itemAmount = item.amount * item.quantity;
                     return item.type === "Discount" ? sum - itemAmount : sum + itemAmount;
-                  }, 0)
-                : 0;
-                
+                }, 0);
+            }
+            
             return total + itemTotal + addonTotal + customItemsTotal;
         }, 0);
     };
@@ -250,9 +251,9 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                                     )}
                                 </>
                             )}
-                            {isCustomLineItemsEnabled && customLineItems.length > 0 && (
+                            {isCustomLineItemsEnabled && customLineItems[tour.id] && customLineItems[tour.id].length > 0 && (
                                 <Box>
-                                    {customLineItems.map((item, itemIndex) => (
+                                    {customLineItems[tour.id].map((item, itemIndex) => (
                                         <HStack key={`${itemIndex}-${index}`} justify="space-between">
                                             <Text>
                                                 {item.name || "Unnamed"} ({item.type === "Discount" ? "-" : ""}${item.amount} × {item.quantity})

@@ -145,7 +145,7 @@ const PurchasePage = () => {
     const [purchaseTags, setPurchaseTags] = useState("");
     const [purchaseNote, setPurchaseNote] = useState("");
     const [isCustomLineItemsEnabled, setIsCustomLineItemsEnabled] = useState(false);
-    const [customLineItems, setCustomLineItems] = useState([]);
+    const [customLineItems, setCustomLineItems] = useState<{[tourId: string]: any[]}>({});
     const [pickUpAddOn,] = useState(0);
     const [privateTourAddOn,] = useState(0);
     const toast = useToast();
@@ -436,8 +436,12 @@ const PurchasePage = () => {
     };
 
     const handleSaveLineItems = () => {
-        if (isCustomLineItemsEnabled) {
-            setCustomLineItems([...items]);
+        if (isCustomLineItemsEnabled && selectedCartItemIndex >= 0 && selectedCartItemIndex < cart.length) {
+            const currentTourId = cart[selectedCartItemIndex].id;
+            setCustomLineItems(prev => ({
+                ...prev,
+                [currentTourId]: [...items]
+            }));
         }
         setIsLineItemModalOpen(false);
     };
@@ -877,6 +881,7 @@ const PurchasePage = () => {
                     createdBy: "Back Office",
                     purchaseTags,
                     purchaseNote,
+                    customLineItems: customLineItems[cartItem.id] || []
                 };
             });
 
@@ -915,10 +920,10 @@ const PurchasePage = () => {
                     }
                 }
 
-                if (customLineItems.length > 0) {
-                    const customItemsPayload = customLineItems.map(item => ({
+                if (isCustomLineItemsEnabled && customLineItems[reservation.tourId] && customLineItems[reservation.tourId].length > 0) {
+                    const customItemsPayload = customLineItems[reservation.tourId].map(item => ({
                         tenantId: tenantId,
-                        tourId: id,
+                        tourId: reservation.tourId,
                         label: item.name,
                         description: item.type,
                         amount: item.amount,
@@ -1633,6 +1638,27 @@ const PurchasePage = () => {
         });
     };
 
+    const handleOpenLineItemModal = () => {
+        if (selectedCartItemIndex >= 0 && selectedCartItemIndex < cart.length) {
+            const currentTourId = cart[selectedCartItemIndex].id;
+            if (customLineItems[currentTourId]) {
+                setItems(customLineItems[currentTourId]);
+            } else {
+                setItems([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
+            }
+        }
+        setIsLineItemModalOpen(true);
+    };
+
+    const calculateCustomLineItemsTotal = (tourId: string) => {
+        if (!isCustomLineItemsEnabled || !customLineItems[tourId]) return 0;
+        
+        return customLineItems[tourId].reduce((acc, item) => {
+            const totalItem = item.amount * item.quantity;
+            return item.type === "Discount" ? acc - totalItem : acc + totalItem;
+        }, 0);
+    };
+
     return (
         <DashboardLayout>
             <Box p={8}>
@@ -1804,7 +1830,7 @@ const PurchasePage = () => {
                         </FormControl>
 
                         {isCustomLineItemsEnabled && (
-                            <Button onClick={() => setIsLineItemModalOpen(true)}>+ Line Item</Button>
+                            <Button onClick={handleOpenLineItemModal}>+ Line Item</Button>
                         )}
 
                         {additionalInformationQuestions.length > 0 && (
@@ -2145,10 +2171,7 @@ const PurchasePage = () => {
                                     isDisabled={submitting || !areAllFieldsValid()}
                                 >
                                     Pay US${(totalWithDiscount +
-                                    items.reduce((acc, item) => {
-                                        const totalItem = item.amount * item.quantity;
-                                        return item.type === "Discount" ? acc - totalItem : acc + totalItem;
-                                    }, 0)
+                                    calculateCustomLineItemsTotal(cart[selectedCartItemIndex].id)
                                 ).toFixed(2)}
                                 </Button>
                             </HStack>
@@ -2187,10 +2210,7 @@ const PurchasePage = () => {
                 isOpen={isCashModalOpen}
                 onClose={() => setIsCashModalOpen(false)}
                 totalAmount={totalWithDiscount +
-                    items.reduce((acc, item) => {
-                        const totalItem = item.amount * item.quantity;
-                        return item.type === "Discount" ? acc - totalItem : acc + totalItem;
-                    }, 0)}
+                    calculateCustomLineItemsTotal(cart[selectedCartItemIndex].id)}
                 onComplete={handleCashPaymentComplete}
             />
             <Modal isOpen={isDatePickerOpen} onClose={onDatePickerClose} size="xl">

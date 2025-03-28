@@ -2358,21 +2358,21 @@ const PurchasePage = () => {
                     </ModalFooter>
                 </ModalContent>
             </Modal>
-            {tierPricing.length > 0 && (
-                <FormControl mb={4}>
-                    <FormLabel>Demographic</FormLabel>
-                    <Select 
-                        value={selectedDemographic} 
-                        onChange={(e) => setSelectedDemographic(e.target.value)}
-                    >
-                        {tierPricing.map(tp => (
-                            <option key={tp.demographicId} value={tp.demographicId}>
-                                {tp.demographic?.name || 'Unknown Demographic'}
-                            </option>
-                        ))}
-                    </Select>
-                </FormControl>
-            )}
+            {/*{tierPricing.length > 0 && (*/}
+            {/*    <FormControl mb={4}>*/}
+            {/*        <FormLabel>Demographic</FormLabel>*/}
+            {/*        <Select */}
+            {/*            value={selectedDemographic} */}
+            {/*            onChange={(e) => setSelectedDemographic(e.target.value)}*/}
+            {/*        >*/}
+            {/*            {tierPricing.map(tp => (*/}
+            {/*                <option key={tp.demographicId} value={tp.demographicId}>*/}
+            {/*                    {tp.demographic?.name || 'Unknown Demographic'}*/}
+            {/*                </option>*/}
+            {/*            ))}*/}
+            {/*        </Select>*/}
+            {/*    </FormControl>*/}
+            {/*)}*/}
         </DashboardLayout>
     )
 }

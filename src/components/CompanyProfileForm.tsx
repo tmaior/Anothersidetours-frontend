@@ -214,6 +214,10 @@ export default function CompanyProfileForm() {
                     mb={2}
                     width="230px"
                     height="100px"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    overflow="hidden"
                   >
                     {previewUrl ? (
                       <Image 
@@ -221,7 +225,10 @@ export default function CompanyProfileForm() {
                         alt="Company logo" 
                         maxHeight="90px" 
                         maxWidth="220px" 
-                        objectFit="contain" 
+                        objectFit="contain"
+                        width="auto"
+                        height="100%"
+                        margin="auto"
                       />
                     ) : (
                       <Box 

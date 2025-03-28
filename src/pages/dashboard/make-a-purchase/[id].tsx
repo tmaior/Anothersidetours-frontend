@@ -1093,10 +1093,8 @@ const PurchasePage = () => {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
-                            tenant_id: tenantId,
-                            reservation_id: reservationId,
+                            amount: finalCartTotal,
                             payment_method: 'cash',
-                            amount: totalWithDiscount,
                             payment_status: 'paid',
                             payment_details: {
                                 cash_received: cashAmountReceived,
@@ -1107,6 +1105,16 @@ const PurchasePage = () => {
                             created_by: "Back Office",
                             created_at: new Date().toISOString(),
                             updated_at: new Date().toISOString(),
+                            tenant: {
+                                connect: {
+                                    id: tenantId
+                                }
+                            },
+                            reservation: {
+                                connect: {
+                                    id: reservationId
+                                }
+                            }
                         }),
                     });
 
@@ -1132,8 +1140,8 @@ const PurchasePage = () => {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({
-                                payment_method: 'invoice',
                                 amount: finalCartTotal, 
+                                payment_method: 'invoice',
                                 payment_status: 'pending',
                                 payment_details: {
                                     note: purchaseNote,
@@ -1168,10 +1176,8 @@ const PurchasePage = () => {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({
-                                tenant_id: tenantId,
-                                reservation_id: reservationId,
+                                amount: finalCartTotal,
                                 payment_method: paymentMethod,
-                                amount: totalWithDiscount,
                                 payment_status: 'paid',
                                 payment_details: {
                                     note: purchaseNote,
@@ -1182,6 +1188,16 @@ const PurchasePage = () => {
                                 created_by: "Back Office",
                                 created_at: new Date().toISOString(),
                                 updated_at: new Date().toISOString(),
+                                tenant: {
+                                    connect: {
+                                        id: tenantId
+                                    }
+                                },
+                                reservation: {
+                                    connect: {
+                                        id: reservationId
+                                    }
+                                }
                             }),
                         });
                         if (!paymentTransactionResponse.ok) {
@@ -1194,10 +1210,8 @@ const PurchasePage = () => {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
-                            tenant_id: tenantId,
-                            reservation_id: reservationId,
+                            amount: finalCartTotal,
                             payment_method: 'credit_card',
-                            amount: totalWithDiscount,
                             payment_status: 'pending',
                             payment_details: {
                                 note: purchaseNote,
@@ -1208,6 +1222,16 @@ const PurchasePage = () => {
                             created_by: "Back Office",
                             created_at: new Date().toISOString(),
                             updated_at: new Date().toISOString(),
+                            tenant: {
+                                connect: {
+                                    id: tenantId
+                                }
+                            },
+                            reservation: {
+                                connect: {
+                                    id: reservationId
+                                }
+                            }
                         }),
                     });
                     
@@ -1282,10 +1306,8 @@ const PurchasePage = () => {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
-                            tenant_id: tenantId,
-                            reservation_id: reservationId,
+                            amount: finalCartTotal,
                             payment_method: 'credit_card',
-                            amount: totalWithDiscount,
                             payment_status: 'paid',
                             payment_details: {
                                 card_number: cardNumber ? `**** **** **** ${cardNumber.slice(-4)}` : "****",
@@ -1298,6 +1320,16 @@ const PurchasePage = () => {
                             created_by: "Back Office",
                             created_at: new Date().toISOString(),
                             updated_at: new Date().toISOString(),
+                            tenant: {
+                                connect: {
+                                    id: tenantId
+                                }
+                            },
+                            reservation: {
+                                connect: {
+                                    id: reservationId
+                                }
+                            }
                         }),
                     });
                     

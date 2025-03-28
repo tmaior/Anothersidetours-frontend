@@ -120,7 +120,7 @@ const PurchasePage = () => {
     const [loading, setLoading] = useState(true);
     const [, setLoadingAddons] = useState(true);
 
-    const [schedules, setSchedules] = useState<{ value: string; label: string }[]>([]);
+    const [schedulesMap, setSchedulesMap] = useState<{ [key: string]: { value: string; label: string }[] }>({});
     const [loadingSchedules, setLoadingSchedules] = useState(true);
     const [formDataMap, setFormDataMap] = useState<{ [key: string]: FormData }>({});
     const [selectedCartItemIndex, setSelectedCartItemIndex] = useState<number>(0);
@@ -335,6 +335,9 @@ const PurchasePage = () => {
             setPurchaseTags(initialFormData.purchaseTags);
             setPurchaseNote(initialFormData.purchaseNote);
             fetchAddOnsForTour(cartItem.id);
+            if (!schedulesMap[cartItem.id]) {
+                fetchSchedules(cartItem.id);
+            }
             return;
         }
         setQuantity(formData.quantity);
@@ -350,6 +353,9 @@ const PurchasePage = () => {
         setPurchaseTags(formData.purchaseTags);
         setPurchaseNote(formData.purchaseNote);
         fetchAddOnsForTour(cartItem.id);
+        if (!schedulesMap[cartItem.id]) {
+            fetchSchedules(cartItem.id);
+        }
     };
     useEffect(() => {
         if (cart.length === 0) return;
@@ -536,11 +542,12 @@ const PurchasePage = () => {
     };
 
     useEffect(() => {
-        const fetchSchedules = async () => {
-            if (!id) return;
+        const fetchSchedules = async (tourId: string) => {
+            if (!tourId) return;
             try {
+                setLoadingSchedules(true);
                 const res = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${id}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${tourId}`
                 );
                 const data = await res.json();
 
@@ -565,16 +572,81 @@ const PurchasePage = () => {
                     };
                 });
                 const sortedSchedules = sortTimeSlots(formattedSchedules);
-                setSchedules(sortedSchedules);
+                setSchedulesMap(prev => ({
+                    ...prev,
+                    [tourId]: sortedSchedules
+                }));
+                
                 setLoadingSchedules(false);
             } catch (error) {
-                console.error('Failed to fetch schedules:', error);
+                console.error(`Failed to fetch schedules for tour ${tourId}:`, error);
+                setSchedulesMap(prev => ({
+                    ...prev,
+                    [tourId]: []
+                }));
                 setLoadingSchedules(false);
             }
         };
-
-        fetchSchedules();
+        if (id && typeof id === 'string') {
+            fetchSchedules(id);
+        }
     }, [id]);
+    useEffect(() => {
+        const fetchAllSchedules = async () => {
+            if (cart.length === 0) return;
+            
+            const promises = cart.map(async (item) => {
+                if (!schedulesMap[item.id]) {
+                    await fetchSchedules(item.id);
+                }
+            });
+            await Promise.all(promises);
+        };
+        fetchAllSchedules();
+    }, [cart, schedulesMap]);
+    const fetchSchedules = async (tourId: string) => {
+        if (!tourId) return;
+        try {
+            const res = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${tourId}`
+            );
+            const data = await res.json();
+
+            const formattedSchedules = data.map((timeStr: string) => {
+                const testDate = `2024-12-20 ${timeStr}`;
+                const dateObj = new Date(testDate);
+
+                if (isNaN(dateObj.getTime())) {
+                    return {
+                        value: timeStr,
+                        label: timeStr,
+                    };
+                }
+                return {
+                    value: timeStr,
+                    label: dateObj.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true,
+                    }),
+                };
+            });
+            const sortedSchedules = sortTimeSlots(formattedSchedules);
+            setSchedulesMap(prev => ({
+                ...prev,
+                [tourId]: sortedSchedules
+            }));
+            
+            return sortedSchedules;
+        } catch (error) {
+            console.error(`Failed to fetch schedules for tour ${tourId}:`, error);
+            setSchedulesMap(prev => ({
+                ...prev,
+                [tourId]: []
+            }));
+            return [];
+        }
+    };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleInfoChange = (index: number, newInfo: string) => {
@@ -1466,14 +1538,19 @@ const PurchasePage = () => {
         setNewSelectedTime(selectedTime);
     };
     const handleAddNewTime = () => {
-        if (newSelectedTime) {
-            const formattedSchedules = [...schedules, {
+        if (newSelectedTime && selectedCartItemIndex >= 0 && selectedCartItemIndex < cart.length) {
+            const currentTourId = cart[selectedCartItemIndex].id;
+            const currentSchedules = schedulesMap[currentTourId] || [];
+            const formattedSchedules = [...currentSchedules, {
                 value: convertTimeFormat(newSelectedTime),
                 label: newSelectedTime
             }];
 
             const sortedSchedules = sortTimeSlots(formattedSchedules);
-            setSchedules(sortedSchedules);
+            setSchedulesMap(prev => ({
+                ...prev,
+                [currentTourId]: sortedSchedules
+            }));
             setTime(convertTimeFormat(newSelectedTime));
             setIsTimeslotModalOpen(false);
             setNewSelectedTime('');
@@ -1753,7 +1830,7 @@ const PurchasePage = () => {
                             <FormLabel>Time</FormLabel>
                             {loadingSchedules ? (
                                 <Spinner size="sm"/>
-                            ) : schedules.length > 0 ? (
+                            ) : cart.length > 0 && schedulesMap[cart[selectedCartItemIndex]?.id]?.length > 0 ? (
                                 <Select
                                     placeholder="Select time"
                                     value={time}
@@ -1762,9 +1839,9 @@ const PurchasePage = () => {
                                             setTime(e.target.value);
                                         }
                                     }}
-                                    isDisabled={schedules.length === 0}
+                                    isDisabled={!schedulesMap[cart[selectedCartItemIndex]?.id] || schedulesMap[cart[selectedCartItemIndex]?.id].length === 0}
                                 >
-                                    {schedules.map((s, i) => (
+                                    {(schedulesMap[cart[selectedCartItemIndex]?.id] || []).map((s, i) => (
                                         <option key={i} value={s.value}>
                                             {s.label}
                                         </option>

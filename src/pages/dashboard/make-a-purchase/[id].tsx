@@ -359,7 +359,7 @@ const PurchasePage = () => {
                 hasNewItems = true;
                 const initialFormData: FormData = {
                     quantity: 1,
-                    date: '2024-12-20',
+                    date: new Date().toISOString().split('T')[0],
                     time: '08:00',
                     organizerName: "",
                     emailEnabled: true,
@@ -379,21 +379,18 @@ const PurchasePage = () => {
                     ...prev,
                     [item.id]: initialFormData
                 }));
+                fetchAddOnsForTour(item.id);
             }
         });
         if (hasNewItems) {
             const newItemIndex = cart.findIndex(item => !formDataMap[item.id]);
             if (newItemIndex >= 0) {
                 setSelectedCartItemIndex(newItemIndex);
-                const newItem = cart[newItemIndex];
-                if (newItem) {
-                    fetchAddOnsForTour(newItem.id);
-                }
             }
         } else if (selectedCartItemIndex >= cart.length && cart.length > 0) {
             setSelectedCartItemIndex(0);
         }
-    }, [selectedCartItemIndex, formDataMap, fetchAddOnsForTour, cart]);
+    }, [cart, formDataMap, fetchAddOnsForTour]);
     useEffect(() => {
         if (cart.length > 0) {
             if (cart.length > 0 && selectedCartItemIndex < cart.length) {
@@ -586,56 +583,61 @@ const PurchasePage = () => {
         if (!tierPricing || tierPricing.length === 0) {
             return cart.length > 0 ? (cart.find(item => item.id === tourId)?.price || 0) : 0;
         }
-
-        const pricingForTour = tierPricing.find(tp => 
-            tp.tourId === tourId && 
-            (selectedDemographic ? tp.demographicId === selectedDemographic : true)
-        );
-
-        if (!pricingForTour) {
+        const pricingForTour = tierPricing.filter(tp => tp.tourId === tourId);
+        
+        if (!pricingForTour || pricingForTour.length === 0) {
             return cart.length > 0 ? (cart.find(item => item.id === tourId)?.price || 0) : 0;
         }
-
-        if (pricingForTour.pricingType === 'flat') {
-            return pricingForTour.basePrice;
+        const selectedPricing = selectedDemographic 
+            ? pricingForTour.find(tp => tp.demographicId === selectedDemographic)
+            : pricingForTour[0];
+        
+        if (!selectedPricing) {
+            return cart.length > 0 ? (cart.find(item => item.id === tourId)?.price || 0) : 0;
         }
-
-        if (pricingForTour.tierEntries && pricingForTour.tierEntries.length > 0) {
-            const sortedTiers = [...pricingForTour.tierEntries].sort((a, b) => b.quantity - a.quantity);
+        if (selectedPricing.pricingType === 'flat') {
+            return selectedPricing.basePrice;
+        }
+        if (selectedPricing.tierEntries && selectedPricing.tierEntries.length > 0) {
+            const sortedTiers = [...selectedPricing.tierEntries].sort((a, b) => b.quantity - a.quantity);
+            
             for (const tier of sortedTiers) {
                 if (quantity >= tier.quantity) {
                     return tier.price;
                 }
             }
         }
-        return pricingForTour.basePrice;
+
+        return selectedPricing.basePrice;
     }, [tierPricing, selectedDemographic, cart]);
     useEffect(() => {
-        const fetchTierPricing = async () => {
-            if (!id) return;
-            
-            try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${id}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setTierPricing(data);
-                    if (data.length > 0 && !selectedDemographic) {
-                        setSelectedDemographic(data[0].demographicId);
+        const fetchTierPricingForAllItems = async () => {
+            if (cart.length === 0) return;
+            const promises = cart.map(async (item) => {
+                try {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${item.id}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setTierPricing(prev => {
+                            const filtered = prev.filter(tp => tp.tourId !== item.id);
+                            return [...filtered, ...data];
+                        });
                     }
+                } catch (error) {
+                    console.error(`Error fetching tier pricing for tour ${item.id}:`, error);
                 }
-            } catch (error) {
-                console.error('Error fetching tier pricing:', error);
-            }
+            });
+            await Promise.all(promises);
         };
-        fetchTierPricing();
-    }, [id, selectedDemographic]);
+        
+        fetchTierPricingForAllItems();
+    }, [cart]);
     const basePrice = useMemo(() => {
-        if (cart.length === 0) return 0;
+        if (cart.length === 0 || selectedCartItemIndex >= cart.length) return 0;
         const currentTourId = cart[selectedCartItemIndex]?.id;
         return getPriceForQuantity(quantity, currentTourId);
     }, [cart, selectedCartItemIndex, quantity, getPriceForQuantity]);
     const totalBase = quantity * basePrice;
-
     useEffect(() => {
         const total = quantity * basePrice;
         const discountedTotal = total - voucherDiscount;

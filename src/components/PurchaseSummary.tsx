@@ -103,7 +103,7 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
         return date.toLocaleDateString('en-US', options);
     };
     const calculateCartTotal = () => {
-        return cart.reduce((total, tour) => {
+        return cart.reduce((total, tour, index) => {
             const tourFormData = formDataMap[tour.id];
             const itemQuantity = tourFormData ? tourFormData.quantity : quantity;
             
@@ -159,6 +159,7 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                         ? getPriceForQuantity(itemQuantity, tour.id) 
                         : tour.price;
                     
+                    const itemTotal = itemPrice * itemQuantity;
                     return (
                         <Box 
                             key={`${tour.id}-${index}`} 
@@ -207,7 +208,7 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                                     Guests (${itemPrice.toFixed(2)} × {itemQuantity})
                                 </Text>
                                 <Text>
-                                    ${(itemQuantity * itemPrice).toFixed(2)}
+                                    ${itemTotal.toFixed(2)}
                                 </Text>
                             </HStack>
                             {tourFormData && tourFormData.selectedAddOns && tourFormData.selectedAddOns.length > 0 ? (

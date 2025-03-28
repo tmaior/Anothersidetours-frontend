@@ -2401,8 +2401,7 @@ const PurchasePage = () => {
             <CashPaymentModal
                 isOpen={isCashModalOpen}
                 onClose={() => setIsCashModalOpen(false)}
-                totalAmount={totalWithDiscount +
-                    calculateCustomLineItemsTotal(cart[selectedCartItemIndex].id)}
+                totalAmount={finalCartTotal}
                 onComplete={handleCashPaymentComplete}
             />
             <Modal isOpen={isDatePickerOpen} onClose={onDatePickerClose} size="xl">

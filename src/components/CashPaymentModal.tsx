@@ -51,7 +51,10 @@ const CashPaymentModal: React.FC<CashPaymentModalProps> = ({
     if (numericAmount < totalAmount) {
       setIsValid(false);
       setButtonLabel(`Minimum US$ ${totalAmount.toFixed(2)}`);
-    } else if (numericAmount >= totalAmount) {
+    } else if (numericAmount > totalAmount) {
+      setIsValid(true);
+      setButtonLabel('Done');
+    } else if (numericAmount === totalAmount) {
       setIsValid(true);
       setButtonLabel('Done');
     } else {

@@ -923,6 +923,7 @@ const PurchasePage = () => {
 
             const cartPayload = cart.map((cartItem) => {
                 const formData = formDataMap[cartItem.id];
+                const itemTotalPrice = calculateItemTotalPrice(cartItem, formData);
                 return {
                     tourId: cartItem.id,
                     reservationData: {
@@ -931,6 +932,7 @@ const PurchasePage = () => {
                         guestQuantity: formData.quantity,
                         purchaseTags: formData.purchaseTags,
                         purchaseNote: formData.purchaseNote,
+                        total_price: parseFloat(itemTotalPrice.toFixed(2)),
                     },
                     addons: formData.selectedAddOns.map(addonItem => {
                         if (addonItem.checked) {
@@ -948,7 +950,7 @@ const PurchasePage = () => {
                         }
                         return null;
                     }).filter(Boolean),
-                    total_price: totalWithDiscount,
+                    total_price: parseFloat(itemTotalPrice.toFixed(2)),
                     guestQuantity: quantity,
                     createdBy: "Back Office",
                     purchaseTags,
@@ -1767,6 +1769,44 @@ const PurchasePage = () => {
         }, 0);
     };
     const finalCartTotal = Math.max(calculateTotalCartValue() - voucherDiscount, 0);
+
+    const calculateItemTotalPrice = (cartItem, formData) => {
+        if (!cartItem || !formData) return 0;
+
+        const itemPrice = getPriceForQuantity(formData.quantity, cartItem.id);
+        const baseTotal = itemPrice * formData.quantity;
+
+        const itemAddonsTotal = formData.selectedAddOns.reduce((sum, addon) => {
+            const addonInfo = addonsMap[cartItem.id]?.find(a => a.id === addon.addOnId);
+            if (!addonInfo) return sum;
+            
+            if (addonInfo.type === 'CHECKBOX' && addon.checked) {
+                return sum + addonInfo.price;
+            } else if (addonInfo.type === 'SELECT' && addon.quantity > 0) {
+                return sum + (addonInfo.price * addon.quantity);
+            }
+            return sum;
+        }, 0);
+
+        const customItemsTotal = isCustomLineItemsEnabled && customLineItems[cartItem.id] 
+            ? customLineItems[cartItem.id].reduce((sum, item) => {
+                const itemAmount = item.amount * item.quantity;
+                return item.type === "Discount" ? sum - itemAmount : sum + itemAmount;
+            }, 0)
+            : 0;
+
+        const itemTotal = baseTotal + itemAddonsTotal + customItemsTotal;
+
+        let itemDiscount = 0;
+        if (voucherDiscount > 0) {
+            const cartTotal = calculateTotalCartValue();
+            if (cartTotal > 0) {
+                const proportion = itemTotal / cartTotal;
+                itemDiscount = voucherDiscount * proportion;
+            }
+        }
+        return Math.max(itemTotal - itemDiscount, 0);
+    }
 
     return (
         <DashboardLayout>

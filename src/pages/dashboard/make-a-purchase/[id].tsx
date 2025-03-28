@@ -1659,6 +1659,38 @@ const PurchasePage = () => {
         }, 0);
     };
 
+    const calculateTotalCartValue = () => {
+        if (cart.length === 0) return 0;
+        
+        return cart.reduce((total, item,) => {
+            const itemFormData = formDataMap[item.id] || {
+                quantity: 1,
+                selectedAddOns: []
+            };
+            const itemQuantity = itemFormData.quantity;
+            const itemPrice = getPriceForQuantity(itemQuantity, item.id);
+            const baseTotal = itemPrice * itemQuantity;
+
+            const itemAddonTotal = itemFormData.selectedAddOns.reduce((addonSum, addon) => {
+                const addonInfo = addonsMap[item.id]?.find(a => a.id === addon.addOnId) || 
+                                  addons.find(a => a.id === addon.addOnId);
+                
+                if (!addonInfo) return addonSum;
+                
+                if (addonInfo.type === 'CHECKBOX' && addon.checked) {
+                    return addonSum + addonInfo.price;
+                } else if (addonInfo.type === 'SELECT' && addon.quantity > 0) {
+                    return addonSum + (addonInfo.price * addon.quantity);
+                }
+                
+                return addonSum;
+            }, 0);
+            const customLineItemsTotal = calculateCustomLineItemsTotal(item.id);
+            return total + baseTotal + itemAddonTotal + customLineItemsTotal;
+        }, 0);
+    };
+    const finalCartTotal = Math.max(calculateTotalCartValue() - voucherDiscount, 0);
+
     return (
         <DashboardLayout>
             <Box p={8}>
@@ -2170,9 +2202,7 @@ const PurchasePage = () => {
                                     isLoading={submitting}
                                     isDisabled={submitting || !areAllFieldsValid()}
                                 >
-                                    Pay US${(totalWithDiscount +
-                                    calculateCustomLineItemsTotal(cart[selectedCartItemIndex].id)
-                                ).toFixed(2)}
+                                    Pay US${finalCartTotal.toFixed(2)}
                                 </Button>
                             </HStack>
                         </HStack>

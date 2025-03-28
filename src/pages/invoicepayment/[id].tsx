@@ -9,7 +9,7 @@ import ModalPageLayout from "../../components/ModalPageLayout";
 export default function InvoicePaymentPage() {
   const router = useRouter();
   const { id } = router.query;
-  const { setTourId, setImageUrl, setReservationId, setName, setEmail, setPhone, setGuestQuantity, setSelectedDate, setSelectedTime } = useGuest();
+  const { setTourId, setImageUrl, setReservationId, setName, setEmail, setPhone, setGuestQuantity, setSelectedDate, setSelectedTime, setPrice } = useGuest();
 
   const {
     isOpen: isBookingOpen,
@@ -24,62 +24,114 @@ export default function InvoicePaymentPage() {
 
   const [reservation, setReservation] = useState(null);
   const [tourData, setTourData] = useState(null);
-  const [loadingStatus, setLoadingStatus] = useState("Loading reservation...");
+  const [finalPrice, setFinalPrice] = useState(0);
+  const [loadingStatus,] = useState("Loading reservation...");
   const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
-    if (router.isReady && id) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${id}`)
-        .then(async (res) => {
-          setLoadingStatus(`${res.status}`);
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.message || `Error: ${res.status}`);
-          }
-          return res.json();
-        })
-        .then((data) => {
-          setReservation(data);
-          setReservationId(data.id);
-          if (data.user) {
-            setName(data.user.name);
-            setEmail(data.user.email);
-            setPhone(data.user.phone);
-          }
+    if (!router.isReady || !id) return;
+    
+    const fetchData = async () => {
+      try {
+        const reservationRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${id}`);
+        if (!reservationRes.ok) {
+          throw new Error(`Error fetching reservation: ${reservationRes.status}`);
+        }
+        
+        const reservationData = await reservationRes.json();
+        const guestQuantity = reservationData.guestQuantity || 1;
+        setReservation(reservationData);
+        setReservationId(reservationData.id);
+        setGuestQuantity(guestQuantity);
+        
+        if (reservationData.user) {
+          setName(reservationData.user.name || "");
+          setEmail(reservationData.user.email || "");
+          setPhone(reservationData.user.phone || "");
+        }
 
-          setGuestQuantity(data.guestQuantity);
+        if (reservationData.reservation_date) {
+          const reservationDate = new Date(reservationData.reservation_date);
+          setSelectedDate(reservationDate);
+          const hours = reservationDate.getUTCHours();
+          const minutes = reservationDate.getUTCMinutes();
+          const period = hours >= 12 ? "PM" : "AM";
+          const hours12 = hours % 12 || 12;
+          const timeString = `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+          setSelectedTime(timeString);
+        }
+        const tourRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${reservationData.tourId}`);
+        if (!tourRes.ok) {
+          throw new Error(`Error fetching tour: ${tourRes.status}`);
+        }
+        
+        const tourData = await tourRes.json();
+        setTourData(tourData);
+        setTourId(tourData.id);
+        setImageUrl(tourData.imageUrl || "");
+        const tierPricingRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourData.id}`);
+        if (!tierPricingRes.ok) {
+          throw new Error(`Error fetching tier pricing: ${tierPricingRes.status}`);
+        }
+        
+        const tierPricingData = await tierPricingRes.json();
+        console.log("Tier pricing data:", JSON.stringify(tierPricingData, null, 2));
 
-          if (data.reservation_date) {
-            const reservationDate = new Date(data.reservation_date);
-            setSelectedDate(reservationDate);
-            const hours = reservationDate.getUTCHours();
-            const minutes = reservationDate.getUTCMinutes();
-            const period = hours >= 12 ? "PM" : "AM";
-            const hours12 = hours % 12 || 12;
-            const timeString = `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
-            setSelectedTime(timeString);
+        let pricePerGuest = 0;
+        
+        if (Array.isArray(tierPricingData) && tierPricingData.length > 0) {
+          const pricing = tierPricingData[0];
+          pricePerGuest = pricing.basePrice || 0;
+          
+          if (pricing.pricingType === 'tiered' && Array.isArray(pricing.tierEntries)) {
+            const applicableTiers = pricing.tierEntries
+              .filter(tier => tier.quantity <= guestQuantity)
+              .sort((a, b) => b.quantity - a.quantity);
+            
+            if (applicableTiers.length > 0) {
+              pricePerGuest = applicableTiers[0].price;
+            }
           }
-          return fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${data.tourId}`);
-        })
-        .then(async (res) => {
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.message || `Error: ${res.status}`);
-          }
-          return res.json();
-        })
-        .then((tourData) => {
-          setTourData(tourData);
-          setTourId(tourData.id);
-          setImageUrl(tourData.imageUrl);
-          openCheckout();
-        })
-        .catch((err) => {
-          setErrorMessage(err.message);
-          console.error("Error fetching data:", err);
-        });
-    }
-  }, [router.isReady, id, setTourId, setImageUrl, setReservationId, setName, setEmail, setPhone, setGuestQuantity, openBooking, openCheckout, setSelectedDate, setSelectedTime]);
+        }
+        setPrice(pricePerGuest);
+
+        const totalPrice = pricePerGuest * guestQuantity;
+
+        setFinalPrice(totalPrice);
+
+        openCheckout();
+      } catch (error) {
+        console.error("Error in data fetching:", error);
+        setErrorMessage(error.message);
+      }
+    };
+    
+    fetchData();
+  }, [router.isReady, id]);
+
+  const handleContinueToCheckout = () => {
+    closeBooking();
+    openCheckout();
+  };
+
+  const handleBackToBooking = () => {
+    closeCheckout();
+    openBooking();
+  };
+
+  const formatReservationDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  };
+
+  const extractTimeFromDate = (dateString) => {
+    const date = new Date(dateString);
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+    const period = hours >= 12 ? "PM" : "AM";
+    const hours12 = hours % 12 || 12;
+    return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+  };
 
   if (!tourData || !reservation) {
     return (
@@ -99,35 +151,6 @@ export default function InvoicePaymentPage() {
     );
   }
 
-  const handleContinueToCheckout = () => {
-    closeBooking();
-    openCheckout();
-  };
-
-  const handleBackToBooking = () => {
-    closeCheckout();
-    openBooking();
-  };
-
-  const handleCloseCheckout = () => {
-    closeCheckout();
-    router.push('/');
-  };
-
-  const formatReservationDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toISOString().split('T')[0];
-  };
-
-  const extractTimeFromDate = (dateString) => {
-    const date = new Date(dateString);
-    const hours = date.getUTCHours();
-    const minutes = date.getUTCMinutes();
-    const period = hours >= 12 ? "PM" : "AM";
-    const hours12 = hours % 12 || 12;
-    return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
-  };
-
   return (
     <>
       <ModalPageLayout isOpen={isBookingOpen}>
@@ -136,7 +159,7 @@ export default function InvoicePaymentPage() {
           title={tourData.name}
           minGuests={tourData.minPerEventLimit}
           description={tourData.description}
-          originalPrice={tourData.price.toString()}
+          originalPrice={finalPrice.toString()}
           addons={tourData.addons || []}
           name={reservation.user?.name || ""}
           email={reservation.user?.email || ""}
@@ -150,7 +173,7 @@ export default function InvoicePaymentPage() {
       <CheckoutModal
         isOpen={isCheckoutOpen}
         title={tourData.name}
-        valuePrice={tourData.price.toString()}
+        valuePrice={finalPrice}
         onClose={() => {
           closeCheckout();
           router.push(`/payment-success?reservation=${reservation.id}`);

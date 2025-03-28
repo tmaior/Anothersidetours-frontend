@@ -53,6 +53,7 @@ import CustomerQuestionnaire, {QuestionnaireRef} from "../../../components/Custo
 import {useDemographics} from "../../../contexts/DemographicsContext";
 import axios from "axios";
 import TimeSlotPicker from "../../../components/TimeSlotPicker";
+import { ScheduleItem } from "../../../contexts/GuestContext";
 
 function DescriptionContentStep({onNext}: { onNext: () => void }) {
     const [newIncludedItem, setNewIncludedItem] = useState("");
@@ -185,7 +186,7 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
         const newErrors = {
             title: formData.title.trim() === "",
             description: formData.description.trim() === "",
-            price: formData.price <= 0,
+            // price: formData.price <= 0,
         };
         setErrors(newErrors);
         return !Object.values(newErrors).includes(true);
@@ -204,7 +205,7 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
         }
         setTitle(formData.title);
         setDescription(formData.description);
-        setPrice(formData.price);
+        // setPrice(formData.price);
         setOperationProcedures(sopNotes);
         setCancellationPolicy(cancellationPolicy);
         setConsiderations(considerations);
@@ -232,18 +233,9 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
     }, [setTitle, setDescription, setPrice, setIncludedItems, setBringItems, setNewIncludedItem, setNewBringItem, setOperationProcedures, setCancellationPolicy, setConsiderations, setImagePreview, setImageFile]);
 
     function handleFormChange(field: keyof typeof formData, value: string | number) {
-        let numericValue = 0;
 
-        if (field === "price") {
-            numericValue = parseFloat(value.toString()) || 0;
-            setPrice(numericValue);
-        }
         setFormData((prev) => ({...prev, [field]: value}));
 
-        setErrors((prev) => ({
-            ...prev,
-            [field]: value === "" || (field === "price" && Number(value) <= 0),
-        }));
         if (field === "title") setTitle(value as string);
         if (field === "description") setDescription(value as string);
     }
@@ -629,70 +621,6 @@ function SchedulesAvailabilityStep({
         setPrice, setIncludedItems, setBringItems, setImagePreview, 
         setOperationProcedures, setCancellationPolicy, setConsiderations]);
 
-    function handleAddTimeRange() {
-        setSchedule([
-            ...schedule,
-            {startTime: "08:00", startPeriod: "AM", endTime: "06:00", endPeriod: "PM"},
-        ]);
-    }
-
-    function handleRemoveTimeRange(index: number) {
-        setSchedule(schedule.filter((_, i) => i !== index));
-    }
-
-    function handleTimeChange(
-        index: number,
-        key: "startTime" | "endTime" | "startPeriod" | "endPeriod",
-        value: string
-    ) {
-        const updatedSchedule = [...schedule];
-        updatedSchedule[index][key] = value;
-        setSchedule(updatedSchedule);
-    }
-
-    function generateTimeSlots(startTime, startPeriod, endTime, endPeriod) {
-        const convertTo24Hour = (time, period) => {
-            const [hours, minutes] = time.split(":").map(Number);
-            let adjustedHours = hours;
-
-            if (period === "PM" && hours < 12) adjustedHours += 12;
-            if (period === "AM" && hours === 12) adjustedHours = 0;
-
-            return {hours: adjustedHours, minutes};
-        };
-
-        const formatTime = (hours, minutes) => {
-            const period = hours >= 12 ? "PM" : "AM";
-            const formattedHours = ((hours % 12) || 12).toString().padStart(2, "0");
-            const formattedMinutes = minutes.toString().padStart(2, "0");
-            return `${formattedHours}:${formattedMinutes} ${period}`;
-        };
-
-        const start = convertTo24Hour(startTime, startPeriod);
-        const end = convertTo24Hour(endTime, endPeriod);
-
-        const timeSlots = [];
-        const current = {...start};
-
-        while (
-            current.hours < end.hours ||
-            (current.hours === end.hours && current.minutes < end.minutes)
-            ) {
-            timeSlots.push(formatTime(current.hours, current.minutes));
-            current.minutes += 60;
-            if (current.minutes >= 60) {
-                current.hours += 1;
-                current.minutes -= 60;
-            }
-        }
-
-        if (current.hours === end.hours && current.minutes === end.minutes) {
-            timeSlots.push(formatTime(current.hours, current.minutes));
-        }
-
-        return timeSlots;
-    }
-
     async function handleSaveTour() {
         try {
             const method = isEditing ? "PUT" : "POST";
@@ -827,9 +755,9 @@ function SchedulesAvailabilityStep({
             if (schedule.length > 0) {
                 const scheduleData = schedule.map(scheduleItem => {
                     const selectedDays = Object.entries(scheduleItem.days)
-                        .filter(([_, isSelected]) => isSelected)
+                        .filter(([, isSelected]) => isSelected)
                         .map(([day]) => day);
-                    
+
                     const formattedTimeSlots = scheduleItem.timeSlots.map(slot => {
                         return slot;
                     });
@@ -974,154 +902,6 @@ function SchedulesAvailabilityStep({
     const handleRemoveDemographic = (id) => {
         setSelectedDemographics(selectedDemographics.filter((demo) => demo.id !== id));
         removeDemographic(id);
-    };
-
-    const handleSaveDemographics = async (tourId) => {
-        if (!tourId) {
-            console.error("Tour ID is missing. Cannot save demographics.");
-            return [];
-        }
-
-        if (selectedDemographics.length === 0) {
-            console.warn("No demographics selected, skipping demographic saving.");
-            return [];
-        }
-
-        try {
-            const savedDemographics = [];
-
-            await Promise.all(
-                selectedDemographics.map(async (demo) => {
-                    if (!demo.id) {
-                        console.warn(`Skipping demographic with missing ID:`, demo);
-                        return;
-                    }
-
-                    const response = await fetch(
-                        `${process.env.NEXT_PUBLIC_API_URL}/demographics/assign-to-tour`,
-                        {
-                            method: "POST",
-                            headers: {"Content-Type": "application/json"},
-                            body: JSON.stringify({
-                                tourId,
-                                demographicId: demo.id,
-                            }),
-                        }
-                    );
-
-                    if (!response.ok) {
-                        throw new Error(`Failed to assign demographic ${demo.name} to tour.`);
-                    }
-
-                    savedDemographics.push(demo);
-                })
-            );
-
-            console.log("Demographics assigned:", savedDemographics);
-
-            toast({
-                title: "Demographics Saved",
-                description: "Successfully added demographics to the tour.",
-                status: "success",
-                duration: 3000,
-                isClosable: true,
-            });
-
-            return savedDemographics;
-
-        } catch (error) {
-            console.error("Error saving demographics:", error);
-            toast({
-                title: "Error",
-                description: "Could not save demographics.",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-            return [];
-        }
-    };
-
-    const handleSavePricing = async (tourId, demographics, pricingType) => {
-        if (!tourId) {
-            console.error("Tour ID is missing. Cannot save pricing.");
-            return;
-        }
-
-        if (!demographics || demographics.length === 0) {
-            console.warn("No demographics found, skipping pricing save.");
-            return;
-        }
-
-        try {
-            await Promise.all(
-                demographics.map(async (demo) => {
-                    const demographicId = demo.id;
-                    let bodyData;
-
-                    if (pricingType === "flat") {
-                        bodyData = {
-                            tourId,
-                            demographicId,
-                            pricingType: "flat",
-                            basePrice: basePrices[demographicId] || 0,
-                        };
-                    } else if (pricingType === "tiered") {
-                        console.log("Tiered Pricing Data:", tiers);
-
-                        if (!tiers || tiers.length === 0) {
-                            console.warn("No tiers found, skipping tiered pricing save.");
-                            return;
-                        }
-
-                        bodyData = {
-                            tourId,
-                            demographicId,
-                            pricingType: "tiered",
-                            tiers: tiers.map((tier) => ({
-                                quantity: Number(tier.guests.replace("+ Guests", "").trim()),
-                                price: tier.finalPrices[demographicId] || 0,
-                                adjustmentType: tier.adjustmentTypes[demographicId] || "$",
-                                operation: tier.operations[demographicId] || "Markup",
-                                adjustment: tier.adjustments[demographicId] || 0
-                            })),
-                        };
-                    } else {
-                        console.error(`Unknown pricing type: ${pricingType}`);
-                        return;
-                    }
-
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing`, {
-                        method: "POST",
-                        headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify(bodyData),
-                    });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(`Failed to create ${pricingType} pricing for demographic ${demographicId}. Error: ${errorText}`);
-                    }
-                })
-            );
-
-            toast({
-                title: "Pricing Saved",
-                description: `Pricing (${pricingType}) data has been saved successfully.`,
-                status: "success",
-                duration: 3000,
-                isClosable: true,
-            });
-
-        } catch (error) {
-            console.error("Error saving pricing:", error);
-            toast({
-                title: "Error",
-                description: `Could not save ${pricingType} pricing.`,
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-        }
     };
 
 
@@ -1325,10 +1105,6 @@ function SchedulesAvailabilityStep({
         tierPriceModal.onClose();
     };
 
-    const handleDeleteTier = (id) => {
-        setTiers(tiers.filter((tier) => tier.id !== id));
-    };
-
     const handleBasePriceChange = (demoId, value) => {
         setBasePrices((prev) => ({
             ...prev,
@@ -1377,11 +1153,6 @@ function SchedulesAvailabilityStep({
 
     const { isOpen: isScheduleModalOpen, onOpen: openScheduleModal, onClose: closeScheduleModal } = useDisclosure();
     const [scheduleName, setScheduleName] = useState("");
-    const [availability, setAvailability] = useState("available");
-    const [dateType, setDateType] = useState("dateRange");
-    const [startDate, setStartDate] = useState("now");
-    const [endDate, setEndDate] = useState("forever");
-    const [noEnd, setNoEnd] = useState(true);
     const [selectedDays, setSelectedDays] = useState({
         Sun: false,
         Mon: false,
@@ -1431,17 +1202,27 @@ function SchedulesAvailabilityStep({
     const handleEditSchedule = (index: number) => {
         const scheduleToEdit = schedule[index];
         setScheduleName(scheduleToEdit.name || "");
-        setSelectedDays(scheduleToEdit.days);
+        const defaultDays = { Sun: false, Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false };
+        const newSelectedDays = { ...defaultDays };
+        Object.keys(scheduleToEdit.days || {}).forEach(day => {
+            newSelectedDays[day] = true;
+        });
+        setSelectedDays(newSelectedDays);
         setTimeSlots(scheduleToEdit.timeSlots);
         setEditingScheduleIndex(index);
         openScheduleModal();
     };
 
     const handleApplySchedule = () => {
-        const newSchedule = {
-            ...(scheduleName && { name: scheduleName }),
+
+        const newSchedule: ScheduleItem = {
+            name: scheduleName,
             days: selectedDays,
-            timeSlots: timeSlots
+            timeSlots: timeSlots,
+            startTime: "",
+            startPeriod: "",
+            endTime: "",
+            endPeriod: ""
         };
         
         if (editingScheduleIndex !== null) {
@@ -1506,7 +1287,7 @@ function SchedulesAvailabilityStep({
             return `Daily at ${formattedTimes.join(', ')}`;
         } else if (anyDaySelected) {
             const selectedDays = Object.entries(days)
-                .filter(([_, isSelected]) => isSelected)
+                .filter(([, isSelected]) => isSelected)
                 .map(([day]) => day)
                 .join(', ');
 
@@ -2240,48 +2021,48 @@ function CreateToursPage({isEditing = false}: { isEditing?: boolean }) {
     const [currentStep, setCurrentStep] = useState(1);
 
 
-    const {
-        setSchedule,
-        setEventDuration,
-        setGuestLimit,
-        setEarlyArrival,
-        setTitle,
-        setDescription,
-        setPrice,
-        setIncludedItems,
-        setBringItems,
-        setImagePreview,
-        setImageFile,
-        setOperationProcedures,
-        setCancellationPolicy,
-        setConsiderations
-    } = useGuest();
+    // const {
+    //     setSchedule,
+    //     setEventDuration,
+    //     setGuestLimit,
+    //     setEarlyArrival,
+    //     setTitle,
+    //     setDescription,
+    //     setPrice,
+    //     setIncludedItems,
+    //     setBringItems,
+    //     setImagePreview,
+    //     setImageFile,
+    //     setOperationProcedures,
+    //     setCancellationPolicy,
+    //     setConsiderations
+    // } = useGuest();
 
-    const resetFields = useCallback(() => {
-        setSchedule([]);
-        setEventDuration('');
-        setGuestLimit(0);
-        setEarlyArrival(false);
-        setTitle("");
-        setDescription("");
-        setPrice(0);
-        setIncludedItems([]);
-        setBringItems([]);
-        setImagePreview(null);
-        setOperationProcedures("");
-        setTitle("");
-        setDescription("");
-        setPrice(0);
-        setIncludedItems([]);
-        setBringItems([]);
-        setOperationProcedures("");
-        setCancellationPolicy("");
-        setConsiderations("");
-        setImagePreview(null);
-        setImageFile(null);
-    }, [setSchedule, setEventDuration, setGuestLimit, setEarlyArrival, setTitle, setDescription, 
-        setPrice, setIncludedItems, setBringItems, setImagePreview, setImageFile, 
-        setOperationProcedures, setCancellationPolicy, setConsiderations]);
+    // const resetFields = useCallback(() => {
+    //     setSchedule([]);
+    //     setEventDuration('');
+    //     setGuestLimit(0);
+    //     setEarlyArrival(false);
+    //     setTitle("");
+    //     setDescription("");
+    //     setPrice(0);
+    //     setIncludedItems([]);
+    //     setBringItems([]);
+    //     setImagePreview(null);
+    //     setOperationProcedures("");
+    //     setTitle("");
+    //     setDescription("");
+    //     setPrice(0);
+    //     setIncludedItems([]);
+    //     setBringItems([]);
+    //     setOperationProcedures("");
+    //     setCancellationPolicy("");
+    //     setConsiderations("");
+    //     setImagePreview(null);
+    //     setImageFile(null);
+    // }, [setSchedule, setEventDuration, setGuestLimit, setEarlyArrival, setTitle, setDescription,
+    //     setPrice, setIncludedItems, setBringItems, setImagePreview, setImageFile,
+    //     setOperationProcedures, setCancellationPolicy, setConsiderations]);
 
     if (currentStep === 1) {
         return <DescriptionContentStep onNext={() => setCurrentStep(2)}/>;

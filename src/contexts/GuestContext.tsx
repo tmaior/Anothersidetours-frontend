@@ -1,6 +1,18 @@
 import React, {createContext, ReactNode, useContext, useState} from "react";
 
+export interface ScheduleItem {
+    name: string;
+    startTime: string | null;
+    startPeriod: string;
+    endTime: string | null;
+    endPeriod: string;
+    days?:  Record<string, boolean>
+    timeSlots?: string[];
+}
+
 interface GuestContextType {
+    schedule: ScheduleItem[];
+    setSchedule: React.Dispatch<React.SetStateAction<ScheduleItem[]>>;
     guestQuantity: number;
     setGuestQuantity: React.Dispatch<React.SetStateAction<number>>;
     name: string;
@@ -47,12 +59,6 @@ interface GuestContextType {
     setDescription: React.Dispatch<React.SetStateAction<string>>;
     operationProcedures: string;
     setOperationProcedures: React.Dispatch<React.SetStateAction<string>>;
-    schedule: { startTime: string | null; startPeriod: string; endTime: string | null; endPeriod: string }[];
-    setSchedule: React.Dispatch<
-        React.SetStateAction<
-            { startTime: string | null; startPeriod: string; endTime: string | null; endPeriod: string }[]
-        >
-    >;
     eventDuration: string;
     setEventDuration: React.Dispatch<React.SetStateAction<string>>;
     guestLimit: number;
@@ -100,9 +106,7 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [bringItems, setBringItems] = useState<string[]>([]);
     const [description, setDescription] = useState("");
     const [operationProcedures, setOperationProcedures] = useState("");
-    const [schedule, setSchedule] = useState<
-        { startTime: string | null; startPeriod: string; endTime: string | null; endPeriod: string }[]
-    >([]);
+    const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
     const [eventDuration, setEventDuration] = useState('');
     const [guestLimit, setGuestLimit] = useState(8);
     const [earlyArrival, setEarlyArrival] = useState(false);

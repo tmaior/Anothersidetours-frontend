@@ -34,19 +34,6 @@ interface TierPricing {
     basePrice: number;
     tierEntries: TierEntry[];
 }
-
-// interface GridProps {
-//     originalPrice: string;
-//     totalPrice: string;
-//     formInfoRef: React.RefObject<HTMLFormElement>;
-//     minGuest: number | undefined;
-//     selectedDate: Date | null;
-//     setSelectedDate: React.Dispatch<React.SetStateAction<Date | null>>;
-//     selectedTime: string | null;
-//     setSelectedTime: React.Dispatch<React.SetStateAction<string | null>>;
-//     errorMessage: string | null;
-//     title: string;
-// }
 export default function BookingDetails({
                                            onContinue,
                                            tourId,

@@ -371,7 +371,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             if (Array.isArray(response.data)) {
                 setAvailableSchedules(response.data);
                 const allTimeSlots = response.data.flatMap(schedule => schedule.timeSlots);
-                const uniqueTimeSlots = [...new Set(allTimeSlots)];
+                const uniqueTimeSlots = Array.from(new Set(allTimeSlots));
                 const sortedTimeSlots = sortTimeSlots(uniqueTimeSlots);
                 setAvailableTimes(sortedTimeSlots);
             } else {

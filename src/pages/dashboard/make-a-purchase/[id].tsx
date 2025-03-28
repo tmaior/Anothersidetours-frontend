@@ -189,7 +189,7 @@ const PurchasePage = () => {
     const [isTimeslotModalOpen, setIsTimeslotModalOpen] = useState(false);
     const [newSelectedTime, setNewSelectedTime] = useState<string>('');
     const [tierPricing, setTierPricing] = useState<TierPricing[]>([]);
-    const [selectedDemographic, setSelectedDemographic] = useState<string>("");
+    const [selectedDemographic,] = useState<string>("");
 
     const getPricesForDatePicker = () => {
         const pricePerGuest = cart.length > 0 ? (cart[selectedCartItemIndex]?.valuePerGuest || cart[selectedCartItemIndex]?.price || 0) : 0;
@@ -1032,9 +1032,11 @@ const PurchasePage = () => {
                                 amount: `$${addonsTotalPrice.toFixed(2)}`
                             });
                         }
-                        
-                        if (isCustomLineItemsEnabled && customLineItems.length > 0) {
-                            customLineItems.forEach(item => {
+
+                        if (isCustomLineItemsEnabled &&
+                            customLineItems[cart[selectedCartItemIndex].id] &&
+                            customLineItems[cart[selectedCartItemIndex].id].length > 0) {
+                            customLineItems[cart[selectedCartItemIndex].id].forEach(item => {
                                 const itemTotal = item.amount * item.quantity;
                                 emailTotals.push({
                                     label: `${item.name || 'Custom item'} (${item.quantity}x)`,
@@ -1790,20 +1792,23 @@ const PurchasePage = () => {
             const itemPrice = getPriceForQuantity(itemQuantity, item.id);
             const baseTotal = itemPrice * itemQuantity;
 
-            const itemAddonTotal = itemFormData.selectedAddOns.reduce((addonSum, addon) => {
-                const addonInfo = addonsMap[item.id]?.find(a => a.id === addon.addOnId) || 
-                                  addons.find(a => a.id === addon.addOnId);
-                
-                if (!addonInfo) return addonSum;
-                
-                if (addonInfo.type === 'CHECKBOX' && addon.checked) {
-                    return addonSum + addonInfo.price;
-                } else if (addonInfo.type === 'SELECT' && addon.quantity > 0) {
-                    return addonSum + (addonInfo.price * addon.quantity);
-                }
-                
-                return addonSum;
-            }, 0);
+            const itemAddonTotal = (itemFormData.selectedAddOns as SelectedAddOn[]).reduce<number>(
+                (addonSum, addon) => {
+                    const addonInfo =
+                        addonsMap[item.id]?.find(a => a.id === addon.addOnId) ||
+                        addons.find(a => a.id === addon.addOnId);
+
+                    if (!addonInfo) return addonSum;
+
+                    if (addonInfo.type === 'CHECKBOX' && addon.checked) {
+                        return addonSum + addonInfo.price;
+                    } else if (addonInfo.type === 'SELECT' && addon.quantity > 0) {
+                        return addonSum + addonInfo.price * addon.quantity;
+                    }
+                    return addonSum;
+                },
+                0
+            );
             const customLineItemsTotal = calculateCustomLineItemsTotal(item.id);
             return total + baseTotal + itemAddonTotal + customLineItemsTotal;
         }, 0);

@@ -14,6 +14,7 @@ interface GridProps {
     originalPrice?: string;
     title?: string;
     minGuest:number;
+    totalPrice: string
 }
 
 const Grid: React.FC<GridProps> = ({

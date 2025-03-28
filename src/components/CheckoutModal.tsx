@@ -58,12 +58,11 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
         reservationId: contextReservationId, 
         setReservationId,
         imageUrl,
-        price,
     } = useGuest();
     const {isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal} = useDisclosure();
 
     const pricePerGuest = valuePrice;
-    const guestTotal = guestQuantity * pricePerGuest;
+    const guestTotal = Number(guestQuantity) * Number(pricePerGuest);
     const addonsTotal = detailedAddons.reduce((acc, addon) => acc + addon.total, 0);
     const totalAmount = guestTotal + addonsTotal;
     const stripe = useStripe();
@@ -71,7 +70,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
     const reservationId = propReservationId || contextReservationId;
 
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [, setIsProcessing] = useState(false);
     const [transactionId, setTransactionId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -481,7 +480,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                                 <VStack w="full" p={4} spacing={4} align="stretch">
                                     {guestQuantity && pricePerGuest !== undefined ? (
                                         <HStack w="full">
-                                            <Text>{`Guests (${guestQuantity} × $${pricePerGuest.toFixed(2)})`}</Text>
+                                            <Text>{`Guests (${guestQuantity} × $${Number(pricePerGuest).toFixed(2)})`}</Text>
                                             <Spacer />
                                             <Text>${guestTotal.toFixed(2)}</Text>
                                         </HStack>

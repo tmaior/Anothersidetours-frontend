@@ -1132,10 +1132,8 @@ const PurchasePage = () => {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({
-                                tenant_id: tenantId,
-                                reservation_id: reservationId,
                                 payment_method: 'invoice',
-                                amount: totalWithDiscount,
+                                amount: finalCartTotal, 
                                 payment_status: 'pending',
                                 payment_details: {
                                     note: purchaseNote,
@@ -1149,6 +1147,16 @@ const PurchasePage = () => {
                                 created_by: "Back Office",
                                 created_at: new Date().toISOString(),
                                 updated_at: new Date().toISOString(),
+                                tenant: {
+                                    connect: {
+                                        id: tenantId
+                                    }
+                                },
+                                reservation: {
+                                    connect: {
+                                        id: reservationId
+                                    }
+                                }
                             }),
                         });
 

@@ -988,6 +988,33 @@ const PaymentSummary = ({reservation}) => {
     const [customLineItems, setCustomLineItems] = useState<LineItem[]>([]);
     const toast = useToast();
     const [isApplyCodeModalOpen, setIsApplyCodeModalOpen] = useState(false);
+    const [tierPricing, setTierPricing] = useState(null);
+    const [isLoadingTierPricing, setIsLoadingTierPricing] = useState(false);
+
+    useEffect(() => {
+        const fetchTierPricing = async () => {
+            if (!reservation?.tour?.id) return;
+            
+            setIsLoadingTierPricing(true);
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${reservation.tour.id}`
+                );
+                
+                if (response.data && response.data.length > 0) {
+                    setTierPricing(response.data[0]);
+                }
+            } catch (error) {
+                console.error('Error fetching tier pricing data:', error);
+            } finally {
+                setIsLoadingTierPricing(false);
+            }
+        };
+
+        if (reservation?.tour?.id) {
+            fetchTierPricing();
+        }
+    }, [reservation?.tour?.id]);
 
     useEffect(() => {
         const fetchGroupReservations = async () => {
@@ -1129,6 +1156,28 @@ const PaymentSummary = ({reservation}) => {
         }
     };
 
+    const calculateTourPrice = () => {
+        const guestQty = reservation?.guestQuantity || 0;
+        
+        if (tierPricing) {
+            if (tierPricing.pricingType === 'tiered' && tierPricing.tierEntries?.length > 0) {
+                const sortedTiers = [...tierPricing.tierEntries].sort((a, b) => b.quantity - a.quantity);
+                const applicableTier = sortedTiers.find(tier => guestQty >= tier.quantity);
+                
+                if (applicableTier) {
+                    return applicableTier.price * guestQty;
+                }
+                return tierPricing.basePrice * guestQty;
+            } else {
+                return tierPricing.basePrice * guestQty;
+            }
+        }
+        
+        return (reservation?.valuePerGuest || reservation?.tour?.price || 0) * guestQty;
+    };
+
+    const tourPrice = calculateTourPrice();
+
     const addonsTotalPrice = combinedAddons && combinedAddons.length > 0 
         ? combinedAddons.reduce(
             (sum, addon) => sum + ((addon?.price || 0) * (addon?.quantity || 0)), 
@@ -1144,7 +1193,6 @@ const PaymentSummary = ({reservation}) => {
         }, 0)
         : 0;
         
-    const tourPrice = (reservation?.valuePerGuest || reservation?.tour?.price || 0) * (reservation?.guestQuantity || 0);
     const finalTotalPrice = (tourPrice + addonsTotalPrice + customLineItemsTotal).toFixed(2);
 
     useEffect(() => {
@@ -1201,6 +1249,19 @@ const PaymentSummary = ({reservation}) => {
         return `${month}/${day}/${year}`;
     }
 
+    const getPricePerGuest = (tierPricingData, guestCount) => {
+        if (!tierPricingData || !tierPricingData.tierEntries || tierPricingData.tierEntries.length === 0) {
+            return tierPricingData?.basePrice || 0;
+        }
+        const sortedTiers = [...tierPricingData.tierEntries].sort((a, b) => b.quantity - a.quantity);
+        const applicableTier = sortedTiers.find(tier => guestCount >= tier.quantity);
+        
+        if (applicableTier) {
+            return applicableTier.price;
+        }
+        return tierPricingData.basePrice;
+    };
+
     return (
         <Box
             bg="gray.100"
@@ -1218,8 +1279,18 @@ const PaymentSummary = ({reservation}) => {
             <Text fontSize="xl" fontWeight="bold">Purchase Summary</Text>
             <VStack spacing={4} align="stretch" mt={4}>
                 <HStack justifyContent="space-between">
-                    <Text>Guests (${reservation.tour?.price || 0} x {reservation.guestQuantity || 0})</Text>
-                    <Text>${((reservation.valuePerGuest || reservation.tour?.price || 0) * (reservation.guestQuantity || 0)).toFixed(2)}</Text>
+                    {isLoadingTierPricing ? (
+                        <Spinner size="sm" />
+                    ) : (
+                        <>
+                            <Text>
+                                Guests ({tierPricing?.pricingType === 'tiered' 
+                                    ? `$${getPricePerGuest(tierPricing, reservation?.guestQuantity || 0)}`
+                                    : `$${tierPricing?.basePrice || reservation?.valuePerGuest || 0}`} x {reservation?.guestQuantity || 0})
+                            </Text>
+                            <Text>${tourPrice.toFixed(2)}</Text>
+                        </>
+                    )}
                 </HStack>
                 {isLoadingAddons ? (
                     <HStack justifyContent="center">

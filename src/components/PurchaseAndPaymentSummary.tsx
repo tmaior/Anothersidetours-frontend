@@ -25,6 +25,17 @@ interface Booking {
     paymentDate?: string;
 }
 
+interface TierEntry {
+    quantity: number;
+    price: number;
+}
+
+interface TierPricing {
+    pricingType: 'tiered' | 'flat';
+    basePrice: number;
+    tierEntries: TierEntry[];
+}
+
 interface PurchaseAndPaymentSummaryProps {
     booking: Booking;
     guestQuantity: number;
@@ -48,6 +59,7 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
     const [isLoadingAddons, setIsLoadingAddons] = useState<boolean>(true);
     const [internalCardDetails, setInternalCardDetails] = useState<CardDetails | null>(null);
     const [isLoadingCardDetails, setIsLoadingCardDetails] = useState<boolean>(true);
+    const [tierPricing, setTierPricing] = useState<TierPricing | null>(null);
 
     useEffect(() => {
         if (allAddons.length === 0) {
@@ -96,6 +108,30 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
         }
     }, [cardDetails, booking.paymentMethodId]);
 
+    useEffect(() => {
+        const fetchTierPricing = async () => {
+            if (!booking?.tourId) return;
+
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`
+                );
+                
+                if (response.data && response.data.length > 0) {
+                    setTierPricing({
+                        pricingType: response.data[0].pricingType,
+                        basePrice: response.data[0].basePrice,
+                        tierEntries: response.data[0].tierEntries,
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching tier pricing:', error);
+            }
+        };
+
+        fetchTierPricing();
+    }, [booking?.tourId]);
+
     let combinedAddons: (Addon & { quantity: number })[] = [];
     if (allAddons.length > 0) {
         combinedAddons = allAddons.reduce((acc: (Addon & { quantity: number })[], addon) => {
@@ -136,7 +172,26 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
         0
     );
 
-    const finalTotalPrice = ((booking.valuePerGuest || booking.tour?.price) * guestQuantity) + addonsTotalPrice;
+    const calculateGuestPrice = () => {
+        if (!tierPricing) {
+            return (booking.valuePerGuest || booking.tour?.price) * guestQuantity;
+        }
+
+        if (tierPricing.pricingType === 'flat') {
+            return tierPricing.basePrice * guestQuantity;
+        }
+
+        const applicableTier = tierPricing.tierEntries
+            .sort((a, b) => b.quantity - a.quantity)
+            .find(tier => guestQuantity >= tier.quantity);
+
+        return applicableTier 
+            ? applicableTier.price * guestQuantity
+            : tierPricing.basePrice * guestQuantity;
+    };
+
+    const guestTotalPrice = calculateGuestPrice();
+    const finalTotalPrice = guestTotalPrice + addonsTotalPrice;
 
     const formattedCardDetails = cardDetails || internalCardDetails;
 
@@ -193,8 +248,10 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                 </Text>
                 <VStack align="stretch" spacing={2}>
                     <HStack justify="space-between">
-                        <Text>{`Guests ($${(booking.valuePerGuest || booking.tour?.price).toFixed(2)} × ${guestQuantity})`}</Text>
-                        <Text>${((booking.valuePerGuest || booking.tour?.price) * guestQuantity).toFixed(2)}</Text>
+                        <Text>
+                            {`Guests ($${(guestTotalPrice / guestQuantity).toFixed(2)} × ${guestQuantity})`}
+                        </Text>
+                        <Text>${guestTotalPrice.toFixed(2)}</Text>
                     </HStack>
                 </VStack>
                 {combinedAddons.length > 0 ? (

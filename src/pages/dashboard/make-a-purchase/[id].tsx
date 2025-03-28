@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react'
+import React, {useCallback, useEffect, useState, useMemo} from 'react'
 import {
     Box,
     Button,
@@ -83,6 +83,28 @@ interface FormData {
     additionalInformation?: { [key: string]: string };
 }
 
+interface TierPriceEntry {
+  id: string;
+  tierPricingId: string;
+  quantity: number;
+  price: number;
+  adjustmentType?: string;
+  operation?: string; 
+  adjustment?: number;
+}
+
+interface TierPricing {
+  id: string;
+  tourId: string;
+  demographicId: string;
+  pricingType: 'flat' | 'tiered';
+  basePrice: number;
+  tierEntries?: TierPriceEntry[];
+  demographic?: {
+    id: string;
+    name: string;
+  };
+}
 const PurchasePage = () => {
     const router = useRouter();
     const {id} = router.query;
@@ -166,6 +188,9 @@ const PurchasePage = () => {
 
     const [isTimeslotModalOpen, setIsTimeslotModalOpen] = useState(false);
     const [newSelectedTime, setNewSelectedTime] = useState<string>('');
+    const [tierPricing, setTierPricing] = useState<TierPricing[]>([]);
+    const [selectedDemographic, setSelectedDemographic] = useState<string>("");
+
     const getPricesForDatePicker = () => {
         const pricePerGuest = cart.length > 0 ? (cart[selectedCartItemIndex]?.valuePerGuest || cart[selectedCartItemIndex]?.price || 0) : 0;
         return Array(31).fill(pricePerGuest);
@@ -557,8 +582,58 @@ const PurchasePage = () => {
         setAttendees(updated);
     };
 
+    const getPriceForQuantity = useCallback((quantity: number, tourId: string): number => {
+        if (!tierPricing || tierPricing.length === 0) {
+            return cart.length > 0 ? (cart.find(item => item.id === tourId)?.price || 0) : 0;
+        }
 
-    const basePrice = cart.length > 0 ? cart[0].price : 0;
+        const pricingForTour = tierPricing.find(tp => 
+            tp.tourId === tourId && 
+            (selectedDemographic ? tp.demographicId === selectedDemographic : true)
+        );
+
+        if (!pricingForTour) {
+            return cart.length > 0 ? (cart.find(item => item.id === tourId)?.price || 0) : 0;
+        }
+
+        if (pricingForTour.pricingType === 'flat') {
+            return pricingForTour.basePrice;
+        }
+
+        if (pricingForTour.tierEntries && pricingForTour.tierEntries.length > 0) {
+            const sortedTiers = [...pricingForTour.tierEntries].sort((a, b) => b.quantity - a.quantity);
+            for (const tier of sortedTiers) {
+                if (quantity >= tier.quantity) {
+                    return tier.price;
+                }
+            }
+        }
+        return pricingForTour.basePrice;
+    }, [tierPricing, selectedDemographic, cart]);
+    useEffect(() => {
+        const fetchTierPricing = async () => {
+            if (!id) return;
+            
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setTierPricing(data);
+                    if (data.length > 0 && !selectedDemographic) {
+                        setSelectedDemographic(data[0].demographicId);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching tier pricing:', error);
+            }
+        };
+        fetchTierPricing();
+    }, [id, selectedDemographic]);
+    const basePrice = useMemo(() => {
+        if (cart.length === 0) return 0;
+        const currentTourId = cart[selectedCartItemIndex]?.id;
+        return getPriceForQuantity(quantity, currentTourId);
+    }, [cart, selectedCartItemIndex, quantity, getPriceForQuantity]);
     const totalBase = quantity * basePrice;
 
     useEffect(() => {
@@ -2101,6 +2176,7 @@ const PurchasePage = () => {
                             formDataMap={formDataMap}
                             addons={addons}
                             addonsMap={addonsMap}
+                            getPriceForQuantity={getPriceForQuantity}
                         />
                     </Box>
                 </Flex>
@@ -2153,6 +2229,21 @@ const PurchasePage = () => {
                     </ModalFooter>
                 </ModalContent>
             </Modal>
+            {tierPricing.length > 0 && (
+                <FormControl mb={4}>
+                    <FormLabel>Demographic</FormLabel>
+                    <Select 
+                        value={selectedDemographic} 
+                        onChange={(e) => setSelectedDemographic(e.target.value)}
+                    >
+                        {tierPricing.map(tp => (
+                            <option key={tp.demographicId} value={tp.demographicId}>
+                                {tp.demographic?.name || 'Unknown Demographic'}
+                            </option>
+                        ))}
+                    </Select>
+                </FormControl>
+            )}
         </DashboardLayout>
     )
 }

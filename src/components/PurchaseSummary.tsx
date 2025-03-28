@@ -66,6 +66,7 @@ interface PurchaseSummaryProps {
     formDataMap: {[key: string]: ItemFormData};
     addons: Addon[];
     addonsMap?: {[key: string]: Addon[]};
+    getPriceForQuantity?: (quantity: number, tourId: string) => number;
 }
 
 const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
@@ -87,6 +88,7 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
     formDataMap,
     addons,
     addonsMap,
+    getPriceForQuantity,
 }) => {
     const formatDate = (dateString: string) => {
         if (!dateString) return '';
@@ -101,10 +103,15 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
         return date.toLocaleDateString('en-US', options);
     };
     const calculateCartTotal = () => {
-        return cart.reduce((total, tour,) => {
+        return cart.reduce((total, tour) => {
             const tourFormData = formDataMap[tour.id];
             const itemQuantity = tourFormData ? tourFormData.quantity : quantity;
-            const itemTotal = tour.price * itemQuantity;
+            
+            const itemPrice = getPriceForQuantity 
+                ? getPriceForQuantity(itemQuantity, tour.id) 
+                : tour.price;
+                
+            const itemTotal = itemPrice * itemQuantity;
             let addonTotal = 0;
             const tourSpecificAddons = addonsMap && addonsMap[tour.id] ? addonsMap[tour.id] : addons;
             if (tourFormData && tourFormData.selectedAddOns) {
@@ -147,6 +154,11 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                     const itemDate = tourFormData ? tourFormData.date : date;
                     const itemTime = tourFormData ? tourFormData.time : time;
                     const tourSpecificAddons = addonsMap && addonsMap[tour.id] ? addonsMap[tour.id] : addons;
+                    
+                    const itemPrice = getPriceForQuantity 
+                        ? getPriceForQuantity(itemQuantity, tour.id) 
+                        : tour.price;
+                    
                     return (
                         <Box 
                             key={`${tour.id}-${index}`} 
@@ -192,10 +204,10 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                             </Text>
                             <HStack justify="space-between">
                                 <Text mt={2}>
-                                    Guests (${tour.price} × {itemQuantity})
+                                    Guests (${itemPrice.toFixed(2)} × {itemQuantity})
                                 </Text>
                                 <Text>
-                                    ${(itemQuantity * tour.price).toFixed(2)}
+                                    ${(itemQuantity * itemPrice).toFixed(2)}
                                 </Text>
                             </HStack>
                             {tourFormData && tourFormData.selectedAddOns && tourFormData.selectedAddOns.length > 0 ? (

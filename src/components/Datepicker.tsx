@@ -310,8 +310,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                 }
                                 cursor={isBlocked || isPast || isDayUnavailable ? 'not-allowed' : 'pointer'}
                                 _hover={{
-                                    bg: isBlocked || isPast ? undefined : '#337AB7',
-                                    color: isBlocked || isPast ? undefined : 'white'
+                                    bg: isBlocked || isPast || isDayUnavailable ? undefined : '#337AB7',
+                                    color: isBlocked || isPast || isDayUnavailable ? undefined : 'white'
                                 }}
                             >
                                 <Text w="full" textAlign="end" fontSize="10px" marginLeft={"-7px"}>

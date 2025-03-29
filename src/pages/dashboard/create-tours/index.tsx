@@ -836,7 +836,7 @@ function SchedulesAvailabilityStep({
                 isClosable: true
             });
             resetFields();
-            router.push("/dashboard/list-tours");
+            window.location.href = "/dashboard/list-tours";
         } catch (error) {
             console.error("Error:", error);
             toast({

@@ -48,7 +48,7 @@ export default function Login() {
 
                 if (res.ok) {
                     localStorage.setItem("user", JSON.stringify(data.employee));
-                    router.push("/dashboard/reservation");
+                    router.push("/select-city");
                 } else {
                     setApiError(data.message || "Invalid credentials");
                 }

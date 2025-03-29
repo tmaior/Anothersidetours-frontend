@@ -44,7 +44,7 @@ import {CartProvider} from "../contexts/CartContext";
 export default function DashboardLayout({children}: { children: React.ReactNode }) {
     const router = useRouter();
     const {isOpen, onOpen, onClose} = useDisclosure();
-    const {tenantId, setTenantId,} = useGuest();
+    const {tenantId, setTenantId} = useGuest();
     const [tenants, setTenants] = useState([]);
     const [selectedTenant, setSelectedTenant] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -63,13 +63,26 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     }, [router]);
 
     useEffect(() => {
+        const storedTenantId = localStorage.getItem("tenantId");
+        const storedTenant = localStorage.getItem("selectedTenant");
+        if (storedTenantId && !tenantId) {
+            setTenantId(storedTenantId);
+        }
+        if (storedTenant) {
+            try {
+                const parsedTenant = JSON.parse(storedTenant);
+                setSelectedTenant(parsedTenant);
+            } catch (e) {
+                console.error("Error parsing stored tenant:", e);
+            }
+        }
 
         if (noTenants) {
             setIsLoading(false);
             return;
         }
 
-        if (!tenants.length || !tenantId) {
+        if (!tenants.length) {
             setIsLoading(true);
             fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`)
                 .then((response) => response.json())
@@ -87,12 +100,18 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         });
                         return;
                     }
-                    if (!tenantId && data.length > 0) {
+
+                    const currentTenantId = storedTenantId || tenantId;
+                    
+                    if (!currentTenantId && data.length > 0) {
                         const defaultTenant = data[0];
                         setSelectedTenant(defaultTenant);
                         setTenantId(defaultTenant.id);
-                    } else if (tenantId) {
-                        const existingTenant = data.find((tenant) => tenant.id === tenantId);
+
+                        localStorage.setItem("tenantId", defaultTenant.id);
+                        localStorage.setItem("selectedTenant", JSON.stringify(defaultTenant));
+                    } else if (currentTenantId) {
+                        const existingTenant = data.find((tenant) => tenant.id === currentTenantId);
                         if (existingTenant) {
                             setSelectedTenant(existingTenant);
                         }
@@ -101,13 +120,16 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                 .catch((error) => console.error("Error fetching tenants:", error))
                 .finally(() => setIsLoading(false));
         } else {
-            const existingTenant = tenants.find((tenant) => tenant.id === tenantId);
-            if (existingTenant) {
-                setSelectedTenant(existingTenant);
+            const effectiveTenantId = storedTenantId || tenantId;
+            if (effectiveTenantId) {
+                const existingTenant = tenants.find((tenant) => tenant.id === effectiveTenantId);
+                if (existingTenant) {
+                    setSelectedTenant(existingTenant);
+                }
             }
             setIsLoading(false);
         }
-    }, [noTenants ,toast,tenantId, tenants, setTenantId]);
+    }, [noTenants, toast, tenantId, tenants, setTenantId]);
 
     const [newTenant, setNewTenant] = useState({title: "", description: "", image: null});
 
@@ -144,6 +166,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
         setSelectedTenant(tenant);
         setTenantId(tenant.id);
         localStorage.setItem("selectedTenant", JSON.stringify(tenant));
+        localStorage.setItem("tenantId", tenant.id);
     };
 
     const [selectedImage, setSelectedImage] = useState<File | null>(null);

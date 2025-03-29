@@ -75,7 +75,6 @@ export default function InvoicePaymentPage() {
         }
         
         const tierPricingData = await tierPricingRes.json();
-        console.log("Tier pricing data:", JSON.stringify(tierPricingData, null, 2));
 
         let pricePerGuest = 0;
         
@@ -96,8 +95,7 @@ export default function InvoicePaymentPage() {
         setPrice(pricePerGuest);
 
         const totalPrice = pricePerGuest * guestQuantity;
-
-        setFinalPrice(totalPrice);
+        setFinalPrice(pricePerGuest);
 
         openCheckout();
       } catch (error) {

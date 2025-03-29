@@ -690,64 +690,78 @@ function SchedulesAvailabilityStep({
             const tourId = savedTour.id;
             setTourId(tourId);
 
-            const savedDemographics = await Promise.all(
-                selectedDemographics.map(async (demo) => {
-                    const response = await fetch(
-                        `${process.env.NEXT_PUBLIC_API_URL}/demographics/assign-to-tour`,
-                        {
-                            method: "POST",
-                            headers: {"Content-Type": "application/json"},
-                            body: JSON.stringify({
-                                tourId,
-                                demographicId: demo.id,
-                            }),
-                        }
+            if (isEditing) {
+                const currentDemographicsResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/demographics/demographicByTourId/${tourId}`
+                );
+                
+                if (!currentDemographicsResponse.ok) {
+                    console.warn("Failed to fetch current demographics, proceeding with assignment");
+                } else {
+                    const currentDemographics = await currentDemographicsResponse.json();
+                    
+                    await Promise.all(
+                        currentDemographics.map(async (currentDemo) => {
+                            if (!selectedDemographics.some(newDemo => newDemo.id === currentDemo.id)) {
+                                await fetch(
+                                    `${process.env.NEXT_PUBLIC_API_URL}/demographics/${tourId}/${currentDemo.id}`,
+                                    {
+                                        method: "DELETE",
+                                        headers: { "Content-Type": "application/json" }
+                                    }
+                                );
+                            }
+                        })
                     );
 
-                    if (!response.ok) {
-                        throw new Error(`Failed to assign demographic ${demo.name}`);
-                    }
-                    return demo;
-                })
-            );
+                    const currentDemoIds = currentDemographics.map(demo => demo.id);
+                    const savedDemographics = await Promise.all(
+                        selectedDemographics
+                            .filter(demo => !currentDemoIds.includes(demo.id))
+                            .map(async (demo) => {
+                                try {
+                                    const response = await fetch(
+                                        `${process.env.NEXT_PUBLIC_API_URL}/demographics/assign-to-tour`,
+                                        {
+                                            method: "POST",
+                                            headers: {"Content-Type": "application/json"},
+                                            body: JSON.stringify({
+                                                tourId,
+                                                demographicId: demo.id,
+                                            }),
+                                        }
+                                    );
 
-            if (pricingStructure === "flat") {
-                await Promise.all(
-                    savedDemographics.map(async (demo) => {
-                        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing`, {
-                            method: "POST",
-                            headers: {"Content-Type": "application/json"},
-                            body: JSON.stringify({
-                                tourId,
-                                demographicId: demo.id,
-                                pricingType: "flat",
-                                basePrice: basePrices[demo.id] || 0
+                                    if (!response.ok) {
+                                        console.warn(`Failed to assign demographic ${demo.name}`);
+                                    }
+                                    return demo;
+                                } catch (error) {
+                                    console.warn(`Error assigning demographic ${demo.name}:`, error);
+                                    return demo;
+                                }
                             })
-                        });
-                    })
-                );
-            } else if (pricingStructure === "tiered") {
-                await Promise.all(
-                    savedDemographics.map(async (demo) => {
-                        const tierData = tiers.map(tier => ({
-                            quantity: parseInt(tier.guests.replace("+ Guests", "").trim()),
-                            price: tier.finalPrices[demo.id] || 0,
-                            adjustmentType: tier.adjustmentTypes[demo.id] || "$",
-                            operation: tier.operations[demo.id] || "Markup",
-                            adjustment: tier.adjustments[demo.id] || 0
-                        }));
+                    );
+                }
+            } else {
+                const savedDemographics = await Promise.all(
+                    selectedDemographics.map(async (demo) => {
+                        const response = await fetch(
+                            `${process.env.NEXT_PUBLIC_API_URL}/demographics/assign-to-tour`,
+                            {
+                                method: "POST",
+                                headers: {"Content-Type": "application/json"},
+                                body: JSON.stringify({
+                                    tourId,
+                                    demographicId: demo.id,
+                                }),
+                            }
+                        );
 
-                        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing`, {
-                            method: "POST",
-                            headers: {"Content-Type": "application/json"},
-                            body: JSON.stringify({
-                                tourId,
-                                demographicId: demo.id,
-                                pricingType: "tiered",
-                                basePrice: basePrices[demo.id] || 0,
-                                tiers: tierData
-                            })
-                        });
+                        if (!response.ok) {
+                            throw new Error(`Failed to assign demographic ${demo.name}`);
+                        }
+                        return demo;
                     })
                 );
             }
@@ -901,11 +915,56 @@ function SchedulesAvailabilityStep({
         onClose();
     };
 
-    const handleRemoveDemographic = (id) => {
+    const handleRemoveDemographic = async (id) => {
         setSelectedDemographics(selectedDemographics.filter((demo) => demo.id !== id));
         removeDemographic(id);
         if (selectedDemographicId === id) {
             setSelectedDemographicId("");
+        }
+
+        if (isEditing && tourId) {
+            try {
+
+                const url = `${process.env.NEXT_PUBLIC_API_URL}/demographics/${tourId}/${id}`;
+
+                const response = await fetch(url, {
+                    method: "DELETE",
+                    headers: { 
+                        "Content-Type": "application/json"
+                    }
+                });
+                if (!response.ok) {
+                    let errorDetails = "";
+                    try {
+                        const errorData = await response.json();
+                        errorDetails = JSON.stringify(errorData);
+                    } catch (e) {
+                        errorDetails = await response.text();
+                    }
+                    console.error(`Error response details: ${errorDetails}`);
+                    throw new Error(`Failed to remove demographic association: ${response.status} - ${errorDetails}`);
+                }
+                
+                toast({
+                    title: "Demographic Removed",
+                    description: "The demographic was successfully removed from this tour.",
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            } catch (error) {
+                console.error("Error removing demographic:", error);
+                toast({
+                    title: "Error",
+                    description: `Failed to remove demographic: ${error.message}`,
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+                setSelectedDemographics(prev => 
+                    [...prev, availableDemographics.find(demo => demo.id === id)].filter(Boolean)
+                );
+            }
         }
     };
     const handleClosePopover = () => {

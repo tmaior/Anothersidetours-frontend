@@ -9,7 +9,7 @@ import ModalPageLayout from "../../components/ModalPageLayout";
 export default function BookingDetailsPage({reservationData}) {
     const router = useRouter();
     const {tourId} = router.query;
-    const {setTourId, setImageUrl, setPrice, guestQuantity, setGuestQuantity} = useGuest();
+    const {setTourId, setImageUrl, setPrice, guestQuantity,} = useGuest();
     const tourIdAsString = reservationData ? reservationData.tourId : (Array.isArray(tourId) ? tourId[0] : (tourId || ""));
 
     const {
@@ -27,7 +27,7 @@ export default function BookingDetailsPage({reservationData}) {
     const [loadingStatus, setLoadingStatus] = useState(null);
     const [errorMessage, setErrorMessage] = useState(null);
     const [finalPrice, setFinalPrice] = useState(0);
-    const [tierPricing, setTierPricing] = useState(null);
+    const [, setTierPricing] = useState(null);
 
 
     useEffect(() => {
@@ -133,10 +133,6 @@ export default function BookingDetailsPage({reservationData}) {
                     selectedDate={reservationData?.date || ""}
                     selectedTime={reservationData?.time || ""}
                     onContinue={handleContinueToCheckout}
-                    onGuestQuantityChange={(quantity) => {
-                        setGuestQuantity(quantity);
-                        calculatePrice(tierPricing, quantity);
-                    }}
                 />
             </ModalPageLayout>
 

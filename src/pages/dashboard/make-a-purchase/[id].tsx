@@ -192,7 +192,9 @@ const PurchasePage = () => {
     const [selectedDemographic,] = useState<string>("");
 
     const getPricesForDatePicker = () => {
-        const pricePerGuest = cart.length > 0 ? (cart[selectedCartItemIndex]?.valuePerGuest || cart[selectedCartItemIndex]?.price || 0) : 0;
+        if (cart.length === 0 || selectedCartItemIndex >= cart.length) return Array(31).fill(0);
+        const currentTourId = cart[selectedCartItemIndex]?.id;
+        const pricePerGuest = getPriceForQuantity(quantity, currentTourId);
         return Array(31).fill(pricePerGuest);
     };
 

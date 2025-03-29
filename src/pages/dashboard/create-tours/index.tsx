@@ -857,6 +857,7 @@ function SchedulesAvailabilityStep({
     const {isOpen: isModalOpen, onOpen: openModal, onClose: closeModal} = useDisclosure();
     const [newDemographic, setNewDemographic] = useState({name: "", caption: ""});
     const {addDemographic, removeDemographic} = useDemographics();
+    const [selectedDemographicId, setSelectedDemographicId] = useState<string>("");
 
     const fetchTourDemographics = useCallback(async () => {
         try {
@@ -896,14 +897,21 @@ function SchedulesAvailabilityStep({
             setSelectedDemographics([...selectedDemographics, selectedDemo]);
             addDemographic(selectedDemo);
         }
+        setSelectedDemographicId("");
         onClose();
     };
 
     const handleRemoveDemographic = (id) => {
         setSelectedDemographics(selectedDemographics.filter((demo) => demo.id !== id));
         removeDemographic(id);
+        if (selectedDemographicId === id) {
+            setSelectedDemographicId("");
+        }
     };
-
+    const handleClosePopover = () => {
+        setSelectedDemographicId("");
+        onClose();
+    };
 
     const handleCreateDemographic = async () => {
         if (!newDemographic.name.trim()) {
@@ -1447,7 +1455,7 @@ function SchedulesAvailabilityStep({
                                     <Text fontSize="lg" fontWeight="bold" mb={4}>
                                         Demographics
                                     </Text>
-                                    <Popover isOpen={isOpen} onClose={onClose} placement="bottom-start">
+                                    <Popover isOpen={isOpen} onClose={handleClosePopover} placement="bottom-start">
                                         <PopoverTrigger>
                                             <Button onClick={onOpen} colorScheme="gray" variant="outline">
                                                 + Add Demographic
@@ -1457,10 +1465,17 @@ function SchedulesAvailabilityStep({
                                             <PopoverArrow/>
                                             <PopoverBody>
                                                 <VStack align="stretch">
-                                                    <RadioGroup onChange={handleSelectDemographic}>
+                                                    <RadioGroup 
+                                                        onChange={handleSelectDemographic} 
+                                                        value={selectedDemographicId}
+                                                    >
                                                         <Stack direction="column" maxH="200px" overflowY="auto">
                                                             {availableDemographics.map((demo) => (
-                                                                <Radio key={demo.id} value={demo.id}>
+                                                                <Radio 
+                                                                    key={demo.id} 
+                                                                    value={demo.id}
+                                                                    isDisabled={selectedDemographics.some(d => d.id === demo.id)}
+                                                                >
                                                                     {demo.name}
                                                                 </Radio>
                                                             ))}

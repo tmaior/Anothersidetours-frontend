@@ -10,6 +10,7 @@ interface DemographicsContextType {
     addDemographic: (demographic: Demographic) => void;
     removeDemographic: (id: string) => void;
     setInitialDemographics: (demographics: Demographic[]) => void;
+    resetDemographics: () => void;
 }
 
 const DemographicsContext = createContext<DemographicsContextType | undefined>(undefined);
@@ -29,8 +30,12 @@ export const DemographicsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setDemographics(initialData);
     };
 
+    const resetDemographics = () => {
+        setDemographics([]);
+    };
+
     return (
-        <DemographicsContext.Provider value={{ demographics, addDemographic, removeDemographic, setInitialDemographics }}>
+        <DemographicsContext.Provider value={{ demographics, addDemographic, removeDemographic, setInitialDemographics, resetDemographics }}>
             {children}
         </DemographicsContext.Provider>
     );

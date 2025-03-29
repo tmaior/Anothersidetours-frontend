@@ -12,7 +12,10 @@ function EditTourPage() {
         setDescription,
         setPrice,
         setImagePreview,
-        setOperationProcedures
+        setOperationProcedures,
+        setTourId,
+        setCancellationPolicy,
+        setConsiderations
     } = useGuest();
 
     const [isLoading, setIsLoading] = useState(true);
@@ -33,6 +36,9 @@ function EditTourPage() {
                 setPrice(data.price || 0);
                 setImagePreview(data.imageUrl || null);
                 setOperationProcedures(data.StandardOperation || "");
+                setCancellationPolicy(data.Cancellation_Policy || "");
+                setConsiderations(data.Considerations || "");
+                setTourId(id as string);
                 setIsLoading(false);
             } catch (error) {
                 console.error(error);
@@ -40,7 +46,7 @@ function EditTourPage() {
         }
 
         fetchTour();
-    }, [id,setDescription ,setImagePreview ,setOperationProcedures ,setPrice ,setTitle]);
+    }, [id, setDescription, setImagePreview, setOperationProcedures, setPrice, setTitle, setTourId, setCancellationPolicy, setConsiderations]);
 
     if (isLoading) {
         return <div>Carregando dados...</div>;

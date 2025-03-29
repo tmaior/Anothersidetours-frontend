@@ -835,11 +835,8 @@ function SchedulesAvailabilityStep({
                 duration: 3000,
                 isClosable: true
             });
-            
             resetFields();
-            
-            window.location.href = "/dashboard/list-tours";
-            
+            router.push("/dashboard/list-tours");
         } catch (error) {
             console.error("Error:", error);
             toast({
@@ -856,7 +853,6 @@ function SchedulesAvailabilityStep({
     const [tourDemographics, setTourDemographics] = useState<Demographic[]>([]);
     const [availableDemographics, setAvailableDemographics] = useState<Demographic[]>([]);
     const [selectedDemographics, setSelectedDemographics] = useState<Demographic[]>([]);
-    const [selectedDemographicId, setSelectedDemographicId] = useState<string>("");
     const {isOpen, onOpen, onClose} = useDisclosure();
     const {isOpen: isModalOpen, onOpen: openModal, onClose: closeModal} = useDisclosure();
     const [newDemographic, setNewDemographic] = useState({name: "", caption: ""});
@@ -900,22 +896,14 @@ function SchedulesAvailabilityStep({
             setSelectedDemographics([...selectedDemographics, selectedDemo]);
             addDemographic(selectedDemo);
         }
-        setSelectedDemographicId("");
         onClose();
     };
 
     const handleRemoveDemographic = (id) => {
         setSelectedDemographics(selectedDemographics.filter((demo) => demo.id !== id));
         removeDemographic(id);
-        if (selectedDemographicId === id) {
-            setSelectedDemographicId("");
-        }
     };
 
-    const handleClosePopover = () => {
-        setSelectedDemographicId("");
-        onClose();
-    };
 
     const handleCreateDemographic = async () => {
         if (!newDemographic.name.trim()) {
@@ -1459,7 +1447,7 @@ function SchedulesAvailabilityStep({
                                     <Text fontSize="lg" fontWeight="bold" mb={4}>
                                         Demographics
                                     </Text>
-                                    <Popover isOpen={isOpen} onClose={handleClosePopover} placement="bottom-start">
+                                    <Popover isOpen={isOpen} onClose={onClose} placement="bottom-start">
                                         <PopoverTrigger>
                                             <Button onClick={onOpen} colorScheme="gray" variant="outline">
                                                 + Add Demographic
@@ -1469,17 +1457,10 @@ function SchedulesAvailabilityStep({
                                             <PopoverArrow/>
                                             <PopoverBody>
                                                 <VStack align="stretch">
-                                                    <RadioGroup 
-                                                        onChange={handleSelectDemographic} 
-                                                        value={selectedDemographicId}
-                                                    >
+                                                    <RadioGroup onChange={handleSelectDemographic}>
                                                         <Stack direction="column" maxH="200px" overflowY="auto">
                                                             {availableDemographics.map((demo) => (
-                                                                <Radio 
-                                                                    key={demo.id} 
-                                                                    value={demo.id}
-                                                                    onChange={() => setSelectedDemographicId(demo.id)}
-                                                                >
+                                                                <Radio key={demo.id} value={demo.id}>
                                                                     {demo.name}
                                                                 </Radio>
                                                             ))}

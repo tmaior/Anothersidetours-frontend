@@ -1251,6 +1251,27 @@ function SchedulesAvailabilityStep({
         } else {
             setTimeSlots([...timeSlots, time]);
         }
+
+        setTimeSlots(prevSlots => {
+            return [...prevSlots].sort((a, b) => {
+                const aIsAM = a.includes('AM');
+                const bIsAM = b.includes('AM');
+
+                if (aIsAM && !bIsAM) return -1;
+                if (!aIsAM && bIsAM) return 1;
+
+                const timeA = a.replace(' AM', '').replace(' PM', '');
+                const timeB = b.replace(' AM', '').replace(' PM', '');
+
+                const [hoursA, minutesA] = timeA.split(':').map(Number);
+                const [hoursB, minutesB] = timeB.split(':').map(Number);
+
+                if (hoursA !== hoursB) return hoursA - hoursB;
+
+                return minutesA - minutesB;
+            });
+        });
+        
         setTimePickerOpen(false);
     };
 
@@ -1269,13 +1290,37 @@ function SchedulesAvailabilityStep({
     const handleEditSchedule = (index: number) => {
         const scheduleToEdit = schedule[index];
         setScheduleName(scheduleToEdit.name || "");
+
         const defaultDays = { Sun: false, Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false };
         const newSelectedDays = { ...defaultDays };
-        Object.keys(scheduleToEdit.days || {}).forEach(day => {
-            newSelectedDays[day] = true;
+        
+        Object.entries(scheduleToEdit.days || {}).forEach(([day, isSelected]) => {
+            if (isSelected) {
+                newSelectedDays[day] = true;
+            }
         });
+        
         setSelectedDays(newSelectedDays);
-        setTimeSlots(scheduleToEdit.timeSlots);
+
+        const sortedTimeSlots = [...scheduleToEdit.timeSlots].sort((a, b) => {
+            const aIsAM = a.includes('AM');
+            const bIsAM = b.includes('AM');
+
+            if (aIsAM && !bIsAM) return -1;
+            if (!aIsAM && bIsAM) return 1;
+
+            const timeA = a.replace(' AM', '').replace(' PM', '');
+            const timeB = b.replace(' AM', '').replace(' PM', '');
+
+            const [hoursA, minutesA] = timeA.split(':').map(Number);
+            const [hoursB, minutesB] = timeB.split(':').map(Number);
+
+            if (hoursA !== hoursB) return hoursA - hoursB;
+
+            return minutesA - minutesB;
+        });
+        
+        setTimeSlots(sortedTimeSlots);
         setEditingScheduleIndex(index);
         openScheduleModal();
     };
@@ -1335,15 +1380,29 @@ function SchedulesAvailabilityStep({
 
     const formatScheduleDisplay = (days: Record<string, boolean>, timeSlots: string[]): string => {
         const sortedTimeSlots = [...timeSlots].sort((a, b) => {
-            const timeA = new Date(`1970/01/01 ${a}`);
-            const timeB = new Date(`1970/01/01 ${b}`);
-            return timeA.getTime() - timeB.getTime();
+            const aIsAM = a.includes('AM');
+            const bIsAM = b.includes('AM');
+
+            if (aIsAM && !bIsAM) return -1;
+            if (!aIsAM && bIsAM) return 1;
+
+            const timeA = a.replace(' AM', '').replace(' PM', '');
+            const timeB = b.replace(' AM', '').replace(' PM', '');
+
+            const [hoursA, minutesA] = timeA.split(':').map(Number);
+            const [hoursB, minutesB] = timeB.split(':').map(Number);
+
+            if (hoursA !== hoursB) return hoursA - hoursB;
+
+            return minutesA - minutesB;
         });
+        
         const formattedTimes = sortedTimeSlots.map(slot => {
             const [time, period] = slot.split(' ');
             const [hours, minutes] = time.split(':');
             return `${hours}:${minutes}${period.toLowerCase()}`;
         });
+        
         const allDaysSelected = Object.values(days).every(day => day);
         const anyDaySelected = Object.values(days).some(day => day);
 
@@ -1363,6 +1422,7 @@ function SchedulesAvailabilityStep({
             }
             return `${selectedDays} at ${formattedTimes.join(', ')}`;
         }
+        
         if (formattedTimes.length > 3) {
             return `${formattedTimes.slice(0, 3).join(', ')}...`;
         }

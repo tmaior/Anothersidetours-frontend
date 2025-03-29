@@ -15,7 +15,8 @@ function EditTourPage() {
         setOperationProcedures,
         setTourId,
         setCancellationPolicy,
-        setConsiderations
+        setConsiderations,
+        setSchedule
     } = useGuest();
 
     const [isLoading, setIsLoading] = useState(true);
@@ -23,30 +24,58 @@ function EditTourPage() {
     useEffect(() => {
         if (!id) return;
 
-        async function fetchTour() {
+        async function fetchTourData() {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`);
-                if (!res.ok) {
+                const tourRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`);
+                if (!tourRes.ok) {
                     throw new Error("Error when searching for tour");
                 }
-                const data = await res.json();
+                const tourData = await tourRes.json();
 
-                setTitle(data.name || "");
-                setDescription(data.description || "");
-                setPrice(data.price || 0);
-                setImagePreview(data.imageUrl || null);
-                setOperationProcedures(data.StandardOperation || "");
-                setCancellationPolicy(data.Cancellation_Policy || "");
-                setConsiderations(data.Considerations || "");
+                setTitle(tourData.name || "");
+                setDescription(tourData.description || "");
+                setPrice(tourData.price || 0);
+                setImagePreview(tourData.imageUrl || null);
+                setOperationProcedures(tourData.StandardOperation || "");
+                setCancellationPolicy(tourData.Cancellation_Policy || "");
+                setConsiderations(tourData.Considerations || "");
                 setTourId(id as string);
+
+                try {
+                    const schedulesRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/schedules/${id}`);
+                    if (schedulesRes.ok) {
+                        const schedulesData = await schedulesRes.json();
+                        const formattedSchedules = schedulesData.map(schedule => ({
+                            id: schedule.id,
+                            name: schedule.name || "",
+                            days: Array.isArray(schedule.days) ? 
+                                schedule.days.reduce((obj, day) => {
+                                    obj[day] = true;
+                                    return obj;
+                                }, {Sun: false, Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false}) : 
+                                {Sun: false, Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false},
+                            timeSlots: Array.isArray(schedule.timeSlots) ? schedule.timeSlots : [],
+                            startTime: "",
+                            startPeriod: "",
+                            endTime: "",
+                            endPeriod: ""
+                        }));
+                        
+                        setSchedule(formattedSchedules);
+                    }
+                } catch (scheduleError) {
+                    console.error("Error fetching schedules:", scheduleError);
+                }
+
                 setIsLoading(false);
             } catch (error) {
                 console.error(error);
+                setIsLoading(false);
             }
         }
 
-        fetchTour();
-    }, [id, setDescription, setImagePreview, setOperationProcedures, setPrice, setTitle, setTourId, setCancellationPolicy, setConsiderations]);
+        fetchTourData();
+    }, [id, setDescription, setImagePreview, setOperationProcedures, setPrice, setTitle, setTourId, setCancellationPolicy, setConsiderations, setSchedule]);
 
     if (isLoading) {
         return <div>Carregando dados...</div>;

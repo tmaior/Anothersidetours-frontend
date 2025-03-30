@@ -1167,7 +1167,14 @@ function SchedulesAvailabilityStep({
         if (tiers.length === 0) {
             setTiers([newTierToSave]);
         } else {
-            setTiers([...tiers, newTierToSave]);
+            const existingTierIndex = tiers.findIndex(tier => tier.id === newTier.id);
+            if (existingTierIndex >= 0) {
+                const updatedTiers = [...tiers];
+                updatedTiers[existingTierIndex] = newTierToSave;
+                setTiers(updatedTiers);
+            } else {
+                setTiers([...tiers, newTierToSave]);
+            }
         }
         tierPriceModal.onClose();
     };

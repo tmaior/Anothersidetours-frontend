@@ -20,6 +20,7 @@ function EditTourPage() {
     } = useGuest();
 
     const [isLoading, setIsLoading] = useState(true);
+    const [pricingData, setPricingData] = useState(null);
 
     useEffect(() => {
         if (!id) return;
@@ -40,6 +41,16 @@ function EditTourPage() {
                 setCancellationPolicy(tourData.Cancellation_Policy || "");
                 setConsiderations(tourData.Considerations || "");
                 setTourId(id as string);
+
+                try {
+                    const pricingRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${id}`);
+                    if (pricingRes.ok) {
+                        const pricingData = await pricingRes.json();
+                        setPricingData(pricingData);
+                    }
+                } catch (pricingError) {
+                    console.error("Error fetching pricing data:", pricingError);
+                }
 
                 try {
                     const schedulesRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/schedules/${id}`);
@@ -75,13 +86,13 @@ function EditTourPage() {
         }
 
         fetchTourData();
-    }, [id, setDescription, setImagePreview, setOperationProcedures, setPrice, setTitle, setTourId, setCancellationPolicy, setConsiderations, setSchedule]);
+    }, [id, setDescription, setImagePreview, setOperationProcedures, setPrice, setTitle, setTourId, setCancellationPolicy, setConsiderations, setSchedule, setPricingData]);
 
     if (isLoading) {
         return <div>Carregando dados...</div>;
     }
 
-    return <CreateToursPage isEditing/>;
+    return <CreateToursPage isEditing pricingData={pricingData}/>;
 }
 
 export default EditTourPage;

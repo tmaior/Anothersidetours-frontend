@@ -55,7 +55,7 @@ import axios from "axios";
 import TimeSlotPicker from "../../../components/TimeSlotPicker";
 import { ScheduleItem } from "../../../contexts/GuestContext";
 
-function DescriptionContentStep({onNext}: { onNext: () => void }) {
+function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEditing?: boolean }) {
     const [newIncludedItem, setNewIncludedItem] = useState("");
     const [newBringItem, setNewBringItem] = useState("");
     const [sopNotes, setSopNotes] = useState("");
@@ -546,6 +546,7 @@ function DescriptionContentStep({onNext}: { onNext: () => void }) {
 interface SchedulesAvailabilityStepProps {
     onBack: () => void;
     isEditing?: boolean;
+    pricingData?: any;
 }
 
 interface Demographic {
@@ -555,9 +556,10 @@ interface Demographic {
 }
 
 function SchedulesAvailabilityStep({
-                                       onBack,
-                                       isEditing = false,
-                                   }: SchedulesAvailabilityStepProps) {
+    onBack,
+    isEditing = false,
+    pricingData = null,
+}: SchedulesAvailabilityStepProps) {
     const router = useRouter();
 
     const {
@@ -621,422 +623,6 @@ function SchedulesAvailabilityStep({
         setPrice, setIncludedItems, setBringItems, setImagePreview, 
         setOperationProcedures, setCancellationPolicy, setConsiderations]);
 
-    async function handleSaveTour() {
-        try {
-            const method = isEditing ? "PUT" : "POST";
-            const {id} = router.query;
-
-            let imageUrlToSave = imagePreview;
-            if (imageFile) {
-                try {
-                    const formData = new FormData();
-                    formData.append("file", imageFile);
-                    
-                    const uploadResponse = await axios.post(
-                        `${process.env.NEXT_PUBLIC_API_URL}/upload`,
-                        formData,
-                        {
-                            headers: {
-                                "Content-Type": "multipart/form-data",
-                            },
-                        }
-                    );
-                    
-                    if (uploadResponse.data && uploadResponse.data.url) {
-                        imageUrlToSave = uploadResponse.data.url;
-                    }
-                } catch (error) {
-                    console.error("Error uploading image:", error);
-                    toast({
-                        title: "Error sending image",
-                        description: "The tour will be saved without an image.",
-                        status: "warning",
-                        duration: 3000,
-                        isClosable: true,
-                    });
-                }
-            }
-
-            const url = isEditing
-                ? `${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`
-                : `${process.env.NEXT_PUBLIC_API_URL}/tours`;
-
-            const tourResponse = await fetch(url, {
-                method,
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    name: title,
-                    description,
-                    duration: Number(eventDuration),
-                    imageUrl: imageUrlToSave,
-                    price: Number(price),
-                    guestLimit: Number(guestLimit),
-                    StandardOperation: operationProcedures,
-                    Cancellation_Policy: cancellationPolicy,
-                    Considerations: considerations,
-                    minPerEventLimit: minPerEventLimit,
-                    maxPerEventLimit: maxPerEventLimit,
-                    tenantId: tenantId
-                })
-            });
-
-            if (!tourResponse.ok) {
-                throw new Error("Failed to create tour");
-            }
-
-            const savedTour = await tourResponse.json();
-            const tourId = savedTour.id;
-            setTourId(tourId);
-
-            if (isEditing) {
-                const currentDemographicsResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/demographics/demographicByTourId/${tourId}`
-                );
-                
-                if (!currentDemographicsResponse.ok) {
-                    console.warn("Failed to fetch current demographics, proceeding with assignment");
-                } else {
-                    const currentDemographics = await currentDemographicsResponse.json();
-                    
-                    await Promise.all(
-                        currentDemographics.map(async (currentDemo) => {
-                            if (!selectedDemographics.some(newDemo => newDemo.id === currentDemo.id)) {
-                                await fetch(
-                                    `${process.env.NEXT_PUBLIC_API_URL}/demographics/${tourId}/${currentDemo.id}`,
-                                    {
-                                        method: "DELETE",
-                                        headers: { "Content-Type": "application/json" }
-                                    }
-                                );
-                            }
-                        })
-                    );
-
-                    const currentDemoIds = currentDemographics.map(demo => demo.id);
-                    const savedDemographics = await Promise.all(
-                        selectedDemographics
-                            .filter(demo => !currentDemoIds.includes(demo.id))
-                            .map(async (demo) => {
-                                try {
-                                    const response = await fetch(
-                                        `${process.env.NEXT_PUBLIC_API_URL}/demographics/assign-to-tour`,
-                                        {
-                                            method: "POST",
-                                            headers: {"Content-Type": "application/json"},
-                                            body: JSON.stringify({
-                                                tourId,
-                                                demographicId: demo.id,
-                                            }),
-                                        }
-                                    );
-
-                                    if (!response.ok) {
-                                        console.warn(`Failed to assign demographic ${demo.name}`);
-                                    }
-                                    return demo;
-                                } catch (error) {
-                                    console.warn(`Error assigning demographic ${demo.name}:`, error);
-                                    return demo;
-                                }
-                            })
-                    );
-                }
-            } else {
-                const savedDemographics = await Promise.all(
-                    selectedDemographics.map(async (demo) => {
-                        const response = await fetch(
-                            `${process.env.NEXT_PUBLIC_API_URL}/demographics/assign-to-tour`,
-                            {
-                                method: "POST",
-                                headers: {"Content-Type": "application/json"},
-                                body: JSON.stringify({
-                                    tourId,
-                                    demographicId: demo.id,
-                                }),
-                            }
-                        );
-
-                        if (!response.ok) {
-                            throw new Error(`Failed to assign demographic ${demo.name}`);
-                        }
-                        return demo;
-                    })
-                );
-            }
-
-            if (schedule.length > 0) {
-                const scheduleData = schedule.map(scheduleItem => {
-                    const selectedDays = Object.entries(scheduleItem.days)
-                        .filter(([, isSelected]) => isSelected)
-                        .map(([day]) => day);
-
-                    const formattedTimeSlots = scheduleItem.timeSlots.map(slot => {
-                        return slot;
-                    });
-                    
-                    return {
-                        name: scheduleItem.name || "",
-                        days: selectedDays,
-                        timeSlots: formattedTimeSlots
-                    };
-                });
-
-                const scheduleResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/${tourId}`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({ schedules: scheduleData })
-                    }
-                );
-
-                if (!scheduleResponse.ok) {
-                    throw new Error("Failed to save schedule");
-                }
-            }
-
-            if (bringItems.length > 0) {
-                await Promise.all(
-                    bringItems.map((item) =>
-                        fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/what-to-bring`, {
-                            method: "POST",
-                            headers: {"Content-Type": "application/json"},
-                            body: JSON.stringify({tourId, item})
-                        })
-                    )
-                );
-            }
-
-            if (includedItems.length > 0) {
-                await Promise.all(
-                    includedItems.map((item) =>
-                        fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/whats-included`, {
-                            method: "POST",
-                            headers: {"Content-Type": "application/json"},
-                            body: JSON.stringify({tourId, item})
-                        })
-                    )
-                );
-            }
-
-            if (questionnaireRef.current) {
-                const questions = questionnaireRef.current.getQuestions();
-                
-                if (questions.length > 0) {
-                    await Promise.all(
-                        questions.map(question =>
-                            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information`, {
-                                method: "POST",
-                                headers: {"Content-Type": "application/json"},
-                                body: JSON.stringify({
-                                    tourId,
-                                    title: question.label
-                                })
-                            })
-                        )
-                    );
-                }
-            }
-
-            toast({
-                title: "Tour Created",
-                description: "The tour and related data were created successfully.",
-                status: "success",
-                duration: 3000,
-                isClosable: true
-            });
-            resetFields();
-            window.location.href = "/dashboard/list-tours";
-        } catch (error) {
-            console.error("Error:", error);
-            toast({
-                title: "Error",
-                description: "Failed to create the tour. Please try again.",
-                status: "error",
-                duration: 5000,
-                isClosable: true
-            });
-        }
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [tourDemographics, setTourDemographics] = useState<Demographic[]>([]);
-    const [availableDemographics, setAvailableDemographics] = useState<Demographic[]>([]);
-    const [selectedDemographics, setSelectedDemographics] = useState<Demographic[]>([]);
-    const {isOpen, onOpen, onClose} = useDisclosure();
-    const {isOpen: isModalOpen, onOpen: openModal, onClose: closeModal} = useDisclosure();
-    const [newDemographic, setNewDemographic] = useState({name: "", caption: ""});
-    const {addDemographic, removeDemographic} = useDemographics();
-    const [selectedDemographicId, setSelectedDemographicId] = useState<string>("");
-
-    const fetchTourDemographics = useCallback(async () => {
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics/demographicByTourId/${tourId}`);
-            const data = await response.json();
-            if (data && Array.isArray(data)) {
-                setSelectedDemographics(data);
-            }
-        } catch (error) {
-            console.error("Error fetching tour demographics:", error);
-            toast({
-                title: "Error",
-                description: "Failed to load tour demographics",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-        }
-    }, [tourId, toast]);
-
-    useEffect(() => {
-        if (tourId) {
-            fetchTourDemographics();
-        }
-    }, [tourId, fetchTourDemographics]);
-
-    useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics/tenant/${tenantId}`)
-            .then((res) => res.json())
-            .then((data) => setAvailableDemographics(Array.isArray(data) ? data : []))
-            .catch((err) => console.error("Error fetching available demographics:", err));
-    }, [tenantId]);
-
-    const handleSelectDemographic = (selectedId) => {
-        const selectedDemo = availableDemographics.find((demo) => demo.id === selectedId);
-        if (selectedDemo && !selectedDemographics.some(demo => demo.id === selectedId)) {
-            setSelectedDemographics([...selectedDemographics, selectedDemo]);
-            addDemographic(selectedDemo);
-        }
-        setSelectedDemographicId("");
-        onClose();
-    };
-
-    const handleRemoveDemographic = async (id) => {
-        setSelectedDemographics(selectedDemographics.filter((demo) => demo.id !== id));
-        removeDemographic(id);
-        if (selectedDemographicId === id) {
-            setSelectedDemographicId("");
-        }
-
-        if (isEditing && tourId) {
-            try {
-
-                const url = `${process.env.NEXT_PUBLIC_API_URL}/demographics/${tourId}/${id}`;
-
-                const response = await fetch(url, {
-                    method: "DELETE",
-                    headers: { 
-                        "Content-Type": "application/json"
-                    }
-                });
-                if (!response.ok) {
-                    let errorDetails = "";
-                    try {
-                        const errorData = await response.json();
-                        errorDetails = JSON.stringify(errorData);
-                    } catch (e) {
-                        errorDetails = await response.text();
-                    }
-                    console.error(`Error response details: ${errorDetails}`);
-                    throw new Error(`Failed to remove demographic association: ${response.status} - ${errorDetails}`);
-                }
-                
-                toast({
-                    title: "Demographic Removed",
-                    description: "The demographic was successfully removed from this tour.",
-                    status: "success",
-                    duration: 3000,
-                    isClosable: true,
-                });
-            } catch (error) {
-                console.error("Error removing demographic:", error);
-                toast({
-                    title: "Error",
-                    description: `Failed to remove demographic: ${error.message}`,
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
-                });
-                setSelectedDemographics(prev => 
-                    [...prev, availableDemographics.find(demo => demo.id === id)].filter(Boolean)
-                );
-            }
-        }
-    };
-    const handleClosePopover = () => {
-        setSelectedDemographicId("");
-        onClose();
-    };
-
-    const handleCreateDemographic = async () => {
-        if (!newDemographic.name.trim()) {
-            toast({
-                title: "Error",
-                description: "Name is required.",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-            return;
-        }
-        const nameExists = availableDemographics.some(
-            demo => demo.name.toLowerCase() === newDemographic.name.trim().toLowerCase()
-        );
-        if (nameExists) {
-            toast({
-                title: "Error",
-                description: "A demographic with this name already exists.",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-            return;
-        }
-
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    name: newDemographic.name,
-                    tenantId: tenantId,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to create demographic");
-            }
-
-            const createdDemographic = await response.json();
-            setAvailableDemographics([...availableDemographics, createdDemographic]);
-            setNewDemographic({name: "", caption: ""});
-            closeModal();
-
-            toast({
-                title: "Success",
-                description: "Demographic created successfully.",
-                status: "success",
-                duration: 3000,
-                isClosable: true,
-            });
-        } catch (error) {
-            console.error("Error creating demographic:", error);
-            toast({
-                title: "Error",
-                description: "Could not create demographic.",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-        }
-    };
-
     const [pricingStructure, setPricingStructure] = useState("tiered");
     const [basePrices, setBasePrices] = useState({});
     const [tiers, setTiers] = useState([]);
@@ -1055,30 +641,44 @@ function SchedulesAvailabilityStep({
     const flatPriceModal = useDisclosure();
 
     useEffect(() => {
-        const updatedTiers = tiers.map((tier) => {
-            const finalPrices = {};
-            for (const demo of demographics) {
-                const basePrice = basePrices[demo.id] || 0;
-                const adjustment = tier.adjustments[demo.id] || 0;
-                const adjustmentType = tier.adjustmentTypes[demo.id] || "$";
-                const operation = tier.operations[demo.id] || "Markup";
+        if (isEditing && pricingData) {
+            const pricingType = pricingData[0]?.pricingType || "flat";
+            setPricingStructure(pricingType);
 
-                finalPrices[demo.id] =
-                    operation === "Markup"
-                        ? adjustmentType === "$"
-                            ? basePrice + adjustment
-                            : basePrice + (basePrice * adjustment) / 100
-                        : adjustmentType === "$"
-                            ? basePrice - adjustment
-                            : basePrice - (basePrice * adjustment) / 100;
+            const newBasePrices = {};
+            pricingData.forEach(pricing => {
+                newBasePrices[pricing.demographicId] = pricing.basePrice;
+            });
+            setBasePrices(newBasePrices);
+
+            if (pricingType === "tiered") {
+                const tiersByQuantity = {};
+                pricingData.forEach(pricing => {
+                    if (pricing.tierEntries && pricing.tierEntries.length > 0) {
+                        pricing.tierEntries.forEach(entry => {
+                            if (!tiersByQuantity[entry.quantity]) {
+                                tiersByQuantity[entry.quantity] = {
+                                    id: crypto.randomUUID(),
+                                    guests: `${entry.quantity}+ Guests`,
+                                    adjustments: {},
+                                    adjustmentTypes: {},
+                                    operations: {},
+                                    finalPrices: {}
+                                };
+                            }
+                            
+                            tiersByQuantity[entry.quantity].adjustments[pricing.demographicId] = entry.adjustment || 0;
+                            tiersByQuantity[entry.quantity].adjustmentTypes[pricing.demographicId] = entry.adjustmentType || "$";
+                            tiersByQuantity[entry.quantity].operations[pricing.demographicId] = entry.operation || "Markup";
+                            tiersByQuantity[entry.quantity].finalPrices[pricing.demographicId] = entry.price;
+                        });
+                    }
+                });
+                
+                setTiers(Object.values(tiersByQuantity));
             }
-            return {
-                ...tier,
-                finalPrices,
-            };
-        });
-        setTiers(updatedTiers);
-    }, [demographics,tiers,basePrices]);
+        }
+    }, [isEditing, pricingData]);
 
     const handlePricingChange = (value) => {
         setPricingStructure(value);
@@ -1436,6 +1036,473 @@ function SchedulesAvailabilityStep({
         return formattedTimes.join(', ');
     };
 
+    async function handleSaveTour() {
+        try {
+            const method = isEditing ? "PUT" : "POST";
+            const {id} = router.query;
+
+            let imageUrlToSave = imagePreview;
+            if (imageFile) {
+                try {
+                    const formData = new FormData();
+                    formData.append("file", imageFile);
+                    
+                    const uploadResponse = await axios.post(
+                        `${process.env.NEXT_PUBLIC_API_URL}/upload`,
+                        formData,
+                        {
+                            headers: {
+                                "Content-Type": "multipart/form-data",
+                            },
+                        }
+                    );
+                    
+                    if (uploadResponse.data && uploadResponse.data.url) {
+                        imageUrlToSave = uploadResponse.data.url;
+                    }
+                } catch (error) {
+                    console.error("Error uploading image:", error);
+                    toast({
+                        title: "Error sending image",
+                        description: "The tour will be saved without an image.",
+                        status: "warning",
+                        duration: 3000,
+                        isClosable: true,
+                    });
+                }
+            }
+
+            const url = isEditing
+                ? `${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`
+                : `${process.env.NEXT_PUBLIC_API_URL}/tours`;
+
+            const tourResponse = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    name: title,
+                    description,
+                    duration: Number(eventDuration),
+                    imageUrl: imageUrlToSave,
+                    price: Number(price),
+                    guestLimit: Number(guestLimit),
+                    StandardOperation: operationProcedures,
+                    Cancellation_Policy: cancellationPolicy,
+                    Considerations: considerations,
+                    minPerEventLimit: minPerEventLimit,
+                    maxPerEventLimit: maxPerEventLimit,
+                    tenantId: tenantId
+                })
+            });
+
+            if (!tourResponse.ok) {
+                throw new Error("Failed to create tour");
+            }
+
+            const savedTour = await tourResponse.json();
+            const tourId = savedTour.id;
+            setTourId(tourId);
+
+            if (isEditing) {
+                const currentDemographicsResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/demographics/demographicByTourId/${tourId}`
+                );
+                
+                if (!currentDemographicsResponse.ok) {
+                    console.warn("Failed to fetch current demographics, proceeding with assignment");
+                } else {
+                    const currentDemographics = await currentDemographicsResponse.json();
+                    
+                    await Promise.all(
+                        currentDemographics.map(async (currentDemo) => {
+                            if (!selectedDemographics.some(newDemo => newDemo.id === currentDemo.id)) {
+                                await fetch(
+                                    `${process.env.NEXT_PUBLIC_API_URL}/demographics/${tourId}/${currentDemo.id}`,
+                                    {
+                                        method: "DELETE",
+                                        headers: { "Content-Type": "application/json" }
+                                    }
+                                );
+                            }
+                        })
+                    );
+
+                    const currentDemoIds = currentDemographics.map(demo => demo.id);
+                    const savedDemographics = await Promise.all(
+                        selectedDemographics
+                            .filter(demo => !currentDemoIds.includes(demo.id))
+                            .map(async (demo) => {
+                                try {
+                                    const response = await fetch(
+                                        `${process.env.NEXT_PUBLIC_API_URL}/demographics/assign-to-tour`,
+                                        {
+                                            method: "POST",
+                                            headers: {"Content-Type": "application/json"},
+                                            body: JSON.stringify({
+                                                tourId,
+                                                demographicId: demo.id,
+                                            }),
+                                        }
+                                    );
+
+                                    if (!response.ok) {
+                                        console.warn(`Failed to assign demographic ${demo.name}`);
+                                    }
+                                    return demo;
+                                } catch (error) {
+                                    console.warn(`Error assigning demographic ${demo.name}:`, error);
+                                    return demo;
+                                }
+                            })
+                    );
+                }
+            } else {
+                const savedDemographics = await Promise.all(
+                    selectedDemographics.map(async (demo) => {
+                        const response = await fetch(
+                            `${process.env.NEXT_PUBLIC_API_URL}/demographics/assign-to-tour`,
+                            {
+                                method: "POST",
+                                headers: {"Content-Type": "application/json"},
+                                body: JSON.stringify({
+                                    tourId,
+                                    demographicId: demo.id,
+                                }),
+                            }
+                        );
+
+                        if (!response.ok) {
+                            throw new Error(`Failed to assign demographic ${demo.name}`);
+                        }
+                        return demo;
+                    })
+                );
+            }
+
+            if (schedule.length > 0) {
+                const scheduleData = schedule.map(scheduleItem => {
+                    const selectedDays = Object.entries(scheduleItem.days)
+                        .filter(([, isSelected]) => isSelected)
+                        .map(([day]) => day);
+
+                    const formattedTimeSlots = scheduleItem.timeSlots.map(slot => {
+                        return slot;
+                    });
+                    
+                    return {
+                        name: scheduleItem.name || "",
+                        days: selectedDays,
+                        timeSlots: formattedTimeSlots
+                    };
+                });
+
+                const scheduleResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/${tourId}`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ schedules: scheduleData })
+                    }
+                );
+
+                if (!scheduleResponse.ok) {
+                    throw new Error("Failed to save schedule");
+                }
+            }
+
+            if (bringItems.length > 0) {
+                await Promise.all(
+                    bringItems.map((item) =>
+                        fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/what-to-bring`, {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({tourId, item})
+                        })
+                    )
+                );
+            }
+
+            if (includedItems.length > 0) {
+                await Promise.all(
+                    includedItems.map((item) =>
+                        fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/whats-included`, {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({tourId, item})
+                        })
+                    )
+                );
+            }
+
+            if (questionnaireRef.current) {
+                const questions = questionnaireRef.current.getQuestions();
+                
+                if (questions.length > 0) {
+                    await Promise.all(
+                        questions.map(question =>
+                            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information`, {
+                                method: "POST",
+                                headers: {"Content-Type": "application/json"},
+                                body: JSON.stringify({
+                                    tourId,
+                                    title: question.label
+                                })
+                            })
+                        )
+                    );
+                }
+            }
+
+            if (selectedDemographics.length > 0) {
+                await Promise.all(
+                    selectedDemographics.map(async (demo) => {
+                        const pricingData = {
+                            tourId,
+                            demographicId: demo.id,
+                            pricingType: pricingStructure,
+                            basePrice: basePrices[demo.id] || 0
+                        };
+                        
+                        if (pricingStructure === "tiered" && tiers.length > 0) {
+                            pricingData.tiers = tiers.map(tier => {
+                                const quantity = parseInt(tier.guests.replace(/\+\s*Guests/i, '').trim());
+                                return {
+                                    quantity,
+                                    price: tier.finalPrices[demo.id] || 0,
+                                    adjustment: tier.adjustments[demo.id] || 0,
+                                    adjustmentType: tier.adjustmentTypes[demo.id] || "$",
+                                    operation: tier.operations[demo.id] || "Markup"
+                                };
+                            });
+                        }
+
+                        if (isEditing) {
+                            try {
+                                const checkRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourId}`);
+                                if (checkRes.ok) {
+                                    const existingPricing = await checkRes.json();
+                                    const existing = existingPricing.find(p => p.demographicId === demo.id);
+                                    
+                                    if (existing) {
+                                        return fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/${existing.id}`, {
+                                            method: "PUT",
+                                            headers: {"Content-Type": "application/json"},
+                                            body: JSON.stringify(pricingData)
+                                        });
+                                    }
+                                }
+                            } catch (error) {
+                                console.warn("Error checking existing pricing:", error);
+                            }
+                        }
+                        return fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing`, {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify(pricingData)
+                        });
+                    })
+                );
+            }
+
+            toast({
+                title: "Tour Created",
+                description: "The tour and related data were created successfully.",
+                status: "success",
+                duration: 3000,
+                isClosable: true
+            });
+            resetFields();
+            window.location.href = "/dashboard/list-tours";
+        } catch (error) {
+            console.error("Error:", error);
+            toast({
+                title: "Error",
+                description: "Failed to create the tour. Please try again.",
+                status: "error",
+                duration: 5000,
+                isClosable: true
+            });
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [tourDemographics, setTourDemographics] = useState<Demographic[]>([]);
+    const [availableDemographics, setAvailableDemographics] = useState<Demographic[]>([]);
+    const [selectedDemographics, setSelectedDemographics] = useState<Demographic[]>([]);
+    const {isOpen, onOpen, onClose} = useDisclosure();
+    const {isOpen: isModalOpen, onOpen: openModal, onClose: closeModal} = useDisclosure();
+    const [newDemographic, setNewDemographic] = useState({name: "", caption: ""});
+    const {addDemographic, removeDemographic} = useDemographics();
+    const [selectedDemographicId, setSelectedDemographicId] = useState<string>("");
+
+    const fetchTourDemographics = useCallback(async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics/demographicByTourId/${tourId}`);
+            const data = await response.json();
+            if (data && Array.isArray(data)) {
+                setSelectedDemographics(data);
+            }
+        } catch (error) {
+            console.error("Error fetching tour demographics:", error);
+            toast({
+                title: "Error",
+                description: "Failed to load tour demographics",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    }, [tourId, toast]);
+
+    useEffect(() => {
+        if (tourId) {
+            fetchTourDemographics();
+        }
+    }, [tourId, fetchTourDemographics]);
+
+    useEffect(() => {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics/tenant/${tenantId}`)
+            .then((res) => res.json())
+            .then((data) => setAvailableDemographics(Array.isArray(data) ? data : []))
+            .catch((err) => console.error("Error fetching available demographics:", err));
+    }, [tenantId]);
+
+    const handleSelectDemographic = (selectedId) => {
+        const selectedDemo = availableDemographics.find((demo) => demo.id === selectedId);
+        if (selectedDemo && !selectedDemographics.some(demo => demo.id === selectedId)) {
+            setSelectedDemographics([...selectedDemographics, selectedDemo]);
+            addDemographic(selectedDemo);
+        }
+        setSelectedDemographicId("");
+        onClose();
+    };
+
+    const handleRemoveDemographic = async (id) => {
+        setSelectedDemographics(selectedDemographics.filter((demo) => demo.id !== id));
+        removeDemographic(id);
+        if (selectedDemographicId === id) {
+            setSelectedDemographicId("");
+        }
+
+        if (isEditing && tourId) {
+            try {
+
+                const url = `${process.env.NEXT_PUBLIC_API_URL}/demographics/${tourId}/${id}`;
+
+                const response = await fetch(url, {
+                    method: "DELETE",
+                    headers: { 
+                        "Content-Type": "application/json"
+                    }
+                });
+                if (!response.ok) {
+                    let errorDetails = "";
+                    try {
+                        const errorData = await response.json();
+                        errorDetails = JSON.stringify(errorData);
+                    } catch (e) {
+                        errorDetails = await response.text();
+                    }
+                    console.error(`Error response details: ${errorDetails}`);
+                    throw new Error(`Failed to remove demographic association: ${response.status} - ${errorDetails}`);
+                }
+                
+                toast({
+                    title: "Demographic Removed",
+                    description: "The demographic was successfully removed from this tour.",
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            } catch (error) {
+                console.error("Error removing demographic:", error);
+                toast({
+                    title: "Error",
+                    description: `Failed to remove demographic: ${error.message}`,
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+                setSelectedDemographics(prev => 
+                    [...prev, availableDemographics.find(demo => demo.id === id)].filter(Boolean)
+                );
+            }
+        }
+    };
+    const handleClosePopover = () => {
+        setSelectedDemographicId("");
+        onClose();
+    };
+
+    const handleCreateDemographic = async () => {
+        if (!newDemographic.name.trim()) {
+            toast({
+                title: "Error",
+                description: "Name is required.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+        const nameExists = availableDemographics.some(
+            demo => demo.name.toLowerCase() === newDemographic.name.trim().toLowerCase()
+        );
+        if (nameExists) {
+            toast({
+                title: "Error",
+                description: "A demographic with this name already exists.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: newDemographic.name,
+                    tenantId: tenantId,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to create demographic");
+            }
+
+            const createdDemographic = await response.json();
+            setAvailableDemographics([...availableDemographics, createdDemographic]);
+            setNewDemographic({name: "", caption: ""});
+            closeModal();
+
+            toast({
+                title: "Success",
+                description: "Demographic created successfully.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error creating demographic:", error);
+            toast({
+                title: "Error",
+                description: "Could not create demographic.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    };
+
     return (
         <Box
             width="100vw"
@@ -1772,29 +1839,45 @@ function SchedulesAvailabilityStep({
                                                 <Thead bg="gray.100">
                                                     <Tr>
                                                         <Th>Demographic</Th>
-                                                        {tiers.map((tier) => (
-                                                            <Th key={tier.id}>
-                                                                {tier.guests}{" "}
-                                                                <IconButton
-                                                                    icon={<EditIcon/>}
-                                                                    size="xs"
-                                                                    variant="ghost"
-                                                                    aria-label="Edit Tier"
-                                                                    onClick={() => handleEditTier(tier)}
-                                                                />
-                                                            </Th>
-                                                        ))}
+                                                        {pricingStructure === "tiered" && tiers.length > 0 ? (
+                                                            tiers.map((tier) => (
+                                                                <Th key={tier.id}>
+                                                                    {tier.guests}{" "}
+                                                                    <IconButton
+                                                                        icon={<EditIcon/>}
+                                                                        size="xs"
+                                                                        variant="ghost"
+                                                                        aria-label="Edit Tier"
+                                                                        onClick={() => handleEditTier(tier)}
+                                                                    />
+                                                                </Th>
+                                                            ))
+                                                        ) : (
+                                                            <Th>Price</Th>
+                                                        )}
                                                     </Tr>
                                                 </Thead>
                                                 <Tbody>
-                                                    {demographics.map((demo) => (
-                                                        <Tr key={demo.id}>
-                                                            <Td>{demo.name}</Td>
-                                                            {tiers.map((tier) => (
-                                                                <Td key={tier.id}>${tier.finalPrices[demo.id].toFixed(2)}</Td>
-                                                            ))}
+                                                    {selectedDemographics.length > 0 ? (
+                                                        selectedDemographics.map((demo) => (
+                                                            <Tr key={demo.id}>
+                                                                <Td>{demo.name}</Td>
+                                                                {pricingStructure === "tiered" && tiers.length > 0 ? (
+                                                                    tiers.map((tier) => (
+                                                                        <Td key={tier.id}>${(tier.finalPrices[demo.id] || 0).toFixed(2)}</Td>
+                                                                    ))
+                                                                ) : (
+                                                                    <Td>${(basePrices[demo.id] || 0).toFixed(2)}</Td>
+                                                                )}
+                                                            </Tr>
+                                                        ))
+                                                    ) : (
+                                                        <Tr>
+                                                            <Td colSpan={pricingStructure === "tiered" ? tiers.length + 1 : 2} textAlign="center">
+                                                                No demographics selected
+                                                            </Td>
                                                         </Tr>
-                                                    ))}
+                                                    )}
                                                 </Tbody>
                                             </Table>
                                         )}
@@ -2158,55 +2241,11 @@ function SchedulesAvailabilityStep({
     );
 }
 
-function CreateToursPage({isEditing = false}: { isEditing?: boolean }) {
+function CreateToursPage({isEditing = false, pricingData = null}: { isEditing?: boolean, pricingData?: any }) {
     const [currentStep, setCurrentStep] = useState(1);
 
-
-    // const {
-    //     setSchedule,
-    //     setEventDuration,
-    //     setGuestLimit,
-    //     setEarlyArrival,
-    //     setTitle,
-    //     setDescription,
-    //     setPrice,
-    //     setIncludedItems,
-    //     setBringItems,
-    //     setImagePreview,
-    //     setImageFile,
-    //     setOperationProcedures,
-    //     setCancellationPolicy,
-    //     setConsiderations
-    // } = useGuest();
-
-    // const resetFields = useCallback(() => {
-    //     setSchedule([]);
-    //     setEventDuration('');
-    //     setGuestLimit(0);
-    //     setEarlyArrival(false);
-    //     setTitle("");
-    //     setDescription("");
-    //     setPrice(0);
-    //     setIncludedItems([]);
-    //     setBringItems([]);
-    //     setImagePreview(null);
-    //     setOperationProcedures("");
-    //     setTitle("");
-    //     setDescription("");
-    //     setPrice(0);
-    //     setIncludedItems([]);
-    //     setBringItems([]);
-    //     setOperationProcedures("");
-    //     setCancellationPolicy("");
-    //     setConsiderations("");
-    //     setImagePreview(null);
-    //     setImageFile(null);
-    // }, [setSchedule, setEventDuration, setGuestLimit, setEarlyArrival, setTitle, setDescription,
-    //     setPrice, setIncludedItems, setBringItems, setImagePreview, setImageFile,
-    //     setOperationProcedures, setCancellationPolicy, setConsiderations]);
-
     if (currentStep === 1) {
-        return <DescriptionContentStep onNext={() => setCurrentStep(2)}/>;
+        return <DescriptionContentStep onNext={() => setCurrentStep(2)} isEditing={isEditing}/>;
     } else {
         return (
             <SchedulesAvailabilityStep
@@ -2214,6 +2253,7 @@ function CreateToursPage({isEditing = false}: { isEditing?: boolean }) {
                     setCurrentStep(1);
                 }}
                 isEditing={isEditing}
+                pricingData={pricingData}
             />
         );
     }

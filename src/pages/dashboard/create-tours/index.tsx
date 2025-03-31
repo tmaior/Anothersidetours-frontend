@@ -641,16 +641,14 @@ function SchedulesAvailabilityStep({
     const flatPriceModal = useDisclosure();
 
     useEffect(() => {
-        if (isEditing && pricingData) {
+        if (isEditing && pricingData && pricingData.length > 0) {
             const pricingType = pricingData[0]?.pricingType || "flat";
             setPricingStructure(pricingType);
-
             const newBasePrices = {};
             pricingData.forEach(pricing => {
                 newBasePrices[pricing.demographicId] = pricing.basePrice;
             });
             setBasePrices(newBasePrices);
-
             if (pricingType === "tiered") {
                 const tiersByQuantity = {};
                 pricingData.forEach(pricing => {
@@ -658,7 +656,7 @@ function SchedulesAvailabilityStep({
                         pricing.tierEntries.forEach(entry => {
                             if (!tiersByQuantity[entry.quantity]) {
                                 tiersByQuantity[entry.quantity] = {
-                                    id: crypto.randomUUID(),
+                id: crypto.randomUUID(),
                                     guests: `${entry.quantity}+ Guests`,
                                     adjustments: {},
                                     adjustmentTypes: {},
@@ -666,7 +664,7 @@ function SchedulesAvailabilityStep({
                                     finalPrices: {}
                                 };
                             }
-                            
+
                             tiersByQuantity[entry.quantity].adjustments[pricing.demographicId] = entry.adjustment || 0;
                             tiersByQuantity[entry.quantity].adjustmentTypes[pricing.demographicId] = entry.adjustmentType || "$";
                             tiersByQuantity[entry.quantity].operations[pricing.demographicId] = entry.operation || "Markup";
@@ -674,8 +672,14 @@ function SchedulesAvailabilityStep({
                         });
                     }
                 });
+
+                const sortedTiers = Object.values(tiersByQuantity).sort((a, b) => {
+                    const quantityA = parseInt(a.guests.replace(/\+\s*Guests/i, '').trim());
+                    const quantityB = parseInt(b.guests.replace(/\+\s*Guests/i, '').trim());
+                    return quantityA - quantityB;
+                });
                 
-                setTiers(Object.values(tiersByQuantity));
+                setTiers(sortedTiers);
             }
         }
     }, [isEditing, pricingData]);
@@ -2016,50 +2020,56 @@ function SchedulesAvailabilityStep({
                                                     </Tr>
                                                 </Thead>
                                                 <Tbody>
-                                                    {demographics.map((demo) => (
-                                                        <Tr key={demo.id}>
-                                                            <Td>{demo.name}</Td>
-                                                            <Td>${basePrices[demo.id]?.toFixed(2) || "0.00"}</Td>
-                                                            <Td>
-                                                                <HStack spacing={1}>
-                                                                    <Input
-                                                                        type="number"
-                                                                        size="sm"
-                                                                        width="80px"
-                                                                        value={newTier.adjustments[demo.id] || ""}
-                                                                        onChange={(e) => handleAdjustmentChange(demo.id, e.target.value)}
-                                                                    />
-                                                                    <Select
-                                                                        size="sm"
-                                                                        width="70px"
-                                                                        value={newTier.adjustmentTypes[demo.id] || "$"}
-                                                                        onChange={(e) => handleAdjustmentTypeChange(demo.id, e.target.value)}
-                                                                    >
-                                                                        <option value="$">$</option>
-                                                                        <option value="%">%</option>
-                                                                    </Select>
-                                                                    <Select
-                                                                        size="sm"
-                                                                        width="100px"
-                                                                        value={newTier.operations[demo.id] || "Markup"}
-                                                                        onChange={(e) => handleOperationChange(demo.id, e.target.value)}
-                                                                    >
-                                                                        <option value="Markup">Markup</option>
-                                                                        <option value="Markdown">Markdown</option>
-                                                                    </Select>
-                                                                </HStack>
-                                                            </Td>
-                                                            <Td>
-                                                                ${(newTier.operations[demo.id] === "Markup"
-                                                                    ? newTier.adjustmentTypes[demo.id] === "$"
-                                                                        ? (basePrices[demo.id] || 0) + (newTier.adjustments[demo.id] || 0)
-                                                                        : (basePrices[demo.id] || 0) + ((basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100
-                                                                    : newTier.adjustmentTypes[demo.id] === "$"
-                                                                        ? (basePrices[demo.id] || 0) - (newTier.adjustments[demo.id] || 0)
-                                                                        : (basePrices[demo.id] || 0) - ((basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100).toFixed(2)}
-                                                            </Td>
+                                                    {selectedDemographics.length > 0 ? (
+                                                        selectedDemographics.map((demo) => (
+                                                            <Tr key={demo.id}>
+                                                                <Td>{demo.name}</Td>
+                                                                <Td>${basePrices[demo.id]?.toFixed(2) || "0.00"}</Td>
+                                                                <Td>
+                                                                    <HStack spacing={1}>
+                                                                        <Input
+                                                                            type="number"
+                                                                            size="sm"
+                                                                            width="80px"
+                                                                            value={newTier.adjustments[demo.id] || ""}
+                                                                            onChange={(e) => handleAdjustmentChange(demo.id, e.target.value)}
+                                                                        />
+                                                                        <Select
+                                                                            size="sm"
+                                                                            width="70px"
+                                                                            value={newTier.adjustmentTypes[demo.id] || "$"}
+                                                                            onChange={(e) => handleAdjustmentTypeChange(demo.id, e.target.value)}
+                                                                        >
+                                                                            <option value="$">$</option>
+                                                                            <option value="%">%</option>
+                                                                        </Select>
+                                                                        <Select
+                                                                            size="sm"
+                                                                            width="100px"
+                                                                            value={newTier.operations[demo.id] || "Markup"}
+                                                                            onChange={(e) => handleOperationChange(demo.id, e.target.value)}
+                                                                        >
+                                                                            <option value="Markup">Markup</option>
+                                                                            <option value="Markdown">Markdown</option>
+                                                                        </Select>
+                                                                    </HStack>
+                                                                </Td>
+                                                                <Td>
+                                                                    ${(newTier.operations[demo.id] === "Markup"
+                                                                        ? newTier.adjustmentTypes[demo.id] === "$"
+                                                                            ? (basePrices[demo.id] || 0) + (newTier.adjustments[demo.id] || 0)
+                                                                            : (basePrices[demo.id] || 0) + ((basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100
+                                                                        : newTier.adjustmentTypes[demo.id] === "$"
+                                                                            ? (basePrices[demo.id] || 0) - (newTier.adjustments[demo.id] || 0)
+                                                                            : (basePrices[demo.id] || 0) - ((basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100).toFixed(2)}
+                                                                </Td>
+                                                            </Tr>
+                                                        ))
+                                                    ) : (
+                                                        <Tr>
+                                                            <Td colSpan={4} textAlign="center">No demographics selected</Td>
                                                         </Tr>
-                                                    ))}
+                                                    )}
                                                 </Tbody>
                                             </Table>
                                         </ModalBody>

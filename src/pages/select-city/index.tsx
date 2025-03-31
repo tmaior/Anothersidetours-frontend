@@ -14,6 +14,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 interface Tenant {
+    imageUrl: string;
     id: string;
     name: string;
     subTitle?: string;
@@ -120,7 +121,7 @@ export default function SelectCity() {
                                 width="100%"
                             >
                                 <Image
-                                    src={tenant.logoUrl || "/assets/default-logo.png"}
+                                    src={tenant.imageUrl || "/assets/default-logo.png"}
                                     alt={tenant.name}
                                     boxSize="40px"
                                     mr={4}

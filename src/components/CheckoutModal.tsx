@@ -292,6 +292,10 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                     return;
                 }
             }
+            //todo
+            // verificar pois o pagamento so deve ser processado em caso de invoice.
+
+
             // else if (reservation && reservation.id) {
             //     const processPaymentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-reservation-payment`, {
             //         method: 'POST',

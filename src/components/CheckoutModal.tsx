@@ -235,7 +235,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
             const saveEndpoint = isInvoicePayment && transactionId
                 ? `${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method-for-transaction`
                 : `${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`;
-                
+
             const savePaymentData = isInvoicePayment && transactionId
                 ? { paymentMethodId, transactionId: transactionId }
                 : { paymentMethodId, reservationId: reservation.id };
@@ -291,27 +291,28 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                     setIsProcessing(false);
                     return;
                 }
-            } else if (reservation && reservation.id) {
-                const processPaymentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-reservation-payment`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({reservationId: reservation.id}),
-                });
-
-                if (!processPaymentRes.ok) {
-                    setErrorMessage("Failed to process payment.");
-                    setIsProcessing(false);
-                    return;
-                }
-
-                const processPaymentResult = await processPaymentRes.json();
-                
-                if (!processPaymentResult.success) {
-                    setErrorMessage(`Payment failed with status: ${processPaymentResult.status}`);
-                    setIsProcessing(false);
-                    return;
-                }
             }
+            // else if (reservation && reservation.id) {
+            //     const processPaymentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-reservation-payment`, {
+            //         method: 'POST',
+            //         headers: {'Content-Type': 'application/json'},
+            //         body: JSON.stringify({reservationId: reservation.id}),
+            //     });
+            //
+            //     if (!processPaymentRes.ok) {
+            //         setErrorMessage("Failed to process payment.");
+            //         setIsProcessing(false);
+            //         return;
+            //     }
+            //
+            //     const processPaymentResult = await processPaymentRes.json();
+            //
+            //     if (!processPaymentResult.success) {
+            //         setErrorMessage(`Payment failed with status: ${processPaymentResult.status}`);
+            //         setIsProcessing(false);
+            //         return;
+            //     }
+            // }
 
             try {
                 if (reservation && reservation.id) {

@@ -1952,7 +1952,7 @@ function SchedulesAvailabilityStep({
                                                     </Tr>
                                                 </Thead>
                                                 <Tbody>
-                                                    {demographics.map((demo) => (
+                                                    {selectedDemographics.map((demo) => (
                                                         <Tr key={demo.id}>
                                                             <Td>
                                                                 <HStack>

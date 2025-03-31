@@ -1821,7 +1821,7 @@ function SchedulesAvailabilityStep({
                                                     </Tr>
                                                 </Thead>
                                                 <Tbody>
-                                                    {demographics.map((demo) => (
+                                                    {selectedDemographics.map((demo) => (
                                                         <Tr key={demo.id}>
                                                             <Td>{demo.name}</Td>
                                                             <Td>${basePrices[demo.id]?.toFixed(2) || "0.00"}</Td>
@@ -1905,7 +1905,7 @@ function SchedulesAvailabilityStep({
                                                     </Tr>
                                                 </Thead>
                                                 <Tbody>
-                                                    {demographics.map((demo) => (
+                                                    {selectedDemographics.map((demo) => (
                                                         <Tr key={demo.id}>
                                                             <Td>{demo.name}</Td>
                                                             <Td>

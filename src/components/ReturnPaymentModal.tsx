@@ -46,6 +46,12 @@ interface ReturnPaymentModalProps {
         total_price: number;
         setupIntentId?: string;
         paymentMethodId?: string;
+        paymentIntentId?: string;
+        PaymentTransaction?: {
+            paymentIntentId?: string;
+            stripe_payment_id?: string;
+            paymentMethodId?: string;
+        }[];
     };
 }
 
@@ -65,7 +71,13 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
     useEffect(() => {
         const fetchCardsFromSetupIntent = async () => {
-            console.log('Booking data:', booking);
+            console.log('Full booking object:', booking);
+            console.log('Important booking fields:', {
+                id: booking?.id,
+                paymentIntentId: booking?.paymentIntentId,
+                paymentMethodId: booking?.paymentMethodId,
+                setupIntentId: booking?.setupIntentId
+            });
             
             if (!booking?.paymentMethodId) {
                 setIsLoading(false);
@@ -110,7 +122,31 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         }
     }, [booking?.paymentMethodId, isOpen, toast]);
 
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        const cleanValue = value.replace(/[^\d.]/g, '');
+        const parts = cleanValue.split('.');
+        if (parts.length > 2) {
+            return;
+        }
+        const numValue = parseFloat(cleanValue);
+        if (numValue > (booking?.total_price || 0)) {
+            return;
+        }
+        setAmount(numValue);
+    };
+
     const handleSaveChanges = async () => {
+        console.log('Starting save changes...');
+        console.log('Current booking state:', {
+            id: booking?.id,
+            paymentIntentId: booking?.paymentIntentId,
+            paymentMethodId: booking?.paymentMethodId,
+            setupIntentId: booking?.setupIntentId,
+            total_price: booking?.total_price,
+            refund_amount: amount
+        });
+
         if (paymentMethod === 'credit_card' && !selectedCardId) {
             toast({
                 title: 'Error',
@@ -122,29 +158,93 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             return;
         }
 
-        try {
-            await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/refund`, {
-                bookingId: booking.id,
-                paymentMethodId: selectedCardId,
-                amount,
-                reason: 'return_payment_only',
-                notifyCustomer,
-                comment,
+        if (!booking?.paymentIntentId) {
+            console.error('Missing or invalid paymentIntentId:', {
+                booking: booking,
+                paymentIntentId: booking?.paymentIntentId,
+                setupIntentId: booking?.setupIntentId
             });
+            toast({
+                title: 'Error',
+                description: 'Payment Intent ID is required for refund. Please ensure the payment has been processed.',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        if (amount <= 0 || amount > (booking?.total_price || 0)) {
+            toast({
+                title: 'Error',
+                description: 'Invalid refund amount. Please enter a value between 0 and the total price.',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        try {
+            const paymentIntentId = booking.PaymentTransaction?.[0]?.paymentIntentId || 
+                                  booking.PaymentTransaction?.[0]?.stripe_payment_id || 
+                                  booking.paymentIntentId;
+            const paymentMethodId = booking.PaymentTransaction?.[0]?.paymentMethodId || 
+                                  booking.paymentMethodId;
+
+            const refundPayload = {
+                paymentIntentId: paymentIntentId,
+                paymentMethodId: selectedCardId || paymentMethodId,
+                amount: Math.round(amount * 100)
+            };
+
+            console.log('Refund payload:', refundPayload);
+
+            if (!refundPayload.paymentIntentId || refundPayload.paymentIntentId.trim() === '') {
+                throw new Error('Payment Intent ID cannot be empty');
+            }
+
+            if (refundPayload.paymentIntentId.startsWith('seti_')) {
+                throw new Error('Invalid Payment Intent ID. A setup intent cannot be used for refunds.');
+            }
+
+            const response = await axios.post(
+                `${process.env.NEXT_PUBLIC_API_URL}/refund`,
+                refundPayload,
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            console.log('Refund response:', response.data);
 
             toast({
                 title: 'Success',
-                description: 'Refund processed successfully!',
+                description: `Refund of $${amount.toFixed(2)} processed successfully!`,
                 status: 'success',
                 duration: 5000,
                 isClosable: true,
             });
             onClose();
-        } catch (error) {
-            console.error('Error processing refund:', error);
+        } catch (error: any) {
+            console.error('Error details:', {
+                message: error.message,
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                url: error.config?.url,
+                paymentIntentId: booking?.paymentIntentId,
+                setupIntentId: booking?.setupIntentId,
+                PaymentTransaction: booking?.PaymentTransaction,
+                refundAmount: amount
+            });
+
+            const errorMessage = error.response?.data?.message || 'Failed to process refund';
             toast({
                 title: 'Error',
-                description: 'Failed to process refund',
+                description: errorMessage,
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
@@ -200,8 +300,11 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                     <Text mb={2}>Amount</Text>
                                     <Input
                                         value={amount}
-                                        onChange={(e) => setAmount(Number(e.target.value))}
+                                        onChange={handleAmountChange}
                                         type="number"
+                                        step="0.01"
+                                        min="0"
+                                        max={booking?.total_price}
                                         placeholder="Enter amount"
                                     />
                                     <Text fontSize="sm" color="gray.600" mt={1}>

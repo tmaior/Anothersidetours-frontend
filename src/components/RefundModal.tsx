@@ -54,6 +54,12 @@ const RefundModal: React.FC<RefundModalProps> = ({ isOpen, onClose, onOptionSele
         },
     ];
 
+    const handleOptionSelect = (option: 'reduce' | 'return' | 'change') => {
+        console.log('Selected refund option:', option);
+        onOptionSelect(option);
+        onClose();
+    };
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} isCentered>
             <ModalOverlay />
@@ -73,7 +79,7 @@ const RefundModal: React.FC<RefundModalProps> = ({ isOpen, onClose, onOptionSele
                                 borderRadius="md"
                                 cursor="pointer"
                                 _hover={{ bg: 'gray.50' }}
-                                onClick={() => onOptionSelect(option.id as 'reduce' | 'return' | 'change')}
+                                onClick={() => handleOptionSelect(option.id as 'reduce' | 'return' | 'change')}
                             >
                                 <HStack spacing={4}>
                                     <Icon as={option.icon} boxSize={5} />

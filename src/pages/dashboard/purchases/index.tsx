@@ -311,7 +311,7 @@ const PurchaseList = ({
         if (tenantId) {
             fetchReservations();
         }
-    }, [tenantId,]);
+    }, [tenantId]);
 
     const filteredDisplayedReservations = displayedReservations.filter((reservation) => {
         if (!searchTerm) return true;
@@ -588,6 +588,20 @@ const PurchaseDetails = ({reservation}) => {
         const hours12 = utcHours % 12 || 12;
         const time = `${hours12.toString().padStart(2, "0")}:${utcMinutes.toString().padStart(2, "0")} ${period}`;
 
+        const paymentIntentId = reservation.PaymentTransaction?.[0]?.paymentIntentId || 
+                               reservation.PaymentTransaction?.[0]?.stripe_payment_id || 
+                               reservation.paymentIntentId;
+        const paymentMethodId = reservation.PaymentTransaction?.[0]?.paymentMethodId || 
+                               reservation.paymentMethodId;
+        console.log('Reservation data for refund:', {
+            id: reservation.id,
+            paymentIntentId: paymentIntentId,
+            paymentMethodId: paymentMethodId,
+            setupIntentId: reservation.setupIntentId,
+            total_price: reservation.total_price,
+            PaymentTransaction: reservation.PaymentTransaction
+        });
+
         return {
             id: reservation.id,
             title: reservation.tour?.name,
@@ -601,18 +615,29 @@ const PurchaseDetails = ({reservation}) => {
             time: time,
             user: reservation.user,
             total_price: reservation.total_price,
-            paymentIntentId: reservation.paymentIntentId,
-            paymentMethodId: reservation.paymentMethodId
+            paymentIntentId: paymentIntentId,
+            paymentMethodId: paymentMethodId,
+            setupIntentId: reservation.setupIntentId
         };
     };
 
     const handleRefundOptionSelect = (option: 'reduce' | 'return' | 'change') => {
+        console.log('Handling refund option:', option);
+        console.log('Current reservation data:', {
+            id: reservation?.id,
+            paymentIntentId: reservation?.paymentIntentId,
+            paymentMethodId: reservation?.paymentMethodId,
+            setupIntentId: reservation?.setupIntentId
+        });
+
         setIsRefundModalOpen(false);
         switch (option) {
             case 'reduce':
                 setBookingCancellationOpen(true);
                 break;
             case 'return':
+                const bookingData = formatBookingData();
+                console.log('Formatted booking data for return payment:', bookingData);
                 setIsReturnPaymentModalOpen(true);
                 break;
             case 'change':

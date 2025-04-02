@@ -59,6 +59,7 @@ import {useGuides} from "../../../hooks/useGuides";
 import {useGuideAssignment} from "../../../hooks/useGuideAssignment";
 import useGuidesStore from "../../../utils/store";
 import RefundModal from "../../../components/RefundModal";
+import BookingCancellationModal from "../../../components/BookingCancellationModal";
 
 type GuestItemProps = {
     name: string;
@@ -512,6 +513,7 @@ const PurchaseDetails = ({reservation}) => {
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
     const [isChangeAddonsModalOpen, setChangeAddonsModalOpen] = useState(false);
     const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+    const [isBookingCancellationOpen, setBookingCancellationOpen] = useState(false);
     const [guestCount, setGuestCount] = useState(reservation?.guestQuantity || 0);
     const [isCancelConfirmationOpen, setCancelConfirmationOpen] = useState(false);
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
@@ -563,20 +565,53 @@ const PurchaseDetails = ({reservation}) => {
 
 
     const handleConfirmCancel = () => {
-        onConfirmClose();
-        onCancelOpen();
+        setCancelConfirmationOpen(false);
+        setBookingCancellationOpen(true);
     };
 
     const isVisible = (minWidth, maxWidth) => {
         return windowWidth >= minWidth && windowWidth <= maxWidth;
     };
 
+    const formatBookingData = () => {
+        if (!reservation) return null;
+        
+        const dateObject = reservation?.reservation_date
+            ? new Date(reservation.reservation_date)
+            : new Date();
+
+        const localDate = new Date(dateObject.getTime() + dateObject.getTimezoneOffset() * 60000);
+        
+        const utcHours = localDate.getHours();
+        const utcMinutes = localDate.getMinutes();
+        const period = utcHours >= 12 ? "PM" : "AM";
+        const hours12 = utcHours % 12 || 12;
+        const time = `${hours12.toString().padStart(2, "0")}:${utcMinutes.toString().padStart(2, "0")} ${period}`;
+
+        return {
+            id: reservation.id,
+            title: reservation.tour?.name,
+            imageUrl: reservation.tour?.imageUrl,
+            dateFormatted: localDate.toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+                timeZone: 'UTC'
+            }),
+            time: time,
+            user: reservation.user,
+            total_price: reservation.total_price,
+            paymentIntentId: reservation.paymentIntentId,
+            paymentMethodId: reservation.paymentMethodId
+        };
+    };
+
     const handleRefundOptionSelect = (option: 'reduce' | 'return' | 'change') => {
         setIsRefundModalOpen(false);
         switch (option) {
             case 'reduce':
-                break;
             case 'return':
+                setBookingCancellationOpen(true);
                 break;
             case 'change':
                 setChangeGuestQuantityModalOpen(true);
@@ -973,15 +1008,17 @@ const PurchaseDetails = ({reservation}) => {
             />
 
             <CancelConfirmationModal
+                booking={formatBookingData()}
                 isOpen={isCancelConfirmationOpen}
                 onClose={() => setCancelConfirmationOpen(false)}
                 onConfirm={handleConfirmCancel}
-                booking={{
-                    title: reservation.tour.name,
-                    dateFormatted: formatDate(datePart),
-                    time: timePart,
-                    user: reservation.user
-                }}
+            />
+
+            <BookingCancellationModal
+                booking={formatBookingData()}
+                isOpen={isBookingCancellationOpen}
+                onClose={() => setBookingCancellationOpen(false)}
+                onStatusChange={() => {}}
             />
 
             <RefundModal

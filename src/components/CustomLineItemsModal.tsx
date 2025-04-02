@@ -16,7 +16,9 @@ import {
     Select,
     IconButton,
     Divider,
-    useToast
+    useToast,
+    InputGroup,
+    InputLeftElement
 } from '@chakra-ui/react';
 import { AddIcon, DeleteIcon, MinusIcon } from '@chakra-ui/icons';
 import axios from 'axios';
@@ -111,9 +113,9 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="2xl">
+        <Modal isOpen={isOpen} onClose={onClose} size="4xl">
             <ModalOverlay/>
-            <ModalContent maxW="600px">
+            <ModalContent maxW="800px">
                 <ModalHeader>Custom Line Items</ModalHeader>
                 <ModalCloseButton/>
 
@@ -143,22 +145,28 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                                         <Select
                                             value={item.type}
                                             onChange={(e) => updateItem(item.id, "type", e.target.value as 'Charge' | 'Discount')}
-                                            width="120px"
+                                            width="150px"
                                             size="md"
                                         >
                                             <option value="Charge">Charge</option>
                                             <option value="Discount">Discount</option>
                                         </Select>
                                         
-                                        <Input
-                                            type="number"
-                                            placeholder="$"
-                                            width="80px"
-                                            value={item.amount}
-                                            onChange={(e) => updateItem(item.id, "amount", parseFloat(e.target.value) || 0)}
-                                            ml={2}
-                                            size="md"
-                                        />
+                                        <InputGroup width="120px" ml={2}>
+                                            <InputLeftElement pointerEvents="none">
+                                                <Text color="gray.500">$</Text>
+                                            </InputLeftElement>
+                                            <Input
+                                                type="number"
+                                                placeholder="0.00"
+                                                value={item.amount === 0 ? '' : item.amount}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    updateItem(item.id, "amount", value === '' ? 0 : parseFloat(value));
+                                                }}
+                                                size="md"
+                                            />
+                                        </InputGroup>
                                         
                                         <Flex align="center" ml={2}>
                                             <IconButton

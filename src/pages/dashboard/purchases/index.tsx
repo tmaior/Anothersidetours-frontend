@@ -846,18 +846,26 @@ const PurchaseDetails = ({reservation}) => {
                 width={{base: "30%", md: "90%", xl: "100%", "2xl": "175%"}}
                 maxWidth={{base: "none", md: "none", xl: "none"}}
                 borderRadius="lg"
-                overflowY="auto"
+                overflow="hidden"
                 marginTop={{base: "0", md: "-5px"}}
                 marginLeft={{base: "0", md: "10px"}}
             >
-                <Image
-                    src={reservation.tour.imageUrl || "https://via.placeholder.com/1000x300"}
-                    alt={reservation.tour.name}
+                <Box
+                    position="relative"
                     width="100%"
                     height="200px"
-                    objectFit="cover"
-                    bg="gray.300"
-                />
+                    overflow="hidden"
+                >
+                    <Image
+                        src={reservation.tour.imageUrl || "https://via.placeholder.com/1000x300"}
+                        alt={reservation.tour.name}
+                        width="100%"
+                        height="100%"
+                        objectFit="cover"
+                        objectPosition="center"
+                        bg="gray.300"
+                    />
+                </Box>
             </Box>
 
             <Box flex="1" p={6} marginTop={"-50px"} marginLeft={"15px"}>

@@ -313,19 +313,17 @@ const PurchaseList = ({
         }
     }, [tenantId,]);
 
-    const normalizePhoneNumber = (phone) => {
-        return phone.replace(/[^\d]/g, '');
-    };
-
     const filteredDisplayedReservations = displayedReservations.filter((reservation) => {
+        if (!searchTerm) return true;
+        
         const user = reservation.user || {};
-        const normalizedSearchTerm = normalizePhoneNumber(searchTerm);
-        const normalizedPhone = normalizePhoneNumber(user.phone || '');
-
+        const searchTermLower = searchTerm.toLowerCase();
+        
         return (
-            user.name?.toLowerCase().includes(searchTerm) ||
-            user.email?.toLowerCase().includes(searchTerm) ||
-            normalizedPhone.includes(normalizedSearchTerm)
+            user.name?.toLowerCase().includes(searchTermLower) ||
+            user.email?.toLowerCase().includes(searchTermLower) ||
+            user.phone?.toLowerCase().includes(searchTermLower) ||
+            reservation.id?.toLowerCase().includes(searchTermLower)
         );
     });
 

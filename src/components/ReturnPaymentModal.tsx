@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
     Modal,
     ModalOverlay,
@@ -18,9 +19,17 @@ import {
     Textarea,
     CloseButton,
     Flex,
+    useToast,
 } from '@chakra-ui/react';
 import { FaRegCreditCard } from 'react-icons/fa';
 import { BsCash, BsCheck2 } from 'react-icons/bs';
+
+interface CardDetails {
+    id: string;
+    brand: string;
+    last4: string;
+    paymentDate: string;
+}
 
 interface ReturnPaymentModalProps {
     isOpen: boolean;
@@ -35,9 +44,8 @@ interface ReturnPaymentModalProps {
             name: string;
         };
         total_price: number;
+        setupIntentId?: string;
         paymentMethodId?: string;
-        last4?: string;
-        cardBrand?: string;
     };
 }
 
@@ -46,13 +54,102 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     onClose,
     booking,
 }) => {
+    const toast = useToast();
     const [amount, setAmount] = useState(booking?.total_price || 0);
     const [paymentMethod, setPaymentMethod] = useState('credit_card');
     const [notifyCustomer, setNotifyCustomer] = useState(true);
     const [comment, setComment] = useState('');
+    const [cardList, setCardList] = useState<CardDetails[]>([]);
+    const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const handleSaveChanges = () => {
-        onClose();
+    useEffect(() => {
+        const fetchCardsFromSetupIntent = async () => {
+            console.log('Booking data:', booking);
+            
+            if (!booking?.paymentMethodId) {
+                setIsLoading(false);
+                return;
+            }
+
+            try {
+                setIsLoading(true);
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${booking.paymentMethodId}`
+                );
+                console.log('Payment Method Response:', response.data);
+
+                if (response.data) {
+                    const cardData: CardDetails = {
+                        id: booking.paymentMethodId,
+                        brand: response.data.brand,
+                        last4: response.data.last4,
+                        paymentDate: response.data.paymentDate
+                    };
+                    
+                    console.log('Card data formatted:', cardData);
+                    setCardList([cardData]);
+                    setSelectedCardId(cardData.id);
+                }
+            } catch (error) {
+                console.error('Error fetching card details:', error);
+                toast({
+                    title: 'Error',
+                    description: 'Failed to fetch card details',
+                    status: 'error',
+                    duration: 5000,
+                    isClosable: true,
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (isOpen) {
+            fetchCardsFromSetupIntent();
+        }
+    }, [booking?.paymentMethodId, isOpen, toast]);
+
+    const handleSaveChanges = async () => {
+        if (paymentMethod === 'credit_card' && !selectedCardId) {
+            toast({
+                title: 'Error',
+                description: 'Please select a card for refund',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        try {
+            await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/refund`, {
+                bookingId: booking.id,
+                paymentMethodId: selectedCardId,
+                amount,
+                reason: 'return_payment_only',
+                notifyCustomer,
+                comment,
+            });
+
+            toast({
+                title: 'Success',
+                description: 'Refund processed successfully!',
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+            });
+            onClose();
+        } catch (error) {
+            console.error('Error processing refund:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to process refund',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+        }
     };
 
     const formatDate = (date: string) => {
@@ -61,11 +158,6 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             day: 'numeric',
             year: 'numeric'
         });
-    };
-
-    const formatCardDisplay = () => {
-        if (!booking?.cardBrand || !booking?.last4) return 'Select a card';
-        return `${booking.cardBrand} **** **** **** ${booking.last4}`;
     };
 
     return (
@@ -155,14 +247,23 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                     <Box>
                                         <Text mb={2}>Credit Card</Text>
                                         <Select
-                                            value={formatCardDisplay()}
-                                            isReadOnly
-                                            bg="white"
-                                            cursor="default"
-                                            _hover={{ cursor: "default" }}
+                                            value={selectedCardId ?? ''}
+                                            onChange={(e) => setSelectedCardId(e.target.value)}
+                                            placeholder={isLoading ? 'Loading cards...' : 'Select a card'}
+                                            isDisabled={isLoading}
                                         >
-                                            <option>{formatCardDisplay()}</option>
+                                            {cardList.map((card) => {
+                                                const brandName = card.brand.charAt(0).toUpperCase() + card.brand.slice(1);
+                                                return (
+                                                    <option key={card.id} value={card.id}>
+                                                        {brandName} **** **** **** {card.last4}
+                                                    </option>
+                                                );
+                                            })}
                                         </Select>
+                                        <Text fontSize="sm" color="gray.600" mt={1}>
+                                            Refund will be processed to the selected card
+                                        </Text>
                                     </Box>
                                 )}
 
@@ -203,18 +304,26 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 <Box>
                                     <Text fontWeight="bold" mb={3}>Payment Summary</Text>
                                     <VStack align="stretch" spacing={2}>
-                                        <HStack justify="space-between">
-                                            <Text>Payment *{booking?.last4 || '3422'} {formatDate(new Date().toISOString())}</Text>
-                                            <Text>${booking?.total_price}</Text>
-                                        </HStack>
-                                        <HStack justify="space-between" color="blue.500">
-                                            <Text>Return Payment *{booking?.last4 || '3422'} {formatDate(new Date().toISOString())}</Text>
-                                            <Text>-${booking?.total_price}</Text>
-                                        </HStack>
+                                        {cardList.length > 0 && (
+                                            <>
+                                                <HStack justify="space-between">
+                                                    <Text>
+                                                        Payment *{cardList[0].last4} {formatDate(cardList[0].paymentDate)}
+                                                    </Text>
+                                                    <Text>${booking?.total_price}</Text>
+                                                </HStack>
+                                                <HStack justify="space-between" color="blue.500">
+                                                    <Text>
+                                                        Return Payment *{cardList[0].last4} {formatDate(new Date().toISOString())}
+                                                    </Text>
+                                                    <Text>-${amount}</Text>
+                                                </HStack>
+                                            </>
+                                        )}
                                     </VStack>
                                     <HStack justify="space-between" mt={4}>
                                         <Text fontWeight="bold">Paid</Text>
-                                        <Text fontWeight="bold">$0.00</Text>
+                                        <Text fontWeight="bold">${booking?.total_price - amount}</Text>
                                     </HStack>
                                 </Box>
                             </VStack>
@@ -231,7 +340,11 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                             Notify Customer
                         </Checkbox>
                         <Button variant="ghost" onClick={onClose}>Skip</Button>
-                        <Button colorScheme="blue" onClick={handleSaveChanges}>
+                        <Button 
+                            colorScheme="blue" 
+                            onClick={handleSaveChanges}
+                            isLoading={isLoading}
+                        >
                             Save Changes
                         </Button>
                     </HStack>

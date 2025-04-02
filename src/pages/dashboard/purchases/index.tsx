@@ -58,6 +58,7 @@ import ManageGuidesModal from "../../../components/ManageGuidesModal";
 import {useGuides} from "../../../hooks/useGuides";
 import {useGuideAssignment} from "../../../hooks/useGuideAssignment";
 import useGuidesStore from "../../../utils/store";
+import RefundModal from "../../../components/RefundModal";
 
 type GuestItemProps = {
     name: string;
@@ -510,6 +511,7 @@ const PurchaseDetails = ({reservation}) => {
     const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
     const [isChangeAddonsModalOpen, setChangeAddonsModalOpen] = useState(false);
+    const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
     const [guestCount, setGuestCount] = useState(reservation?.guestQuantity || 0);
     const [isCancelConfirmationOpen, setCancelConfirmationOpen] = useState(false);
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
@@ -569,6 +571,18 @@ const PurchaseDetails = ({reservation}) => {
         return windowWidth >= minWidth && windowWidth <= maxWidth;
     };
 
+    const handleRefundOptionSelect = (option: 'reduce' | 'return' | 'change') => {
+        setIsRefundModalOpen(false);
+        switch (option) {
+            case 'reduce':
+                break;
+            case 'return':
+                break;
+            case 'change':
+                setChangeGuestQuantityModalOpen(true);
+                break;
+        }
+    };
 
     const ACTION_ITEMS = [
         {
@@ -608,6 +622,7 @@ const PurchaseDetails = ({reservation}) => {
             isVisible: isVisible(480, 2560),
             onClick: (e) => {
                 e.stopPropagation();
+                setIsRefundModalOpen(true);
             },
         },
         {
@@ -967,6 +982,12 @@ const PurchaseDetails = ({reservation}) => {
                     time: timePart,
                     user: reservation.user
                 }}
+            />
+
+            <RefundModal
+                isOpen={isRefundModalOpen}
+                onClose={() => setIsRefundModalOpen(false)}
+                onOptionSelect={handleRefundOptionSelect}
             />
         </VStack>
     );

@@ -60,6 +60,7 @@ import {useGuideAssignment} from "../../../hooks/useGuideAssignment";
 import useGuidesStore from "../../../utils/store";
 import RefundModal from "../../../components/RefundModal";
 import BookingCancellationModal from "../../../components/BookingCancellationModal";
+import ReturnPaymentModal from '../../../components/ReturnPaymentModal';
 
 type GuestItemProps = {
     name: string;
@@ -524,6 +525,7 @@ const PurchaseDetails = ({reservation}) => {
     const guides = reservationGuides[reservation?.id] || [];
     const loading = false;
     const [localGuides, setLocalGuides] = useState([]);
+    const [isReturnPaymentModalOpen, setIsReturnPaymentModalOpen] = useState(false);
 
     useEffect(() => {
         if (reservation?.id) {
@@ -610,8 +612,10 @@ const PurchaseDetails = ({reservation}) => {
         setIsRefundModalOpen(false);
         switch (option) {
             case 'reduce':
-            case 'return':
                 setBookingCancellationOpen(true);
+                break;
+            case 'return':
+                setIsReturnPaymentModalOpen(true);
                 break;
             case 'change':
                 setChangeGuestQuantityModalOpen(true);
@@ -1025,6 +1029,12 @@ const PurchaseDetails = ({reservation}) => {
                 isOpen={isRefundModalOpen}
                 onClose={() => setIsRefundModalOpen(false)}
                 onOptionSelect={handleRefundOptionSelect}
+            />
+
+            <ReturnPaymentModal
+                isOpen={isReturnPaymentModalOpen}
+                onClose={() => setIsReturnPaymentModalOpen(false)}
+                booking={formatBookingData()}
             />
         </VStack>
     );

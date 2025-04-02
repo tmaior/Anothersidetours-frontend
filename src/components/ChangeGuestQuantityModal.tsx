@@ -1,4 +1,4 @@
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import {
     Box,
     Button,
@@ -22,22 +22,56 @@ import axios from "axios";
 import PurchaseAndPaymentSummary from "./PurchaseAndPaymentSummary";
 
 const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGuestCount }) => {
+    const [tierPricing, setTierPricing] = useState(null);
+    const toast = useToast();
 
     useEffect(() => {
+        const fetchTierPricing = async () => {
+            if (!booking?.tourId) return;
+            
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`
+                );
+                
+                if (response.data && response.data.length > 0) {
+                    setTierPricing(response.data[0]);
+                }
+            } catch (error) {
+                console.error('Error fetching tier pricing:', error);
+            }
+        };
+
         if (isOpen) {
             setGuestCount(booking.guestQuantity);
+            fetchTierPricing();
         }
-    }, [setGuestCount,isOpen, booking]);
+    }, [setGuestCount, isOpen, booking]);
 
-    const toast = useToast();
+    const calculateGuestPrice = () => {
+        if (!tierPricing) {
+            return (booking.valuePerGuest || booking.tour?.price) * guestCount;
+        }
+
+        if (tierPricing.pricingType === 'flat') {
+            return tierPricing.basePrice * guestCount;
+        }
+
+        const applicableTier = tierPricing.tierEntries
+            .sort((a, b) => b.quantity - a.quantity)
+            .find(tier => guestCount >= tier.quantity);
+
+        return applicableTier 
+            ? applicableTier.price * guestCount
+            : tierPricing.basePrice * guestCount;
+    };
+
     const handleIncrease = () => setGuestCount(guestCount + 1);
     const handleDecrease = () => {
         if (guestCount > 1) setGuestCount(guestCount - 1);
     };
 
     const handleModify = async () => {
-        const updatedTotalPrice = booking.tour.price * guestCount;
-
         if (booking.status === "CANCELED" || booking.status === "REJECTED") {
             toast({
                 title: "Error",
@@ -50,20 +84,25 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
         }
 
         try {
-            await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
+            const updatedTotalPrice = calculateGuestPrice();
+
+            const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
                 guestQuantity: guestCount,
                 total_price: updatedTotalPrice,
                 status: booking.status
             });
 
-            toast({
-                title: "Success",
-                description: "Reservation updated successfully.",
-                status: "success",
-                duration: 5000,
-                isClosable: true,
-            });
-            onClose();
+            if (response.data) {
+                toast({
+                    title: "Success",
+                    description: "Reservation updated successfully.",
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
+                });
+                window.location.reload();
+                onClose();
+            }
         } catch (error) {
             console.error("Failed to update reservation:", error);
             toast({

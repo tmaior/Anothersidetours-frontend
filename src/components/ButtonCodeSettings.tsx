@@ -36,7 +36,10 @@ export default function ButtonCodeSettings() {
     const [checkoutType, setCheckoutType] = useState('single');
     const { tenantId } = useGuest();
     const toast = useToast();
-    const { onCopy } = useClipboard('');
+    const [selectedTourId, setSelectedTourId] = useState<string | null>(null);
+
+    const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
+    const { onCopy } = useClipboard(selectedTourId ? `${baseUrl}/bookingdetails/${selectedTourId}` : '');
 
     useEffect(() => {
         const fetchTours = async () => {
@@ -71,16 +74,20 @@ export default function ButtonCodeSettings() {
         setFilteredTours(filtered);
     }, [searchTerm, tours]);
 
-    const handleCopyCode = (tourId: string) => {
-        const code = `<div class="xola-checkout" data-seller="52b3dd42986ae5be70000063" data-version="2" data-experience="${tourId}"></div>`;
-        onCopy(code);
+    const handleCopyUrl = (tourId: string) => {
+        setSelectedTourId(tourId);
+        onCopy();
         toast({
-            title: 'Code copied',
-            description: 'Button code has been copied to clipboard',
+            title: 'URL copied',
+            description: 'Booking details URL has been copied to clipboard',
             status: 'success',
             duration: 2000,
             isClosable: true,
         });
+    };
+
+    const handleViewDetails = (tourId: string) => {
+        window.open(`${baseUrl}/bookingdetails/${tourId}`, '_blank');
     };
 
     return (
@@ -155,21 +162,22 @@ export default function ButtonCodeSettings() {
                                             fontFamily="monospace"
                                             noOfLines={1}
                                         >
-                                            <div className="xola-checkout" data-seller="52b3dd42986ae5be70000063" data-version="2" data-experience={tour.id}></div>
+                                            {`${baseUrl}/bookingdetails/${tour.id}`}
                                         </Box>
                                         <HStack>
                                             <IconButton
-                                                aria-label="View code"
+                                                aria-label="View booking details"
                                                 icon={<ViewIcon />}
                                                 variant="ghost"
                                                 size="sm"
+                                                onClick={() => handleViewDetails(tour.id)}
                                             />
                                             <IconButton
-                                                aria-label="Copy code"
+                                                aria-label="Copy booking URL"
                                                 icon={<CopyIcon />}
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => handleCopyCode(tour.id)}
+                                                onClick={() => handleCopyUrl(tour.id)}
                                             />
                                         </HStack>
                                     </HStack>

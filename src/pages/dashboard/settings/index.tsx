@@ -5,6 +5,7 @@ import MyProfileForm from '../../../components/MyProfileForm'
 import SettingsList, { SettingsPage } from '../../../components/SettingsList'
 import UnderConstruction from '../../../components/UnderConstruction';
 import CompanyProfileForm from '../../../components/CompanyProfileForm';
+import ButtonCodeSettings from '../../../components/ButtonCodeSettings';
 
 export default function Settings() {
     const [currentPage, setCurrentPage] = useState<SettingsPage>(SettingsPage.MyProfile);
@@ -19,6 +20,8 @@ export default function Settings() {
                 return <MyProfileForm />;
             case SettingsPage.CompanyProfile:
                 return <CompanyProfileForm />;
+            case SettingsPage.ButtonCode:
+                return <ButtonCodeSettings />;
             default:
                 return <UnderConstruction pageName={currentPage} />;
         }

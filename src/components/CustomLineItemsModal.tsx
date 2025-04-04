@@ -51,7 +51,14 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
     reservationId,
 }) => {
     const [items, setItems] = useState<LineItem[]>([]);
+    const [currentQuantity, setCurrentQuantity] = useState(quantity);
     const toast = useToast();
+
+    useEffect(() => {
+        if (quantity) {
+            setCurrentQuantity(quantity);
+        }
+    }, [quantity]);
 
     useEffect(() => {
         if (isOpen) {
@@ -59,8 +66,9 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                 ? initialItems 
                 : [{id: Date.now(), type: "Charge", amount: 0, quantity: 1, name: ""}]
             );
+            setCurrentQuantity(quantity);
         }
-    }, [isOpen, initialItems]);
+    }, [isOpen, initialItems, quantity]);
 
     const addItem = () => {
         setItems([...items, {id: Date.now(), type: "Charge", amount: 0, quantity: 1, name: ""}]);
@@ -102,7 +110,10 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
     };
 
     const calculateTotal = () => {
-        const baseTotal = quantity * basePrice;
+        const numericBasePrice = Number(basePrice) || 0;
+        const numericQuantity = Number(currentQuantity) || 0;
+        const baseTotal = numericQuantity * numericBasePrice;
+        
         const lineItemsTotal = items.reduce((acc, item) => {
             if (!item.name && item.amount === 0) return acc;
             const totalItem = item.amount * item.quantity;
@@ -203,8 +214,8 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                             <Text fontWeight="bold" mb={4}>Breakdown</Text>
                             
                             <HStack justify="space-between" mb={3}>
-                                <Text>Guests (${basePrice} × {quantity})</Text>
-                                <Text fontWeight="semibold">${(quantity * basePrice).toFixed(2)}</Text>
+                                <Text>Guests (${Number(basePrice).toFixed(2)} × {currentQuantity})</Text>
+                                <Text fontWeight="semibold">${(Number(basePrice) * currentQuantity).toFixed(2)}</Text>
                             </HStack>
                             
                             {items.map((item) => {
@@ -215,7 +226,7 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                                         <Text>
                                             {item.name || "Unnamed"} 
                                             {item.type === "Discount" ? " (-" : " ("}
-                                            ${item.amount} × {item.quantity})
+                                            ${item.amount.toFixed(2)} × {item.quantity})
                                         </Text>
                                         <Text fontWeight="semibold">
                                             {item.type === "Discount" ? "-" : ""}

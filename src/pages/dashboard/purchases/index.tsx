@@ -1529,7 +1529,9 @@ const PaymentSummary = ({reservation}) => {
                 onClose={() => setIsCustomLineItemsModalOpen(false)}
                 onSave={handleSaveCustomLineItems}
                 initialItems={customLineItems}
-                basePrice={reservation?.tour?.price || 0}
+                basePrice={tierPricing?.pricingType === 'tiered' 
+                    ? getPricePerGuest(tierPricing, reservation?.guestQuantity || 0) 
+                    : (tierPricing?.basePrice || reservation?.valuePerGuest || reservation?.tour?.price || 0)}
                 quantity={reservation?.guestQuantity || 1}
                 reservationId={reservation?.id}
             />

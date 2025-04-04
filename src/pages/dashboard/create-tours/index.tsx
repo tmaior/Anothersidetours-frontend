@@ -1363,7 +1363,7 @@ function SchedulesAvailabilityStep({
                 }
                 await Promise.all(
                     selectedDemographics.map(async (demo) => {
-                        let pricingData = {
+                        const pricingData: PricingData = {
                             tourId,
                             demographicId: demo.id,
                             pricingType: pricingStructure,

@@ -555,6 +555,31 @@ interface Demographic {
     caption?: string;
 }
 
+interface Tier {
+    id: string;
+    guests: string;
+    adjustments: Record<string, number>;
+    adjustmentTypes: Record<string, string>;
+    operations: Record<string, string>;
+    finalPrices: Record<string, number>;
+}
+
+interface TierEntry {
+    quantity: number;
+    price: number;
+    adjustment: number;
+    adjustmentType: string;
+    operation: string;
+}
+
+interface PricingData {
+    tourId: string;
+    demographicId: string;
+    pricingType: string;
+    basePrice: number;
+    tiers?: TierEntry[];
+}
+
 function SchedulesAvailabilityStep({
     onBack,
     isEditing = false,
@@ -673,7 +698,7 @@ function SchedulesAvailabilityStep({
                     }
                 });
 
-                const sortedTiers = Object.values(tiersByQuantity).sort((a, b) => {
+                const sortedTiers = (Object.values(tiersByQuantity) as Tier[]).sort((a, b) => {
                     const quantityA = parseInt(a.guests.replace(/\+\s*Guests/i, '').trim());
                     const quantityB = parseInt(b.guests.replace(/\+\s*Guests/i, '').trim());
                     return quantityA - quantityB;
@@ -1264,7 +1289,7 @@ function SchedulesAvailabilityStep({
             if (selectedDemographics.length > 0) {
                 await Promise.all(
                     selectedDemographics.map(async (demo) => {
-                        const pricingData = {
+                        const pricingData: PricingData = {
                             tourId,
                             demographicId: demo.id,
                             pricingType: pricingStructure,

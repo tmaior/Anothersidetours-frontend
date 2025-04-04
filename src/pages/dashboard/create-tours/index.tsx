@@ -657,6 +657,7 @@ function SchedulesAvailabilityStep({
         adjustments: {},
         adjustmentTypes: {},
         operations: {},
+        finalPrices: {}
     });
     const {demographics} = useDemographics();
 
@@ -728,13 +729,27 @@ function SchedulesAvailabilityStep({
                 return acc;
             }, {});
 
-            setNewTier({
+            const initialFinalPrices = demographics.reduce((acc, demo) => {
+                const basePrice = basePrices[demo.id] || 0;
+                acc[demo.id] = Number(basePrice);
+                return acc;
+            }, {});
+            const initialTier = {
                 id: crypto.randomUUID(),
                 guests: "1+ Guests",
-                adjustments: initialAdjustments,
-                adjustmentTypes: initialAdjustmentTypes,
-                operations: initialOperations,
-            });
+                adjustments: { ...initialAdjustments },
+                adjustmentTypes: { ...initialAdjustmentTypes },
+                operations: { ...initialOperations },
+                finalPrices: { ...initialFinalPrices }
+            };
+
+            setNewTier(initialTier);
+            if (Object.keys(basePrices).length > 0) {
+                setTiers([initialTier]);
+                setTimeout(() => {
+                    handleEditTier(initialTier);
+                }, 100);
+            }
         }
     };
 
@@ -754,6 +769,11 @@ function SchedulesAvailabilityStep({
             return acc;
         }, {});
 
+        const initialFinalPrices = demographics.reduce((acc, demo) => {
+            acc[demo.id] = basePrices[demo.id] || 0;
+            return acc;
+        }, {});
+
         const guests = tiers.length === 0 ? "1+ Guests" : "";
 
         setNewTier({
@@ -762,37 +782,57 @@ function SchedulesAvailabilityStep({
             adjustments: initialAdjustments,
             adjustmentTypes: initialAdjustmentTypes,
             operations: initialOperations,
+            finalPrices: initialFinalPrices
         });
         tierPriceModal.onOpen();
     };
 
+    const calculateFinalPrice = (basePrice, adjustment, adjustmentType, operation) => {
+        let finalPrice = basePrice;
+        
+        if (operation === "Markup") {
+            if (adjustmentType === "$") {
+                finalPrice = basePrice + adjustment;
+            } else {
+                finalPrice = basePrice + (basePrice * adjustment / 100);
+            }
+        } else {
+            if (adjustmentType === "$") {
+                finalPrice = basePrice - adjustment;
+            } else {
+                finalPrice = basePrice - (basePrice * adjustment / 100);
+            }
+        }
+        return Number(finalPrice.toFixed(2));
+    };
+    
     const handleSaveTier = () => {
         const finalPrices = {};
         for (const demo of demographics) {
-            const basePrice = basePrices[demo.id] || 0;
-            const adjustment = newTier.adjustments[demo.id] || 0;
+            const basePrice = Number(basePrices[demo.id] || 0);
+            const adjustment = Number(newTier.adjustments[demo.id] || 0);
             const adjustmentType = newTier.adjustmentTypes[demo.id] || "$";
             const operation = newTier.operations[demo.id] || "Markup";
 
-            finalPrices[demo.id] =
-                operation === "Markup"
-                    ? adjustmentType === "$"
-                        ? basePrice + adjustment
-                        : basePrice + (basePrice * adjustment) / 100
-                    : adjustmentType === "$"
-                        ? basePrice - adjustment
-                        : basePrice - (basePrice * adjustment) / 100;
+            finalPrices[demo.id] = calculateFinalPrice(basePrice, adjustment, adjustmentType, operation);
         }
-
         const newTierToSave = {
-            id: newTier.id,
-            guests: newTier.guests || `${newTier.guests} + Guests`,
-            finalPrices,
-            adjustments: newTier.adjustments,
-            adjustmentTypes: newTier.adjustmentTypes,
-            operations: newTier.operations,
+            id: newTier.id || crypto.randomUUID(),
+            guests: newTier.guests || "1+ Guests",
+            adjustments: { ...newTier.adjustments },
+            adjustmentTypes: { ...newTier.adjustmentTypes },
+            operations: { ...newTier.operations },
+            finalPrices: { ...finalPrices }
         };
 
+        for (const demo of demographics) {
+            if (newTierToSave.adjustments[demo.id] === undefined) newTierToSave.adjustments[demo.id] = 0;
+            if (newTierToSave.adjustmentTypes[demo.id] === undefined) newTierToSave.adjustmentTypes[demo.id] = "$";
+            if (newTierToSave.operations[demo.id] === undefined) newTierToSave.operations[demo.id] = "Markup";
+            if (newTierToSave.finalPrices[demo.id] === undefined) {
+                newTierToSave.finalPrices[demo.id] = Number(basePrices[demo.id] || 0);
+            }
+        }
         if (tiers.length === 0) {
             setTiers([newTierToSave]);
         } else {
@@ -846,7 +886,23 @@ function SchedulesAvailabilityStep({
     };
 
     const handleEditTier = (tier) => {
-        setNewTier(tier);
+        const tierToEdit = {
+            id: tier.id,
+            guests: tier.guests,
+            adjustments: { ...tier.adjustments },
+            adjustmentTypes: { ...tier.adjustmentTypes },
+            operations: { ...tier.operations },
+            finalPrices: { ...tier.finalPrices }
+        };
+        for (const demo of demographics) {
+            if (tierToEdit.adjustments[demo.id] === undefined) tierToEdit.adjustments[demo.id] = 0;
+            if (tierToEdit.adjustmentTypes[demo.id] === undefined) tierToEdit.adjustmentTypes[demo.id] = "$";
+            if (tierToEdit.operations[demo.id] === undefined) tierToEdit.operations[demo.id] = "Markup";
+            if (tierToEdit.finalPrices[demo.id] === undefined) {
+                tierToEdit.finalPrices[demo.id] = basePrices[demo.id] || 0;
+            }
+        }
+        setNewTier(tierToEdit);
         tierPriceModal.onOpen();
     };
 
@@ -1287,46 +1343,74 @@ function SchedulesAvailabilityStep({
             }
 
             if (selectedDemographics.length > 0) {
+                if (isEditing) {
+                    try {
+                        const checkRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourId}`);
+                        if (checkRes.ok) {
+                            const existingPricing = await checkRes.json();
+                            for (const existing of existingPricing) {
+                                if (existing.pricingType !== pricingStructure) {
+                                    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/${existing.id}`, {
+                                        method: "DELETE",
+                                        headers: {"Content-Type": "application/json"}
+                                    });
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.warn("Error checking existing pricing:", error);
+                    }
+                }
                 await Promise.all(
                     selectedDemographics.map(async (demo) => {
-                        const pricingData: PricingData = {
+                        let pricingData = {
                             tourId,
                             demographicId: demo.id,
                             pricingType: pricingStructure,
-                            basePrice: basePrices[demo.id] || 0
+                            basePrice: Number(basePrices[demo.id] || 0)
                         };
-                        
+
                         if (pricingStructure === "tiered" && tiers.length > 0) {
                             pricingData.tiers = tiers.map(tier => {
                                 const quantity = parseInt(tier.guests.replace(/\+\s*Guests/i, '').trim());
+
+                                let price = tier.finalPrices && tier.finalPrices[demo.id] !== undefined ? 
+                                    Number(tier.finalPrices[demo.id]) : 0;
+
+                                if (price === 0) {
+                                    const basePrice = Number(basePrices[demo.id] || 0);
+                                    const adjustment = Number(tier.adjustments[demo.id] || 0);
+                                    const adjustmentType = tier.adjustmentTypes[demo.id] || "$";
+                                    const operation = tier.operations[demo.id] || "Markup";
+                                    
+                                    if (operation === "Markup") {
+                                        if (adjustmentType === "$") {
+                                            price = basePrice + adjustment;
+                                        } else {
+                                            price = basePrice + (basePrice * adjustment / 100);
+                                        }
+                                    } else {
+                                        if (adjustmentType === "$") {
+                                            price = basePrice - adjustment;
+                                        } else {
+                                            price = basePrice - (basePrice * adjustment / 100);
+                                        }
+                                    }
+                                    
+                                    price = Number(price.toFixed(2));
+                                }
+                                const adjustment = Number(tier.adjustments[demo.id] || 0);
+                                const adjustmentType = tier.adjustmentTypes[demo.id] || "$";
+                                const operation = tier.operations[demo.id] || "Markup";
+                                
                                 return {
                                     quantity,
-                                    price: tier.finalPrices[demo.id] || 0,
-                                    adjustment: tier.adjustments[demo.id] || 0,
-                                    adjustmentType: tier.adjustmentTypes[demo.id] || "$",
-                                    operation: tier.operations[demo.id] || "Markup"
+                                    price: isNaN(price) ? 0 : price,
+                                    adjustment: isNaN(adjustment) ? 0 : adjustment,
+                                    adjustmentType,
+                                    operation
                                 };
                             });
-                        }
-
-                        if (isEditing) {
-                            try {
-                                const checkRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourId}`);
-                                if (checkRes.ok) {
-                                    const existingPricing = await checkRes.json();
-                                    const existing = existingPricing.find(p => p.demographicId === demo.id);
-                                    
-                                    if (existing) {
-                                        return fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/${existing.id}`, {
-                                            method: "PUT",
-                                            headers: {"Content-Type": "application/json"},
-                                            body: JSON.stringify(pricingData)
-                                        });
-                                    }
-                                }
-                            } catch (error) {
-                                console.warn("Error checking existing pricing:", error);
-                            }
                         }
                         return fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing`, {
                             method: "POST",
@@ -1892,11 +1976,40 @@ function SchedulesAvailabilityStep({
                                                             <Tr key={demo.id}>
                                                                 <Td>{demo.name}</Td>
                                                                 {pricingStructure === "tiered" && tiers.length > 0 ? (
-                                                                    tiers.map((tier) => (
-                                                                        <Td key={tier.id}>${(tier.finalPrices[demo.id] || 0).toFixed(2)}</Td>
-                                                                    ))
+                                                                    tiers.map((tier) => {
+                                                                        let finalPrice = 0;
+                                                                        const basePrice = Number(basePrices[demo.id] || 0);
+                                                                        const adjustment = Number(tier.adjustments[demo.id] || 0);
+                                                                        const adjustmentType = tier.adjustmentTypes[demo.id] || "$";
+                                                                        const operation = tier.operations[demo.id] || "Markup";
+
+                                                                        if (operation === "Markup") {
+                                                                            if (adjustmentType === "$") {
+                                                                                finalPrice = basePrice + adjustment;
+                                                                            } else {
+                                                                                finalPrice = basePrice + (basePrice * adjustment / 100);
+                                                                            }
+                                                                        } else {
+                                                                            if (adjustmentType === "$") {
+                                                                                finalPrice = basePrice - adjustment;
+                                                                            } else {
+                                                                                finalPrice = basePrice - (basePrice * adjustment / 100);
+                                                                            }
+                                                                        }
+
+                                                                        finalPrice = Number(finalPrice.toFixed(2));
+
+                                                                        if (!tier.finalPrices) tier.finalPrices = {};
+                                                                        tier.finalPrices[demo.id] = finalPrice;
+                                                                        
+                                                                        return (
+                                                                            <Td key={tier.id}>
+                                                                                ${finalPrice.toFixed(2)}
+                                                                            </Td>
+                                                                        );
+                                                                    })
                                                                 ) : (
-                                                                    <Td>${(basePrices[demo.id] || 0).toFixed(2)}</Td>
+                                                                    <Td>${Number(basePrices[demo.id] || 0).toFixed(2)}</Td>
                                                                 )}
                                                             </Tr>
                                                         ))
@@ -2082,11 +2195,11 @@ function SchedulesAvailabilityStep({
                                                                 <Td>
                                                                     ${(newTier.operations[demo.id] === "Markup"
                                                                         ? newTier.adjustmentTypes[demo.id] === "$"
-                                                                            ? (basePrices[demo.id] || 0) + (newTier.adjustments[demo.id] || 0)
-                                                                            : (basePrices[demo.id] || 0) + ((basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100
+                                                                            ? Number((basePrices[demo.id] || 0) + (newTier.adjustments[demo.id] || 0))
+                                                                            : Number((basePrices[demo.id] || 0) + ((basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100)
                                                                         : newTier.adjustmentTypes[demo.id] === "$"
-                                                                            ? (basePrices[demo.id] || 0) - (newTier.adjustments[demo.id] || 0)
-                                                                            : (basePrices[demo.id] || 0) - ((basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100).toFixed(2)}
+                                                                            ? Number((basePrices[demo.id] || 0) - (newTier.adjustments[demo.id] || 0))
+                                                                            : Number((basePrices[demo.id] || 0) - ((basePrices[demo.id] || 0) * (newTier.adjustments[demo.id] || 0)) / 100)).toFixed(2)}
                                                                 </Td>
                                                             </Tr>
                                                         ))

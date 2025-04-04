@@ -211,7 +211,7 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                             justifyContent="space-between"
                             h="300px"
                         >
-                            <Text fontWeight="bold" mb={4}>Breakdown</Text>
+                            <Text fontWeight="bold" mb={4}>Purchase Summary</Text>
                             
                             <HStack justify="space-between" mb={3}>
                                 <Text>Guests (${Number(basePrice).toFixed(2)} × {currentQuantity})</Text>

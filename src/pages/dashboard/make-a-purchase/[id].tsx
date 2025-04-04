@@ -10,7 +10,7 @@ import {
     HStack,
     IconButton,
     Input,
-    InputGroup,
+    InputGroup, InputLeftElement,
     InputRightElement,
     Modal,
     ModalBody,
@@ -2077,7 +2077,7 @@ const PurchasePage = () => {
 
                                 <ModalBody>
                                     <Flex gap={4}>
-                                        <Box flex="2" maxH="300px" overflowY="auto" pr={2} maxW={"300px"}>
+                                        <Box flex="2" maxH="300px" overflowY="auto" pr={2} maxW="350px">
                                             {items.map((item) => (
                                                 <Box key={item.id} borderBottom="1px solid" borderColor="gray.200"
                                                      pb={3} mb={3}>
@@ -2094,47 +2094,56 @@ const PurchasePage = () => {
                                                             onClick={() => removeItem(item.id)} aria-label={'delete'}/>
                                                     </HStack>
 
-                                                    <HStack mt={2}>
+                                                    <Flex mt={2} alignItems="center" justifyContent="space-between" flexWrap="nowrap">
                                                         <Select
                                                             value={item.type}
                                                             onChange={(e) => updateItem(item.id, "type", e.target.value)}
-                                                            width="100px"
+                                                            width="110px"
+                                                            mr={2}
+                                                            size="md"
                                                         >
                                                             <option value="Charge">Charge</option>
                                                             <option value="Discount">Discount</option>
                                                         </Select>
+                                                        
+                                                        <InputGroup size="md" width="100px" mr={2}>
+                                                            <InputLeftElement pointerEvents="none">
+                                                                <Text color="gray.500">$</Text>
+                                                            </InputLeftElement>
+                                                            <Input
+                                                                type="number"
+                                                                paddingLeft="30px"
+                                                                placeholder="0.00"
+                                                                value={item.amount === 0 ? '' : item.amount}
+                                                                onChange={(e) => updateItem(item.id, "amount", parseFloat(e.target.value) || 0)}
+                                                            />
+                                                        </InputGroup>
 
-                                                        <Input
-                                                            type="number"
-                                                            placeholder="$"
-                                                            width="80px"
-                                                            value={item.amount}
-                                                            onChange={(e) => updateItem(item.id, "amount", parseFloat(e.target.value) || 0)}
-                                                        />
-
-                                                        <HStack>
+                                                        <Flex alignItems="center">
                                                             <IconButton
                                                                 icon={<MinusIcon/>}
                                                                 size="sm"
                                                                 onClick={() => updateItem(item.id, "quantity", Math.max(1, item.quantity - 1))}
                                                                 aria-label={'Decrease quantity'}
+                                                                mr={1}
                                                             />
-                                                            <Text>{item.quantity}</Text>
+                                                            <Text mx={2} minWidth="20px" textAlign="center">{item.quantity}</Text>
                                                             <IconButton
                                                                 icon={<AddIcon/>}
                                                                 size="sm"
                                                                 onClick={() => updateItem(item.id, "quantity", item.quantity + 1)}
                                                                 aria-label={'Increase quantity'}
+                                                                ml={1}
                                                             />
-                                                        </HStack>
-                                                    </HStack>
+                                                        </Flex>
+                                                    </Flex>
                                                 </Box>
                                             ))}
                                         </Box>
 
                                         <Box flex="1" bg="gray.100" p={4} borderRadius="md" h={"300px"} display="flex"
                                              flexDirection="column" justifyContent="space-between">
-                                            <Text fontWeight="bold">Breakdown</Text>
+                                            <Text fontWeight="bold">Purchase Summary</Text>
                                             <HStack justify="space-between" mb={-10} spacing={2} mt={-8}>
                                                 <Text>Guests (${basePrice} × {quantity})</Text>
                                                 <Text fontWeight="semibold">${(quantity * basePrice).toFixed(2)}</Text>

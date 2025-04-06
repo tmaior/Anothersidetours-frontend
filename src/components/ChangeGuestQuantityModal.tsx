@@ -20,26 +20,49 @@ import {
     VStack,
     Icon,
     useDisclosure,
+    Divider,
+    InputGroup,
+    InputLeftElement,
 } from "@chakra-ui/react";
 import axios from "axios";
 import PurchaseAndPaymentSummary from "./PurchaseAndPaymentSummary";
 import { BsCheck2 } from "react-icons/bs";
 import { FaRegCreditCard } from "react-icons/fa";
 import { BsCash } from "react-icons/bs";
+import { BiCheck } from "react-icons/bi";
+import { format } from 'date-fns';
 
-const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
+const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     const toast = useToast();
+    const [paymentMethod, setPaymentMethod] = useState('Credit Card');
+    const [notifyCustomer, setNotifyCustomer] = useState(true);
+    const [tag, setTag] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleCollectNow = async () => {
+    const handleCollect = async () => {
         try {
-            const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
+            setIsLoading(true);
+            const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
+                bookingId: booking.id,
+                amount: bookingChanges.priceDifference,
+                paymentMethod: paymentMethod,
+                tag: tag || null,
+                notifyCustomer: notifyCustomer,
+                type: 'GUEST_QUANTITY_CHANGE',
+                metadata: {
+                    originalGuestQuantity: bookingChanges.originalGuestQuantity,
+                    newGuestQuantity: bookingChanges.newGuestQuantity,
+                    originalPrice: bookingChanges.originalPrice,
+                    newPrice: bookingChanges.newPrice
+                }
+            });
+            const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
                 guestQuantity: bookingChanges.newGuestQuantity,
                 total_price: bookingChanges.newPrice,
-                status: booking.status,
-                paymentMethod: 'STANDARD'
+                status: booking.status
             });
 
-            if (response.data) {
+            if (transactionResponse.data && bookingResponse.data) {
                 toast({
                     title: "Success",
                     description: "Payment collected and booking updated successfully.",
@@ -59,19 +82,167 @@ const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                 duration: 5000,
                 isClosable: true,
             });
+        } finally {
+            setIsLoading(false);
         }
+    };
+
+    const handleLater = () => {
+        onClose();
+    };
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} size="4xl">
+            <ModalOverlay />
+            <ModalContent>
+                <ModalHeader textAlign="center">Collect Payment</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                    <Flex>
+                        <Box flex="1" mr={4}>
+                            <Text mb={2}>Amount</Text>
+                            <InputGroup mb={4}>
+                                <InputLeftElement pointerEvents="none">$</InputLeftElement>
+                                <Input value={bookingChanges?.priceDifference.toFixed(2)} readOnly />
+                            </InputGroup>
+
+                            <Text mb={2}>Payment Method</Text>
+                            <HStack spacing={2} mb={4}>
+                                <Button
+                                    size="sm"
+                                    variant={paymentMethod === 'Credit Card' ? 'solid' : 'outline'}
+                                    onClick={() => setPaymentMethod('Credit Card')}
+                                    leftIcon={<FaRegCreditCard />}
+                                >
+                                    Credit Card
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant={paymentMethod === 'Cash' ? 'solid' : 'outline'}
+                                    onClick={() => setPaymentMethod('Cash')}
+                                    leftIcon={<BsCash />}
+                                >
+                                    Cash
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant={paymentMethod === 'Check' ? 'solid' : 'outline'}
+                                    onClick={() => setPaymentMethod('Check')}
+                                    leftIcon={<BiCheck />}
+                                >
+                                    Check
+                                </Button>
+                            </HStack>
+                            <Button
+                                size="sm"
+                                variant={paymentMethod === 'Other' ? 'solid' : 'outline'}
+                                onClick={() => setPaymentMethod('Other')}
+                                mb={4}
+                                colorScheme="blue"
+                                bg={paymentMethod === 'Other' ? "blue.500" : "blue.50"}
+                                color={paymentMethod === 'Other' ? "white" : "blue.500"}
+                            >
+                                Other
+                            </Button>
+
+                            <Text mb={2}>Tag</Text>
+                            <Input 
+                                placeholder="Add a tag" 
+                                value={tag} 
+                                onChange={(e) => setTag(e.target.value)}
+                            />
+                        </Box>
+
+                        <Box flex="1" bg="gray.50" p={4} borderRadius="md">
+                            <VStack align="stretch" spacing={4}>
+                                <Box>
+                                    <Text fontWeight="bold" mb={2}>Purchase Summary</Text>
+                                    <Flex justify="space-between">
+                                        <Text>Guests (${(booking.valuePerGuest || booking.tour?.price || 0).toFixed(2)} × {bookingChanges?.newGuestQuantity})</Text>
+                                        <Text>${bookingChanges?.newPrice.toFixed(2)}</Text>
+                                    </Flex>
+                                    <Flex justify="space-between" fontWeight="bold" mt={2}>
+                                        <Text>Total</Text>
+                                        <Text>${bookingChanges?.newPrice.toFixed(2)}</Text>
+                                    </Flex>
+                                </Box>
+
+                                <Divider />
+
+                                <Box>
+                                    <Text fontWeight="bold" mb={2}>Payment Summary</Text>
+                                    <Flex justify="space-between">
+                                        <Text>Payment {format(new Date(), 'MM/dd/yyyy')}</Text>
+                                        <Text>${booking.total_price.toFixed(2)}</Text>
+                                    </Flex>
+                                    <Flex justify="space-between" color="blue.500">
+                                        <Text>Payment</Text>
+                                        <Text>${bookingChanges?.priceDifference.toFixed(2)}</Text>
+                                    </Flex>
+                                    <Flex justify="space-between" fontWeight="bold" mt={2}>
+                                        <Text>Paid</Text>
+                                        <Text>${bookingChanges?.newPrice.toFixed(2)}</Text>
+                                    </Flex>
+                                </Box>
+                            </VStack>
+                        </Box>
+                    </Flex>
+                </ModalBody>
+                <ModalFooter>
+                    <Flex width="100%" justifyContent="space-between" alignItems="center">
+                        <Checkbox isChecked={notifyCustomer} onChange={(e) => setNotifyCustomer(e.target.checked)}>
+                            Notify Customer
+                        </Checkbox>
+                        <HStack>
+                            <Button colorScheme="gray" onClick={handleLater}>
+                                Later
+                            </Button>
+                            <Button 
+                                colorScheme="blue" 
+                                onClick={handleCollect}
+                                isLoading={isLoading}
+                                loadingText="Processing"
+                            >
+                                Collect
+                            </Button>
+                        </HStack>
+                    </Flex>
+                </ModalFooter>
+            </ModalContent>
+        </Modal>
+    );
+};
+
+const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
+    const toast = useToast();
+    const { isOpen: isPaymentModalOpen, onOpen: onPaymentModalOpen, onClose: onPaymentModalClose } = useDisclosure();
+
+    const handleCollectNow = () => {
+        onPaymentModalOpen();
     };
 
     const handleCollectViaInvoice = async () => {
         try {
-            const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
+            const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
+                bookingId: booking.id,
+                amount: bookingChanges.priceDifference,
+                paymentMethod: 'INVOICE',
+                type: 'GUEST_QUANTITY_CHANGE',
+                notifyCustomer: true,
+                metadata: {
+                    originalGuestQuantity: bookingChanges.originalGuestQuantity,
+                    newGuestQuantity: bookingChanges.newGuestQuantity,
+                    originalPrice: bookingChanges.originalPrice,
+                    newPrice: bookingChanges.newPrice
+                }
+            });
+            const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
                 guestQuantity: bookingChanges.newGuestQuantity,
                 total_price: bookingChanges.newPrice,
-                status: booking.status,
-                paymentMethod: 'INVOICE'
+                status: booking.status
             });
 
-            if (response.data) {
+            if (transactionResponse.data && bookingResponse.data) {
                 toast({
                     title: "Success",
                     description: "Invoice sent and booking updated successfully.",
@@ -96,14 +267,26 @@ const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
 
     const handleCollectLater = async () => {
         try {
-            const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
+            const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
+                bookingId: booking.id,
+                amount: bookingChanges.priceDifference,
+                paymentMethod: 'LATER',
+                type: 'GUEST_QUANTITY_CHANGE',
+                notifyCustomer: false,
+                metadata: {
+                    originalGuestQuantity: bookingChanges.originalGuestQuantity,
+                    newGuestQuantity: bookingChanges.newGuestQuantity,
+                    originalPrice: bookingChanges.originalPrice,
+                    newPrice: bookingChanges.newPrice
+                }
+            });
+            const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
                 guestQuantity: bookingChanges.newGuestQuantity,
                 total_price: bookingChanges.newPrice,
-                status: booking.status,
-                paymentMethod: 'LATER'
+                status: booking.status
             });
 
-            if (response.data) {
+            if (transactionResponse.data && bookingResponse.data) {
                 toast({
                     title: "Success",
                     description: "Booking updated. Balance will be collected later.",
@@ -127,71 +310,80 @@ const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="4xl">
-            <ModalOverlay />
-            <ModalContent>
-                <ModalHeader textAlign="center">How Do You Want To Collect Balance?</ModalHeader>
-                <ModalBody>
-                    <VStack spacing={4} align="stretch">
-                        <Box
-                            as="button"
-                            p={4}
-                            borderWidth="1px"
-                            borderRadius="md"
-                            onClick={handleCollectNow}
-                            _hover={{ bg: "gray.50" }}
-                        >
-                            <Flex align="center">
-                                <Icon as={FaRegCreditCard} boxSize={5} mr={4} />
-                                <Box textAlign="left">
-                                    <Text fontWeight="bold">Collect Balance Now</Text>
-                                    <Text>Use standard methods of collecting balance</Text>
-                                </Box>
-                            </Flex>
-                        </Box>
+        <>
+            <Modal isOpen={isOpen} onClose={onClose} size="4xl">
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader textAlign="center">How Do You Want To Collect Balance?</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <VStack spacing={4} align="stretch">
+                            <Box
+                                as="button"
+                                p={4}
+                                borderWidth="1px"
+                                borderRadius="md"
+                                onClick={handleCollectNow}
+                                _hover={{ bg: "gray.50" }}
+                            >
+                                <Flex align="center">
+                                    <Icon as={FaRegCreditCard} boxSize={5} mr={4} />
+                                    <Box textAlign="left">
+                                        <Text fontWeight="bold">Collect Balance Now</Text>
+                                        <Text>Use standard methods of collecting balance</Text>
+                                    </Box>
+                                </Flex>
+                            </Box>
 
-                        <Box
-                            as="button"
-                            p={4}
-                            borderWidth="1px"
-                            borderRadius="md"
-                            onClick={handleCollectViaInvoice}
-                            _hover={{ bg: "gray.50" }}
-                        >
-                            <Flex align="center">
-                                <Icon as={BsCheck2} boxSize={5} mr={4} />
-                                <Box textAlign="left">
-                                    <Text fontWeight="bold">Collect Balance via Invoice</Text>
-                                    <Text>Send an invoice to the organizer</Text>
-                                </Box>
-                            </Flex>
-                        </Box>
+                            <Box
+                                as="button"
+                                p={4}
+                                borderWidth="1px"
+                                borderRadius="md"
+                                onClick={handleCollectViaInvoice}
+                                _hover={{ bg: "gray.50" }}
+                            >
+                                <Flex align="center">
+                                    <Icon as={BsCheck2} boxSize={5} mr={4} />
+                                    <Box textAlign="left">
+                                        <Text fontWeight="bold">Collect Balance via Invoice</Text>
+                                        <Text>Send an invoice to the organizer</Text>
+                                    </Box>
+                                </Flex>
+                            </Box>
 
-                        <Box
-                            as="button"
-                            p={4}
-                            borderWidth="1px"
-                            borderRadius="md"
-                            onClick={handleCollectLater}
-                            _hover={{ bg: "gray.50" }}
-                        >
-                            <Flex align="center">
-                                <Icon as={BsCash} boxSize={5} mr={4} />
-                                <Box textAlign="left">
-                                    <Text fontWeight="bold">Collect Balance Later</Text>
-                                    <Text>Collect balance later</Text>
-                                </Box>
-                            </Flex>
-                        </Box>
-                    </VStack>
-                </ModalBody>
-                <ModalFooter>
-                    <Button colorScheme="blue" variant="outline" onClick={onClose}>
-                        Cancel
-                    </Button>
-                </ModalFooter>
-            </ModalContent>
-        </Modal>
+                            <Box
+                                as="button"
+                                p={4}
+                                borderWidth="1px"
+                                borderRadius="md"
+                                onClick={handleCollectLater}
+                                _hover={{ bg: "gray.50" }}
+                            >
+                                <Flex align="center">
+                                    <Icon as={BsCash} boxSize={5} mr={4} />
+                                    <Box textAlign="left">
+                                        <Text fontWeight="bold">Collect Balance Later</Text>
+                                        <Text>Collect balance later</Text>
+                                    </Box>
+                                </Flex>
+                            </Box>
+                        </VStack>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button colorScheme="blue" variant="outline" onClick={onClose}>
+                            Cancel
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+            <CollectPaymentModal
+                isOpen={isPaymentModalOpen}
+                onClose={onPaymentModalClose}
+                bookingChanges={bookingChanges}
+                booking={booking}
+            />
+        </>
     );
 };
 
@@ -318,13 +510,27 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
     
     const handleNegativePriceDifference = async () => {
         try {
+            const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
+                bookingId: booking.id,
+                amount: Math.abs(bookingChanges.priceDifference),
+                paymentMethod: 'REFUND',
+                type: 'GUEST_QUANTITY_CHANGE',
+                notifyCustomer: true,
+                metadata: {
+                    originalGuestQuantity: bookingChanges.originalGuestQuantity,
+                    newGuestQuantity: bookingChanges.newGuestQuantity,
+                    originalPrice: bookingChanges.originalPrice,
+                    newPrice: bookingChanges.newPrice
+                }
+            });
+            
             const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
                 guestQuantity: bookingChanges.newGuestQuantity,
                 total_price: bookingChanges.newPrice,
                 status: booking.status
             });
 
-            if (response.data) {
+            if (response.data && transactionResponse.data) {
                 toast({
                     title: "Success",
                     description: "Reservation updated. Refund process initiated.",
@@ -349,13 +555,27 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
     
     const handleNoPriceDifference = async () => {
         try {
+            const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
+                bookingId: booking.id,
+                amount: 0,
+                paymentMethod: 'NO_CHANGE',
+                type: 'GUEST_QUANTITY_CHANGE',
+                notifyCustomer: false,
+                metadata: {
+                    originalGuestQuantity: bookingChanges.originalGuestQuantity,
+                    newGuestQuantity: bookingChanges.newGuestQuantity,
+                    originalPrice: bookingChanges.originalPrice,
+                    newPrice: bookingChanges.newPrice
+                }
+            });
+            
             const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
                 guestQuantity: bookingChanges.newGuestQuantity,
                 total_price: bookingChanges.newPrice,
                 status: booking.status
             });
 
-            if (response.data) {
+            if (response.data && transactionResponse.data) {
                 toast({
                     title: "Success",
                     description: "Reservation updated successfully.",

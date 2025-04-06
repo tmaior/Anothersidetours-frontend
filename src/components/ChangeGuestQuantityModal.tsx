@@ -23,6 +23,7 @@ import {
     Divider,
     InputGroup,
     InputLeftElement,
+    Textarea,
 } from "@chakra-ui/react";
 import axios from "axios";
 import PurchaseAndPaymentSummary from "./PurchaseAndPaymentSummary";
@@ -213,22 +214,87 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     );
 };
 
-const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
+const CollectInvoiceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     const toast = useToast();
-    const { isOpen: isPaymentModalOpen, onOpen: onPaymentModalOpen, onClose: onPaymentModalClose } = useDisclosure();
+    const [tag, setTag] = useState('');
+    const [message, setMessage] = useState('');
+    const [daysBeforeArrival, setDaysBeforeArrival] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleCollectNow = () => {
-        onPaymentModalOpen();
+    const getBookingDate = () => {
+        try {
+            if (booking.reservation_date) {
+                const dateParts = booking.reservation_date.split('T')[0].split('-');
+                const year = parseInt(dateParts[0], 10);
+                const month = parseInt(dateParts[1], 10) - 1;
+                const day = parseInt(dateParts[2], 10);
+                
+                return new Date(year, month, day);
+            }
+            else if (booking.selectedDate) {
+                const dateParts = booking.selectedDate.split('T')[0].split('-');
+                const year = parseInt(dateParts[0], 10);
+                const month = parseInt(dateParts[1], 10) - 1;
+                const day = parseInt(dateParts[2], 10);
+                
+                return new Date(year, month, day);
+            }
+            else if (booking.dateFormatted) {
+                try {
+                    const parts = booking.dateFormatted.split(' ');
+                    const month = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
+                        .indexOf(parts[0].toLowerCase());
+                    const day = parseInt(parts[1].replace(',', ''), 10);
+                    const year = parseInt(parts[2], 10);
+                    
+                    return new Date(year, month, day);
+                } catch (e) {
+                    return new Date(booking.dateFormatted);
+                }
+            } 
+            else if (booking.date) {
+                return new Date(booking.date);
+            } 
+            else if (booking.tourDate) {
+                return new Date(booking.tourDate);
+            } 
+            else {
+                console.warn("No date found in booking, using current date");
+                return new Date();
+            }
+        } catch (e) {
+            console.error("Error parsing booking date:", e);
+            return new Date();
+        }
     };
 
-    const handleCollectViaInvoice = async () => {
+    const bookingDate = getBookingDate();
+    const calculateDueDate = () => {
+        const year = bookingDate.getFullYear();
+        const month = bookingDate.getMonth();
+        const day = bookingDate.getDate();
+        const localDate = new Date(year, month, day);
+        localDate.setDate(localDate.getDate() - daysBeforeArrival);
+        
+        return localDate;
+    };
+    
+    const dueDate = calculateDueDate();
+    const formattedDueDate = format(dueDate, 'MMMM d, yyyy');
+    const formattedBookingDate = format(bookingDate, 'MMMM d, yyyy');
+    const handleSendInvoice = async () => {
         try {
+            setIsLoading(true);
+            
             const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
                 bookingId: booking.id,
                 amount: bookingChanges.priceDifference,
                 paymentMethod: 'INVOICE',
                 type: 'GUEST_QUANTITY_CHANGE',
                 notifyCustomer: true,
+                tag: tag || null,
+                message: message || null,
+                dueDate: dueDate.toISOString(),
                 metadata: {
                     originalGuestQuantity: bookingChanges.originalGuestQuantity,
                     newGuestQuantity: bookingChanges.newGuestQuantity,
@@ -262,7 +328,103 @@ const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                 duration: 5000,
                 isClosable: true,
             });
+        } finally {
+            setIsLoading(false);
         }
+    };
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} size="lg">
+            <ModalOverlay />
+            <ModalContent>
+                <ModalHeader textAlign="center">Collect Payment via Invoice</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                    <VStack spacing={4} align="stretch">
+                        <Box>
+                            <Text mb={2}>Amount</Text>
+                            <InputGroup>
+                                <InputLeftElement pointerEvents="none">$</InputLeftElement>
+                                <Input value={bookingChanges?.priceDifference.toFixed(2)} readOnly />
+                            </InputGroup>
+                        </Box>
+                        
+                        <Box>
+                            <Text mb={2}>Payment due</Text>
+                            <Flex align="center">
+                                <Input 
+                                    type="number" 
+                                    value={daysBeforeArrival} 
+                                    onChange={(e) => {
+                                        const value = parseInt(e.target.value, 10);
+                                        if (!isNaN(value)) {
+                                            setDaysBeforeArrival(value);
+                                        }
+                                    }}
+                                    width="60px"
+                                    mr={2}
+                                />
+                                <Text mr={2}>days before arrival (due on {formattedDueDate})</Text>
+                            </Flex>
+                        </Box>
+
+                        <Box>
+                            <Text color="gray.500" fontSize="sm">
+                                Reservation date: {formattedBookingDate}
+                            </Text>
+                        </Box>
+                        
+                        <Box>
+                            <Text mb={2}>Message</Text>
+                            <Textarea 
+                                placeholder="Optional message to include in invoice" 
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                height="120px"
+                            />
+                        </Box>
+                        
+                        <Box>
+                            <Text mb={2}>Tag</Text>
+                            <Input 
+                                placeholder="Add a tag" 
+                                value={tag} 
+                                onChange={(e) => setTag(e.target.value)}
+                            />
+                        </Box>
+                    </VStack>
+                </ModalBody>
+                <ModalFooter>
+                    <Button variant="outline" mr={3} onClick={onClose}>
+                        Cancel
+                    </Button>
+                    <Button 
+                        colorScheme="blue" 
+                        onClick={handleSendInvoice}
+                        isLoading={isLoading}
+                        loadingText="Sending"
+                    >
+                        Send Invoice
+                    </Button>
+                </ModalFooter>
+            </ModalContent>
+        </Modal>
+    );
+};
+
+const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
+    const toast = useToast();
+    const { isOpen: isPaymentModalOpen, onOpen: onPaymentModalOpen, onClose: onPaymentModalClose } = useDisclosure();
+    const { isOpen: isInvoiceModalOpen, onOpen: onInvoiceModalOpen, onClose: onInvoiceModalClose } = useDisclosure();
+
+    const handleCollectNow = () => {
+        onClose();
+        onPaymentModalOpen();
+    };
+
+    const handleCollectViaInvoice = () => {
+        onClose();
+        onInvoiceModalOpen();
     };
 
     const handleCollectLater = async () => {
@@ -380,6 +542,13 @@ const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
             <CollectPaymentModal
                 isOpen={isPaymentModalOpen}
                 onClose={onPaymentModalClose}
+                bookingChanges={bookingChanges}
+                booking={booking}
+            />
+
+            <CollectInvoiceModal
+                isOpen={isInvoiceModalOpen}
+                onClose={onInvoiceModalClose}
                 bookingChanges={bookingChanges}
                 booking={booking}
             />

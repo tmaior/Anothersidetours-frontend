@@ -127,18 +127,28 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
 
     const handleAccept = async () => {
         try {
-            const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/confirm-payment`, {
+            const transactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`);
+            
+            if (!transactionResponse.ok) throw new Error("Failed to get payment transaction data");
+            
+            const transactionData = await transactionResponse.json();
+            
+            if (!transactionData || transactionData.length === 0) {
+                throw new Error("No payment transaction found for this reservation");
+            }
+            
+            const transaction = transactionData[0];
+            const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
-                    email: reservation.user?.email,
-                    paymentMethodId: reservation.paymentMethodId,
-                    amount: reservation.total_price * 100,
-                    currency: "usd",
+                    transactionId: transaction.id
                 }),
             });
-
-            if (!paymentResponse.ok) throw new Error("Failed to confirm payment");
+            
+            if (!paymentResponse.ok) throw new Error("Failed to process payment");
+            
+            const paymentResult = await paymentResponse.json();
 
             const parsedDate = parse(reservation.dateFormatted, 'MMM dd, yyyy', new Date());
             const formattedDate = format(parsedDate, 'yyyy-MM-dd');
@@ -170,35 +180,28 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
             });
 
             if (!emailResponse.ok) throw new Error("Failed to send email");
-
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservation.id}`, {
-                method: "PUT",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({status: "ACCEPTED"}),
-            });
-
             setCurrentStatus("ACCEPTED");
             setReservations((prevDays) =>
                 prevDays.map((dayObj) => ({
                     ...dayObj,
                     reservations: dayObj.reservations.map((r) =>
-                        r.id === reservation.id ? {...r, status: "ACCEPTED"} : r
+                        r.id === reservation.id ? {...r, status: "ACCEPTED", paymentIntentId: paymentResult.paymentIntentId} : r
                     ),
                 }))
             );
 
             toast({
                 title: "Reservation Accepted",
-                description: "The reservation has been accepted and payment confirmed.",
+                description: "The reservation has been accepted and payment processed.",
                 status: "success",
                 duration: 3000,
                 isClosable: true,
             });
         } catch (error) {
-            console.error("Error confirming payment:", error);
+            console.error("Error processing payment:", error);
             toast({
                 title: "Error",
-                description: "Failed to accept reservation.",
+                description: error.message || "Failed to accept reservation.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -208,11 +211,28 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
 
     const confirmReject = async () => {
         try {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/invalidate-payment-method`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({paymentMethodId: reservation.paymentMethodId}),
-            });
+            const transactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`);
+            
+            if (!transactionResponse.ok) throw new Error("Failed to get payment transaction data");
+            
+            const transactionData = await transactionResponse.json();
+            
+            if (transactionData && transactionData.length > 0) {
+                const transaction = transactionData[0];
+                if (transaction.paymentMethodId) {
+                    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/invalidate-payment-method`, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({paymentMethodId: transaction.paymentMethodId}),
+                    });
+                }
+            } else if (reservation.paymentMethodId) {
+                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/invalidate-payment-method`, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({paymentMethodId: reservation.paymentMethodId}),
+                });
+            }
 
             const parsedDate = parse(reservation.dateFormatted, 'MMM dd, yyyy', new Date());
             const formattedDate = format(parsedDate, 'yyyy-MM-dd');
@@ -272,7 +292,7 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
             console.error("Error rejecting reservation:", error);
             toast({
                 title: "Error",
-                description: "Failed to reject reservation.",
+                description: error.message || "Failed to reject reservation.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,

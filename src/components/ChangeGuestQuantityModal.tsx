@@ -560,6 +560,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
     const [tierPricing, setTierPricing] = useState(null);
     const [bookingChanges, setBookingChanges] = useState(null);
     const [changesConfirmed, setChangesConfirmed] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const toast = useToast();
     const { isOpen: isCollectBalanceOpen, onOpen: onCollectBalanceOpen, onClose: onCollectBalanceClose } = useDisclosure();
 
@@ -611,7 +612,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
         if (guestCount > 1) setGuestCount(guestCount - 1);
     };
 
-    const handleChangeConfirm = () => {
+    const handleChangeConfirm = async () => {
         if (booking.status === "CANCELED" || booking.status === "REJECTED") {
             toast({
                 title: "Error",
@@ -623,148 +624,107 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
             return;
         }
 
+        setIsLoading(true);
         try {
             const updatedTotalPrice = calculateGuestPrice();
             const priceDifference = updatedTotalPrice - booking.total_price;
 
-            setBookingChanges({
+            const bookingChangesObj = {
                 originalGuestQuantity: booking.guestQuantity,
                 newGuestQuantity: guestCount,
                 originalPrice: booking.total_price,
                 newPrice: updatedTotalPrice,
                 priceDifference: priceDifference
-            });
+            };
 
-            setChangesConfirmed(true);
-            
-            toast({
-                title: "Success",
-                description: "Changes confirmed. Click 'Complete' to proceed.",
-                status: "success",
-                duration: 3000,
-                isClosable: true,
-            });
+            setBookingChanges(bookingChangesObj);
+
+            // const paymentMethod = 'LATER';
+            const amount = Math.abs(priceDifference);
+            const transactionType = priceDifference >= 0 ? 'GUEST_QUANTITY_CHANGE' : 'GUEST_QUANTITY_REFUND';
+
+            let transactionSuccess = false;
+            try {
+                const transactionData = {
+                    tenant_id: booking.tenantId,
+                    reservation_id: booking.id,
+                    amount: amount,
+                    // payment_method: paymentMethod,
+                    payment_status: 'pending',
+                    transaction_type: transactionType,
+                    metadata: {
+                        originalGuestQuantity: booking.guestQuantity,
+                        newGuestQuantity: guestCount,
+                        originalPrice: booking.total_price,
+                        newPrice: updatedTotalPrice,
+                        modifiedAt: new Date().toISOString()
+                    }
+                };
+
+                await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
+                    transactionData
+                );
+                transactionSuccess = true;
+            } catch (txError) {
+                console.error("Error creating transaction:", txError);
+                if (txError.response) {
+                    console.error("Transaction error response:", txError.response.data);
+                    console.error("Transaction error status:", txError.response.status);
+                }
+                toast({
+                    title: "Warning",
+                    description: "Transaction creation failed, but we'll still update the booking.",
+                    status: "warning",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            }
+            try {
+                await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
+                    guestQuantity: guestCount,
+                    total_price: updatedTotalPrice,
+                    status: booking.status
+                });
+                const actionType = priceDifference > 0 ? "additional charge" : 
+                                  priceDifference < 0 ? "refund" : "change";
+                
+                toast({
+                    title: "Success",
+                    description: transactionSuccess 
+                        ? `Booking updated successfully. The ${actionType} will be processed later.`
+                        : `Booking updated successfully. Note: The ${actionType} transaction will need to be created manually.`,
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true,
+                });
+                
+                setChangesConfirmed(true);
+            } catch (bookingError) {
+                console.error("Error updating booking:", bookingError);
+                if (bookingError.response) {
+                    console.error("Booking error response:", bookingError.response.data);
+                    console.error("Booking error status:", bookingError.response.status);
+                }
+                throw bookingError;
+            }
         } catch (error) {
-            console.error("Failed to calculate changes:", error);
+            console.error("Overall error in handleChangeConfirm:", error);
             toast({
                 title: "Error",
-                description: "Failed to calculate changes. Please try again.",
+                description: "Failed to update booking. Please try again.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
             });
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const handleComplete = () => {
-        if (!bookingChanges) {
-            toast({
-                title: "Error",
-                description: "No changes found. Please try again.",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
-            return;
-        }
-        if (bookingChanges.priceDifference > 0) {
-            onCollectBalanceOpen();
-            onClose();
-        } else if (bookingChanges.priceDifference < 0) {
-            handleNegativePriceDifference();
-        } else {
-            handleNoPriceDifference();
-        }
-    };
-    
-    const handleNegativePriceDifference = async () => {
-        try {
-            const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
-                bookingId: booking.id,
-                amount: Math.abs(bookingChanges.priceDifference),
-                paymentMethod: 'REFUND',
-                type: 'GUEST_QUANTITY_CHANGE',
-                notifyCustomer: true,
-                metadata: {
-                    originalGuestQuantity: bookingChanges.originalGuestQuantity,
-                    newGuestQuantity: bookingChanges.newGuestQuantity,
-                    originalPrice: bookingChanges.originalPrice,
-                    newPrice: bookingChanges.newPrice
-                }
-            });
-            
-            const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
-                guestQuantity: bookingChanges.newGuestQuantity,
-                total_price: bookingChanges.newPrice,
-                status: booking.status
-            });
-
-            if (response.data && transactionResponse.data) {
-                toast({
-                    title: "Success",
-                    description: "Reservation updated. Refund process initiated.",
-                    status: "success",
-                    duration: 5000,
-                    isClosable: true,
-                });
-                window.location.reload();
-                onClose();
-            }
-        } catch (error) {
-            console.error("Failed to update booking:", error);
-            toast({
-                title: "Error",
-                description: "Failed to update booking. Please try again.",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
-        }
-    };
-    
-    const handleNoPriceDifference = async () => {
-        try {
-            const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
-                bookingId: booking.id,
-                amount: 0,
-                paymentMethod: 'NO_CHANGE',
-                type: 'GUEST_QUANTITY_CHANGE',
-                notifyCustomer: false,
-                metadata: {
-                    originalGuestQuantity: bookingChanges.originalGuestQuantity,
-                    newGuestQuantity: bookingChanges.newGuestQuantity,
-                    originalPrice: bookingChanges.originalPrice,
-                    newPrice: bookingChanges.newPrice
-                }
-            });
-            
-            const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
-                guestQuantity: bookingChanges.newGuestQuantity,
-                total_price: bookingChanges.newPrice,
-                status: booking.status
-            });
-
-            if (response.data && transactionResponse.data) {
-                toast({
-                    title: "Success",
-                    description: "Reservation updated successfully.",
-                    status: "success",
-                    duration: 5000,
-                    isClosable: true,
-                });
-                window.location.reload();
-                onClose();
-            }
-        } catch (error) {
-            console.error("Failed to update booking:", error);
-            toast({
-                title: "Error",
-                description: "Failed to update booking. Please try again.",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
-        }
+        onCollectBalanceOpen();
+        onClose();
     };
 
     return (
@@ -845,12 +805,21 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                             Cancel
                         </Button>
                         {!changesConfirmed ? (
-                            <Button colorScheme="blue" onClick={handleChangeConfirm}>
-                                Change
+                            <Button 
+                                colorScheme="blue" 
+                                onClick={handleChangeConfirm}
+                                isLoading={isLoading}
+                                loadingText="Updating"
+                            >
+                                Modify
                             </Button>
                         ) : (
-                            <Button colorScheme="green" onClick={handleComplete} leftIcon={<BsCheck2 />}>
-                                Complete
+                            <Button 
+                                colorScheme="green" 
+                                onClick={handleComplete} 
+                                leftIcon={<BsCheck2 />}
+                            >
+                                Done
                             </Button>
                         )}
                     </ModalFooter>

@@ -639,17 +639,58 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
 
             setBookingChanges(bookingChangesObj);
 
-            // const paymentMethod = 'LATER';
             const amount = Math.abs(priceDifference);
             const transactionType = priceDifference >= 0 ? 'GUEST_QUANTITY_CHANGE' : 'GUEST_QUANTITY_REFUND';
 
             let transactionSuccess = false;
-            try {
+
+            const pendingTransactionsResponse = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
+                { params: { payment_status: 'pending' } }
+            );
+            
+            const pendingTransactions = pendingTransactionsResponse.data;
+            const hasPendingTransaction = pendingTransactions && pendingTransactions.length > 0;
+            
+            if (hasPendingTransaction) {
+                const existingTransaction = pendingTransactions[0];
+                await axios.put(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${existingTransaction.id}`,
+                    {
+                        is_history: true,
+                        payment_status: 'archived'
+                    }
+                );
                 const transactionData = {
                     tenant_id: booking.tenantId,
                     reservation_id: booking.id,
                     amount: amount,
-                    // payment_method: paymentMethod,
+                    // payment_method: 'LATER',
+                    payment_status: 'pending',
+                    transaction_type: transactionType,
+                    parent_transaction_id: existingTransaction.id,
+                    metadata: {
+                        originalGuestQuantity: booking.guestQuantity,
+                        newGuestQuantity: guestCount,
+                        originalPrice: booking.total_price,
+                        newPrice: updatedTotalPrice,
+                        modifiedAt: new Date().toISOString(),
+                        previousTransactionId: existingTransaction.id
+                    }
+                };
+                
+                await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
+                    transactionData
+                );
+                
+                transactionSuccess = true;
+            } else {
+                const transactionData = {
+                    tenant_id: booking.tenantId,
+                    reservation_id: booking.id,
+                    amount: amount,
+                    // payment_method: 'LATER',
                     payment_status: 'pending',
                     transaction_type: transactionType,
                     metadata: {
@@ -665,21 +706,10 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
                     transactionData
                 );
+                
                 transactionSuccess = true;
-            } catch (txError) {
-                console.error("Error creating transaction:", txError);
-                if (txError.response) {
-                    console.error("Transaction error response:", txError.response.data);
-                    console.error("Transaction error status:", txError.response.status);
-                }
-                toast({
-                    title: "Warning",
-                    description: "Transaction creation failed, but we'll still update the booking.",
-                    status: "warning",
-                    duration: 3000,
-                    isClosable: true,
-                });
             }
+            
             try {
                 await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
                     guestQuantity: guestCount,

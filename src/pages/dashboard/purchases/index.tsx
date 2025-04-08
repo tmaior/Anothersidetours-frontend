@@ -21,22 +21,22 @@ import {
     Spinner,
     Text,
     useDisclosure,
-    VStack,
-    useToast
+    useToast,
+    VStack
 } from '@chakra-ui/react';
 import {SearchIcon} from '@chakra-ui/icons';
 import DashboardLayout from "../../../components/DashboardLayout";
-import {CiCalendar, CiClock2, CiLocationArrow1} from "react-icons/ci";
+import {CiCalendar, CiClock2, CiLocationArrow1, CiSquarePlus} from "react-icons/ci";
 import {IoPersonOutline} from "react-icons/io5";
 import {RiRefund2Line} from "react-icons/ri";
-import {AiOutlineMail} from "react-icons/ai";
+import {AiOutlineCompass, AiOutlineMail} from "react-icons/ai";
 import {BsBox2, BsTelephone, BsThreeDots} from "react-icons/bs";
 import {PiPencilSimpleLineDuotone} from "react-icons/pi";
 import {useRouter} from "next/router";
 import {HiOutlineMail} from "react-icons/hi";
 import {RxPerson} from "react-icons/rx";
 import {useGuest} from "../../../contexts/GuestContext";
-import ChangeGuestQuantityModal, { CollectBalanceModal } from "../../../components/ChangeGuestQuantityModal";
+import ChangeGuestQuantityModal, {CollectBalanceModal} from "../../../components/ChangeGuestQuantityModal";
 import ChangeArrivalModal from "../../../components/ChangeArrivalModal";
 import SendMessageModal from "../../../components/SendMessageModal";
 import TimelinePage from "../../../components/TimelinePage";
@@ -50,10 +50,8 @@ import PurchaseNotes from "../../../components/PurchaseNotes";
 import useWindowWidth from "../../../hooks/useWindowWidth";
 import withAuth from "../../../utils/withAuth";
 import PurchaseSummaryDetailed from "../../../components/PurchaseSummaryDetailed";
-import CustomLineItemsModal, { LineItem } from "../../../components/CustomLineItemsModal";
+import CustomLineItemsModal, {LineItem} from "../../../components/CustomLineItemsModal";
 import ApplyCodeModal from '../../../components/ApplyCodeModal';
-import {AiOutlineCompass} from "react-icons/ai";
-import {CiSquarePlus} from "react-icons/ci";
 import ManageGuidesModal from "../../../components/ManageGuidesModal";
 import {useGuides} from "../../../hooks/useGuides";
 import {useGuideAssignment} from "../../../hooks/useGuideAssignment";
@@ -82,6 +80,7 @@ type GroupCardProps = {
     formatDate: (dateString: string) => string;
     toggleDetailedSummary?: () => void;
 };
+
 interface ReservationItem {
     id: string;
     name?: string;
@@ -110,17 +109,19 @@ interface ReservationItem {
     tenantId?: string;
     tourId?: string;
     groupId?: string;
-    reservationAddons?: Array<{addonId: string; value: number}>;
+    reservationAddons?: Array<{ addonId: string; value: number }>;
+
     [key: string]: unknown;
 }
+
 const GuestItem: React.FC<GuestItemProps> = ({
-    name, 
-    date, 
-    guests, 
-    avatarUrl, 
-    onClick, 
-    isSelected,
-}) => {
+                                                 name,
+                                                 date,
+                                                 guests,
+                                                 avatarUrl,
+                                                 onClick,
+                                                 isSelected,
+                                             }) => {
     const handleClick = () => {
         if (onClick) {
             onClick();
@@ -156,26 +157,26 @@ const GuestItem: React.FC<GuestItemProps> = ({
 };
 const GroupCard: React.FC<GroupCardProps> = ({
 
-    items,
-    isExpanded,
-    onToggle,
-    onSelectReservation,
-    selectedReservation,
-    formatDate,
-    toggleDetailedSummary
-}) => {
+                                                 items,
+                                                 isExpanded,
+                                                 onToggle,
+                                                 onSelectReservation,
+                                                 selectedReservation,
+                                                 formatDate,
+                                                 toggleDetailedSummary
+                                             }) => {
     const totalGuests = items.reduce((sum, item) => sum + (item.guestQuantity || 0), 0);
     const earliestDate = items.reduce((earliest: string | null, item) => {
         if (!item.reservation_date) return earliest;
-        
+
         const currentDate = new Date(item.reservation_date);
-        
+
         if (!earliest) return item.reservation_date;
-        
+
         return new Date(earliest) < currentDate ? earliest : item.reservation_date;
     }, null);
     const groupImage = items[0]?.tour?.imageUrl || 'https://via.placeholder.com/50';
-    
+
     const handleGroupClick = () => {
         onToggle();
 
@@ -190,10 +191,10 @@ const GroupCard: React.FC<GroupCardProps> = ({
         }
     };
     return (
-        <Box 
-            borderWidth="1px" 
-            borderRadius="md" 
-            mb={2} 
+        <Box
+            borderWidth="1px"
+            borderRadius="md"
+            mb={2}
             overflow="hidden"
             boxShadow="sm"
             bg="white"
@@ -206,7 +207,7 @@ const GroupCard: React.FC<GroupCardProps> = ({
                 onClick={handleGroupClick}
                 cursor="pointer"
                 bg={isExpanded ? 'blue.50' : 'white'}
-                _hover={{ bg: 'blue.50' }}
+                _hover={{bg: 'blue.50'}}
             >
                 <HStack>
                     <Box position="relative">
@@ -248,13 +249,13 @@ const GroupCard: React.FC<GroupCardProps> = ({
                     </Text>
                 </Box>
             </HStack>
-            
+
             {isExpanded && (
-                <VStack 
-                    p={3} 
-                    pt={0} 
-                    spacing={2} 
-                    align="stretch" 
+                <VStack
+                    p={3}
+                    pt={0}
+                    spacing={2}
+                    align="stretch"
                     bg="gray.50"
                     borderTop="1px dashed"
                     borderColor="gray.200"
@@ -278,11 +279,12 @@ const GroupCard: React.FC<GroupCardProps> = ({
 };
 
 const PurchaseList = ({
-    onSelectReservation, 
-    selectedReservation, 
-    searchTerm, 
-    toggleDetailedSummary = () => {}
-}) => {
+                          onSelectReservation,
+                          selectedReservation,
+                          searchTerm,
+                          toggleDetailedSummary = () => {
+                          }
+                      }) => {
     const [reservations, setReservations] = useState([]);
     const [displayedReservations, setDisplayedReservations] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -315,10 +317,10 @@ const PurchaseList = ({
 
     const filteredDisplayedReservations = displayedReservations.filter((reservation) => {
         if (!searchTerm) return true;
-        
+
         const user = reservation.user || {};
         const searchTermLower = searchTerm.toLowerCase();
-        
+
         return (
             user.name?.toLowerCase().includes(searchTermLower) ||
             user.email?.toLowerCase().includes(searchTermLower) ||
@@ -397,7 +399,7 @@ const PurchaseList = ({
     const groupReservations = (reservations: ReservationItem[]) => {
         const grouped: { [groupId: string]: ReservationItem[] } = {};
         const ungrouped: ReservationItem[] = [];
-        
+
         reservations.forEach(reservation => {
             if (reservation.groupId) {
                 if (!grouped[reservation.groupId]) {
@@ -408,14 +410,14 @@ const PurchaseList = ({
                 ungrouped.push(reservation);
             }
         });
-        
-        return { grouped, ungrouped };
+
+        return {grouped, ungrouped};
     };
 
     const toggleGroupExpansion = (groupId) => {
         setExpandedGroupId(prev => prev === groupId ? null : groupId);
     };
-    const { grouped, ungrouped } = groupReservations(filteredDisplayedReservations);
+    const {grouped, ungrouped} = groupReservations(filteredDisplayedReservations);
 
     return (
         <VStack
@@ -533,7 +535,7 @@ const PurchaseDetails = ({reservation}) => {
     if (!reservation) {
         return <Text>No reservation Available</Text>;
     }
-    
+
     if (!reservation.tour) {
         return <Text>No tour details available for this reservation</Text>;
     }
@@ -575,24 +577,24 @@ const PurchaseDetails = ({reservation}) => {
 
     const formatBookingData = () => {
         if (!reservation) return null;
-        
+
         const dateObject = reservation?.reservation_date
             ? new Date(reservation.reservation_date)
             : new Date();
 
         const localDate = new Date(dateObject.getTime() + dateObject.getTimezoneOffset() * 60000);
-        
+
         const utcHours = localDate.getHours();
         const utcMinutes = localDate.getMinutes();
         const period = utcHours >= 12 ? "PM" : "AM";
         const hours12 = utcHours % 12 || 12;
         const time = `${hours12.toString().padStart(2, "0")}:${utcMinutes.toString().padStart(2, "0")} ${period}`;
 
-        const paymentIntentId = reservation.PaymentTransaction?.[0]?.paymentIntentId || 
-                               reservation.PaymentTransaction?.[0]?.stripe_payment_id || 
-                               reservation.paymentIntentId;
-        const paymentMethodId = reservation.PaymentTransaction?.[0]?.paymentMethodId || 
-                               reservation.paymentMethodId;
+        const paymentIntentId = reservation.PaymentTransaction?.[0]?.paymentIntentId ||
+            reservation.PaymentTransaction?.[0]?.stripe_payment_id ||
+            reservation.paymentIntentId;
+        const paymentMethodId = reservation.PaymentTransaction?.[0]?.paymentMethodId ||
+            reservation.paymentMethodId;
         console.log('Reservation data for refund:', {
             id: reservation.id,
             paymentIntentId: paymentIntentId,
@@ -1053,7 +1055,8 @@ const PurchaseDetails = ({reservation}) => {
                 booking={formatBookingData()}
                 isOpen={isBookingCancellationOpen}
                 onClose={() => setBookingCancellationOpen(false)}
-                onStatusChange={() => {}}
+                onStatusChange={() => {
+                }}
             />
 
             <RefundModal
@@ -1091,19 +1094,23 @@ const PaymentSummary = ({reservation}) => {
     const [isLoadingTierPricing, setIsLoadingTierPricing] = useState(false);
     const [pendingBalance, setPendingBalance] = useState(0);
     const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState(true);
-    const { isOpen: isCollectBalanceOpen, onOpen: onCollectBalanceOpen, onClose: onCollectBalanceClose } = useDisclosure();
+    const {
+        isOpen: isCollectBalanceOpen,
+        onOpen: onCollectBalanceOpen,
+        onClose: onCollectBalanceClose
+    } = useDisclosure();
     const [bookingChanges, setBookingChanges] = useState(null);
 
     useEffect(() => {
         const fetchTierPricing = async () => {
             if (!reservation?.tour?.id) return;
-            
+
             setIsLoadingTierPricing(true);
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${reservation.tour.id}`
                 );
-                
+
                 if (response.data && response.data.length > 0) {
                     setTierPricing(response.data[0]);
                 }
@@ -1122,7 +1129,7 @@ const PaymentSummary = ({reservation}) => {
     useEffect(() => {
         const fetchGroupReservations = async () => {
             if (!isGroupBooking) return;
-            
+
             setIsLoadingGroup(true);
             try {
                 const response = await axios.get(
@@ -1184,12 +1191,12 @@ const PaymentSummary = ({reservation}) => {
     useEffect(() => {
         const fetchCustomLineItems = async () => {
             if (!reservation?.id) return;
-            
+
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${reservation.id}`
                 );
-                
+
                 const customItems = response.data.map(item => ({
                     id: item.id,
                     name: item.label,
@@ -1197,13 +1204,13 @@ const PaymentSummary = ({reservation}) => {
                     amount: Number(item.amount),
                     quantity: Number(item.quantity)
                 }));
-                
+
                 setCustomLineItems(customItems);
             } catch (error) {
                 console.error('Error fetching custom line items:', error);
             }
         };
-        
+
         fetchCustomLineItems();
     }, [reservation?.id]);
 
@@ -1218,9 +1225,9 @@ const PaymentSummary = ({reservation}) => {
             });
             return;
         }
-        
+
         setCustomLineItems(items);
-        
+
         try {
             await axios.delete(
                 `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${reservation.id}`
@@ -1234,10 +1241,10 @@ const PaymentSummary = ({reservation}) => {
                     amount: item.amount || 0,
                     quantity: item.quantity || 1,
                 }));
-                
+
                 await axios.post(
                     `${process.env.NEXT_PUBLIC_API_URL}/custom-items`,
-                    { items: customItemsPayload, reservationId: reservation.id }
+                    {items: customItemsPayload, reservationId: reservation.id}
                 );
             }
             toast({
@@ -1261,12 +1268,12 @@ const PaymentSummary = ({reservation}) => {
 
     const calculateTourPrice = () => {
         const guestQty = reservation?.guestQuantity || 0;
-        
+
         if (tierPricing) {
             if (tierPricing.pricingType === 'tiered' && tierPricing.tierEntries?.length > 0) {
                 const sortedTiers = [...tierPricing.tierEntries].sort((a, b) => b.quantity - a.quantity);
                 const applicableTier = sortedTiers.find(tier => guestQty >= tier.quantity);
-                
+
                 if (applicableTier) {
                     return applicableTier.price * guestQty;
                 }
@@ -1275,27 +1282,27 @@ const PaymentSummary = ({reservation}) => {
                 return tierPricing.basePrice * guestQty;
             }
         }
-        
+
         return (reservation?.valuePerGuest || reservation?.tour?.price || 0) * guestQty;
     };
 
     const tourPrice = calculateTourPrice();
 
-    const addonsTotalPrice = combinedAddons && combinedAddons.length > 0 
+    const addonsTotalPrice = combinedAddons && combinedAddons.length > 0
         ? combinedAddons.reduce(
-            (sum, addon) => sum + ((addon?.price || 0) * (addon?.quantity || 0)), 
+            (sum, addon) => sum + ((addon?.price || 0) * (addon?.quantity || 0)),
             0
         )
         : 0;
-        
-    const customLineItemsTotal = customLineItems && customLineItems.length > 0 
+
+    const customLineItemsTotal = customLineItems && customLineItems.length > 0
         ? customLineItems.reduce((sum, item) => {
             if (!item) return sum;
             const itemTotal = (item.amount || 0) * (item.quantity || 0);
             return item.type === "Discount" ? sum - itemTotal : sum + itemTotal;
         }, 0)
         : 0;
-        
+
     const finalTotalPrice = (tourPrice + addonsTotalPrice + customLineItemsTotal).toFixed(2);
 
     useEffect(() => {
@@ -1331,21 +1338,21 @@ const PaymentSummary = ({reservation}) => {
     useEffect(() => {
         const fetchPendingTransactions = async () => {
             if (!reservation?.id) return;
-            
+
             setIsLoadingPendingBalance(true);
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`,
-                    { params: { payment_status: 'pending' } }
+                    {params: {payment_status: 'pending'}}
                 );
-                
+
                 if (response.data && response.data.length > 0) {
                     const totalPending = response.data.reduce(
-                        (sum, transaction) => sum + transaction.amount, 
+                        (sum, transaction) => sum + transaction.amount,
                         0
                     );
                     setPendingBalance(totalPending);
-                    
+
                     if (totalPending > 0) {
                         setBookingChanges({
                             originalGuestQuantity: reservation.guestQuantity,
@@ -1365,7 +1372,7 @@ const PaymentSummary = ({reservation}) => {
                 setIsLoadingPendingBalance(false);
             }
         };
-        
+
         fetchPendingTransactions();
     }, [reservation?.id, reservation?.guestQuantity, reservation?.total_price]);
 
@@ -1400,7 +1407,7 @@ const PaymentSummary = ({reservation}) => {
         }
         const sortedTiers = [...tierPricingData.tierEntries].sort((a, b) => b.quantity - a.quantity);
         const applicableTier = sortedTiers.find(tier => guestCount >= tier.quantity);
-        
+
         if (applicableTier) {
             return applicableTier.price;
         }
@@ -1425,13 +1432,13 @@ const PaymentSummary = ({reservation}) => {
             <VStack spacing={4} align="stretch" mt={4}>
                 <HStack justifyContent="space-between">
                     {isLoadingTierPricing ? (
-                        <Spinner size="sm" />
+                        <Spinner size="sm"/>
                     ) : (
                         <>
                             <Text>
-                                Guests ({tierPricing?.pricingType === 'tiered' 
-                                    ? `$${getPricePerGuest(tierPricing, reservation?.guestQuantity || 0)}`
-                                    : `$${tierPricing?.basePrice || reservation?.valuePerGuest || 0}`} x {reservation?.guestQuantity || 0})
+                                Guests ({tierPricing?.pricingType === 'tiered'
+                                ? `$${getPricePerGuest(tierPricing, reservation?.guestQuantity || 0)}`
+                                : `$${tierPricing?.basePrice || reservation?.valuePerGuest || 0}`} x {reservation?.guestQuantity || 0})
                             </Text>
                             <Text>${tourPrice.toFixed(2)}</Text>
                         </>
@@ -1472,13 +1479,13 @@ const PaymentSummary = ({reservation}) => {
                         Modify
                     </MenuButton>
                     <MenuList zIndex={1000}>
-                        <MenuItem 
-                            icon={<IoPersonOutline size={18}/>} 
+                        <MenuItem
+                            icon={<IoPersonOutline size={18}/>}
                             onClick={() => setChangeGuestQuantityModalOpen(true)}
                         >
                             Guests
                         </MenuItem>
-                        <MenuItem 
+                        <MenuItem
                             icon={<BsBox2 size={15}/>}
                             onClick={() => setIsCustomLineItemsModalOpen(true)}
                         >
@@ -1530,23 +1537,29 @@ const PaymentSummary = ({reservation}) => {
                             </Text>
                         </Button>
                     </Box>
-                    
+
                     {!isLoadingPendingBalance && pendingBalance > 0 && (
                         <Box mt={4}>
                             <HStack justifyContent="space-between">
                                 <Text fontWeight="bold" color="red.500" fontSize="xl">Balance Due</Text>
-                                <Text fontWeight="bold" color="red.500" fontSize="xl">${pendingBalance.toFixed(2)}</Text>
+                                <Text fontWeight="bold" color="red.500"
+                                      fontSize="xl">${pendingBalance.toFixed(2)}</Text>
                             </HStack>
-                            
-                            <Button
-                                colorScheme="green"
-                                size="sm"
-                                width="100%"
-                                mt={2}
-                                onClick={onCollectBalanceOpen}
-                            >
-                                Collect Balance
-                            </Button>
+
+                            <Flex justifyContent="flex-end" mt={2}>
+                                <Box height="36px" width="auto" display="inline-block">
+                                    <Button
+                                        colorScheme="green"
+                                        height="100%"
+                                        width="100%"
+                                        px={6}
+                                        fontSize="sm"
+                                        onClick={onCollectBalanceOpen}
+                                    >
+                                        Collect Balance
+                                    </Button>
+                                </Box>
+                            </Flex>
                         </Box>
                     )}
                 </Box>
@@ -1576,28 +1589,34 @@ const PaymentSummary = ({reservation}) => {
                             </Text>
                         </Button>
                     </Box>
-                    
+
                     {!isLoadingPendingBalance && pendingBalance > 0 && (
                         <Box mt={4}>
                             <HStack justifyContent="space-between">
                                 <Text fontWeight="bold" color="red.500" fontSize="xl">Balance Due</Text>
-                                <Text fontWeight="bold" color="red.500" fontSize="xl">${pendingBalance.toFixed(2)}</Text>
+                                <Text fontWeight="bold" color="red.500"
+                                      fontSize="xl">${pendingBalance.toFixed(2)}</Text>
                             </HStack>
-                            
-                            <Button
-                                colorScheme="green"
-                                size="sm"
-                                width="100%"
-                                mt={2}
-                                onClick={onCollectBalanceOpen}
-                            >
-                                Collect Balance
-                            </Button>
+
+                            <Flex justifyContent="flex-end" mt={2}>
+                                <Box height="36px" width="auto" display="inline-block">
+                                    <Button
+                                        colorScheme="green"
+                                        height="100%"
+                                        width="100%"
+                                        px={6}
+                                        fontSize="sm"
+                                        onClick={onCollectBalanceOpen}
+                                    >
+                                        Collect Balance
+                                    </Button>
+                                </Box>
+                            </Flex>
                         </Box>
                     )}
                 </Box>
             )}
-            
+
             <ChangeGuestQuantityModal
                 booking={reservation}
                 isOpen={isChangeGuestQuantityModalOpen}
@@ -1605,19 +1624,19 @@ const PaymentSummary = ({reservation}) => {
                 guestCount={guestCount}
                 setGuestCount={setGuestCount}
             />
-            
+
             <CustomLineItemsModal
                 isOpen={isCustomLineItemsModalOpen}
                 onClose={() => setIsCustomLineItemsModalOpen(false)}
                 onSave={handleSaveCustomLineItems}
                 initialItems={customLineItems}
-                basePrice={tierPricing?.pricingType === 'tiered' 
-                    ? getPricePerGuest(tierPricing, reservation?.guestQuantity || 0) 
+                basePrice={tierPricing?.pricingType === 'tiered'
+                    ? getPricePerGuest(tierPricing, reservation?.guestQuantity || 0)
                     : (tierPricing?.basePrice || reservation?.valuePerGuest || reservation?.tour?.price || 0)}
                 quantity={reservation?.guestQuantity || 1}
                 reservationId={reservation?.id}
             />
-            
+
             <ApplyCodeModal
                 isOpen={isApplyCodeModalOpen}
                 onClose={() => setIsApplyCodeModalOpen(false)}
@@ -1637,7 +1656,10 @@ const PaymentSummary = ({reservation}) => {
                             name: item.name,
                             price: (item.amount || 0) * (item.quantity || 0)
                         })) : []),
-                        { name: `Guests (${reservation.tour?.price || 0} x ${reservation.guestQuantity || 0})`, price: (reservation.valuePerGuest || reservation.tour?.price || 0) * (reservation.guestQuantity || 0) }
+                        {
+                            name: `Guests (${reservation.tour?.price || 0} x ${reservation.guestQuantity || 0})`,
+                            price: (reservation.valuePerGuest || reservation.tour?.price || 0) * (reservation.guestQuantity || 0)
+                        }
                     ],
                     total: parseFloat(finalTotalPrice)
                 }}
@@ -1647,9 +1669,9 @@ const PaymentSummary = ({reservation}) => {
                     amount: parseFloat(finalTotalPrice)
                 }}
             />
-            
+
             {bookingChanges && (
-                <CollectBalanceModal 
+                <CollectBalanceModal
                     isOpen={isCollectBalanceOpen}
                     onClose={onCollectBalanceClose}
                     bookingChanges={bookingChanges}
@@ -1676,17 +1698,17 @@ const PurchasesPage = () => {
             const reservationAddonsResponse = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${reservationId}`
             );
-            
+
             const allAddonsResponse = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`
             );
-            
+
             const reservationAddons = reservationAddonsResponse.data;
             const allAddons = allAddonsResponse.data;
 
-            return reservationAddons.map((selectedAddon: {addonId: string; value: number}) => {
+            return reservationAddons.map((selectedAddon: { addonId: string; value: number }) => {
                 const addonDetails = allAddons.find(
-                    (addon: {id: string; price: number; label: string}) => addon.id === selectedAddon.addonId
+                    (addon: { id: string; price: number; label: string }) => addon.id === selectedAddon.addonId
                 );
                 return {
                     name: addonDetails?.label || 'Add-on',
@@ -1710,7 +1732,7 @@ const PurchasesPage = () => {
                 day: 'numeric',
                 year: 'numeric'
             });
-            
+
             try {
                 if (reservation.isGroupBooking && reservation.groupItems) {
                     const groupToursPromises = reservation.groupItems.map(async (item) => {
@@ -1720,7 +1742,7 @@ const PurchasesPage = () => {
                         const addons = await fetchAddonsForReservation(item.id, item.tour?.id);
                         const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
                         const tourTotal = (tourPrice * guestCount) + gratuityAmount + addonsTotal;
-                        
+
                         return {
                             name: item.tour?.name || 'Unknown Tour',
                             bookingFeePercent: 6,
@@ -1732,10 +1754,10 @@ const PurchasesPage = () => {
                             total: tourTotal
                         };
                     });
-                    
+
                     const groupTours = await Promise.all(groupToursPromises);
                     const totalAmount = groupTours.reduce((sum, tour) => sum + tour.total, 0);
-                    
+
                     setDetailedSummaryData({
                         tours: groupTours,
                         payments: [{
@@ -1750,7 +1772,7 @@ const PurchasesPage = () => {
                     const addons = await fetchAddonsForReservation(reservation.id, reservation.tour?.id);
                     const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
                     const tourTotal = (tourPrice * guestCount) + gratuityAmount + addonsTotal;
-                    
+
                     setDetailedSummaryData({
                         tours: [{
                             name: reservation.tour?.name || 'Unknown Tour',
@@ -1800,7 +1822,7 @@ const PurchasesPage = () => {
         if (tenantId) {
             fetchReservations();
         }
-    }, [tenantId,handleSelectReservation,selectedReservation]);
+    }, [tenantId, handleSelectReservation, selectedReservation]);
 
     const handlePurchaseClick = () => {
         router.push("/dashboard/choose-a-product");
@@ -1864,7 +1886,7 @@ const PurchasesPage = () => {
                 </Flex>
                 <HStack height="100vh" width="100%">
                     <Box>
-                        <PurchaseList 
+                        <PurchaseList
                             onSelectReservation={handleSelectReservation}
                             selectedReservation={selectedReservation}
                             searchTerm={searchTerm}
@@ -1909,7 +1931,7 @@ const PurchasesPage = () => {
                             marginLeft={showDetailedSummary ? "800px" : "500px"}
                         >
                             {showDetailedSummary ? (
-                                <PurchaseSummaryDetailed 
+                                <PurchaseSummaryDetailed
                                     tours={detailedSummaryData.tours}
                                     payments={detailedSummaryData.payments}
                                     onApplyCode={() => console.log("Apply code clicked")}
@@ -1920,7 +1942,7 @@ const PurchasesPage = () => {
                         </Box>
                         <Divider mb={4}/>
                         <Box>
-                            <PurchaseNotes reservationId={selectedReservation?.id} />
+                            <PurchaseNotes reservationId={selectedReservation?.id}/>
                         </Box>
                         <Divider mb={4}/>
                         <Box flex="1" overflowY="auto" padding="20px" paddingBottom="50px">

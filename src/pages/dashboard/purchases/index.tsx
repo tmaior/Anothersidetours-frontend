@@ -36,7 +36,7 @@ import {useRouter} from "next/router";
 import {HiOutlineMail} from "react-icons/hi";
 import {RxPerson} from "react-icons/rx";
 import {useGuest} from "../../../contexts/GuestContext";
-import ChangeGuestQuantityModal from "../../../components/ChangeGuestQuantityModal";
+import ChangeGuestQuantityModal, { CollectBalanceModal } from "../../../components/ChangeGuestQuantityModal";
 import ChangeArrivalModal from "../../../components/ChangeArrivalModal";
 import SendMessageModal from "../../../components/SendMessageModal";
 import TimelinePage from "../../../components/TimelinePage";
@@ -1089,6 +1089,10 @@ const PaymentSummary = ({reservation}) => {
     const [isApplyCodeModalOpen, setIsApplyCodeModalOpen] = useState(false);
     const [tierPricing, setTierPricing] = useState(null);
     const [isLoadingTierPricing, setIsLoadingTierPricing] = useState(false);
+    const [pendingBalance, setPendingBalance] = useState(0);
+    const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState(true);
+    const { isOpen: isCollectBalanceOpen, onOpen: onCollectBalanceOpen, onClose: onCollectBalanceClose } = useDisclosure();
+    const [bookingChanges, setBookingChanges] = useState(null);
 
     useEffect(() => {
         const fetchTierPricing = async () => {
@@ -1323,6 +1327,48 @@ const PaymentSummary = ({reservation}) => {
     const handleApplyCode = (code) => {
         console.log('Applying code:', code);
     };
+
+    useEffect(() => {
+        const fetchPendingTransactions = async () => {
+            if (!reservation?.id) return;
+            
+            setIsLoadingPendingBalance(true);
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`,
+                    { params: { payment_status: 'pending' } }
+                );
+                
+                if (response.data && response.data.length > 0) {
+                    const totalPending = response.data.reduce(
+                        (sum, transaction) => sum + transaction.amount, 
+                        0
+                    );
+                    setPendingBalance(totalPending);
+                    
+                    if (totalPending > 0) {
+                        setBookingChanges({
+                            originalGuestQuantity: reservation.guestQuantity,
+                            newGuestQuantity: reservation.guestQuantity,
+                            originalPrice: reservation.total_price - totalPending,
+                            newPrice: reservation.total_price,
+                            priceDifference: totalPending
+                        });
+                    }
+                } else {
+                    setPendingBalance(0);
+                }
+            } catch (error) {
+                console.error('Error fetching pending transactions:', error);
+                setPendingBalance(0);
+            } finally {
+                setIsLoadingPendingBalance(false);
+            }
+        };
+        
+        fetchPendingTransactions();
+    }, [reservation?.id, reservation?.guestQuantity, reservation?.total_price]);
+
     if (isLoading) {
         if (!reservation) {
             return null;
@@ -1468,24 +1514,41 @@ const PaymentSummary = ({reservation}) => {
                         <Text>Paid</Text>
                         <Text fontWeight="bold">${finalTotalPrice}</Text>
                     </HStack>
-                    <Flex justify="space-between" mt={4} align="center">
-                        <Box>
+                    <Box mt={4}>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            height="28px"
+                            fontSize="sm"
+                            fontWeight="normal"
+                            borderRadius="md"
+                            background="white"
+                            onClick={() => setIsApplyCodeModalOpen(true)}
+                        >
+                            <Text fontWeight="medium">
+                                Apply Code
+                            </Text>
+                        </Button>
+                    </Box>
+                    
+                    {!isLoadingPendingBalance && pendingBalance > 0 && (
+                        <Box mt={4}>
+                            <HStack justifyContent="space-between">
+                                <Text fontWeight="bold" color="red.500" fontSize="xl">Balance Due</Text>
+                                <Text fontWeight="bold" color="red.500" fontSize="xl">${pendingBalance.toFixed(2)}</Text>
+                            </HStack>
+                            
                             <Button
+                                colorScheme="green"
                                 size="sm"
-                                variant="outline"
-                                height="28px"
-                                fontSize="sm"
-                                fontWeight="normal"
-                                borderRadius="md"
-                                background="white"
-                                onClick={() => setIsApplyCodeModalOpen(true)}
+                                width="100%"
+                                mt={2}
+                                onClick={onCollectBalanceOpen}
                             >
-                                <Text fontWeight="medium">
-                                    Apply Code
-                                </Text>
+                                Collect Balance
                             </Button>
                         </Box>
-                    </Flex>
+                    )}
                 </Box>
             ) : (
                 <Box mt={8}>
@@ -1497,26 +1560,44 @@ const PaymentSummary = ({reservation}) => {
                         <Text>Total Due</Text>
                         <Text fontWeight="bold">${finalTotalPrice}</Text>
                     </HStack>
-                    <Flex justify="space-between" mt={4} align="center">
-                        <Box>
+                    <Box mt={4}>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            height="28px"
+                            fontSize="sm"
+                            fontWeight="normal"
+                            borderRadius="md"
+                            background="white"
+                            onClick={() => setIsApplyCodeModalOpen(true)}
+                        >
+                            <Text fontWeight="medium">
+                                Apply Code
+                            </Text>
+                        </Button>
+                    </Box>
+                    
+                    {!isLoadingPendingBalance && pendingBalance > 0 && (
+                        <Box mt={4}>
+                            <HStack justifyContent="space-between">
+                                <Text fontWeight="bold" color="red.500" fontSize="xl">Balance Due</Text>
+                                <Text fontWeight="bold" color="red.500" fontSize="xl">${pendingBalance.toFixed(2)}</Text>
+                            </HStack>
+                            
                             <Button
+                                colorScheme="green"
                                 size="sm"
-                                variant="outline"
-                                height="28px"
-                                fontSize="sm"
-                                fontWeight="normal"
-                                borderRadius="md"
-                                background="white"
-                                onClick={() => setIsApplyCodeModalOpen(true)}
+                                width="100%"
+                                mt={2}
+                                onClick={onCollectBalanceOpen}
                             >
-                                <Text fontWeight="medium">
-                                    Apply Code
-                                </Text>
+                                Collect Balance
                             </Button>
                         </Box>
-                    </Flex>
+                    )}
                 </Box>
             )}
+            
             <ChangeGuestQuantityModal
                 booking={reservation}
                 isOpen={isChangeGuestQuantityModalOpen}
@@ -1524,6 +1605,7 @@ const PaymentSummary = ({reservation}) => {
                 guestCount={guestCount}
                 setGuestCount={setGuestCount}
             />
+            
             <CustomLineItemsModal
                 isOpen={isCustomLineItemsModalOpen}
                 onClose={() => setIsCustomLineItemsModalOpen(false)}
@@ -1535,6 +1617,7 @@ const PaymentSummary = ({reservation}) => {
                 quantity={reservation?.guestQuantity || 1}
                 reservationId={reservation?.id}
             />
+            
             <ApplyCodeModal
                 isOpen={isApplyCodeModalOpen}
                 onClose={() => setIsApplyCodeModalOpen(false)}
@@ -1564,6 +1647,15 @@ const PaymentSummary = ({reservation}) => {
                     amount: parseFloat(finalTotalPrice)
                 }}
             />
+            
+            {bookingChanges && (
+                <CollectBalanceModal 
+                    isOpen={isCollectBalanceOpen}
+                    onClose={onCollectBalanceClose}
+                    bookingChanges={bookingChanges}
+                    booking={reservation}
+                />
+            )}
         </Box>
     );
 };

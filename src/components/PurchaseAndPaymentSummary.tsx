@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {Box, Divider, HStack, Spinner, Text, VStack,} from "@chakra-ui/react";
+import {Box, Divider, HStack, Spinner, Text, VStack, Button,} from "@chakra-ui/react";
 import axios from "axios";
 
 interface Addon {
@@ -17,12 +17,16 @@ interface CardDetails {
 interface Booking {
     id: string;
     tourId: string;
+    tenantId: string;
     valuePerGuest?: number;
     tour?: { price: number };
     paymentMethodId?: string;
     reservationAddons?: { addonId: string; value: string }[];
     cardLast4?: string;
     paymentDate?: string;
+    total_price: number;
+    status: string;
+    guestQuantity: number;
 }
 
 interface TierEntry {
@@ -42,6 +46,7 @@ interface PurchaseAndPaymentSummaryProps {
     selectedAddons?: Record<string, number | boolean>;
     allAddons?: Addon[];
     cardDetails?: CardDetails;
+    onCollectBalance?: () => void;
 }
 
 const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
@@ -50,6 +55,7 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                                                                                  selectedAddons = {},
                                                                                  allAddons = [],
                                                                                  cardDetails,
+                                                                                 onCollectBalance
                                                                              }) => {
     const [internalReservationAddons, setInternalReservationAddons] = useState<{
         addonId: string;
@@ -60,6 +66,8 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
     const [internalCardDetails, setInternalCardDetails] = useState<CardDetails | null>(null);
     const [isLoadingCardDetails, setIsLoadingCardDetails] = useState<boolean>(true);
     const [tierPricing, setTierPricing] = useState<TierPricing | null>(null);
+    const [pendingBalance, setPendingBalance] = useState<number>(0);
+    const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState<boolean>(true);
 
     useEffect(() => {
         if (allAddons.length === 0) {
@@ -131,6 +139,33 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
 
         fetchTierPricing();
     }, [booking?.tourId]);
+
+    useEffect(() => {
+        const fetchPendingTransactions = async () => {
+            if (!booking?.id) return;
+            
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
+                    { params: { payment_status: 'pending' } }
+                );
+                
+                if (response.data && response.data.length > 0) {
+                    const totalPending = response.data.reduce(
+                        (sum, transaction) => sum + transaction.amount, 
+                        0
+                    );
+                    setPendingBalance(totalPending);
+                }
+            } catch (error) {
+                console.error('Error fetching pending transactions:', error);
+            } finally {
+                setIsLoadingPendingBalance(false);
+            }
+        };
+        
+        fetchPendingTransactions();
+    }, [booking?.id]);
 
     let combinedAddons: (Addon & { quantity: number })[] = [];
     if (allAddons.length > 0) {
@@ -205,7 +240,7 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
         return `${month}/${day}/${year}`;
     }
 
-    if (isLoadingAddons || isLoadingCardDetails) {
+    if (isLoadingAddons || isLoadingCardDetails || isLoadingPendingBalance) {
         return (
             <VStack
                 bg="gray.50"
@@ -222,7 +257,7 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
             >
                 <HStack justifyContent="center">
                     <Spinner size="sm"/>
-                    <Text>Loading Add-ons...</Text>
+                    <Text>Loading...</Text>
                 </HStack>
             </VStack>
         );
@@ -269,6 +304,25 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                     <Text fontWeight="bold">Total</Text>
                     <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                 </HStack>
+                
+                {pendingBalance > 0 && (
+                    <>
+                        <HStack justify="space-between" mt={2}>
+                            <Text fontWeight="bold" color="red.500">Balance Due</Text>
+                            <Text fontWeight="bold" color="red.500">${pendingBalance.toFixed(2)}</Text>
+                        </HStack>
+                        
+                        <Button 
+                            colorScheme="green" 
+                            size="sm" 
+                            mt={2} 
+                            onClick={onCollectBalance}
+                            width="100%"
+                        >
+                            Collect Balance
+                        </Button>
+                    </>
+                )}
             </Box>
             <Box>
                 <Text fontWeight="bold" mb={2}>

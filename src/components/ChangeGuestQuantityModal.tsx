@@ -825,6 +825,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                 <PurchaseAndPaymentSummary
                                     booking={booking}
                                     guestQuantity={guestCount}
+                                    onCollectBalance={onCollectBalanceOpen}
                                 />
                             </HStack>
                         </Flex>
@@ -867,3 +868,4 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
 };
 
 export default ChangeGuestQuantityModal;
+export { CollectBalanceModal };

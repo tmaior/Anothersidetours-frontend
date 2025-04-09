@@ -47,6 +47,7 @@ interface PurchaseAndPaymentSummaryProps {
     allAddons?: Addon[];
     cardDetails?: CardDetails;
     onCollectBalance?: () => void;
+    isPurchasePage?: boolean;
 }
 
 const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
@@ -55,7 +56,8 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                                                                                  selectedAddons = {},
                                                                                  allAddons = [],
                                                                                  cardDetails,
-                                                                                 onCollectBalance
+                                                                                 onCollectBalance,
+                                                                                 isPurchasePage = false
                                                                              }) => {
     const [internalReservationAddons, setInternalReservationAddons] = useState<{
         addonId: string;
@@ -305,7 +307,7 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                     <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                 </HStack>
                 
-                {pendingBalance > 0 && (
+                {isPurchasePage && pendingBalance > 0 && (
                     <>
                         <HStack justify="space-between" mt={2}>
                             <Text fontWeight="bold" color="red.500">Balance Due</Text>

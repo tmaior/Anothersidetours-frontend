@@ -1074,7 +1074,7 @@ const PurchaseDetails = ({reservation}) => {
     );
 };
 
-const PaymentSummary = ({reservation}) => {
+const PaymentSummary = ({reservation, isPurchasePage = true}) => {
     const [cardDetails, setCardDetails] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1538,7 +1538,7 @@ const PaymentSummary = ({reservation}) => {
                         </Button>
                     </Box>
 
-                    {!isLoadingPendingBalance && pendingBalance > 0 && (
+                    {isPurchasePage && !isLoadingPendingBalance && pendingBalance > 0 && (
                         <Box mt={4}>
                             <HStack justifyContent="space-between">
                                 <Text fontWeight="bold" color="red.500" fontSize="xl">Balance Due</Text>
@@ -1590,7 +1590,7 @@ const PaymentSummary = ({reservation}) => {
                         </Button>
                     </Box>
 
-                    {!isLoadingPendingBalance && pendingBalance > 0 && (
+                    {isPurchasePage && !isLoadingPendingBalance && pendingBalance > 0 && (
                         <Box mt={4}>
                             <HStack justifyContent="space-between">
                                 <Text fontWeight="bold" color="red.500" fontSize="xl">Balance Due</Text>
@@ -1670,7 +1670,7 @@ const PaymentSummary = ({reservation}) => {
                 }}
             />
 
-            {bookingChanges && (
+            {isPurchasePage && bookingChanges && (
                 <CollectBalanceModal
                     isOpen={isCollectBalanceOpen}
                     onClose={onCollectBalanceClose}
@@ -1937,7 +1937,10 @@ const PurchasesPage = () => {
                                     onApplyCode={() => console.log("Apply code clicked")}
                                 />
                             ) : (
-                                <PaymentSummary reservation={selectedReservation}/>
+                                <PaymentSummary 
+                                    reservation={selectedReservation}
+                                    isPurchasePage={true}
+                                />
                             )}
                         </Box>
                         <Divider mb={4}/>

@@ -498,6 +498,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                             </>
                                         )}
                                     </VStack>
+                                    <HStack justify="space-between" mt={4} color="green.500">
+                                        <Text fontWeight="bold" fontSize="lg">Refund</Text>
+                                        <Text fontWeight="bold" fontSize="lg">${amount}</Text>
+                                    </HStack>
                                     <HStack justify="space-between" mt={4}>
                                         <Text fontWeight="bold">Paid</Text>
                                         <Text fontWeight="bold">${booking?.total_price - amount}</Text>

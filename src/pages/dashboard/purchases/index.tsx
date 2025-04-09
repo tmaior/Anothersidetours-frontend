@@ -1077,18 +1077,18 @@ const PurchaseDetails = ({reservation}) => {
                         day: 'numeric',
                         year: 'numeric'
                     }),
-                    time: reservation?.reservation_date ? 
-                          new Date(reservation.reservation_date).toLocaleTimeString('en-US', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                          }) : '',
+                    time: reservation?.reservation_date ?
+                        new Date(reservation.reservation_date).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) : '',
                     user: reservation?.user,
                     total_price: reservation?.total_price,
-                    paymentIntentId: reservation?.PaymentTransaction?.[0]?.paymentIntentId || 
-                                  reservation?.PaymentTransaction?.[0]?.stripe_payment_id || 
-                                  reservation?.paymentIntentId,
-                    paymentMethodId: reservation?.PaymentTransaction?.[0]?.paymentMethodId || 
-                                  reservation?.paymentMethodId,
+                    paymentIntentId: reservation?.PaymentTransaction?.[0]?.paymentIntentId ||
+                        reservation?.PaymentTransaction?.[0]?.stripe_payment_id ||
+                        reservation?.paymentIntentId,
+                    paymentMethodId: reservation?.PaymentTransaction?.[0]?.paymentMethodId ||
+                        reservation?.paymentMethodId,
                     setupIntentId: reservation?.setupIntentId
                 }}
             />
@@ -1513,9 +1513,23 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                     <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                 </HStack>
                 <Menu>
-                    <MenuButton as={Button} size={"sm"} mt={1} w="70px">
-                        Modify
-                    </MenuButton>
+                    <Box mt={4}>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            height="28px"
+                            fontSize="sm"
+                            fontWeight="normal"
+                            borderRadius="md"
+                            background="white"
+                        >
+                            <MenuButton>
+                                Modify
+                            </MenuButton>
+                        </Button>
+                    </Box>
+
+
                     <MenuList zIndex={1000}>
                         <MenuItem
                             icon={<IoPersonOutline size={18}/>}
@@ -1785,18 +1799,18 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                         day: 'numeric',
                         year: 'numeric'
                     }),
-                    time: reservation?.reservation_date ? 
-                          new Date(reservation.reservation_date).toLocaleTimeString('en-US', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                          }) : '',
+                    time: reservation?.reservation_date ?
+                        new Date(reservation.reservation_date).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) : '',
                     user: reservation?.user,
                     total_price: reservation?.total_price,
-                    paymentIntentId: reservation?.PaymentTransaction?.[0]?.paymentIntentId || 
-                                  reservation?.PaymentTransaction?.[0]?.stripe_payment_id || 
-                                  reservation?.paymentIntentId,
-                    paymentMethodId: reservation?.PaymentTransaction?.[0]?.paymentMethodId || 
-                                  reservation?.paymentMethodId,
+                    paymentIntentId: reservation?.PaymentTransaction?.[0]?.paymentIntentId ||
+                        reservation?.PaymentTransaction?.[0]?.stripe_payment_id ||
+                        reservation?.paymentIntentId,
+                    paymentMethodId: reservation?.PaymentTransaction?.[0]?.paymentMethodId ||
+                        reservation?.paymentMethodId,
                     setupIntentId: reservation?.setupIntentId
                 }}
                 refundAmount={totalBalanceDue}
@@ -2060,7 +2074,7 @@ const PurchasesPage = () => {
                                     onApplyCode={() => console.log("Apply code clicked")}
                                 />
                             ) : (
-                                <PaymentSummary 
+                                <PaymentSummary
                                     reservation={selectedReservation}
                                     isPurchasePage={true}
                                 />

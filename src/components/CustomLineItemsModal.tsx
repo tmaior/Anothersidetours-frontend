@@ -154,7 +154,46 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
         setItems(items.map((item) => (item.id === id ? {...item, [field]: value} : item)));
     };
 
-    const handleSaveLineItems = () => {
+    const handleSaveLineItems = async () => {
+        if (finalRefundAmount > 0 && reservationId) {
+            try {
+                const reservationResponse = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservationId}`
+                );
+                
+                if (reservationResponse.data && reservationResponse.data.tenantId) {
+                    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
+                        tenant_id: reservationResponse.data.tenantId,
+                        reservation_id: reservationId,
+                        amount: finalRefundAmount,
+                        payment_status: 'pending',
+                        transaction_type: 'REFUND',
+                        transaction_direction: 'refund',
+                        metadata: {
+                            refundReason: 'Custom line items discount',
+                            createdAt: new Date().toISOString()
+                        }
+                    });
+                    
+                    toast({
+                        title: "Refund transaction created",
+                        description: `A refund of $${finalRefundAmount.toFixed(2)} has been created.`,
+                        status: "success",
+                        duration: 3000,
+                        isClosable: true,
+                    });
+                }
+            } catch (error) {
+                console.error("Error creating refund transaction:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to create refund transaction. Line items will still be saved.",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
+        }
         onSave(items);
         onClose();
     };
@@ -174,8 +213,29 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
     };
 
     const currentTotal = parseFloat(calculateTotal());
-    const additionalBalance = Math.max(0, currentTotal - originalTotal);
-    const totalBalanceDue = pendingBalance + additionalBalance;
+    const rawDifference = currentTotal - originalTotal;
+    
+    const isRefund = rawDifference < 0;
+    
+    const additionalBalance = !isRefund ? Math.max(0, rawDifference) : 0;
+    const refundAmount = isRefund ? Math.abs(rawDifference) : 0;
+    
+    let finalBalanceDue = 0;
+    let finalRefundAmount = 0;
+    
+    if (pendingBalance > 0 && isRefund) {
+        if (refundAmount <= pendingBalance) {
+            finalBalanceDue = pendingBalance - refundAmount;
+        } else {
+            finalRefundAmount = refundAmount - pendingBalance;
+        }
+    } else if (pendingBalance > 0) {
+        finalBalanceDue = pendingBalance + additionalBalance;
+    } else if (isRefund) {
+        finalRefundAmount = refundAmount;
+    } else {
+        finalBalanceDue = additionalBalance;
+    }
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="4xl">
@@ -297,10 +357,17 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                                     <Text fontWeight="bold" fontSize="lg">${calculateTotal()}</Text>
                                 </Flex>
                                 
-                                {!isLoadingPendingBalance && totalBalanceDue > 0 && (
+                                {!isLoadingPendingBalance && finalBalanceDue > 0 && (
                                     <Flex justify="space-between" mt={2}>
                                         <Text fontWeight="bold" color="red.500">Balance Due:</Text>
-                                        <Text fontWeight="bold" color="red.500">${totalBalanceDue.toFixed(2)}</Text>
+                                        <Text fontWeight="bold" color="red.500">${finalBalanceDue.toFixed(2)}</Text>
+                                    </Flex>
+                                )}
+                                
+                                {!isLoadingPendingBalance && finalRefundAmount > 0 && (
+                                    <Flex justify="space-between" mt={2}>
+                                        <Text fontWeight="bold" color="green.500">Refund:</Text>
+                                        <Text fontWeight="bold" color="green.500">${finalRefundAmount.toFixed(2)}</Text>
                                     </Flex>
                                 )}
                             </Box>

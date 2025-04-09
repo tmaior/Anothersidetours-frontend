@@ -1094,6 +1094,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
     const [isLoadingTierPricing, setIsLoadingTierPricing] = useState(false);
     const [pendingBalance, setPendingBalance] = useState(0);
     const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState(true);
+    const [isRefundTransaction, setIsRefundTransaction] = useState(false);
     const {
         isOpen: isCollectBalanceOpen,
         onOpen: onCollectBalanceOpen,
@@ -1347,11 +1348,19 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                 );
 
                 if (response.data && response.data.length > 0) {
-                    const totalPending = response.data.reduce(
-                        (sum, transaction) => sum + transaction.amount,
-                        0
-                    );
+                    let totalPending = 0;
+                    let isRefund = false;
+                    response.data.forEach(transaction => {
+                        if (transaction.transaction_type === 'REFUND') {
+                            isRefund = true;
+                            totalPending += transaction.amount;
+                        } else {
+                            totalPending += transaction.amount;
+                        }
+                    });
+
                     setPendingBalance(totalPending);
+                    setIsRefundTransaction(isRefund);
 
                     if (totalPending > 0) {
                         setBookingChanges({
@@ -1359,15 +1368,18 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                             newGuestQuantity: reservation.guestQuantity,
                             originalPrice: reservation.total_price - totalPending,
                             newPrice: reservation.total_price,
-                            priceDifference: totalPending
+                            priceDifference: totalPending,
+                            isRefund: isRefund
                         });
                     }
                 } else {
                     setPendingBalance(0);
+                    setIsRefundTransaction(false);
                 }
             } catch (error) {
                 console.error('Error fetching pending transactions:', error);
                 setPendingBalance(0);
+                setIsRefundTransaction(false);
             } finally {
                 setIsLoadingPendingBalance(false);
             }
@@ -1541,7 +1553,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                         </Button>
                     </Box>
 
-                    {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && (
+                    {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && !isRefundTransaction && (
                         <Box mt={4}>
                             <HStack justifyContent="space-between">
                                 <Text fontWeight="bold" color="red.500" fontSize="xl">Balance Due</Text>
@@ -1560,6 +1572,31 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                                         onClick={onCollectBalanceOpen}
                                     >
                                         Collect Balance
+                                    </Button>
+                                </Box>
+                            </Flex>
+                        </Box>
+                    )}
+                    
+                    {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && isRefundTransaction && (
+                        <Box mt={4}>
+                            <HStack justifyContent="space-between">
+                                <Text fontWeight="bold" color="green.500" fontSize="xl">Refund</Text>
+                                <Text fontWeight="bold" color="green.500"
+                                      fontSize="xl">${totalBalanceDue.toFixed(2)}</Text>
+                            </HStack>
+
+                            <Flex justifyContent="flex-end" mt={2}>
+                                <Box height="36px" width="auto" display="inline-block">
+                                    <Button
+                                        colorScheme="green"
+                                        height="100%"
+                                        width="100%"
+                                        px={6}
+                                        fontSize="sm"
+                                        onClick={onCollectBalanceOpen}
+                                    >
+                                        Refund Excess Payment
                                     </Button>
                                 </Box>
                             </Flex>
@@ -1593,7 +1630,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                         </Button>
                     </Box>
 
-                    {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && (
+                    {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && !isRefundTransaction && (
                         <Box mt={4}>
                             <HStack justifyContent="space-between">
                                 <Text fontWeight="bold" color="red.500" fontSize="xl">Balance Due</Text>
@@ -1612,6 +1649,31 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                                         onClick={onCollectBalanceOpen}
                                     >
                                         Collect Balance
+                                    </Button>
+                                </Box>
+                            </Flex>
+                        </Box>
+                    )}
+                    
+                    {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && isRefundTransaction && (
+                        <Box mt={4}>
+                            <HStack justifyContent="space-between">
+                                <Text fontWeight="bold" color="green.500" fontSize="xl">Refund</Text>
+                                <Text fontWeight="bold" color="green.500"
+                                      fontSize="xl">${totalBalanceDue.toFixed(2)}</Text>
+                            </HStack>
+
+                            <Flex justifyContent="flex-end" mt={2}>
+                                <Box height="36px" width="auto" display="inline-block">
+                                    <Button
+                                        colorScheme="green"
+                                        height="100%"
+                                        width="100%"
+                                        px={6}
+                                        fontSize="sm"
+                                        onClick={onCollectBalanceOpen}
+                                    >
+                                        Refund Excess Payment
                                     </Button>
                                 </Box>
                             </Flex>

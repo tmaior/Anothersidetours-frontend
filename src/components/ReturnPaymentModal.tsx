@@ -83,6 +83,12 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     }, [refundAmount]);
 
     useEffect(() => {
+        if (isOpen && refundAmount) {
+            setAmount(refundAmount);
+        }
+    }, [isOpen, refundAmount]);
+
+    useEffect(() => {
         const fetchCustomLineItems = async () => {
             if (!booking?.id || !isOpen) return;
 
@@ -167,12 +173,20 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
+        if (value === '' || value === undefined) {
+            setAmount(0);
+            return;
+        }
         const cleanValue = value.replace(/[^\d.]/g, '');
         const parts = cleanValue.split('.');
         if (parts.length > 2) {
             return;
         }
         const numValue = parseFloat(cleanValue);
+        if (isNaN(numValue)) {
+            setAmount(0);
+            return;
+        }
         if (numValue > (booking?.total_price || 0)) {
             return;
         }
@@ -489,22 +503,34 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                     </Text>
                                                     <Text>${booking?.total_price}</Text>
                                                 </HStack>
-                                                <HStack justify="space-between" color="blue.500">
-                                                    <Text>
-                                                        Return Payment *{cardList[0].last4} {formatDate(new Date().toISOString())}
-                                                    </Text>
-                                                    <Text>-${amount}</Text>
-                                                </HStack>
+                                                
+                                                {amount === refundAmount ? (
+                                                    <HStack justify="space-between" color="blue.500">
+                                                        <Text>
+                                                            Return Payment {formatDate(new Date().toISOString())} 
+                                                        </Text>
+                                                        <Text>-${amount.toFixed(2)}</Text>
+                                                    </HStack>
+                                                ) : (
+                                                    <HStack justify="space-between" color="blue.500">
+                                                        <Text>
+                                                            Return Payment {formatDate(new Date().toISOString())} *{cardList[0].last4}
+                                                        </Text>
+                                                        <Text>-${amount.toFixed(2)}</Text>
+                                                    </HStack>
+                                                )}
                                             </>
                                         )}
                                     </VStack>
+                                    {(refundAmount !== undefined && amount < refundAmount) && (
                                     <HStack justify="space-between" mt={4} color="green.500">
                                         <Text fontWeight="bold" fontSize="lg">Refund</Text>
-                                        <Text fontWeight="bold" fontSize="lg">${amount}</Text>
+                                        <Text fontWeight="bold" fontSize="lg">${(refundAmount - amount).toFixed(2)}</Text>
                                     </HStack>
+                                    )}
                                     <HStack justify="space-between" mt={4}>
                                         <Text fontWeight="bold">Paid</Text>
-                                        <Text fontWeight="bold">${booking?.total_price - amount}</Text>
+                                        <Text fontWeight="bold">${(booking?.total_price - (refundAmount || 0)).toFixed(2)}</Text>
                                     </HStack>
                                 </Box>
                             </VStack>

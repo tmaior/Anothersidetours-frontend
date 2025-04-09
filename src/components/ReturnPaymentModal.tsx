@@ -73,12 +73,44 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     const [cardList, setCardList] = useState<CardDetails[]>([]);
     const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [fetchedCustomItems, setFetchedCustomItems] = useState<LineItem[]>([]);
+    const [isLoadingCustomItems, setIsLoadingCustomItems] = useState(false);
 
     useEffect(() => {
         if (refundAmount) {
             setAmount(refundAmount);
         }
     }, [refundAmount]);
+
+    useEffect(() => {
+        const fetchCustomLineItems = async () => {
+            if (!booking?.id || !isOpen) return;
+
+            setIsLoadingCustomItems(true);
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${booking.id}`
+                );
+
+                const customItems = response.data.map(item => ({
+                    id: item.id,
+                    name: item.label,
+                    type: item.description as 'Charge' | 'Discount',
+                    amount: Number(item.amount),
+                    quantity: Number(item.quantity)
+                }));
+
+                setFetchedCustomItems(customItems);
+                console.log('Fetched custom items:', customItems);
+            } catch (error) {
+                console.error('Error fetching custom line items:', error);
+            } finally {
+                setIsLoadingCustomItems(false);
+            }
+        };
+
+        fetchCustomLineItems();
+    }, [booking?.id, isOpen]);
 
     useEffect(() => {
         const fetchCardsFromSetupIntent = async () => {
@@ -273,10 +305,12 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
     const guestPrice = booking?.total_price ? booking.total_price / 3 : 0;
 
-    const customLineItemsTotal = customLineItems.reduce((sum, item) => {
-        const itemAmount = (item.amount || 0) * (item.quantity || 1);
-        return item.type === 'Discount' ? sum - itemAmount : sum + itemAmount;
-    }, 0);
+    const displayedCustomItems = fetchedCustomItems.length > 0 ? fetchedCustomItems : customLineItems;
+
+    // const customLineItemsTotal = displayedCustomItems.reduce((sum, item) => {
+    //     const itemAmount = (item.amount || 0) * (item.quantity || 1);
+    //     return item.type === 'Discount' ? sum - itemAmount : sum + itemAmount;
+    // }, 0);
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="6xl">
@@ -417,21 +451,25 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                         <Text>${(guestPrice * 3).toFixed(2)}</Text>
                                     </HStack>
 
-                                    {customLineItems && customLineItems.length > 0 && (
-                                        <>
-                                            {customLineItems.map((item) => (
-                                                <HStack key={item.id} justify="space-between">
-                                                    <Text>
-                                                        {item.name} (${item.amount.toFixed(2)} × {item.quantity})
-                                                        {item.type === 'Discount' && ' - Discount'}
-                                                    </Text>
-                                                    <Text>
-                                                        {item.type === 'Discount' ? '-' : ''}
-                                                        ${(item.amount * item.quantity).toFixed(2)}
-                                                    </Text>
-                                                </HStack>
-                                            ))}
-                                        </>
+                                    {isLoadingCustomItems ? (
+                                        <Text fontSize="sm" color="gray.500">Loading custom items...</Text>
+                                    ) : (
+                                        displayedCustomItems && displayedCustomItems.length > 0 && (
+                                            <>
+                                                {displayedCustomItems.map((item) => (
+                                                    <HStack key={item.id} justify="space-between">
+                                                        <Text>
+                                                            {item.name} (${item.amount.toFixed(2)} × {item.quantity})
+                                                            {item.type === 'Discount' && ' - Discount'}
+                                                        </Text>
+                                                        <Text>
+                                                            {item.type === 'Discount' ? '-' : ''}
+                                                            ${(item.amount * item.quantity).toFixed(2)}
+                                                        </Text>
+                                                    </HStack>
+                                                ))}
+                                            </>
+                                        )
                                     )}
                                     
                                     <HStack justify="space-between" mt={2}>

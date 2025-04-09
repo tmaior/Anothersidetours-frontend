@@ -52,6 +52,9 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
 }) => {
     const [items, setItems] = useState<LineItem[]>([]);
     const [currentQuantity, setCurrentQuantity] = useState(quantity);
+    const [pendingBalance, setPendingBalance] = useState(0);
+    const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState(true);
+    const [originalTotal, setOriginalTotal] = useState(0);
     const toast = useToast();
 
     useEffect(() => {
@@ -67,8 +70,55 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                 : [{id: Date.now(), type: "Charge", amount: 0, quantity: 1, name: ""}]
             );
             setCurrentQuantity(quantity);
+
+            if (reservationId) {
+                fetchPendingTransactions();
+                fetchReservationTotal();
+            }
         }
-    }, [isOpen, initialItems, quantity]);
+    }, [isOpen, initialItems, quantity, reservationId]);
+
+    const fetchPendingTransactions = async () => {
+        if (!reservationId) return;
+        
+        try {
+            const response = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservationId}`,
+                { params: { payment_status: 'pending' } }
+            );
+            
+            if (response.data && response.data.length > 0) {
+                const totalPending = response.data.reduce(
+                    (sum, transaction) => sum + transaction.amount, 
+                    0
+                );
+                setPendingBalance(totalPending);
+            } else {
+                setPendingBalance(0);
+            }
+        } catch (error) {
+            console.error('Error fetching pending transactions:', error);
+            setPendingBalance(0);
+        } finally {
+            setIsLoadingPendingBalance(false);
+        }
+    };
+
+    const fetchReservationTotal = async () => {
+        if (!reservationId) return;
+        
+        try {
+            const response = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservationId}`
+            );
+            
+            if (response.data && response.data.total_price) {
+                setOriginalTotal(response.data.total_price);
+            }
+        } catch (error) {
+            console.error('Error fetching reservation total:', error);
+        }
+    };
 
     const addItem = () => {
         setItems([...items, {id: Date.now(), type: "Charge", amount: 0, quantity: 1, name: ""}]);
@@ -122,6 +172,10 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
         
         return (baseTotal + lineItemsTotal).toFixed(2);
     };
+
+    const currentTotal = parseFloat(calculateTotal());
+    const additionalBalance = Math.max(0, currentTotal - originalTotal);
+    const totalBalanceDue = pendingBalance + additionalBalance;
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="4xl">
@@ -238,11 +292,17 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                             
                             <Box mt="auto">
                                 <Divider my={4} />
-                                <Flex justify="flex-end">
-                                    <Text fontWeight="bold" fontSize="lg">
-                                        Total: ${calculateTotal()}
-                                    </Text>
+                                <Flex justify="space-between">
+                                    <Text fontWeight="bold" fontSize="lg">Total:</Text>
+                                    <Text fontWeight="bold" fontSize="lg">${calculateTotal()}</Text>
                                 </Flex>
+                                
+                                {!isLoadingPendingBalance && totalBalanceDue > 0 && (
+                                    <Flex justify="space-between" mt={2}>
+                                        <Text fontWeight="bold" color="red.500">Balance Due:</Text>
+                                        <Text fontWeight="bold" color="red.500">${totalBalanceDue.toFixed(2)}</Text>
+                                    </Flex>
+                                )}
                             </Box>
                         </Box>
                     </Flex>

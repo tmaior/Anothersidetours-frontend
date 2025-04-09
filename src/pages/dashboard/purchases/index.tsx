@@ -1303,7 +1303,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
         }, 0)
         : 0;
 
-    const finalTotalPrice = (tourPrice + addonsTotalPrice + customLineItemsTotal).toFixed(2);
+    const finalTotalPrice = parseFloat((tourPrice + addonsTotalPrice + customLineItemsTotal).toFixed(2));
 
     useEffect(() => {
         const fetchCardDetails = async () => {
@@ -1375,6 +1375,9 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
 
         fetchPendingTransactions();
     }, [reservation?.id, reservation?.guestQuantity, reservation?.total_price]);
+
+    const paidTotal = parseFloat(reservation?.total_price || '0') - pendingBalance;
+    const totalBalanceDue = pendingBalance;
 
     if (isLoading) {
         if (!reservation) {
@@ -1472,7 +1475,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                 <Divider/>
                 <HStack justifyContent="space-between">
                     <Text fontWeight="bold">Total</Text>
-                    <Text fontWeight="bold">${finalTotalPrice}</Text>
+                    <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                 </HStack>
                 <Menu>
                     <MenuButton as={Button} size={"sm"} mt={1} w="70px">
@@ -1519,7 +1522,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                     </HStack>
                     <HStack justifyContent="space-between">
                         <Text>Paid</Text>
-                        <Text fontWeight="bold">${finalTotalPrice}</Text>
+                        <Text fontWeight="bold">${paidTotal.toFixed(2)}</Text>
                     </HStack>
                     <Box mt={4}>
                         <Button
@@ -1538,12 +1541,12 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                         </Button>
                     </Box>
 
-                    {isPurchasePage && !isLoadingPendingBalance && pendingBalance > 0 && (
+                    {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && (
                         <Box mt={4}>
                             <HStack justifyContent="space-between">
                                 <Text fontWeight="bold" color="red.500" fontSize="xl">Balance Due</Text>
                                 <Text fontWeight="bold" color="red.500"
-                                      fontSize="xl">${pendingBalance.toFixed(2)}</Text>
+                                      fontSize="xl">${totalBalanceDue.toFixed(2)}</Text>
                             </HStack>
 
                             <Flex justifyContent="flex-end" mt={2}>
@@ -1571,7 +1574,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                     </HStack>
                     <HStack justifyContent="space-between">
                         <Text>Total Due</Text>
-                        <Text fontWeight="bold">${finalTotalPrice}</Text>
+                        <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                     </HStack>
                     <Box mt={4}>
                         <Button
@@ -1590,12 +1593,12 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                         </Button>
                     </Box>
 
-                    {isPurchasePage && !isLoadingPendingBalance && pendingBalance > 0 && (
+                    {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && (
                         <Box mt={4}>
                             <HStack justifyContent="space-between">
                                 <Text fontWeight="bold" color="red.500" fontSize="xl">Balance Due</Text>
                                 <Text fontWeight="bold" color="red.500"
-                                      fontSize="xl">${pendingBalance.toFixed(2)}</Text>
+                                      fontSize="xl">${totalBalanceDue.toFixed(2)}</Text>
                             </HStack>
 
                             <Flex justifyContent="flex-end" mt={2}>
@@ -1661,20 +1664,26 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                             price: (reservation.valuePerGuest || reservation.tour?.price || 0) * (reservation.guestQuantity || 0)
                         }
                     ],
-                    total: parseFloat(finalTotalPrice)
+                    total: finalTotalPrice
                 }}
                 paymentSummary={{
                     last4: cardDetails?.last4,
                     date: cardDetails ? formatDateToAmerican(formatDate(cardDetails.paymentDate)) : undefined,
-                    amount: parseFloat(finalTotalPrice)
+                    amount: finalTotalPrice
                 }}
             />
 
-            {isPurchasePage && bookingChanges && (
+            {isPurchasePage && (
                 <CollectBalanceModal
                     isOpen={isCollectBalanceOpen}
                     onClose={onCollectBalanceClose}
-                    bookingChanges={bookingChanges}
+                    bookingChanges={{
+                        originalGuestQuantity: reservation?.guestQuantity,
+                        newGuestQuantity: reservation?.guestQuantity,
+                        originalPrice: paidTotal,
+                        newPrice: finalTotalPrice,
+                        priceDifference: totalBalanceDue
+                    }}
                     booking={reservation}
                 />
             )}

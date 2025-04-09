@@ -230,6 +230,11 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
     const guestTotalPrice = calculateGuestPrice();
     const finalTotalPrice = guestTotalPrice + addonsTotalPrice;
 
+    const originalTotal = booking.total_price || 0;
+    const paidTotal = originalTotal - pendingBalance;
+    const additionalBalance = finalTotalPrice > originalTotal ? finalTotalPrice - originalTotal : 0;
+    const totalBalanceDue = pendingBalance + additionalBalance;
+
     const formattedCardDetails = cardDetails || internalCardDetails;
 
     const formatDate = (dateString) => {
@@ -307,11 +312,11 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                     <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                 </HStack>
                 
-                {pendingBalance > 0 && (
+                {totalBalanceDue > 0 && (
                     <>
                         <HStack justify="space-between" mt={2}>
                             <Text fontWeight="bold" color="red.500">Balance Due</Text>
-                            <Text fontWeight="bold" color="red.500">${pendingBalance.toFixed(2)}</Text>
+                            <Text fontWeight="bold" color="red.500">${totalBalanceDue.toFixed(2)}</Text>
                         </HStack>
                         
                         {isPurchasePage && (
@@ -358,7 +363,7 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                     )}
                     <HStack justify="space-between">
                         <Text>Paid</Text>
-                        <Text>${finalTotalPrice.toFixed(2)}</Text>
+                        <Text>${paidTotal.toFixed(2)}</Text>
                     </HStack>
                 </VStack>
             </Box>

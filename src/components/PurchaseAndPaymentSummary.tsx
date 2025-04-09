@@ -307,22 +307,24 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                     <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                 </HStack>
                 
-                {isPurchasePage && pendingBalance > 0 && (
+                {pendingBalance > 0 && (
                     <>
                         <HStack justify="space-between" mt={2}>
                             <Text fontWeight="bold" color="red.500">Balance Due</Text>
                             <Text fontWeight="bold" color="red.500">${pendingBalance.toFixed(2)}</Text>
                         </HStack>
                         
-                        <Button 
-                            colorScheme="green" 
-                            size="sm" 
-                            mt={2} 
-                            onClick={onCollectBalance}
-                            width="100%"
-                        >
-                            Collect Balance
-                        </Button>
+                        {isPurchasePage && (
+                            <Button 
+                                colorScheme="green" 
+                                size="sm" 
+                                mt={2} 
+                                onClick={onCollectBalance}
+                                width="100%"
+                            >
+                                Collect Balance
+                            </Button>
+                        )}
                     </>
                 )}
             </Box>

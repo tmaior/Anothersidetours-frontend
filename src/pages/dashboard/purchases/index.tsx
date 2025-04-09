@@ -1068,7 +1068,29 @@ const PurchaseDetails = ({reservation}) => {
             <ReturnPaymentModal
                 isOpen={isReturnPaymentModalOpen}
                 onClose={() => setIsReturnPaymentModalOpen(false)}
-                booking={formatBookingData()}
+                booking={{
+                    id: reservation?.id,
+                    title: reservation?.tour?.name,
+                    imageUrl: reservation?.tour?.imageUrl,
+                    dateFormatted: new Date(reservation?.reservation_date || new Date()).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                    }),
+                    time: reservation?.reservation_date ? 
+                          new Date(reservation.reservation_date).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                          }) : '',
+                    user: reservation?.user,
+                    total_price: reservation?.total_price,
+                    paymentIntentId: reservation?.PaymentTransaction?.[0]?.paymentIntentId || 
+                                  reservation?.PaymentTransaction?.[0]?.stripe_payment_id || 
+                                  reservation?.paymentIntentId,
+                    paymentMethodId: reservation?.PaymentTransaction?.[0]?.paymentMethodId || 
+                                  reservation?.paymentMethodId,
+                    setupIntentId: reservation?.setupIntentId
+                }}
             />
         </VStack>
     );
@@ -1101,6 +1123,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
         onClose: onCollectBalanceClose
     } = useDisclosure();
     const [bookingChanges, setBookingChanges] = useState(null);
+    const [isReturnPaymentModalOpen, setIsReturnPaymentModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchTierPricing = async () => {
@@ -1594,7 +1617,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                                         width="100%"
                                         px={6}
                                         fontSize="sm"
-                                        onClick={onCollectBalanceOpen}
+                                        onClick={() => setIsReturnPaymentModalOpen(true)}
                                     >
                                         Refund Excess Payment
                                     </Button>
@@ -1671,7 +1694,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                                         width="100%"
                                         px={6}
                                         fontSize="sm"
-                                        onClick={onCollectBalanceOpen}
+                                        onClick={() => setIsReturnPaymentModalOpen(true)}
                                     >
                                         Refund Excess Payment
                                     </Button>
@@ -1749,6 +1772,35 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                     booking={reservation}
                 />
             )}
+            
+            <ReturnPaymentModal
+                isOpen={isReturnPaymentModalOpen}
+                onClose={() => setIsReturnPaymentModalOpen(false)}
+                booking={{
+                    id: reservation?.id,
+                    title: reservation?.tour?.name,
+                    imageUrl: reservation?.tour?.imageUrl,
+                    dateFormatted: new Date(reservation?.reservation_date || new Date()).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                    }),
+                    time: reservation?.reservation_date ? 
+                          new Date(reservation.reservation_date).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                          }) : '',
+                    user: reservation?.user,
+                    total_price: reservation?.total_price,
+                    paymentIntentId: reservation?.PaymentTransaction?.[0]?.paymentIntentId || 
+                                  reservation?.PaymentTransaction?.[0]?.stripe_payment_id || 
+                                  reservation?.paymentIntentId,
+                    paymentMethodId: reservation?.PaymentTransaction?.[0]?.paymentMethodId || 
+                                  reservation?.paymentMethodId,
+                    setupIntentId: reservation?.setupIntentId
+                }}
+                refundAmount={totalBalanceDue}
+            />
         </Box>
     );
 };

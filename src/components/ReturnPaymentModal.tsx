@@ -23,6 +23,7 @@ import {
 } from '@chakra-ui/react';
 import { FaRegCreditCard } from 'react-icons/fa';
 import { BsCash, BsCheck2 } from 'react-icons/bs';
+import { LineItem } from './CustomLineItemsModal';
 
 interface CardDetails {
     id: string;
@@ -53,21 +54,31 @@ interface ReturnPaymentModalProps {
             paymentMethodId?: string;
         }[];
     };
+    refundAmount?: number;
+    customLineItems?: LineItem[];
 }
 
 const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     isOpen,
     onClose,
     booking,
+    refundAmount,
+    customLineItems = []
 }) => {
     const toast = useToast();
-    const [amount, setAmount] = useState(booking?.total_price || 0);
+    const [amount, setAmount] = useState(refundAmount || booking?.total_price || 0);
     const [paymentMethod, setPaymentMethod] = useState('credit_card');
     const [notifyCustomer, setNotifyCustomer] = useState(true);
     const [comment, setComment] = useState('');
     const [cardList, setCardList] = useState<CardDetails[]>([]);
     const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (refundAmount) {
+            setAmount(refundAmount);
+        }
+    }, [refundAmount]);
 
     useEffect(() => {
         const fetchCardsFromSetupIntent = async () => {
@@ -260,6 +271,13 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         });
     };
 
+    const guestPrice = booking?.total_price ? booking.total_price / 3 : 0;
+
+    const customLineItemsTotal = customLineItems.reduce((sum, item) => {
+        const itemAmount = (item.amount || 0) * (item.quantity || 1);
+        return item.type === 'Discount' ? sum - itemAmount : sum + itemAmount;
+    }, 0);
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="6xl">
             <ModalOverlay />
@@ -395,9 +413,27 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 <Box>
                                     <Text fontWeight="bold" mb={3}>Purchase Summary</Text>
                                     <HStack justify="space-between">
-                                        <Text>Guests (${booking?.total_price / 3} × 3)</Text>
-                                        <Text>${booking?.total_price}</Text>
+                                        <Text>Guests (${guestPrice.toFixed(2)} × 3)</Text>
+                                        <Text>${(guestPrice * 3).toFixed(2)}</Text>
                                     </HStack>
+
+                                    {customLineItems && customLineItems.length > 0 && (
+                                        <>
+                                            {customLineItems.map((item) => (
+                                                <HStack key={item.id} justify="space-between">
+                                                    <Text>
+                                                        {item.name} (${item.amount.toFixed(2)} × {item.quantity})
+                                                        {item.type === 'Discount' && ' - Discount'}
+                                                    </Text>
+                                                    <Text>
+                                                        {item.type === 'Discount' ? '-' : ''}
+                                                        ${(item.amount * item.quantity).toFixed(2)}
+                                                    </Text>
+                                                </HStack>
+                                            ))}
+                                        </>
+                                    )}
+                                    
                                     <HStack justify="space-between" mt={2}>
                                         <Text fontWeight="bold">Total</Text>
                                         <Text fontWeight="bold">${booking?.total_price}</Text>

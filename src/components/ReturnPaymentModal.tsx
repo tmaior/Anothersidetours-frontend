@@ -503,31 +503,32 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                     </Text>
                                                     <Text>${booking?.total_price}</Text>
                                                 </HStack>
-                                                
-                                                {amount === refundAmount ? (
-                                                    <HStack justify="space-between" color="blue.500">
-                                                        <Text>
-                                                            Return Payment {formatDate(new Date().toISOString())} 
-                                                        </Text>
-                                                        <Text>-${amount.toFixed(2)}</Text>
-                                                    </HStack>
-                                                ) : (
-                                                    <HStack justify="space-between" color="blue.500">
-                                                        <Text>
-                                                            Return Payment {formatDate(new Date().toISOString())} *{cardList[0].last4}
-                                                        </Text>
-                                                        <Text>-${amount.toFixed(2)}</Text>
-                                                    </HStack>
-                                                )}
                                             </>
                                         )}
                                     </VStack>
-                                    {(refundAmount !== undefined && amount < refundAmount) && (
-                                    <HStack justify="space-between" mt={4} color="green.500">
-                                        <Text fontWeight="bold" fontSize="lg">Refund</Text>
-                                        <Text fontWeight="bold" fontSize="lg">${(refundAmount - amount).toFixed(2)}</Text>
-                                    </HStack>
+                                    
+                                    {(refundAmount !== undefined && amount < refundAmount) ? (
+                                        <>
+                                            <HStack justify="space-between" color="blue.500">
+                                                <Text>
+                                                    Return Payment {formatDate(new Date().toISOString())} *{cardList[0]?.last4}
+                                                </Text>
+                                                <Text>-${amount.toFixed(2)}</Text>
+                                            </HStack>
+                                            <HStack justify="space-between" mt={4} color="green.500">
+                                                <Text fontWeight="bold" fontSize="lg">Refund</Text>
+                                                <Text fontWeight="bold" fontSize="lg">${(refundAmount - amount).toFixed(2)}</Text>
+                                            </HStack>
+                                        </>
+                                    ) : (
+                                        <HStack justify="space-between" mt={2} color="blue.500">
+                                            <Text fontSize="sm">
+                                                Return Payment {formatDate(new Date().toISOString())}
+                                            </Text>
+                                            <Text fontSize="sm">-${amount.toFixed(2)}</Text>
+                                        </HStack>
                                     )}
+                                    
                                     <HStack justify="space-between" mt={4}>
                                         <Text fontWeight="bold">Paid</Text>
                                         <Text fontWeight="bold">${(booking?.total_price - (refundAmount || 0)).toFixed(2)}</Text>

@@ -153,7 +153,10 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                 );
                 
                 if (response.data && response.data.length > 0) {
-                    const totalPending = response.data.reduce(
+                    const filteredTransactions = response.data.filter(
+                        transaction => transaction.transaction_type !== 'CREATE'
+                    );
+                    const totalPending = filteredTransactions.reduce(
                         (sum, transaction) => sum + transaction.amount, 
                         0
                     );

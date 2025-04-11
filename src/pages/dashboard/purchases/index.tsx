@@ -1371,9 +1371,12 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                 );
 
                 if (response.data && response.data.length > 0) {
+                    const filteredTransactions = response.data.filter(
+                        transaction => transaction.transaction_type !== 'CREATE'
+                    );
                     let totalPending = 0;
                     let isRefund = false;
-                    response.data.forEach(transaction => {
+                    filteredTransactions.forEach(transaction => {
                         if (transaction.transaction_type === 'REFUND') {
                             isRefund = true;
                             totalPending += transaction.amount;

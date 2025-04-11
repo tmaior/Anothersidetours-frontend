@@ -17,7 +17,9 @@ import {
     useToast,
     VStack
 } from "@chakra-ui/react";
-import {useState} from "react";
+import React, {useState} from "react";
+import {FaRegCreditCard} from "react-icons/fa";
+import {BsCash} from "react-icons/bs";
 
 const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) => {
     const [setAmount] = useState(booking.total_price || 298);
@@ -171,8 +173,15 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                         <Button
                                             variant={method === "cash" ? "solid" : "outline"}
                                             onClick={() => setMethod("cash")}
+                                            leftIcon={<FaRegCreditCard />}
                                         >
-                                            Card
+                                            Credit Card
+                                        </Button>
+                                        <Button
+                                            size="md"
+                                            leftIcon={<BsCash />}
+                                        >
+                                            Cash
                                         </Button>
                                         <Button
                                             variant={method === "store" ? "solid" : "outline"}

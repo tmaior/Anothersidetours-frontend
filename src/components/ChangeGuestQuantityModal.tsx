@@ -1054,6 +1054,11 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                     booking={booking}
                                     guestQuantity={guestCount}
                                     onCollectBalance={onCollectBalanceOpen}
+                                    isPurchasePage={changesConfirmed}
+                                    bookingChanges={{
+                                        newPrice: calculateGuestPrice(),
+                                        priceDifference: calculateGuestPrice() - booking.total_price
+                                    }}
                                 />
                             </HStack>
                         </Flex>

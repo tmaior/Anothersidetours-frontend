@@ -48,6 +48,10 @@ interface PurchaseAndPaymentSummaryProps {
     cardDetails?: CardDetails;
     onCollectBalance?: () => void;
     isPurchasePage?: boolean;
+    bookingChanges?: {
+        newPrice: number;
+        priceDifference: number;
+    };
 }
 
 const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
@@ -57,7 +61,8 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                                                                                  allAddons = [],
                                                                                  cardDetails,
                                                                                  onCollectBalance,
-                                                                                 isPurchasePage = false
+                                                                                 isPurchasePage = false,
+                                                                                 bookingChanges
                                                                              }) => {
     const [internalReservationAddons, setInternalReservationAddons] = useState<{
         addonId: string;
@@ -233,9 +238,11 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
     const guestTotalPrice = calculateGuestPrice();
     const finalTotalPrice = guestTotalPrice + addonsTotalPrice;
     const totalPaidSoFar = booking.total_price - pendingBalance;
-    const totalBalanceDue = finalTotalPrice - totalPaidSoFar - addonsTotalPrice;
+    let totalBalanceDue = finalTotalPrice - totalPaidSoFar - addonsTotalPrice;
+    if (bookingChanges) {
+        totalBalanceDue = bookingChanges.priceDifference;
+    }
     const paidTotal = totalPaidSoFar;
-
 
     const formattedCardDetails = cardDetails || internalCardDetails;
 
@@ -295,7 +302,7 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                         <Text>
                             {`Guests ($${(guestTotalPrice / guestQuantity).toFixed(2)} × ${guestQuantity})`}
                         </Text>
-                        <Text>${guestTotalPrice.toFixed(2)}</Text>
+                        <Text>${bookingChanges ? bookingChanges.newPrice.toFixed(2) : guestTotalPrice.toFixed(2)}</Text>
                     </HStack>
                 </VStack>
                 {combinedAddons.length > 0 ? (
@@ -311,14 +318,18 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                 <Divider my={2}/>
                 <HStack justify="space-between">
                     <Text fontWeight="bold">Total</Text>
-                    <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
+                    <Text fontWeight="bold">${bookingChanges ? bookingChanges.newPrice.toFixed(2) : finalTotalPrice.toFixed(2)}</Text>
                 </HStack>
                 
-                {totalBalanceDue > 0 && (
+                {totalBalanceDue !== 0 && (
                     <>
                         <HStack justify="space-between" mt={2}>
-                            <Text fontWeight="bold" color="red.500">Balance Due</Text>
-                            <Text fontWeight="bold" color="red.500">${totalBalanceDue.toFixed(2)}</Text>
+                            <Text fontWeight="bold" color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                {totalBalanceDue < 0 ? "Refund Due" : "Balance Due"}
+                            </Text>
+                            <Text fontWeight="bold" color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                ${Math.abs(totalBalanceDue).toFixed(2)}
+                            </Text>
                         </HStack>
                         
                         {isPurchasePage && (
@@ -329,7 +340,7 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
                                 onClick={onCollectBalance}
                                 width="100%"
                             >
-                                Collect Balance
+                                {totalBalanceDue < 0 ? "Process Refund" : "Collect Balance"}
                             </Button>
                         )}
                     </>

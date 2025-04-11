@@ -651,41 +651,108 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
             
             const pendingTransactions = pendingTransactionsResponse.data;
             const hasPendingTransaction = pendingTransactions && pendingTransactions.length > 0;
+            const createTransaction = pendingTransactions?.find(t => t.transaction_type === 'CREATE');
             
-            if (hasPendingTransaction) {
-                const existingTransaction = pendingTransactions[0];
+            if (createTransaction && priceDifference < 0) {
                 await axios.put(
-                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${existingTransaction.id}`,
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${createTransaction.id}`,
                     {
-                        is_history: true,
-                        payment_status: 'archived'
+                        amount: createTransaction.amount + priceDifference
                     }
                 );
-                const transactionData = {
-                    tenant_id: booking.tenantId,
-                    reservation_id: booking.id,
-                    amount: amount,
-                    // payment_method: 'LATER',
-                    payment_status: 'pending',
-                    transaction_type: transactionType,
-                    parent_transaction_id: existingTransaction.id,
-                    metadata: {
-                        originalGuestQuantity: booking.guestQuantity,
-                        newGuestQuantity: guestCount,
-                        originalPrice: booking.total_price,
-                        newPrice: updatedTotalPrice,
-                        modifiedAt: new Date().toISOString(),
-                        previousTransactionId: existingTransaction.id
-                    }
-                };
-                
+
                 await axios.post(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
-                    transactionData
+                    {
+                        tenant_id: booking.tenantId,
+                        reservation_id: booking.id,
+                        amount: amount,
+                        payment_status: 'archived',
+                        transaction_type: 'REFUND',
+                        is_history: true,
+                        parent_transaction_id: createTransaction.id,
+                        metadata: {
+                            originalGuestQuantity: booking.guestQuantity,
+                            newGuestQuantity: guestCount,
+                            originalPrice: booking.total_price,
+                            newPrice: updatedTotalPrice,
+                            modifiedAt: new Date().toISOString(),
+                            previousTransactionId: createTransaction.id,
+                            isHistorical: true
+                        }
+                    }
+                );
+                
+                transactionSuccess = true;
+            } else if (createTransaction && priceDifference > 0) {
+                await axios.put(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${createTransaction.id}`,
+                    {
+                        amount: createTransaction.amount + priceDifference
+                    }
+                );
+                await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
+                    {
+                        tenant_id: booking.tenantId,
+                        reservation_id: booking.id,
+                        amount: amount,
+                        payment_status: 'archived',
+                        transaction_type: 'GUEST_QUANTITY_CHANGE',
+                        is_history: true,
+                        parent_transaction_id: createTransaction.id,
+                        metadata: {
+                            originalGuestQuantity: booking.guestQuantity,
+                            newGuestQuantity: guestCount,
+                            originalPrice: booking.total_price,
+                            newPrice: updatedTotalPrice,
+                            modifiedAt: new Date().toISOString(),
+                            previousTransactionId: createTransaction.id,
+                            isHistorical: true
+                        }
+                    }
                 );
                 
                 transactionSuccess = true;
             } else {
+                if (hasPendingTransaction) {
+                    const existingTransaction = pendingTransactions.find(t => t.transaction_type !== 'CREATE');
+                    if (existingTransaction) {
+                        await axios.put(
+                            `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${existingTransaction.id}`,
+                            {
+                                is_history: true,
+                                payment_status: 'archived'
+                            }
+                        );
+                        const transactionData = {
+                            tenant_id: booking.tenantId,
+                            reservation_id: booking.id,
+                            amount: amount,
+                            // payment_method: 'LATER',
+                            payment_status: 'pending',
+                            transaction_type: transactionType,
+                            parent_transaction_id: existingTransaction.id,
+                            metadata: {
+                                originalGuestQuantity: booking.guestQuantity,
+                                newGuestQuantity: guestCount,
+                                originalPrice: booking.total_price,
+                                newPrice: updatedTotalPrice,
+                                modifiedAt: new Date().toISOString(),
+                                previousTransactionId: existingTransaction.id
+                            }
+                        };
+                        
+                        await axios.post(
+                            `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
+                            transactionData
+                        );
+                        
+                        transactionSuccess = true;
+                    }
+                }
+            }
+            if (!transactionSuccess) {
                 const transactionData = {
                     tenant_id: booking.tenantId,
                     reservation_id: booking.id,

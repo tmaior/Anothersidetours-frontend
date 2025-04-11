@@ -1,7 +1,9 @@
 import React, {useCallback, useEffect, useState} from "react";
 import {
+    Box, 
     Button,
     Checkbox,
+    Divider,
     FormControl,
     FormLabel,
     HStack,
@@ -14,6 +16,8 @@ import {
     ModalHeader,
     ModalOverlay,
     Select,
+    Spinner,
+    Text,
     useToast,
     VStack,
 } from "@chakra-ui/react";
@@ -21,7 +25,6 @@ import axios from "axios";
 import {CiSquarePlus} from "react-icons/ci";
 import DatePicker from "./TimePickerArrival";
 import AddTimeSlotModal from "./AddTimeSlotModal";
-import PurchaseAndPaymentSummary from "./PurchaseAndPaymentSummary";
 
 const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
     const [selectedDate, setSelectedDate] = useState<string>();
@@ -31,6 +34,127 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
     const [isTimeslotModalOpen, setTimeslotModalOpen] = useState(false);
     const [availableTimes, setAvailableTimes] = useState([]);
     const toast = useToast();
+
+    const [pendingBalance, setPendingBalance] = useState<number>(0);
+    const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState<boolean>(true);
+    const [reservationAddons, setReservationAddons] = useState([]);
+    const [allAddons, setAllAddons] = useState([]);
+    const [isLoadingAddons, setIsLoadingAddons] = useState<boolean>(true);
+    const [cardDetails, setCardDetails] = useState(null);
+    const [isLoadingCardDetails, setIsLoadingCardDetails] = useState<boolean>(true);
+    const [tierPricing, setTierPricing] = useState(null);
+
+    useEffect(() => {
+        const fetchPendingTransactions = async () => {
+            if (!booking?.id) return;
+            
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
+                    { params: { payment_status: 'pending' } }
+                );
+                
+                if (response.data && response.data.length > 0) {
+                    const filteredTransactions = response.data.filter(
+                        transaction => transaction.transaction_type !== 'CREATE'
+                    );
+                    
+                    let totalPending = 0;
+                    
+                    for (const transaction of filteredTransactions) {
+                        if (transaction.transaction_direction === 'refund') {
+                            totalPending -= transaction.amount;
+                        } else {
+                            totalPending += transaction.amount;
+                        }
+                    }
+                    
+                    setPendingBalance(totalPending);
+                }
+            } catch (error) {
+                console.error('Error fetching pending transactions:', error);
+            } finally {
+                setIsLoadingPendingBalance(false);
+            }
+        };
+        
+        if (isOpen) {
+            fetchPendingTransactions();
+        }
+    }, [booking?.id, isOpen]);
+
+    useEffect(() => {
+        const fetchAddons = async () => {
+            if (!booking?.id || !booking.tourId) return;
+
+            try {
+                const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`),
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${booking.tourId}`)
+                ]);
+
+                setAllAddons(allAddonsResponse.data);
+                setReservationAddons(reservationAddonsResponse.data);
+            } catch (error) {
+                console.error('Error fetching add-ons:', error);
+            } finally {
+                setIsLoadingAddons(false);
+            }
+        };
+
+        if (isOpen) {
+            fetchAddons();
+        }
+    }, [booking?.id, booking.tourId, isOpen]);
+
+    useEffect(() => {
+        const fetchCardDetails = async () => {
+            if (!booking.paymentMethodId) return;
+            
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${booking.paymentMethodId}`
+                );
+                setCardDetails(response.data);
+            } catch (error) {
+                console.error("Failed to fetch card details:", error);
+            } finally {
+                setIsLoadingCardDetails(false);
+            }
+        };
+
+        if (isOpen && booking.paymentMethodId) {
+            fetchCardDetails();
+        } else {
+            setIsLoadingCardDetails(false);
+        }
+    }, [booking.paymentMethodId, isOpen]);
+
+    useEffect(() => {
+        const fetchTierPricing = async () => {
+            if (!booking?.tourId) return;
+
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`
+                );
+                
+                if (response.data && response.data.length > 0) {
+                    setTierPricing({
+                        pricingType: response.data[0].pricingType,
+                        basePrice: response.data[0].basePrice,
+                        tierEntries: response.data[0].tierEntries,
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching tier pricing:', error);
+            }
+        };
+
+        if (isOpen) {
+            fetchTierPricing();
+        }
+    }, [booking?.tourId, isOpen]);
 
     const fetchSchedules = useCallback(async () => {
         if (!booking.id) return;
@@ -184,6 +308,67 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
         }
     }, [isOpen, booking.reservation_date]);
 
+    const getCombinedAddons = () => {
+        let combinedAddons = [];
+
+        combinedAddons = allAddons.reduce((acc, addon) => {
+            const selectedAddon = reservationAddons.find(resAddon => resAddon.addonId === addon.id);
+            if (addon.type === 'SELECT' && selectedAddon && parseInt(selectedAddon.value, 10) > 0) {
+                acc.push({
+                    ...addon,
+                    quantity: parseInt(selectedAddon.value, 10),
+                });
+            } else if (addon.type === 'CHECKBOX' && selectedAddon && selectedAddon.value === "1") {
+                acc.push({
+                    ...addon,
+                    quantity: 1,
+                });
+            }
+            return acc;
+        }, []);
+
+        return combinedAddons;
+    };
+
+    const calculateGuestPrice = () => {
+        if (!tierPricing) {
+            return (booking.valuePerGuest || booking.tour?.price) * booking.guestQuantity;
+        }
+
+        if (tierPricing.pricingType === 'flat') {
+            return tierPricing.basePrice * booking.guestQuantity;
+        }
+
+        const applicableTier = tierPricing.tierEntries
+            .sort((a, b) => b.quantity - a.quantity)
+            .find(tier => booking.guestQuantity >= tier.quantity);
+
+        return applicableTier 
+            ? applicableTier.price * booking.guestQuantity
+            : tierPricing.basePrice * booking.guestQuantity;
+    };
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toISOString().split("T")[0];
+    };
+
+    function formatDateToAmerican(date) {
+        const [year, month, day] = date.split("-");
+        return `${month}/${day}/${year}`;
+    }
+
+    const combinedAddons = getCombinedAddons();
+    const addonsTotalPrice = combinedAddons.reduce(
+        (sum, addon) => sum + (addon.price * addon.quantity),
+        0
+    );
+    const guestTotalPrice = calculateGuestPrice();
+    const finalTotalPrice = guestTotalPrice + addonsTotalPrice;
+    const totalPaidSoFar = booking.total_price - pendingBalance;
+    const totalBalanceDue = finalTotalPrice - totalPaidSoFar - addonsTotalPrice;
+    const isLoading = isLoadingPendingBalance || isLoadingAddons || isLoadingCardDetails;
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="3xl">
             <ModalOverlay/>
@@ -237,10 +422,114 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                             </Button>
                         </VStack>
                         <HStack align="center">
-                            <PurchaseAndPaymentSummary
-                                booking={booking}
-                                guestQuantity={booking.guestQuantity}
-                            />
+                            {isLoading ? (
+                                <VStack
+                                    bg="gray.50"
+                                    p={6}
+                                    borderRadius="md"
+                                    borderWidth="1px"
+                                    flex="2"
+                                    spacing={6}
+                                    align="stretch"
+                                    w="100%"
+                                    h="350px"
+                                    minW="300px"
+                                    minH="300px"
+                                >
+                                    <HStack justifyContent="center">
+                                        <Spinner size="sm"/>
+                                        <Text>Loading...</Text>
+                                    </HStack>
+                                </VStack>
+                            ) : (
+                                <VStack
+                                    bg="gray.50"
+                                    p={6}
+                                    borderRadius="md"
+                                    borderWidth="1px"
+                                    flex="2"
+                                    spacing={6}
+                                    align="stretch"
+                                    w="100%"
+                                    h="350px"
+                                    minW="300px"
+                                    minH="300px"
+                                >
+                                    <Box padding="10px" w="100%" h="500px">
+                                        <Text fontWeight="bold" mb={2}>
+                                            Purchase Summary
+                                        </Text>
+                                        <VStack align="stretch" spacing={2}>
+                                            <HStack justify="space-between">
+                                                <Text>
+                                                    {`Guests ($${(guestTotalPrice / booking.guestQuantity).toFixed(2)} × ${booking.guestQuantity})`}
+                                                </Text>
+                                                <Text>${guestTotalPrice.toFixed(2)}</Text>
+                                            </HStack>
+                                        </VStack>
+                                        {combinedAddons.length > 0 ? (
+                                            combinedAddons.map((addon) => (
+                                                <HStack key={addon.id} justifyContent="space-between">
+                                                    <Text>{addon.label} (${addon.price} x {addon.quantity})</Text>
+                                                    <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
+                                                </HStack>
+                                            ))
+                                        ) : (
+                                            <Text>No add-ons selected.</Text>
+                                        )}
+                                        <Divider my={2}/>
+                                        <HStack justify="space-between">
+                                            <Text fontWeight="bold">Total</Text>
+                                            <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
+                                        </HStack>
+                                        
+                                        {totalBalanceDue !== 0 && (
+                                            <HStack justify="space-between" mt={2}>
+                                                <Text fontWeight="bold" color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                    {totalBalanceDue < 0 ? "Refund Due" : "Balance Due"}
+                                                </Text>
+                                                <Text fontWeight="bold" color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                    ${Math.abs(totalBalanceDue).toFixed(2)}
+                                                </Text>
+                                            </HStack>
+                                        )}
+                                    </Box>
+                                    <Box>
+                                        <Text fontWeight="bold" mb={2}>
+                                            Payment Summary
+                                        </Text>
+                                        <VStack align="stretch" spacing={2}>
+                                            {cardDetails && (
+                                                <HStack justify="space-between">
+                                                    <HStack spacing={2}>
+                                                        <Box as="span" role="img" aria-label="Card Icon" fontSize="lg">
+                                                            💳
+                                                        </Box>
+                                                        <Text>
+                                                            Payment
+                                                            <Box
+                                                                as="span"
+                                                                bg="white"
+                                                                px={1}
+                                                                py={1}
+                                                                borderRadius="md"
+                                                                boxShadow="sm"
+                                                            >
+                                                                *{cardDetails.last4}
+                                                            </Box>{" "}
+                                                            {formatDateToAmerican(formatDate(cardDetails.paymentDate))}
+                                                        </Text>
+                                                    </HStack>
+                                                </HStack>
+                                            )}
+                                            <HStack justify="space-between">
+                                                <Text>Paid</Text>
+                                                <Text>${totalPaidSoFar.toFixed(2)}</Text>
+                                            </HStack>
+                                        </VStack>
+                                    </Box>
+                                </VStack>
+                            )}
                         </HStack>
                     </HStack>
                 </ModalBody>

@@ -566,54 +566,62 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                     <ModalHeader textAlign="center">Change Add-Ons</ModalHeader>
                     <ModalCloseButton/>
                     <ModalBody>
-                        <HStack align="start" spacing={20}>
-                            <VStack spacing={4} align="stretch">
-                                {allAddons.map(addon => (
-                                    <Flex key={addon.id} justify="space-between" align="center" gap={20}>
-                                        <VStack align="start" spacing={1}>
-                                            <Text fontWeight="bold">{addon.label}</Text>
-                                            <Text color="gray.500">${addon.price.toFixed(2)}</Text>
-                                        </VStack>
-                                        {addon.type === 'SELECT' ? (
-                                            <Flex align="center">
-                                                <Button size="sm" onClick={() => handleDecrement(addon.id)}
-                                                        disabled={selectedAddons[addon.id] <= 0 || changesConfirmed}>
-                                                    -
-                                                </Button>
-                                                <Input
-                                                    value={selectedAddons[addon.id] || 0}
-                                                    readOnly
-                                                    w="50px"
-                                                    textAlign="center"
-                                                    mx={2}
-                                                />
-                                                <Button size="sm" onClick={() => handleIncrement(addon.id)} 
-                                                        disabled={changesConfirmed}>
-                                                    +
-                                                </Button>
+                        <Flex justify="space-between" align="start">
+                            <Box minW="250px" maxW="300px" w="100%" mr={6}>
+                                {allAddons.length > 0 ? (
+                                    <VStack spacing={4} align="stretch">
+                                        {allAddons.map(addon => (
+                                            <Flex key={addon.id} justify="space-between" align="center">
+                                                <VStack align="start" spacing={1} flex="1">
+                                                    <Text fontWeight="bold">{addon.label}</Text>
+                                                    <Text color="gray.500">${addon.price.toFixed(2)}</Text>
+                                                </VStack>
+                                                {addon.type === 'SELECT' ? (
+                                                    <Flex align="center">
+                                                        <Button size="sm" onClick={() => handleDecrement(addon.id)}
+                                                                disabled={selectedAddons[addon.id] <= 0 || changesConfirmed}>
+                                                            -
+                                                        </Button>
+                                                        <Input
+                                                            value={selectedAddons[addon.id] || 0}
+                                                            readOnly
+                                                            w="50px"
+                                                            textAlign="center"
+                                                            mx={2}
+                                                        />
+                                                        <Button size="sm" onClick={() => handleIncrement(addon.id)} 
+                                                                disabled={changesConfirmed}>
+                                                            +
+                                                        </Button>
+                                                    </Flex>
+                                                ) : addon.type === 'CHECKBOX' ? (
+                                                    <Switch
+                                                        isChecked={selectedAddons[addon.id] || false}
+                                                        onChange={() => handleCheckboxChange(addon.id)}
+                                                        isDisabled={changesConfirmed}
+                                                    />
+                                                ) : null}
                                             </Flex>
-                                        ) : addon.type === 'CHECKBOX' ? (
-                                            <Switch
-                                                isChecked={selectedAddons[addon.id] || false}
-                                                onChange={() => handleCheckboxChange(addon.id)}
-                                                isDisabled={changesConfirmed}
-                                            />
-                                        ) : null}
-                                    </Flex>
-                                ))}
-                            </VStack>
+                                        ))}
+                                    </VStack>
+                                ) : (
+                                    <Box p={4} borderWidth="1px" borderRadius="md" bg="gray.50">
+                                        <Text align="center">No add-ons available for this reservation</Text>
+                                    </Box>
+                                )}
+                            </Box>
+
                             <VStack
                                 bg="gray.50"
-                                p={6}
+                                p={4}
                                 borderRadius="md"
                                 borderWidth="1px"
-                                flex="2"
-                                spacing={6}
+                                spacing={4}
                                 align="stretch"
-                                w="100%"
-                                h="350px"
-                                minW="300px"
+                                w="320px"
                                 minH="300px"
+                                maxH="400px"
+                                overflowY="auto"
                             >
                                 {isLoadingAddons || isLoadingCardDetails || isLoadingPendingBalance ? (
                                     <HStack justifyContent="center">
@@ -622,7 +630,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                     </HStack>
                                 ) : (
                                     <>
-                                        <Box padding="10px" w="100%" h="500px">
+                                        <Box w="100%">
                                             <Text fontWeight="bold" mb={2}>
                                                 Purchase Summary
                                             </Text>
@@ -661,12 +669,13 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                                 </HStack>
                                             )}
                                         </Box>
-                                        <Box>
-                                            <Text fontWeight="bold" mb={2}>
-                                                Payment Summary
-                                            </Text>
-                                            <VStack align="stretch" spacing={2}>
-                                                {cardDetails && (
+                                        
+                                        {cardDetails && (
+                                            <Box>
+                                                <Text fontWeight="bold" mb={2}>
+                                                    Payment Summary
+                                                </Text>
+                                                <VStack align="stretch" spacing={2}>
                                                     <HStack justify="space-between">
                                                         <HStack spacing={2}>
                                                             <Box as="span" role="img" aria-label="Card Icon" fontSize="lg">
@@ -688,17 +697,17 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                                             </Text>
                                                         </HStack>
                                                     </HStack>
-                                                )}
-                                                <HStack justify="space-between">
-                                                    <Text>Paid</Text>
-                                                    <Text>${paidTotal.toFixed(2)}</Text>
-                                                </HStack>
-                                            </VStack>
-                                        </Box>
+                                                    <HStack justify="space-between">
+                                                        <Text>Paid</Text>
+                                                        <Text>${paidTotal.toFixed(2)}</Text>
+                                                    </HStack>
+                                                </VStack>
+                                            </Box>
+                                        )}
                                     </>
                                 )}
                             </VStack>
-                        </HStack>
+                        </Flex>
                     </ModalBody>
 
                     <ModalFooter>

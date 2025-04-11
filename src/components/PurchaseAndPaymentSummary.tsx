@@ -232,11 +232,10 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
 
     const guestTotalPrice = calculateGuestPrice();
     const finalTotalPrice = guestTotalPrice + addonsTotalPrice;
+    const totalPaidSoFar = booking.total_price - pendingBalance;
+    const totalBalanceDue = finalTotalPrice - totalPaidSoFar - addonsTotalPrice;
+    const paidTotal = totalPaidSoFar;
 
-    const originalTotal = booking.total_price || 0;
-    const paidTotal = originalTotal - pendingBalance;
-    const additionalBalance = finalTotalPrice > originalTotal ? finalTotalPrice - originalTotal : 0;
-    const totalBalanceDue = pendingBalance + additionalBalance;
 
     const formattedCardDetails = cardDetails || internalCardDetails;
 

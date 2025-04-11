@@ -99,10 +99,16 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                     const filteredTransactions = response.data.filter(
                         transaction => transaction.transaction_type !== 'CREATE'
                     );
-                    const totalPending = filteredTransactions.reduce(
-                        (sum, transaction) => sum + transaction.amount, 
-                        0
-                    );
+                    
+                    let totalPending = 0;
+                    filteredTransactions.forEach(transaction => {
+                        if (transaction.transaction_direction === 'refund') {
+                            totalPending -= transaction.amount;
+                        } else {
+                            totalPending += transaction.amount;
+                        }
+                    });
+                    
                     setPendingBalance(totalPending);
                 }
             } catch (error) {
@@ -203,6 +209,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
             const isRefund = totalBalanceDue < 0;
             const finalAmount = Math.abs(totalBalanceDue);
             const transactionType = isRefund ? 'ADDON_CHANGE_REFUND' : 'ADDON_CHANGE';
+            const transactionDirection = isRefund ? 'refund' : 'charge';
 
             const bookingChangesObj = {
                 originalAddonsTotal: originalAddonsTotal,
@@ -244,6 +251,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                         amount: finalAmount,
                         payment_status: 'archived',
                         transaction_type: 'REFUND',
+                        transaction_direction: 'refund',
                         is_history: true,
                         parent_transaction_id: createTransaction.id,
                         metadata: {
@@ -276,6 +284,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                         amount: finalAmount,
                         payment_status: 'archived',
                         transaction_type: 'ADDON_CHANGE',
+                        transaction_direction: 'charge',
                         is_history: true,
                         parent_transaction_id: createTransaction.id,
                         metadata: {
@@ -310,6 +319,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                             amount: finalAmount,
                             payment_status: 'pending',
                             transaction_type: transactionType,
+                            transaction_direction: transactionDirection,
                             parent_transaction_id: existingTransaction.id,
                             metadata: {
                                 originalAddonsTotal: originalAddonsTotal,
@@ -340,6 +350,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                     amount: finalAmount,
                     payment_status: 'pending',
                     transaction_type: transactionType,
+                    transaction_direction: transactionDirection,
                     metadata: {
                         originalAddonsTotal: originalAddonsTotal,
                         newAddonsTotal: updatedAddonsTotalPrice,
@@ -641,11 +652,11 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                             
                                             {totalBalanceDue !== 0 && (
                                                 <HStack justify="space-between" mt={2}>
-                                                    <Text fontWeight="bold" color={isRefund ? "green.500" : "red.500"}>
-                                                        {isRefund ? "Refund Due" : "Balance Due"}
+                                                    <Text fontWeight="bold" color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                        {totalBalanceDue < 0 ? "Refund Due" : "Balance Due"}
                                                     </Text>
-                                                    <Text fontWeight="bold" color={isRefund ? "green.500" : "red.500"}>
-                                                        ${displayBalanceValue.toFixed(2)}
+                                                    <Text fontWeight="bold" color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                        ${Math.abs(totalBalanceDue).toFixed(2)}
                                                     </Text>
                                                 </HStack>
                                             )}

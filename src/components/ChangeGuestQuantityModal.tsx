@@ -834,7 +834,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
 
     const calculateGuestPrice = () => {
         if (!tierPricing) {
-            return (booking.valuePerGuest || booking.tour?.price) * guestCount;
+            return (booking.valuePerGuest || booking.tour?.price || 0) * guestCount;
         }
 
         if (tierPricing.pricingType === 'flat') {
@@ -848,6 +848,24 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
         return applicableTier 
             ? applicableTier.price * guestCount
             : tierPricing.basePrice * guestCount;
+    };
+
+    const calculatePricePerGuest = (quantity) => {
+        if (!tierPricing) {
+            return booking.valuePerGuest || booking.tour?.price || 300;
+        }
+
+        if (tierPricing.pricingType === 'flat') {
+            return tierPricing.basePrice;
+        }
+
+        const applicableTier = tierPricing.tierEntries
+            .sort((a, b) => b.quantity - a.quantity)
+            .find(tier => quantity >= tier.quantity);
+
+        return applicableTier 
+            ? applicableTier.price
+            : tierPricing.basePrice;
     };
 
     const handleIncrease = () => setGuestCount(guestCount + 1);
@@ -866,10 +884,17 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
     }
     const guestTotalPrice = calculateGuestPrice();
 
-    const valuePerGuest = booking.valuePerGuest || booking.tour?.price || 300;
+    const oldPricePerGuest = calculatePricePerGuest(booking.guestQuantity);
+    const newPricePerGuest = calculatePricePerGuest(guestCount);
 
-    const guestDifference = guestCount - booking.guestQuantity;
-    const priceDifference = guestDifference * valuePerGuest;
+    let priceDifference = 0;
+    if (guestCount > booking.guestQuantity) {
+        const guestsAdded = guestCount - booking.guestQuantity;
+        priceDifference = guestsAdded * newPricePerGuest;
+    } else if (guestCount < booking.guestQuantity) {
+        const guestsRemoved = booking.guestQuantity - guestCount;
+        priceDifference = -guestsRemoved * oldPricePerGuest;
+    }
 
     const totalBalanceDue = guestCount === booking.guestQuantity 
         ? pendingBalance 
@@ -895,9 +920,17 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
         try {
             const updatedTotalPrice = calculateGuestPrice();
 
-            const valuePerGuest = booking.valuePerGuest || booking.tour?.price || 300;
-            const guestDifference = guestCount - booking.guestQuantity;
-            const priceDifference = guestDifference * valuePerGuest;
+            const oldPricePerGuest = calculatePricePerGuest(booking.guestQuantity);
+            const newPricePerGuest = calculatePricePerGuest(guestCount);
+
+            let priceDifference = 0;
+            if (guestCount > booking.guestQuantity) {
+                const guestsAdded = guestCount - booking.guestQuantity;
+                priceDifference = guestsAdded * newPricePerGuest;
+            } else if (guestCount < booking.guestQuantity) {
+                const guestsRemoved = booking.guestQuantity - guestCount;
+                priceDifference = -guestsRemoved * oldPricePerGuest;
+            }
 
             const pendingTransactionsResponse = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,

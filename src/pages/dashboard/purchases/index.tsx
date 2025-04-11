@@ -1374,16 +1374,22 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                     const filteredTransactions = response.data.filter(
                         transaction => transaction.transaction_type !== 'CREATE'
                     );
+                    
                     let totalPending = 0;
                     let isRefund = false;
+                    
                     filteredTransactions.forEach(transaction => {
-                        if (transaction.transaction_type === 'REFUND') {
+                        if (transaction.transaction_direction === 'refund') {
                             isRefund = true;
-                            totalPending += transaction.amount;
+                            totalPending -= transaction.amount;
                         } else {
                             totalPending += transaction.amount;
                         }
                     });
+                    if (totalPending < 0) {
+                        isRefund = true;
+                        totalPending = Math.abs(totalPending);
+                    }
 
                     setPendingBalance(totalPending);
                     setIsRefundTransaction(isRefund);
@@ -1392,7 +1398,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                         setBookingChanges({
                             originalGuestQuantity: reservation.guestQuantity,
                             newGuestQuantity: reservation.guestQuantity,
-                            originalPrice: reservation.total_price - totalPending,
+                            originalPrice: isRefund ? reservation.total_price + totalPending : reservation.total_price - totalPending,
                             newPrice: reservation.total_price,
                             priceDifference: totalPending,
                             isRefund: isRefund

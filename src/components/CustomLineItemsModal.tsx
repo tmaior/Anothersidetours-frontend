@@ -18,7 +18,9 @@ import {
     Divider,
     useToast,
     InputGroup,
-    InputLeftElement
+    InputLeftElement,
+    Spinner,
+    VStack
 } from '@chakra-ui/react';
 import { AddIcon, DeleteIcon, MinusIcon } from '@chakra-ui/icons';
 import axios from 'axios';
@@ -29,6 +31,29 @@ export interface LineItem {
     type: 'Charge' | 'Discount';
     amount: number;
     quantity: number;
+}
+
+interface Addon {
+    id: string;
+    label: string;
+    price: number;
+    type: 'SELECT' | 'CHECKBOX';
+}
+
+interface TierEntry {
+    quantity: number;
+    price: number;
+}
+
+interface TierPricing {
+    pricingType: 'tiered' | 'flat';
+    basePrice: number;
+    tierEntries: TierEntry[];
+}
+
+interface CardDetails {
+    last4: string;
+    paymentDate: string;
 }
 
 interface CustomLineItemsModalProps {
@@ -55,6 +80,13 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
     const [pendingBalance, setPendingBalance] = useState(0);
     const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState(true);
     const [originalTotal, setOriginalTotal] = useState(0);
+    const [reservationAddons, setReservationAddons] = useState<{ addonId: string; value: string }[]>([]);
+    const [allAddons, setAllAddons] = useState<Addon[]>([]);
+    const [isLoadingAddons, setIsLoadingAddons] = useState(true);
+    const [cardDetails, setCardDetails] = useState<CardDetails | null>(null);
+    const [isLoadingCardDetails, setIsLoadingCardDetails] = useState(true);
+    const [tierPricing, setTierPricing] = useState<TierPricing | null>(null);
+    
     const toast = useToast();
 
     useEffect(() => {
@@ -63,20 +95,47 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
         }
     }, [quantity]);
 
-    useEffect(() => {
-        if (isOpen) {
-            setItems(initialItems.length > 0 
-                ? initialItems 
-                : [{id: Date.now(), type: "Charge", amount: 0, quantity: 1, name: ""}]
-            );
-            setCurrentQuantity(quantity);
+    const fetchAddons = async () => {
+        if (!reservationId) return;
 
-            if (reservationId) {
-                fetchPendingTransactions();
-                fetchReservationTotal();
-            }
+        try {
+            const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
+                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${reservationId}`),
+                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${reservationId.split('-')[0]}`)
+            ]);
+
+            setAllAddons(allAddonsResponse.data);
+            setReservationAddons(reservationAddonsResponse.data);
+        } catch (error) {
+            console.error('Error fetching add-ons:', error);
+        } finally {
+            setIsLoadingAddons(false);
         }
-    }, [isOpen, initialItems, quantity, reservationId]);
+    };
+
+    const fetchCardDetails = async () => {
+        if (!reservationId) {
+            setIsLoadingCardDetails(false);
+            return;
+        }
+        
+        try {
+            const reservationResponse = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservationId}`
+            );
+            
+            if (reservationResponse.data && reservationResponse.data.paymentMethodId) {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${reservationResponse.data.paymentMethodId}`
+                );
+                setCardDetails(response.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch card details:", error);
+        } finally {
+            setIsLoadingCardDetails(false);
+        }
+    };
 
     const fetchPendingTransactions = async () => {
         if (!reservationId) return;
@@ -88,15 +147,20 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
             );
             
             if (response.data && response.data.length > 0) {
-                const totalPending = response.data.reduce(
-                    (sum, transaction) => {
-                        if (transaction.transaction_direction === 'refund') {
-                            return sum - transaction.amount;
-                        }
-                        return sum + transaction.amount;
-                    }, 
-                    0
+                const filteredTransactions = response.data.filter(
+                    transaction => transaction.transaction_type !== 'CREATE'
                 );
+                
+                let totalPending = 0;
+                
+                for (const transaction of filteredTransactions) {
+                    if (transaction.transaction_direction === 'refund') {
+                        totalPending -= transaction.amount;
+                    } else {
+                        totalPending += transaction.amount;
+                    }
+                }
+                
                 setPendingBalance(totalPending);
             } else {
                 setPendingBalance(0);
@@ -106,6 +170,32 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
             setPendingBalance(0);
         } finally {
             setIsLoadingPendingBalance(false);
+        }
+    };
+
+    const fetchTierPricing = async () => {
+        if (!reservationId) return;
+
+        try {
+            const reservationResponse = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservationId}`
+            );
+            
+            if (reservationResponse.data && reservationResponse.data.tourId) {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${reservationResponse.data.tourId}`
+                );
+                
+                if (response.data && response.data.length > 0) {
+                    setTierPricing({
+                        pricingType: response.data[0].pricingType,
+                        basePrice: response.data[0].basePrice,
+                        tierEntries: response.data[0].tierEntries,
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching tier pricing:', error);
         }
     };
 
@@ -124,6 +214,24 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
             console.error('Error fetching reservation total:', error);
         }
     };
+
+    useEffect(() => {
+        if (isOpen) {
+            setItems(initialItems.length > 0 
+                ? initialItems 
+                : [{id: Date.now(), type: "Charge", amount: 0, quantity: 1, name: ""}]
+            );
+            setCurrentQuantity(quantity);
+
+            if (reservationId) {
+                fetchPendingTransactions();
+                fetchReservationTotal();
+                fetchAddons();
+                fetchCardDetails();
+                fetchTierPricing();
+            }
+        }
+    }, [isOpen, initialItems, quantity, reservationId]);
 
     const addItem = () => {
         setItems([...items, {id: Date.now(), type: "Charge", amount: 0, quantity: 1, name: ""}]);
@@ -203,17 +311,58 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
         onClose();
     };
 
-    const calculateTotal = () => {
-        const lineItemsTotal = items.reduce((acc, item) => {
-            if (!item.name && item.amount === 0) return acc;
-            const totalItem = item.amount * item.quantity;
-            return item.type === "Discount" ? acc - totalItem : acc + totalItem;
-        }, 0);
-        
-        return (originalTotal + lineItemsTotal).toFixed(2);
+    let combinedAddons: (Addon & { quantity: number })[] = [];
+    combinedAddons = allAddons.reduce((acc: (Addon & { quantity: number })[], addon) => {
+        const selectedAddon = reservationAddons.find(resAddon => resAddon.addonId === addon.id);
+        if (addon.type === 'SELECT' && selectedAddon && parseInt(selectedAddon.value, 10) > 0) {
+            acc.push({
+                ...addon,
+                quantity: parseInt(selectedAddon.value, 10),
+            });
+        } else if (addon.type === 'CHECKBOX' && selectedAddon && selectedAddon.value === "1") {
+            acc.push({
+                ...addon,
+                quantity: 1,
+            });
+        }
+        return acc;
+    }, []);
+
+    const addonsTotalPrice = combinedAddons.reduce(
+        (sum, addon) => sum + (addon.price * addon.quantity),
+        0
+    );
+
+    const calculateGuestPrice = () => {
+        if (!tierPricing) {
+            return (basePrice) * currentQuantity;
+        }
+
+        if (tierPricing.pricingType === 'flat') {
+            return tierPricing.basePrice * currentQuantity;
+        }
+
+        const applicableTier = tierPricing.tierEntries
+            .sort((a, b) => b.quantity - a.quantity)
+            .find(tier => currentQuantity >= tier.quantity);
+
+        return applicableTier 
+            ? applicableTier.price * currentQuantity
+            : tierPricing.basePrice * currentQuantity;
     };
 
-    const currentTotal = parseFloat(calculateTotal());
+    const guestTotalPrice = calculateGuestPrice();
+
+    const lineItemsTotal = items.reduce((acc, item) => {
+        if (!item.name && item.amount === 0) return acc;
+        const totalItem = item.amount * item.quantity;
+        return item.type === "Discount" ? acc - totalItem : acc + totalItem;
+    }, 0);
+
+    const finalTotalPrice = guestTotalPrice + addonsTotalPrice + lineItemsTotal;
+    
+    const totalPaidSoFar = originalTotal - pendingBalance;
+    const currentTotal = parseFloat(finalTotalPrice.toFixed(2));
     const rawDifference = currentTotal - originalTotal;
     
     const isRefund = rawDifference < 0;
@@ -238,6 +387,18 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
         finalBalanceDue = additionalBalance;
     }
 
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toISOString().split("T")[0];
+    };
+
+    function formatDateToAmerican(date) {
+        const [year, month, day] = date.split("-");
+        return `${month}/${day}/${year}`;
+    }
+
+    const isLoading = isLoadingAddons || isLoadingCardDetails || isLoadingPendingBalance;
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="4xl">
             <ModalOverlay/>
@@ -247,7 +408,7 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
 
                 <ModalBody>
                     <Flex gap={4}>
-                        <Box flex="1" maxH="300px" overflowY="auto" pr={2}>
+                        <Box flex="1.5" maxH="400px" overflowY="auto" pr={2}>
                             {items.map((item) => (
                                 <Box key={item.id} pb={4} mb={4} borderBottom="1px solid" borderColor="gray.100">
                                     <Flex align="center" mb={2}>
@@ -316,63 +477,146 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                             ))}
                         </Box>
 
-                        <Box 
-                            flex="1" 
-                            bg="gray.50" 
-                            p={4} 
-                            borderRadius="md" 
-                            display="flex"
-                            flexDirection="column"
-                            justifyContent="space-between"
-                            h="300px"
-                        >
-                            <Text fontWeight="bold" mb={4}>Purchase Summary</Text>
-                            
-                            <HStack justify="space-between" mb={3}>
-                                <Text>Guests (${Number(basePrice).toFixed(2)} × {currentQuantity})</Text>
-                                <Text fontWeight="semibold">${(Number(basePrice) * currentQuantity).toFixed(2)}</Text>
-                            </HStack>
-                            
-                            {items.map((item) => {
-                                if (!item.name && item.amount === 0) return null;
-                                const totalItem = item.amount * item.quantity;
-                                return (
-                                    <HStack key={item.id} justify="space-between" mb={2}>
-                                        <Text>
-                                            {item.name || "Unnamed"} 
-                                            {item.type === "Discount" ? " (-" : " ("}
-                                            ${item.amount.toFixed(2)} × {item.quantity})
-                                        </Text>
-                                        <Text fontWeight="semibold">
-                                            {item.type === "Discount" ? "-" : ""}
-                                            ${totalItem.toFixed(2)}
-                                        </Text>
+                        {isLoading ? (
+                            <VStack
+                                bg="gray.50"
+                                p={4}
+                                borderRadius="md"
+                                borderWidth="1px"
+                                flex="1"
+                                spacing={4}
+                                align="stretch"
+                                w="100%"
+                                h="320px"
+                                minW="250px"
+                                maxW="400px"
+                            >
+                                <HStack justifyContent="center">
+                                    <Spinner size="sm"/>
+                                    <Text>Loading...</Text>
+                                </HStack>
+                            </VStack>
+                        ) : (
+                            <VStack
+                                bg="gray.50"
+                                p={4}
+                                borderRadius="md"
+                                borderWidth="1px"
+                                flex="1"
+                                spacing={4}
+                                align="stretch"
+                                w="100%"
+                                h="320px"
+                                minW="250px"
+                                maxW="400px"
+                                overflowY="auto"
+                            >
+                                <Box padding="8px" w="100%">
+                                    <Text fontWeight="bold" mb={2}>
+                                        Purchase Summary
+                                    </Text>
+                                    <VStack align="stretch" spacing={2}>
+                                        <HStack justify="space-between">
+                                            <Text>
+                                                {`Guests ($${(guestTotalPrice / currentQuantity).toFixed(2)} × ${currentQuantity})`}
+                                            </Text>
+                                            <Text>${guestTotalPrice.toFixed(2)}</Text>
+                                        </HStack>
+                                    </VStack>
+                                    {combinedAddons.length > 0 ? (
+                                        combinedAddons.map((addon) => (
+                                            <HStack key={addon.id} justifyContent="space-between">
+                                                <Text>{addon.label} (${addon.price} x {addon.quantity})</Text>
+                                                <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
+                                            </HStack>
+                                        ))
+                                    ) : (
+                                        <Text>No add-ons selected.</Text>
+                                    )}
+                                    
+                                    {items.map((item) => {
+                                        if (!item.name && item.amount === 0) return null;
+                                        const totalItem = item.amount * item.quantity;
+                                        return (
+                                            <HStack key={item.id} justify="space-between" mb={2}>
+                                                <Text>
+                                                    {item.name || "Unnamed"} 
+                                                    {item.type === "Discount" ? " (-" : " ("}
+                                                    ${item.amount.toFixed(2)} × {item.quantity})
+                                                </Text>
+                                                <Text fontWeight="semibold">
+                                                    {item.type === "Discount" ? "-" : ""}
+                                                    ${totalItem.toFixed(2)}
+                                                </Text>
+                                            </HStack>
+                                        );
+                                    })}
+                                    
+                                    <Divider my={2}/>
+                                    <HStack justify="space-between">
+                                        <Text fontWeight="bold">Total</Text>
+                                        <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                                     </HStack>
-                                );
-                            })}
-                            
-                            <Box mt="auto">
-                                <Divider my={4} />
-                                <Flex justify="space-between">
-                                    <Text fontWeight="bold" fontSize="lg">Total:</Text>
-                                    <Text fontWeight="bold" fontSize="lg">${calculateTotal()}</Text>
-                                </Flex>
+                                    
+                                    {finalBalanceDue !== 0 && (
+                                        <HStack justify="space-between" mt={2}>
+                                            <Text fontWeight="bold" color={finalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                {finalBalanceDue < 0 ? "Refund Due" : "Balance Due"}
+                                            </Text>
+                                            <Text fontWeight="bold" color={finalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                ${Math.abs(finalBalanceDue).toFixed(2)}
+                                            </Text>
+                                        </HStack>
+                                    )}
+                                    
+                                    {finalRefundAmount !== 0 && (
+                                        <HStack justify="space-between" mt={2}>
+                                            <Text fontWeight="bold" color="green.500">
+                                                Refund Due
+                                            </Text>
+                                            <Text fontWeight="bold" color="green.500">
+                                                ${finalRefundAmount.toFixed(2)}
+                                            </Text>
+                                        </HStack>
+                                    )}
+                                </Box>
                                 
-                                {!isLoadingPendingBalance && finalBalanceDue > 0 && (
-                                    <Flex justify="space-between" mt={2}>
-                                        <Text fontWeight="bold" color="red.500">Balance Due:</Text>
-                                        <Text fontWeight="bold" color="red.500">${finalBalanceDue.toFixed(2)}</Text>
-                                    </Flex>
+                                {cardDetails && (
+                                    <Box>
+                                        <Text fontWeight="bold" mb={2}>
+                                            Payment Summary
+                                        </Text>
+                                        <VStack align="stretch" spacing={2}>
+                                            <HStack justify="space-between">
+                                                <HStack spacing={2}>
+                                                    <Box as="span" role="img" aria-label="Card Icon" fontSize="lg">
+                                                        💳
+                                                    </Box>
+                                                    <Text>
+                                                        Payment
+                                                        <Box
+                                                            as="span"
+                                                            bg="white"
+                                                            px={1}
+                                                            py={1}
+                                                            borderRadius="md"
+                                                            boxShadow="sm"
+                                                        >
+                                                            *{cardDetails.last4}
+                                                        </Box>{" "}
+                                                        {formatDateToAmerican(formatDate(cardDetails.paymentDate))}
+                                                    </Text>
+                                                </HStack>
+                                            </HStack>
+                                            <HStack justify="space-between">
+                                                <Text>Paid</Text>
+                                                <Text>${totalPaidSoFar.toFixed(2)}</Text>
+                                            </HStack>
+                                        </VStack>
+                                    </Box>
                                 )}
-                                
-                                {!isLoadingPendingBalance && finalRefundAmount > 0 && (
-                                    <Flex justify="space-between" mt={2}>
-                                        <Text fontWeight="bold" color="green.500">Refund:</Text>
-                                        <Text fontWeight="bold" color="green.500">${finalRefundAmount.toFixed(2)}</Text>
-                                    </Flex>
-                                )}
-                            </Box>
-                        </Box>
+                            </VStack>
+                        )}
                     </Flex>
                 </ModalBody>
 

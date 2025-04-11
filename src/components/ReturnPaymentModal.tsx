@@ -75,6 +75,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     const [isLoading, setIsLoading] = useState(true);
     const [fetchedCustomItems, setFetchedCustomItems] = useState<LineItem[]>([]);
     const [isLoadingCustomItems, setIsLoadingCustomItems] = useState(false);
+    const [hasOriginalCardPayment, setHasOriginalCardPayment] = useState(false);
 
     useEffect(() => {
         if (refundAmount) {
@@ -128,39 +129,50 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                 setupIntentId: booking?.setupIntentId
             });
             
-            if (!booking?.paymentMethodId) {
-                setIsLoading(false);
-                return;
-            }
-
+            setIsLoading(true);
+            
             try {
-                setIsLoading(true);
-                const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${booking.paymentMethodId}`
-                );
-                console.log('Payment Method Response:', response.data);
-
-                if (response.data) {
-                    const cardData: CardDetails = {
-                        id: booking.paymentMethodId,
-                        brand: response.data.brand,
-                        last4: response.data.last4,
-                        paymentDate: response.data.paymentDate
-                    };
+                if (booking?.id) {
+                    const transactionsResponse = await axios.get(
+                        `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`
+                    );
+                    const createTransaction = transactionsResponse.data?.find(
+                        (t: any) => t.transaction_type === 'CREATE' && 
+                        (t.payment_method === 'Credit Card' || t.payment_method === 'card')
+                    );
                     
-                    console.log('Card data formatted:', cardData);
-                    setCardList([cardData]);
-                    setSelectedCardId(cardData.id);
+                    if (createTransaction) {
+                        setHasOriginalCardPayment(true);
+                        setPaymentMethod('credit_card');
+                        const paymentMethodId = booking.paymentMethodId || 
+                                               createTransaction.payment_method_id ||
+                                               createTransaction.paymentMethodId;
+                        if (paymentMethodId) {
+                            const response = await axios.get(
+                                `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`
+                            );
+                            if (response.data) {
+                                const cardData: CardDetails = {
+                                    id: paymentMethodId,
+                                    brand: response.data.brand,
+                                    last4: response.data.last4,
+                                    paymentDate: response.data.paymentDate
+                                };
+                                
+                                console.log('Card data formatted:', cardData);
+                                setCardList([cardData]);
+                                setSelectedCardId(cardData.id);
+                            }
+                        }
+                    } else {
+                        setHasOriginalCardPayment(false);
+                        setPaymentMethod('cash');
+                    }
                 }
             } catch (error) {
-                console.error('Error fetching card details:', error);
-                toast({
-                    title: 'Error',
-                    description: 'Failed to fetch card details',
-                    status: 'error',
-                    duration: 5000,
-                    isClosable: true,
-                });
+                console.error('Error fetching payment details:', error);
+                setHasOriginalCardPayment(false);
+                setPaymentMethod('cash');
             } finally {
                 setIsLoading(false);
             }
@@ -169,7 +181,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         if (isOpen) {
             fetchCardsFromSetupIntent();
         }
-    }, [booking?.paymentMethodId, isOpen, toast]);
+    }, [booking?.id, booking?.paymentMethodId, isOpen, toast]);
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -215,15 +227,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             return;
         }
 
-        if (!booking?.paymentIntentId) {
-            console.error('Missing or invalid paymentIntentId:', {
-                booking: booking,
-                paymentIntentId: booking?.paymentIntentId,
-                setupIntentId: booking?.setupIntentId
-            });
+        if (paymentMethod === 'credit_card' && !hasOriginalCardPayment) {
             toast({
                 title: 'Error',
-                description: 'Payment Intent ID is required for refund. Please ensure the payment has been processed.',
+                description: 'Cannot refund to credit card as the original payment was not made by card.',
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
@@ -243,39 +250,54 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         }
 
         try {
-            const paymentIntentId = booking.PaymentTransaction?.[0]?.paymentIntentId || 
-                                  booking.PaymentTransaction?.[0]?.stripe_payment_id || 
-                                  booking.paymentIntentId;
-            const paymentMethodId = booking.PaymentTransaction?.[0]?.paymentMethodId || 
-                                  booking.paymentMethodId;
+            if (paymentMethod === 'credit_card') {
+                const paymentIntentId = booking.PaymentTransaction?.[0]?.paymentIntentId || 
+                                    booking.PaymentTransaction?.[0]?.stripe_payment_id || 
+                                    booking.paymentIntentId;
+                const paymentMethodId = booking.PaymentTransaction?.[0]?.paymentMethodId || 
+                                    booking.paymentMethodId;
 
-            const refundPayload = {
-                paymentIntentId: paymentIntentId,
-                paymentMethodId: selectedCardId || paymentMethodId,
-                amount: Math.round(amount * 100)
-            };
+                const refundPayload = {
+                    paymentIntentId: paymentIntentId,
+                    paymentMethodId: selectedCardId || paymentMethodId,
+                    amount: Math.round(amount * 100)
+                };
 
-            console.log('Refund payload:', refundPayload);
-
-            if (!refundPayload.paymentIntentId || refundPayload.paymentIntentId.trim() === '') {
-                throw new Error('Payment Intent ID cannot be empty');
-            }
-
-            if (refundPayload.paymentIntentId.startsWith('seti_')) {
-                throw new Error('Invalid Payment Intent ID. A setup intent cannot be used for refunds.');
-            }
-
-            const response = await axios.post(
-                `${process.env.NEXT_PUBLIC_API_URL}/refund`,
-                refundPayload,
-                {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                if (!refundPayload.paymentIntentId || refundPayload.paymentIntentId.trim() === '') {
+                    throw new Error('Payment Intent ID cannot be empty');
                 }
-            );
 
-            console.log('Refund response:', response.data);
+                if (refundPayload.paymentIntentId.startsWith('seti_')) {
+                    throw new Error('Invalid Payment Intent ID. A setup intent cannot be used for refunds.');
+                }
+                await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/refund`,
+                    refundPayload,
+                    {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+            } else {
+                await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
+                    {
+                        tenant_id: booking.id.split('-')[1],
+                        reservation_id: booking.id,
+                        amount: amount,
+                        payment_status: 'completed',
+                        payment_method: paymentMethod,
+                        transaction_type: 'REFUND',
+                        transaction_direction: 'refund',
+                        metadata: {
+                            comment: comment,
+                            notifyCustomer: notifyCustomer,
+                            refundDate: new Date().toISOString()
+                        }
+                    }
+                );
+            }
 
             toast({
                 title: 'Success',
@@ -381,13 +403,15 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 <Box>
                                     <Text mb={2}>Payment Method</Text>
                                     <HStack spacing={2}>
-                                        <Button
-                                            leftIcon={<FaRegCreditCard />}
-                                            variant={paymentMethod === 'credit_card' ? 'solid' : 'outline'}
-                                            onClick={() => setPaymentMethod('credit_card')}
-                                        >
-                                            Credit Card
-                                        </Button>
+                                        {hasOriginalCardPayment && (
+                                            <Button
+                                                leftIcon={<FaRegCreditCard />}
+                                                variant={paymentMethod === 'credit_card' ? 'solid' : 'outline'}
+                                                onClick={() => setPaymentMethod('credit_card')}
+                                            >
+                                                Credit Card
+                                            </Button>
+                                        )}
                                         <Button
                                             leftIcon={<BsCash />}
                                             variant={paymentMethod === 'cash' ? 'solid' : 'outline'}
@@ -412,27 +436,25 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                     </HStack>
                                 </Box>
 
-                                {paymentMethod === 'credit_card' && (
+                                {paymentMethod === 'credit_card' && hasOriginalCardPayment && (
                                     <Box>
                                         <Text mb={2}>Credit Card</Text>
-                                        <Select
-                                            value={selectedCardId ?? ''}
-                                            onChange={(e) => setSelectedCardId(e.target.value)}
-                                            placeholder={isLoading ? 'Loading cards...' : 'Select a card'}
-                                            isDisabled={isLoading}
-                                        >
-                                            {cardList.map((card) => {
-                                                const brandName = card.brand.charAt(0).toUpperCase() + card.brand.slice(1);
-                                                return (
-                                                    <option key={card.id} value={card.id}>
-                                                        {brandName} **** **** **** {card.last4}
-                                                    </option>
-                                                );
-                                            })}
-                                        </Select>
-                                        <Text fontSize="sm" color="gray.600" mt={1}>
-                                            Refund will be processed to the selected card
-                                        </Text>
+                                        {isLoading ? (
+                                            <HStack spacing={2} py={2}>
+                                                <Text>Loading card information...</Text>
+                                            </HStack>
+                                        ) : cardList.length > 0 ? (
+                                            <Box p={3} borderWidth="1px" borderRadius="md">
+                                                <HStack>
+                                                    <FaRegCreditCard />
+                                                    <Text>
+                                                        {cardList[0].brand.charAt(0).toUpperCase() + cardList[0].brand.slice(1)} •••• •••• •••• {cardList[0].last4}
+                                                    </Text>
+                                                </HStack>
+                                            </Box>
+                                        ) : (
+                                            <Text color="red.500">No card information found</Text>
+                                        )}
                                     </Box>
                                 )}
 

@@ -629,27 +629,38 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
             const updatedTotalPrice = calculateGuestPrice();
             const priceDifference = updatedTotalPrice - booking.total_price;
 
-            const bookingChangesObj = {
-                originalGuestQuantity: booking.guestQuantity,
-                newGuestQuantity: guestCount,
-                originalPrice: booking.total_price,
-                newPrice: updatedTotalPrice,
-                priceDifference: priceDifference
-            };
-
-            setBookingChanges(bookingChangesObj);
-
-            const amount = Math.abs(priceDifference);
-            const transactionType = priceDifference >= 0 ? 'GUEST_QUANTITY_CHANGE' : 'GUEST_QUANTITY_REFUND';
-
-            let transactionSuccess = false;
-
             const pendingTransactionsResponse = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
                 { params: { payment_status: 'pending' } }
             );
             
             const pendingTransactions = pendingTransactionsResponse.data;
+            const pendingBalance = pendingTransactions && pendingTransactions.length > 0
+                ? pendingTransactions
+                    .filter(t => t.transaction_type !== 'CREATE')
+                    .reduce((sum, t) => sum + t.amount, 0)
+                : 0;
+            
+            const totalBalanceDue = priceDifference + pendingBalance;
+            const isRefund = totalBalanceDue < 0;
+            const finalAmount = Math.abs(totalBalanceDue);
+            const transactionType = isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE';
+
+            const bookingChangesObj = {
+                originalGuestQuantity: booking.guestQuantity,
+                newGuestQuantity: guestCount,
+                originalPrice: booking.total_price,
+                newPrice: updatedTotalPrice,
+                priceDifference: priceDifference,
+                totalBalanceDue: totalBalanceDue,
+                isRefund: isRefund,
+                finalAmount: finalAmount
+            };
+
+            setBookingChanges(bookingChangesObj);
+
+            let transactionSuccess = false;
+            
             const hasPendingTransaction = pendingTransactions && pendingTransactions.length > 0;
             const createTransaction = pendingTransactions?.find(t => t.transaction_type === 'CREATE');
             
@@ -666,7 +677,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                     {
                         tenant_id: booking.tenantId,
                         reservation_id: booking.id,
-                        amount: amount,
+                        amount: finalAmount,
                         payment_status: 'archived',
                         transaction_type: 'REFUND',
                         is_history: true,
@@ -678,7 +689,9 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                             newPrice: updatedTotalPrice,
                             modifiedAt: new Date().toISOString(),
                             previousTransactionId: createTransaction.id,
-                            isHistorical: true
+                            isHistorical: true,
+                            isRefund: true,
+                            totalBalanceDue: totalBalanceDue
                         }
                     }
                 );
@@ -696,7 +709,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                     {
                         tenant_id: booking.tenantId,
                         reservation_id: booking.id,
-                        amount: amount,
+                        amount: finalAmount,
                         payment_status: 'archived',
                         transaction_type: 'GUEST_QUANTITY_CHANGE',
                         is_history: true,
@@ -708,7 +721,9 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                             newPrice: updatedTotalPrice,
                             modifiedAt: new Date().toISOString(),
                             previousTransactionId: createTransaction.id,
-                            isHistorical: true
+                            isHistorical: true,
+                            isRefund: false,
+                            totalBalanceDue: totalBalanceDue
                         }
                     }
                 );
@@ -728,8 +743,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                         const transactionData = {
                             tenant_id: booking.tenantId,
                             reservation_id: booking.id,
-                            amount: amount,
-                            // payment_method: 'LATER',
+                            amount: finalAmount,
                             payment_status: 'pending',
                             transaction_type: transactionType,
                             parent_transaction_id: existingTransaction.id,
@@ -739,7 +753,9 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                 originalPrice: booking.total_price,
                                 newPrice: updatedTotalPrice,
                                 modifiedAt: new Date().toISOString(),
-                                previousTransactionId: existingTransaction.id
+                                previousTransactionId: existingTransaction.id,
+                                isRefund: isRefund,
+                                totalBalanceDue: totalBalanceDue
                             }
                         };
                         
@@ -756,8 +772,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                 const transactionData = {
                     tenant_id: booking.tenantId,
                     reservation_id: booking.id,
-                    amount: amount,
-                    // payment_method: 'LATER',
+                    amount: finalAmount,
                     payment_status: 'pending',
                     transaction_type: transactionType,
                     metadata: {
@@ -765,7 +780,9 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                         newGuestQuantity: guestCount,
                         originalPrice: booking.total_price,
                         newPrice: updatedTotalPrice,
-                        modifiedAt: new Date().toISOString()
+                        modifiedAt: new Date().toISOString(),
+                        isRefund: isRefund,
+                        totalBalanceDue: totalBalanceDue
                     }
                 };
 

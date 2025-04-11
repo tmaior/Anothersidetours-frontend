@@ -9,7 +9,7 @@ import {
     Image,
     Input,
     Modal,
-    ModalBody,
+    ModalBody, ModalCloseButton,
     ModalContent,
     ModalFooter,
     ModalHeader,
@@ -231,6 +231,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 <ModalHeader textAlign="center">
                     Reduce Booking Value and Return Payment
                 </ModalHeader>
+                <ModalCloseButton />
                 <ModalBody>
                     <Box>
                         <HStack align="start" spacing={10}>

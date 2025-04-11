@@ -24,6 +24,7 @@ import {
     InputGroup,
     InputLeftElement,
     Textarea,
+    Spinner,
 } from "@chakra-ui/react";
 import axios from "axios";
 import PurchaseAndPaymentSummary from "./PurchaseAndPaymentSummary";
@@ -39,40 +40,124 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     const [notifyCustomer, setNotifyCustomer] = useState(true);
     const [tag, setTag] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [originalTransaction, setOriginalTransaction] = useState(null);
+    const [cardInfo, setCardInfo] = useState(null);
+    const [loadingCardInfo, setLoadingCardInfo] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && paymentMethod === 'Credit Card') {
+            fetchOriginalTransaction();
+        }
+    }, [isOpen, paymentMethod, booking?.id]);
+
+    const fetchOriginalTransaction = async () => {
+        try {
+            setLoadingCardInfo(true);
+            const response = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`
+            );
+            
+            if (response.data && response.data.length > 0) {
+                const createTransaction = response.data.find(t => t.transaction_type === 'CREATE');
+                if (createTransaction) {
+                    setOriginalTransaction(createTransaction);
+                    if (createTransaction.metadata && createTransaction.metadata.cardInfo) {
+                        setCardInfo(createTransaction.metadata.cardInfo);
+                    } else {
+                        setCardInfo({
+                            brand: 'Card',
+                            last4: 'on file'
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch original transaction:", error);
+            toast({
+                title: "Warning",
+                description: "Could not retrieve saved card information.",
+                status: "warning",
+                duration: 3000,
+                isClosable: true,
+            });
+        } finally {
+            setLoadingCardInfo(false);
+        }
+    };
 
     const handleCollect = async () => {
         try {
             setIsLoading(true);
-            const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
-                bookingId: booking.id,
-                amount: bookingChanges.priceDifference,
-                paymentMethod: paymentMethod,
-                tag: tag || null,
-                notifyCustomer: notifyCustomer,
-                type: 'GUEST_QUANTITY_CHANGE',
-                metadata: {
-                    originalGuestQuantity: bookingChanges.originalGuestQuantity,
-                    newGuestQuantity: bookingChanges.newGuestQuantity,
-                    originalPrice: bookingChanges.originalPrice,
-                    newPrice: bookingChanges.newPrice
-                }
-            });
-            const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
-                guestQuantity: bookingChanges.newGuestQuantity,
-                total_price: bookingChanges.newPrice,
-                status: booking.status
-            });
-
-            if (transactionResponse.data && bookingResponse.data) {
-                toast({
-                    title: "Success",
-                    description: "Payment collected and booking updated successfully.",
-                    status: "success",
-                    duration: 5000,
-                    isClosable: true,
+            
+            if (paymentMethod === 'Credit Card' && originalTransaction) {
+                const paymentResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
+                    transactionId: originalTransaction.id,
+                    amount: bookingChanges.priceDifference,
+                    paymentMethod: paymentMethod,
+                    bookingId: booking.id,
+                    tag: tag || null,
+                    notifyCustomer: notifyCustomer,
+                    type: 'GUEST_QUANTITY_CHANGE',
+                    metadata: {
+                        originalGuestQuantity: bookingChanges.originalGuestQuantity,
+                        newGuestQuantity: bookingChanges.newGuestQuantity,
+                        originalPrice: bookingChanges.originalPrice,
+                        newPrice: bookingChanges.newPrice
+                    }
                 });
-                window.location.reload();
-                onClose();
+
+                if (paymentResponse.data) {
+                    const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
+                        guestQuantity: bookingChanges.newGuestQuantity,
+                        total_price: bookingChanges.newPrice,
+                        status: booking.status
+                    });
+
+                    if (bookingResponse.data) {
+                        toast({
+                            title: "Success",
+                            description: "Payment collected and booking updated successfully.",
+                            status: "success",
+                            duration: 5000,
+                            isClosable: true,
+                        });
+                        window.location.reload();
+                        onClose();
+                    }
+                }
+            } else {
+                const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
+                    bookingId: booking.id,
+                    amount: bookingChanges.priceDifference,
+                    paymentMethod: paymentMethod,
+                    tag: tag || null,
+                    notifyCustomer: notifyCustomer,
+                    type: 'GUEST_QUANTITY_CHANGE',
+                    metadata: {
+                        originalGuestQuantity: bookingChanges.originalGuestQuantity,
+                        newGuestQuantity: bookingChanges.newGuestQuantity,
+                        originalPrice: bookingChanges.originalPrice,
+                        newPrice: bookingChanges.newPrice
+                    }
+                });
+                
+                const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
+                    guestQuantity: bookingChanges.newGuestQuantity,
+                    total_price: bookingChanges.newPrice,
+                    status: booking.status
+                });
+
+                if (transactionResponse.data && bookingResponse.data) {
+                    toast({
+                        title: "Success",
+                        description: "Payment collected and booking updated successfully.",
+                        status: "success",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                    window.location.reload();
+                    onClose();
+                }
             }
         } catch (error) {
             console.error("Failed to collect payment:", error);
@@ -146,6 +231,26 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                 Other
                             </Button>
 
+                            {paymentMethod === 'Credit Card' && (
+                                <Box mt={2} mb={4} p={3} borderWidth="1px" borderRadius="md">
+                                    {loadingCardInfo ? (
+                                        <Flex justify="center" py={2}>
+                                            <Spinner size="sm" mr={2} />
+                                            <Text>Loading card information...</Text>
+                                        </Flex>
+                                    ) : cardInfo ? (
+                                        <Flex align="center">
+                                            <Icon as={FaRegCreditCard} mr={2} />
+                                            <Text>
+                                                {cardInfo.brand || 'Card'} •••• •••• •••• {cardInfo.last4 || 'on file'}
+                                            </Text>
+                                        </Flex>
+                                    ) : (
+                                        <Text color="gray.500">No saved card information found</Text>
+                                    )}
+                                </Box>
+                            )}
+
                             <Text mb={2}>Tag</Text>
                             <Input 
                                 placeholder="Add a tag" 
@@ -203,6 +308,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                 onClick={handleCollect}
                                 isLoading={isLoading}
                                 loadingText="Processing"
+                                isDisabled={paymentMethod === 'Credit Card' && !originalTransaction}
                             >
                                 Collect
                             </Button>

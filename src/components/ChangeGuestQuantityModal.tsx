@@ -865,8 +865,16 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
         return `${month}/${day}/${year}`;
     }
     const guestTotalPrice = calculateGuestPrice();
-    const priceDifference = guestTotalPrice - booking.total_price;
-    const totalBalanceDue = priceDifference + pendingBalance;
+
+    const valuePerGuest = booking.valuePerGuest || booking.tour?.price || 300;
+
+    const guestDifference = guestCount - booking.guestQuantity;
+    const priceDifference = guestDifference * valuePerGuest;
+
+    const totalBalanceDue = guestCount === booking.guestQuantity 
+        ? pendingBalance 
+        : pendingBalance + priceDifference;
+    
     const isRefund = totalBalanceDue < 0;
     const displayBalanceValue = Math.abs(totalBalanceDue);
     const paidTotal = booking.total_price;
@@ -886,7 +894,10 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
         setIsLoading(true);
         try {
             const updatedTotalPrice = calculateGuestPrice();
-            const priceDifference = updatedTotalPrice - booking.total_price;
+
+            const valuePerGuest = booking.valuePerGuest || booking.tour?.price || 300;
+            const guestDifference = guestCount - booking.guestQuantity;
+            const priceDifference = guestDifference * valuePerGuest;
 
             const pendingTransactionsResponse = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
@@ -894,24 +905,16 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
             );
             
             const pendingTransactions = pendingTransactionsResponse.data;
-            const pendingBalance = pendingTransactions && pendingTransactions.length > 0
-                ? pendingTransactions
-                    .filter(t => t.transaction_type !== 'CREATE')
-                    .reduce((sum, t) => sum + t.amount, 0)
-                : 0;
-            
-            let totalBalanceDue;
-            if (priceDifference < 0) {
-                if (pendingBalance > 0) {
-                    totalBalanceDue = Math.max(pendingBalance + priceDifference, priceDifference);
-                } else if (pendingBalance < 0) {
-                    totalBalanceDue = pendingBalance + priceDifference;
-                } else {
-                    totalBalanceDue = priceDifference;
-                }
-            } else {
-                totalBalanceDue = priceDifference + pendingBalance;
+            const pendingTransaction = pendingTransactions?.find(t => t.transaction_type !== 'CREATE');
+            let pendingBalance = 0;
+
+            if (pendingTransaction) {
+                pendingBalance = pendingTransaction.transaction_direction === 'refund' 
+                    ? -pendingTransaction.amount 
+                    : pendingTransaction.amount;
             }
+
+            let totalBalanceDue = priceDifference + pendingBalance;
             
             const isRefund = totalBalanceDue < 0;
             const finalAmount = Math.abs(totalBalanceDue);

@@ -89,7 +89,12 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
             
             if (response.data && response.data.length > 0) {
                 const totalPending = response.data.reduce(
-                    (sum, transaction) => sum + transaction.amount, 
+                    (sum, transaction) => {
+                        if (transaction.transaction_direction === 'refund') {
+                            return sum - transaction.amount;
+                        }
+                        return sum + transaction.amount;
+                    }, 
                     0
                 );
                 setPendingBalance(totalPending);
@@ -199,17 +204,13 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
     };
 
     const calculateTotal = () => {
-        const numericBasePrice = Number(basePrice) || 0;
-        const numericQuantity = Number(currentQuantity) || 0;
-        const baseTotal = numericQuantity * numericBasePrice;
-        
         const lineItemsTotal = items.reduce((acc, item) => {
             if (!item.name && item.amount === 0) return acc;
             const totalItem = item.amount * item.quantity;
             return item.type === "Discount" ? acc - totalItem : acc + totalItem;
         }, 0);
         
-        return (baseTotal + lineItemsTotal).toFixed(2);
+        return (originalTotal + lineItemsTotal).toFixed(2);
     };
 
     const currentTotal = parseFloat(calculateTotal());

@@ -125,6 +125,44 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                         onClose();
                     }
                 }
+            } else if (paymentMethod === 'Cash' || paymentMethod === 'Check') {
+                const pendingTransactionsResponse = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
+                    { params: { payment_status: 'pending' } }
+                );
+                
+                const pendingTransactions = pendingTransactionsResponse.data;
+                const pendingTransaction = pendingTransactions?.find(t => 
+                    t.transaction_type !== 'CREATE'
+                );
+                
+                if (pendingTransaction) {
+                    await axios.put(
+                        `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${pendingTransaction.id}`,
+                        {
+                            payment_method: paymentMethod,
+                            payment_status: 'completed'
+                        }
+                    );
+                    
+                    toast({
+                        title: "Success",
+                        description: "Payment collected successfully.",
+                        status: "success",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                    window.location.reload();
+                    onClose();
+                } else {
+                    toast({
+                        title: "Error",
+                        description: "No pending transaction found for this booking.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                }
             } else {
                 const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
                     bookingId: booking.id,

@@ -48,15 +48,65 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     const [hasOriginalCardPayment, setHasOriginalCardPayment] = useState(false);
     const [pendingBalance, setPendingBalance] = useState(0);
     const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState(true);
+    const [, setTierPricing] = useState(null);
+    const [isLoadingTierPricing, setIsLoadingTierPricing] = useState(true);
+    const [guestPrice, setGuestPrice] = useState(0);
 
     useEffect(() => {
         if (isOpen) {
             fetchTransactionAndCardInfo();
             fetchAddons();
             fetchPendingTransactions();
+            fetchTierPricing();
         }
     }, [isOpen, booking?.id]);
 
+    const fetchTierPricing = async () => {
+        if (!booking?.tourId) return;
+        
+        try {
+            setIsLoadingTierPricing(true);
+            const response = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`
+            );
+            
+            if (response.data && response.data.length > 0) {
+                const pricingData = response.data[0];
+                setTierPricing(pricingData);
+
+                const newGuestQuantity = bookingChanges?.newGuestQuantity || booking.guestQuantity;
+                const guestPrice = calculateCorrectGuestPrice(pricingData, newGuestQuantity);
+                setGuestPrice(guestPrice);
+            } else {
+                const pricePerGuest = booking.valuePerGuest || (booking.total_price / booking.guestQuantity) || 0;
+                const newGuestQuantity = bookingChanges?.newGuestQuantity || booking.guestQuantity;
+                setGuestPrice(pricePerGuest * newGuestQuantity);
+            }
+        } catch (error) {
+            const pricePerGuest = booking.valuePerGuest || (booking.total_price / booking.guestQuantity) || 0;
+            const newGuestQuantity = bookingChanges?.newGuestQuantity || booking.guestQuantity;
+            setGuestPrice(pricePerGuest * newGuestQuantity);
+        } finally {
+            setIsLoadingTierPricing(false);
+        }
+    };
+
+    const calculateCorrectGuestPrice = (pricingData, guestQuantity) => {
+        if (!pricingData) {
+            return (booking.valuePerGuest || (booking.total_price / booking.guestQuantity) || 0) * guestQuantity;
+        }
+
+        if (pricingData.pricingType === 'flat') {
+            return pricingData.basePrice * guestQuantity;
+        }
+        const applicableTier = pricingData.tierEntries
+            ?.sort((a, b) => b.quantity - a.quantity)
+            .find(tier => guestQuantity >= tier.quantity);
+
+        return applicableTier 
+            ? applicableTier.price * guestQuantity
+            : pricingData.basePrice * guestQuantity;
+    };
     const fetchPendingTransactions = async () => {
         if (!booking?.id) return;
         
@@ -83,7 +133,6 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                 }
                 
                 setPendingBalance(totalPending);
-                console.log('Pending balance from transactions:', totalPending);
             }
         } catch (error) {
             console.error('Error fetching pending transactions:', error);
@@ -337,7 +386,6 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
         return acc;
     }, []);
 
-
     const calculateFinalBalance = () => {
         const totalBalance = bookingChanges?.totalBalanceDue !== undefined
             ? bookingChanges.totalBalanceDue
@@ -345,9 +393,17 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
         
         return isNaN(totalBalance) ? 0 : totalBalance;
     };
+    const addonsTotalPrice = combinedAddons.reduce(
+        (sum, addon) => sum + (addon.price * addon.quantity),
+        0
+    );
+    const totalPrice = guestPrice + addonsTotalPrice;
 
     const finalBalance = calculateFinalBalance();
-    const isDataLoading = loadingCardInfo || isLoadingAddons || isLoadingPendingBalance;
+    const isDataLoading = loadingCardInfo || isLoadingAddons || isLoadingPendingBalance || isLoadingTierPricing;
+
+    const newGuestQuantity = bookingChanges?.newGuestQuantity || booking.guestQuantity;
+    const pricePerGuest = newGuestQuantity > 0 ? guestPrice / newGuestQuantity : 0;
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="4xl">
@@ -460,9 +516,9 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                             <VStack align="stretch" spacing={2}>
                                                 <HStack justify="space-between">
                                                     <Text>
-                                                        {`Guests ($${(booking.valuePerGuest || (booking.total_price / booking.guestQuantity) || 0).toFixed(2)} × ${bookingChanges?.newGuestQuantity})`}
+                                                        {`Guests ($${pricePerGuest.toFixed(2)} × ${newGuestQuantity})`}
                                                     </Text>
-                                                    <Text>${bookingChanges?.newPrice?.toFixed(2) || '0.00'}</Text>
+                                                    <Text>${guestPrice.toFixed(2)}</Text>
                                                 </HStack>
                                             </VStack>
                                             
@@ -480,7 +536,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                             <Divider my={2}/>
                                             <HStack justify="space-between">
                                                 <Text fontWeight="bold">Total</Text>
-                                                <Text fontWeight="bold">${bookingChanges?.newPrice?.toFixed(2) || '0.00'}</Text>
+                                                <Text fontWeight="bold">${totalPrice.toFixed(2)}</Text>
                                             </HStack>
                                             
                                             {finalBalance !== 0 && (
@@ -535,7 +591,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                             
                                             <HStack justify="space-between" fontWeight="bold" mt={2}>
                                                 <Text>Final Total:</Text>
-                                                <Text>${bookingChanges?.newPrice?.toFixed(2) || (booking.total_price + (bookingChanges?.priceDifference || 0)).toFixed(2)}</Text>
+                                                <Text>${totalPrice.toFixed(2)}</Text>
                                             </HStack>
                                         </Box>
                                     </>

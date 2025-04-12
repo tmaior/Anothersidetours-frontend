@@ -359,12 +359,12 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     }, [isOpen, tierPricing, reservationAddons, fetchedCustomItems, guestQuantity]);
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        if (value === '' || value === undefined) {
+        const inputValue = e.target.value;
+        if (inputValue === '') {
             setAmount(0);
             return;
         }
-        const cleanValue = value.replace(/[^\d.]/g, '');
+        const cleanValue = inputValue.replace(/[^\d.]/g, '');
         const parts = cleanValue.split('.');
         if (parts.length > 2) {
             return;
@@ -414,8 +414,20 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             });
             return;
         }
+        
+        if (amount <= 0) {
+            toast({
+                title: 'Error',
+                description: 'Refund amount must be greater than zero.',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+        
         const maxRefundAmount = calculateTotalPrice();
-        if (amount <= 0 || amount > maxRefundAmount) {
+        if (amount > maxRefundAmount) {
             toast({
                 title: 'Error',
                 description: `Invalid refund amount. Please enter a value between 0 and the total price of $${maxRefundAmount.toFixed(2)}.`,
@@ -623,13 +635,13 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 <Box>
                                     <Text mb={2}>Amount</Text>
                                     <Input
-                                        value={amount}
+                                        value={amount === 0 ? '' : amount}
                                         onChange={handleAmountChange}
                                         type="number"
                                         step="0.01"
                                         min="0"
                                         max={calculateTotalPrice()}
-                                        placeholder="Enter amount"
+                                        placeholder="$ 0.00"
                                     />
                                     <Text fontSize="sm" color="gray.600" mt={1}>
                                         up to ${calculateTotalPrice().toFixed(2)}

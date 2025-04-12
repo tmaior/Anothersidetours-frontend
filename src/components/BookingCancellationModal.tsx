@@ -295,6 +295,16 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
     const handleSaveChanges = async () => {
         try {
+            if (refundAmount <= 0) {
+                toast({
+                    title: "Error",
+                    description: "Refund amount must be greater than zero.",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+                return;
+            }
             setIsSubmitting(true);
             
             if (paymentMethod === 'Credit Card') {
@@ -478,19 +488,25 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                     <Text mb={2}>Amount</Text>
                                     <Input
                                         type="number"
-                                        value={refundAmount}
+                                        value={refundAmount === 0 ? '' : refundAmount}
                                         onChange={(e) => {
-                                            const value = parseFloat(e.target.value);
-                                            if (isNaN(value) || value < 0) {
+                                            const inputValue = e.target.value;
+                                            if (inputValue === '') {
                                                 setRefundAmount(0);
-                                            } else if (value > calculateTotalPrice()) {
+                                                return;
+                                            }
+                                            const numValue = parseFloat(inputValue);
+                                            if (isNaN(numValue) || numValue < 0) {
+                                                setRefundAmount(0);
+                                            } else if (numValue > calculateTotalPrice()) {
                                                 setRefundAmount(calculateTotalPrice());
                                             } else {
-                                                setRefundAmount(value);
+                                                setRefundAmount(numValue);
                                             }
                                         }}
                                         max={calculateTotalPrice()}
                                         min={0}
+                                        placeholder="$ 0.00"
                                     />
                                     <Text fontSize="sm" mt={1}>
                                         up to ${calculateTotalPrice().toFixed(2)}

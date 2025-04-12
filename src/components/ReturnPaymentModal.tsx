@@ -48,6 +48,12 @@ interface ReturnPaymentModalProps {
         setupIntentId?: string;
         paymentMethodId?: string;
         paymentIntentId?: string;
+        guestQuantity?: number;
+        tour?: {
+            id?: string;
+            price?: number;
+        };
+        valuePerGuest?: number;
         PaymentTransaction?: {
             paymentIntentId?: string;
             stripe_payment_id?: string;
@@ -76,6 +82,17 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     const [fetchedCustomItems, setFetchedCustomItems] = useState<LineItem[]>([]);
     const [isLoadingCustomItems, setIsLoadingCustomItems] = useState(false);
     const [hasOriginalCardPayment, setHasOriginalCardPayment] = useState(false);
+    const [pendingBalance, setPendingBalance] = useState<number>(0);
+    const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState<boolean>(true);
+    const [reservationAddons, setReservationAddons] = useState([]);
+    const [allAddons, setAllAddons] = useState([]);
+    const [isLoadingAddons, setIsLoadingAddons] = useState<boolean>(true);
+    const [tierPricing, setTierPricing] = useState(null);
+    const [isLoadingTierPricing, setIsLoadingTierPricing] = useState<boolean>(true);
+    const [tourId, setTourId] = useState<string | null>(null);
+    const [isLoadingTourId, setIsLoadingTourId] = useState<boolean>(true);
+    const [guestQuantity, setGuestQuantity] = useState<number>(0);
+    const [guestPrice, setGuestPrice] = useState<number>(0);
 
     useEffect(() => {
         if (refundAmount) {
@@ -183,6 +200,146 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             fetchCardsFromSetupIntent();
         }
     }, [booking?.id, booking?.paymentMethodId, isOpen, toast]);
+
+    useEffect(() => {
+        const fetchPendingTransactions = async () => {
+            if (!booking?.id) return;
+            
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
+                    { params: { payment_status: 'pending' } }
+                );
+                
+                if (response.data && response.data.length > 0) {
+                    const filteredTransactions = response.data.filter(
+                        transaction => transaction.transaction_type !== 'CREATE'
+                    );
+                    
+                    let totalPending = 0;
+                    
+                    for (const transaction of filteredTransactions) {
+                        if (transaction.transaction_direction === 'refund') {
+                            totalPending -= transaction.amount;
+                        } else {
+                            totalPending += transaction.amount;
+                        }
+                    }
+                    
+                    setPendingBalance(totalPending);
+                }
+            } catch (error) {
+                console.error('Error fetching pending transactions:', error);
+            } finally {
+                setIsLoadingPendingBalance(false);
+            }
+        };
+        
+        if (isOpen) {
+            fetchPendingTransactions();
+        } else {
+            setIsLoadingPendingBalance(false);
+        }
+    }, [booking?.id, isOpen]);
+
+    useEffect(() => {
+        const fetchReservationDetails = async () => {
+            if (!booking?.id) return;
+            
+            setIsLoadingTourId(true);
+            try {
+                console.log("Fetching reservation details for:", booking.id);
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`
+                );
+                
+                console.log("Reservation data:", response.data);
+                
+                if (response.data) {
+                    if (response.data.tourId) {
+                        setTourId(response.data.tourId);
+                    } else if (response.data.tour_id) {
+                        setTourId(response.data.tour_id);
+                    }
+                    if (response.data.guestQuantity) {
+                        setGuestQuantity(response.data.guestQuantity);
+                    } else {
+                        setGuestQuantity(booking.guestQuantity || 3);
+                    }
+                    const guests = response.data.guestQuantity || booking.guestQuantity || 3;
+                    const pricePerGuest = response.data.total_price / guests;
+                    setGuestPrice(pricePerGuest);
+                }
+            } catch (error) {
+                console.error('Error fetching reservation details:', error);
+                setGuestQuantity(booking.guestQuantity || 3);
+            } finally {
+                setIsLoadingTourId(false);
+            }
+        };
+        
+        if (isOpen) {
+            fetchReservationDetails();
+        }
+    }, [booking?.id, booking.guestQuantity, isOpen]);
+
+    useEffect(() => {
+        const fetchAddons = async () => {
+            if (!booking?.id || !tourId) return;
+
+            try {
+                const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`),
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`)
+                ]);
+
+                setAllAddons(allAddonsResponse.data);
+                setReservationAddons(reservationAddonsResponse.data);
+            } catch (error) {
+                console.error('Error fetching add-ons:', error);
+            } finally {
+                setIsLoadingAddons(false);
+            }
+        };
+
+        if (isOpen && !isLoadingTourId) {
+            setIsLoadingAddons(true);
+            fetchAddons();
+        } else if (!isOpen) {
+            setIsLoadingAddons(false);
+        }
+    }, [booking?.id, tourId, isOpen, isLoadingTourId]);
+
+    useEffect(() => {
+        const fetchTierPricing = async () => {
+            if (!tourId) return;
+
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourId}`
+                );
+                
+                if (response.data && response.data.length > 0) {
+                    setTierPricing({
+                        pricingType: response.data[0].pricingType,
+                        basePrice: response.data[0].basePrice,
+                        tierEntries: response.data[0].tierEntries,
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching tier pricing:', error);
+            } finally {
+                setIsLoadingTierPricing(false);
+            }
+        };
+
+        if (isOpen && !isLoadingTourId) {
+            setIsLoadingTierPricing(true);
+            fetchTierPricing();
+        } else if (!isOpen) {
+            setIsLoadingTierPricing(false);
+        }
+    }, [tourId, isOpen, isLoadingTourId]);
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -340,14 +497,47 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         });
     };
 
-    const guestPrice = booking?.total_price ? booking.total_price / 3 : 0;
-
     const displayedCustomItems = fetchedCustomItems.length > 0 ? fetchedCustomItems : customLineItems;
 
-    // const customLineItemsTotal = displayedCustomItems.reduce((sum, item) => {
-    //     const itemAmount = (item.amount || 0) * (item.quantity || 1);
-    //     return item.type === 'Discount' ? sum - itemAmount : sum + itemAmount;
-    // }, 0);
+    const getCombinedAddons = () => {
+        let combinedAddons = [];
+
+        combinedAddons = allAddons.reduce((acc, addon) => {
+            const selectedAddon = reservationAddons.find(resAddon => resAddon.addonId === addon.id);
+            if (addon.type === 'SELECT' && selectedAddon && parseInt(selectedAddon.value, 10) > 0) {
+                acc.push({
+                    ...addon,
+                    quantity: parseInt(selectedAddon.value, 10),
+                });
+            } else if (addon.type === 'CHECKBOX' && selectedAddon && selectedAddon.value === "1") {
+                acc.push({
+                    ...addon,
+                    quantity: 1,
+                });
+            }
+            return acc;
+        }, []);
+
+        return combinedAddons;
+    };
+
+    const calculateGuestPrice = () => {
+        if (!tierPricing) {
+            return guestPrice * guestQuantity;
+        }
+
+        if (tierPricing.pricingType === 'flat') {
+            return tierPricing.basePrice * guestQuantity;
+        }
+
+        const applicableTier = tierPricing.tierEntries
+            ?.sort((a, b) => b.quantity - a.quantity)
+            .find(tier => guestQuantity >= tier.quantity);
+
+        return applicableTier 
+            ? applicableTier.price * guestQuantity
+            : tierPricing.basePrice * guestQuantity;
+    };
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="6xl">
@@ -483,36 +673,60 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                             <VStack spacing={6} align="stretch">
                                 <Box>
                                     <Text fontWeight="bold" mb={3}>Purchase Summary</Text>
-                                    <HStack justify="space-between">
-                                        <Text>Guests (${guestPrice.toFixed(2)} × 3)</Text>
-                                        <Text>${(guestPrice * 3).toFixed(2)}</Text>
-                                    </HStack>
-
-                                    {isLoadingCustomItems ? (
-                                        <Text fontSize="sm" color="gray.500">Loading custom items...</Text>
+                                    {isLoadingTierPricing || isLoadingAddons || isLoadingTourId ? (
+                                        <Text fontSize="sm" color="gray.500">Loading...</Text>
                                     ) : (
-                                        displayedCustomItems && displayedCustomItems.length > 0 && (
-                                            <>
-                                                {displayedCustomItems.map((item) => (
-                                                    <HStack key={item.id} justify="space-between">
-                                                        <Text>
-                                                            {item.name} (${item.amount.toFixed(2)} × {item.quantity})
-                                                            {item.type === 'Discount' && ' - Discount'}
-                                                        </Text>
-                                                        <Text>
-                                                            {item.type === 'Discount' ? '-' : ''}
-                                                            ${(item.amount * item.quantity).toFixed(2)}
-                                                        </Text>
+                                        <>
+                                            <HStack justify="space-between">
+                                                <Text>
+                                                    {`Guests ($${(guestPrice).toFixed(2)} × ${guestQuantity})`}
+                                                </Text>
+                                                <Text>${calculateGuestPrice().toFixed(2)}</Text>
+                                            </HStack>
+
+                                            {getCombinedAddons().length > 0 ? (
+                                                getCombinedAddons().map((addon) => (
+                                                    <HStack key={addon.id} justify="space-between">
+                                                        <Text>{addon.label || addon.name} (${addon.price.toFixed(2)} x {addon.quantity})</Text>
+                                                        <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
                                                     </HStack>
-                                                ))}
-                                            </>
-                                        )
+                                                ))
+                                            ) : null}
+
+                                            {displayedCustomItems && displayedCustomItems.length > 0 && (
+                                                <>
+                                                    {displayedCustomItems.map((item) => (
+                                                        <HStack key={item.id} justify="space-between">
+                                                            <Text>
+                                                                {item.name} (${item.amount.toFixed(2)} × {item.quantity})
+                                                                {item.type === 'Discount' && ' - Discount'}
+                                                            </Text>
+                                                            <Text>
+                                                                {item.type === 'Discount' ? '-' : ''}
+                                                                ${(item.amount * item.quantity).toFixed(2)}
+                                                            </Text>
+                                                        </HStack>
+                                                    ))}
+                                                </>
+                                            )}
+                                            
+                                            <HStack justify="space-between" mt={2}>
+                                                <Text fontWeight="bold">Total</Text>
+                                                <Text fontWeight="bold">${booking?.total_price}</Text>
+                                            </HStack>
+
+                                            {!isLoadingPendingBalance && pendingBalance !== 0 && (
+                                                <HStack justify="space-between" mt={2} color={pendingBalance > 0 ? "red.500" : "green.500"}>
+                                                    <Text fontWeight="semibold">
+                                                        {pendingBalance < 0 ? "Refund Due" : "Balance Due"}
+                                                    </Text>
+                                                    <Text fontWeight="semibold">
+                                                        ${Math.abs(pendingBalance).toFixed(2)}
+                                                    </Text>
+                                                </HStack>
+                                            )}
+                                        </>
                                     )}
-                                    
-                                    <HStack justify="space-between" mt={2}>
-                                        <Text fontWeight="bold">Total</Text>
-                                        <Text fontWeight="bold">${booking?.total_price}</Text>
-                                    </HStack>
                                 </Box>
 
                                 <Box>

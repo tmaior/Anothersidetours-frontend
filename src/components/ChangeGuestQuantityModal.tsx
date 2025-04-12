@@ -110,8 +110,8 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     const fetchPendingTransactions = async () => {
         if (!booking?.id) return;
         
+        setIsLoadingPendingBalance(true);
         try {
-            setIsLoadingPendingBalance(true);
             const response = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
                 { params: { payment_status: 'pending' } }
@@ -123,14 +123,13 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                 );
                 
                 let totalPending = 0;
-                
-                for (const transaction of filteredTransactions) {
+                filteredTransactions.forEach(transaction => {
                     if (transaction.transaction_direction === 'refund') {
-                        totalPending = transaction.amount;
+                        totalPending -= transaction.amount;
                     } else {
-                        totalPending = transaction.amount;
+                        totalPending += transaction.amount;
                     }
-                }
+                });
                 
                 setPendingBalance(totalPending);
             }
@@ -1010,6 +1009,9 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
     const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState(true);
     const [cardDetails, setCardDetails] = useState(null);
     const [isLoadingCardDetails, setIsLoadingCardDetails] = useState(true);
+    const [reservationAddons, setReservationAddons] = useState([]);
+    const [allAddons, setAllAddons] = useState([]);
+    const [isLoadingAddons, setIsLoadingAddons] = useState(true);
     const toast = useToast();
     const { isOpen: isCollectBalanceOpen, onOpen: onCollectBalanceOpen, onClose: onCollectBalanceClose } = useDisclosure();
 
@@ -1046,14 +1048,13 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                     );
                     
                     let totalPending = 0;
-                    
-                    for (const transaction of filteredTransactions) {
+                    filteredTransactions.forEach(transaction => {
                         if (transaction.transaction_direction === 'refund') {
                             totalPending -= transaction.amount;
                         } else {
                             totalPending += transaction.amount;
                         }
-                    }
+                    });
                     
                     setPendingBalance(totalPending);
                 }
@@ -1082,6 +1083,24 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
             }
         };
 
+        const fetchAddons = async () => {
+            if (!booking?.id || !booking.tourId) return;
+            
+            setIsLoadingAddons(true);
+            try {
+                const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`),
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${booking.tourId}`)
+                ]);
+                setAllAddons(allAddonsResponse.data);
+                setReservationAddons(reservationAddonsResponse.data);
+            } catch (error) {
+                console.error('Error fetching add-ons:', error);
+            } finally {
+                setIsLoadingAddons(false);
+            }
+        };
+
         if (isOpen) {
             setGuestCount(booking.guestQuantity);
             setChangesConfirmed(false);
@@ -1089,6 +1108,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
             fetchTierPricing();
             fetchPendingTransactions();
             fetchCardDetails();
+            fetchAddons();
         }
     }, [setGuestCount, isOpen, booking]);
 
@@ -1156,6 +1176,29 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
         priceDifference = -guestsRemoved * oldPricePerGuest;
     }
 
+    const combinedAddons = allAddons.reduce((acc, addon) => {
+        const selectedAddon = reservationAddons.find(resAddon => resAddon.addonId === addon.id);
+        if (addon.type === 'SELECT' && selectedAddon && parseInt(selectedAddon.value, 10) > 0) {
+            acc.push({
+                ...addon,
+                quantity: parseInt(selectedAddon.value, 10),
+            });
+        } else if (addon.type === 'CHECKBOX' && selectedAddon && selectedAddon.value === "1") {
+            acc.push({
+                ...addon,
+                quantity: 1,
+            });
+        }
+        return acc;
+    }, []);
+
+    const addonsTotalPrice = combinedAddons.reduce(
+        (sum, addon) => sum + (addon.price * addon.quantity),
+        0
+    );
+
+    const finalTotalPrice = guestTotalPrice + addonsTotalPrice;
+    
     const totalBalanceDue = guestCount === booking.guestQuantity 
         ? pendingBalance 
         : pendingBalance + priceDifference;
@@ -1178,7 +1221,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
 
         setIsLoading(true);
         try {
-            const updatedTotalPrice = calculateGuestPrice();
+            const updatedTotalPrice = finalTotalPrice;
 
             const oldPricePerGuest = calculatePricePerGuest(booking.guestQuantity);
             const newPricePerGuest = calculatePricePerGuest(guestCount);
@@ -1221,7 +1264,9 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                 priceDifference: priceDifference,
                 totalBalanceDue: totalBalanceDue,
                 isRefund: isRefund,
-                finalAmount: finalAmount
+                finalAmount: finalAmount,
+                addons: combinedAddons,
+                addonsTotalPrice: addonsTotalPrice
             };
 
             setBookingChanges(bookingChangesObj);
@@ -1259,7 +1304,9 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                             previousTransactionId: createTransaction.id,
                             isHistorical: true,
                             isRefund: true,
-                            totalBalanceDue: totalBalanceDue
+                            totalBalanceDue: totalBalanceDue,
+                            addons: combinedAddons,
+                            addonsTotalPrice: addonsTotalPrice
                         }
                     }
                 );
@@ -1292,7 +1339,9 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                             previousTransactionId: createTransaction.id,
                             isHistorical: true,
                             isRefund: false,
-                            totalBalanceDue: totalBalanceDue
+                            totalBalanceDue: totalBalanceDue,
+                            addons: combinedAddons,
+                            addonsTotalPrice: addonsTotalPrice
                         }
                     }
                 );
@@ -1325,7 +1374,9 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                 modifiedAt: new Date().toISOString(),
                                 previousTransactionId: existingTransaction.id,
                                 isRefund: isRefund,
-                                totalBalanceDue: totalBalanceDue
+                                totalBalanceDue: totalBalanceDue,
+                                addons: combinedAddons,
+                                addonsTotalPrice: addonsTotalPrice
                             }
                         };
                         
@@ -1353,7 +1404,9 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                         newPrice: updatedTotalPrice,
                         modifiedAt: new Date().toISOString(),
                         isRefund: isRefund,
-                        totalBalanceDue: totalBalanceDue
+                        totalBalanceDue: totalBalanceDue,
+                        addons: combinedAddons,
+                        addonsTotalPrice: addonsTotalPrice
                     }
                 };
 
@@ -1412,6 +1465,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
         onClose();
     };
 
+    const isLoadingData = isLoadingPendingBalance || isLoadingCardDetails || isLoadingAddons;
     return (
         <>
             <Modal isOpen={isOpen} onClose={onClose} size="4xl">
@@ -1489,7 +1543,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                     minW="300px"
                                     minH="300px"
                                 >
-                                    {isLoadingPendingBalance || isLoadingCardDetails ? (
+                                    {isLoadingData ? (
                                         <HStack justifyContent="center">
                                             <Spinner size="sm"/>
                                             <Text>Loading...</Text>
@@ -1508,11 +1562,22 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                                         <Text>${guestTotalPrice.toFixed(2)}</Text>
                                                     </HStack>
                                                 </VStack>
-                                                <Text>No add-ons selected.</Text>
+                                                
+                                                {combinedAddons.length > 0 ? (
+                                                    combinedAddons.map((addon) => (
+                                                        <HStack key={addon.id} justifyContent="space-between">
+                                                            <Text>{addon.label || 'Add-on'} (${addon.price} x {addon.quantity})</Text>
+                                                            <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
+                                                        </HStack>
+                                                    ))
+                                                ) : (
+                                                    <Text>No add-ons selected.</Text>
+                                                )}
+                                                
                                                 <Divider my={2}/>
                                                 <HStack justify="space-between">
                                                     <Text fontWeight="bold">Total</Text>
-                                                    <Text fontWeight="bold">${guestTotalPrice.toFixed(2)}</Text>
+                                                    <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                                                 </HStack>
                                                 
                                                 {totalBalanceDue !== 0 && (

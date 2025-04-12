@@ -530,13 +530,15 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             return tierPricing.basePrice * guestQuantity;
         }
 
-        const applicableTier = tierPricing.tierEntries
+        const applicableTierEntry = tierPricing.tierEntries
             ?.sort((a, b) => b.quantity - a.quantity)
             .find(tier => guestQuantity >= tier.quantity);
 
-        return applicableTier 
-            ? applicableTier.price * guestQuantity
-            : tierPricing.basePrice * guestQuantity;
+        if (applicableTierEntry) {
+            return applicableTierEntry.price * guestQuantity;
+        } else {
+            return tierPricing.basePrice * guestQuantity;
+        }
     };
 
     return (
@@ -679,7 +681,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                         <>
                                             <HStack justify="space-between">
                                                 <Text>
-                                                    {`Guests ($${(guestPrice).toFixed(2)} × ${guestQuantity})`}
+                                                    {`Guests ($${(tierPricing && tierPricing.pricingType === 'flat' ? tierPricing.basePrice : guestPrice).toFixed(2)} × ${guestQuantity})`}
                                                 </Text>
                                                 <Text>${calculateGuestPrice().toFixed(2)}</Text>
                                             </HStack>

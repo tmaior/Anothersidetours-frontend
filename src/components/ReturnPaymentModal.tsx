@@ -138,7 +138,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                     );
                     const createTransaction = transactionsResponse.data?.find(
                         (t: any) => t.transaction_type === 'CREATE' && 
-                        (t.payment_method === 'Credit Card' || t.payment_method === 'card')
+                        (t.payment_method?.toLowerCase() === 'credit card' || 
+                         t.payment_method?.toLowerCase() === 'card')
                     );
                     
                     if (createTransaction) {

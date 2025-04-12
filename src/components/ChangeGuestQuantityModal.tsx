@@ -42,45 +42,101 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     const [originalTransaction, setOriginalTransaction] = useState(null);
     const [cardInfo, setCardInfo] = useState(null);
     const [loadingCardInfo, setLoadingCardInfo] = useState(false);
+    const [reservationAddons, setReservationAddons] = useState([]);
+    const [allAddons, setAllAddons] = useState([]);
+    const [isLoadingAddons, setIsLoadingAddons] = useState(true);
+    const [hasOriginalCardPayment, setHasOriginalCardPayment] = useState(false);
 
     useEffect(() => {
-        if (isOpen && paymentMethod === 'Credit Card') {
-            fetchOriginalTransaction();
+        if (isOpen) {
+            fetchTransactionAndCardInfo();
+            fetchAddons();
         }
-    }, [isOpen, paymentMethod, booking?.id]);
+    }, [isOpen, booking?.id]);
 
-    const fetchOriginalTransaction = async () => {
+    const fetchTransactionAndCardInfo = async () => {
         try {
             setLoadingCardInfo(true);
+            
             const response = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`
             );
             
             if (response.data && response.data.length > 0) {
-                const createTransaction = response.data.find(t => t.transaction_type === 'CREATE');
+                const createTransaction = response.data.find(t => 
+                    t.transaction_type === 'CREATE' && 
+                    (t.payment_method?.toLowerCase() === 'credit card' || 
+                     t.payment_method?.toLowerCase() === 'card')
+                );
                 if (createTransaction) {
                     setOriginalTransaction(createTransaction);
-                    if (createTransaction.metadata && createTransaction.metadata.cardInfo) {
-                        setCardInfo(createTransaction.metadata.cardInfo);
-                    } else {
-                        setCardInfo({
-                            brand: 'Card',
-                            last4: 'on file'
-                        });
+                    setHasOriginalCardPayment(true);
+                    setPaymentMethod('Credit Card');
+                    const paymentMethodId = booking.paymentMethodId || 
+                                          createTransaction.payment_method_id ||
+                                          createTransaction.paymentMethodId;
+                    
+                    if (paymentMethodId) {
+                        try {
+                            const cardResponse = await axios.get(
+                                `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`
+                            );
+                            
+                            if (cardResponse.data) {
+                                setCardInfo({
+                                    brand: cardResponse.data.brand,
+                                    last4: cardResponse.data.last4
+                                });
+                            }
+                        } catch (cardError) {
+                            console.error("Error fetching card details:", cardError);
+                            if (createTransaction.metadata && createTransaction.metadata.cardInfo) {
+                                setCardInfo(createTransaction.metadata.cardInfo);
+                            } else {
+                                setCardInfo({
+                                    brand: 'Card',
+                                    last4: 'on file'
+                                });
+                            }
+                        }
                     }
+                } else {
+                    setHasOriginalCardPayment(false);
+                    setPaymentMethod('Cash');
                 }
             }
         } catch (error) {
             console.error("Failed to fetch original transaction:", error);
             toast({
                 title: "Warning",
-                description: "Could not retrieve saved card information.",
+                description: "Could not retrieve payment information.",
                 status: "warning",
                 duration: 3000,
                 isClosable: true,
             });
+            setHasOriginalCardPayment(false);
+            setPaymentMethod('Cash');
         } finally {
             setLoadingCardInfo(false);
+        }
+    };
+
+    const fetchAddons = async () => {
+        if (!booking?.id) return;
+
+        try {
+            setIsLoadingAddons(true);
+            const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
+                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`),
+                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${booking.tourId}`)
+            ]);
+
+            setAllAddons(allAddonsResponse.data);
+            setReservationAddons(reservationAddonsResponse.data);
+        } catch (error) {
+            console.error('Error fetching add-ons:', error);
+        } finally {
+            setIsLoadingAddons(false);
         }
     };
 
@@ -221,6 +277,35 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     const handleLater = () => {
         onClose();
     };
+    const combinedAddons = allAddons.reduce((acc, addon) => {
+        const selectedAddon = reservationAddons.find(resAddon => resAddon.addonId === addon.id);
+        if (addon.type === 'SELECT' && selectedAddon && parseInt(selectedAddon.value, 10) > 0) {
+            acc.push({
+                ...addon,
+                quantity: parseInt(selectedAddon.value, 10),
+            });
+        } else if (addon.type === 'CHECKBOX' && selectedAddon && selectedAddon.value === "1") {
+            acc.push({
+                ...addon,
+                quantity: 1,
+            });
+        }
+        return acc;
+    }, []);
+
+    // const formatDate = (dateString) => {
+    //     if (!dateString) return '';
+    //     const date = new Date(dateString);
+    //     return date.toISOString().split("T")[0];
+    // };
+    //
+    // function formatDateToAmerican(date) {
+    //     if (!date) return '';
+    //     const [year, month, day] = date.split("-");
+    //     return `${month}/${day}/${year}`;
+    // }
+
+    const isDataLoading = loadingCardInfo || isLoadingAddons;
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="4xl">
@@ -241,14 +326,16 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
 
                             <Text mb={2}>Payment Method</Text>
                             <HStack spacing={2} mb={4}>
-                                <Button
-                                    size="sm"
-                                    variant={paymentMethod === 'Credit Card' ? 'solid' : 'outline'}
-                                    onClick={() => setPaymentMethod('Credit Card')}
-                                    leftIcon={<FaRegCreditCard />}
-                                >
-                                    Credit Card
-                                </Button>
+                                {hasOriginalCardPayment && (
+                                    <Button
+                                        size="sm"
+                                        variant={paymentMethod === 'Credit Card' ? 'solid' : 'outline'}
+                                        onClick={() => setPaymentMethod('Credit Card')}
+                                        leftIcon={<FaRegCreditCard />}
+                                    >
+                                        Credit Card
+                                    </Button>
+                                )}
                                 <Button
                                     size="sm"
                                     variant={paymentMethod === 'Cash' ? 'solid' : 'outline'}
@@ -306,37 +393,111 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                             />
                         </Box>
 
-                        <Box flex="1" bg="gray.50" p={4} borderRadius="md">
-                            <VStack align="stretch" spacing={4}>
-                                <Box>
-                                    <Text fontWeight="bold" mb={2}>Purchase Summary</Text>
-                                    <Flex justify="space-between">
-                                        <Text>Guests (${(booking.valuePerGuest || booking.tour?.price || 0).toFixed(2)} × {bookingChanges?.newGuestQuantity})</Text>
-                                        <Text>${bookingChanges?.newPrice.toFixed(2)}</Text>
-                                    </Flex>
-                                    <Flex justify="space-between" fontWeight="bold" mt={2}>
-                                        <Text>Total</Text>
-                                        <Text>${bookingChanges?.newPrice.toFixed(2)}</Text>
-                                    </Flex>
-                                </Box>
+                        <Box flex="1">
+                            <VStack
+                                bg="gray.50"
+                                p={4}
+                                borderRadius="md"
+                                borderWidth="1px"
+                                spacing={4}
+                                align="stretch"
+                                w="100%"
+                                minH="300px"
+                                maxH="400px"
+                                overflowY="auto"
+                            >
+                                {isDataLoading ? (
+                                    <HStack justifyContent="center">
+                                        <Spinner size="sm"/>
+                                        <Text>Loading...</Text>
+                                    </HStack>
+                                ) : (
+                                    <>
+                                        <Box>
+                                            <Text fontWeight="bold" mb={2}>Purchase Summary</Text>
+                                            <VStack align="stretch" spacing={2}>
+                                                <HStack justify="space-between">
+                                                    <Text>
+                                                        {`Guests ($${(booking.valuePerGuest || (booking.total_price / booking.guestQuantity) || 0).toFixed(2)} × ${bookingChanges?.newGuestQuantity})`}
+                                                    </Text>
+                                                    <Text>${bookingChanges?.newPrice.toFixed(2)}</Text>
+                                                </HStack>
+                                            </VStack>
+                                            
+                                            {combinedAddons.length > 0 ? (
+                                                combinedAddons.map((addon) => (
+                                                    <HStack key={addon.id} justifyContent="space-between">
+                                                        <Text>{addon.label || 'Add-on'} (${addon.price} x {addon.quantity})</Text>
+                                                        <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
+                                                    </HStack>
+                                                ))
+                                            ) : (
+                                                <Text>No add-ons selected.</Text>
+                                            )}
 
-                                <Divider />
+                                            <Divider my={2}/>
+                                            <HStack justify="space-between">
+                                                <Text fontWeight="bold">Total</Text>
+                                                <Text fontWeight="bold">${bookingChanges?.newPrice.toFixed(2)}</Text>
+                                            </HStack>
+                                            
+                                            {bookingChanges?.totalBalanceDue !== 0 && (
+                                                <HStack justify="space-between" mt={2}>
+                                                    <Text fontWeight="bold" color={bookingChanges?.totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                        {bookingChanges?.totalBalanceDue < 0 ? "Refund Due" : "Balance Due"}
+                                                    </Text>
+                                                    <Text fontWeight="bold" color={bookingChanges?.totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                        ${Math.abs(bookingChanges?.totalBalanceDue).toFixed(2)}
+                                                    </Text>
+                                                </HStack>
+                                            )}
+                                        </Box>
 
-                                <Box>
-                                    <Text fontWeight="bold" mb={2}>Payment Summary</Text>
-                                    <Flex justify="space-between">
-                                        <Text>Payment {format(new Date(), 'MM/dd/yyyy')}</Text>
-                                        <Text>${booking.total_price.toFixed(2)}</Text>
-                                    </Flex>
-                                    <Flex justify="space-between" color={bookingChanges?.totalBalanceDue < 0 ? "green.500" : "red.500"} fontWeight="bold">
-                                        <Text>{bookingChanges?.totalBalanceDue < 0 ? "Refund Due" : "Balance Due"}</Text>
-                                        <Text>${Math.abs(bookingChanges?.totalBalanceDue).toFixed(2)}</Text>
-                                    </Flex>
-                                    <Flex justify="space-between" fontWeight="bold" mt={2}>
-                                        <Text>Paid</Text>
-                                        <Text>${bookingChanges?.newPrice.toFixed(2)}</Text>
-                                    </Flex>
-                                </Box>
+                                        <Divider />
+
+                                        <Box>
+                                            <Text fontWeight="bold" mb={2}>Payment Summary</Text>
+                                            {cardInfo && (
+                                                <HStack justify="space-between">
+                                                    <HStack spacing={2}>
+                                                        <Box as="span" role="img" aria-label="Card Icon" fontSize="lg">
+                                                            💳
+                                                        </Box>
+                                                        <Text>
+                                                            Original Payment
+                                                            <Box
+                                                                as="span"
+                                                                bg="white"
+                                                                px={1}
+                                                                py={1}
+                                                                borderRadius="md"
+                                                                boxShadow="sm"
+                                                                ml={1}
+                                                            >
+                                                                *{cardInfo.last4}
+                                                            </Box>
+                                                        </Text>
+                                                    </HStack>
+                                                    <Text>${booking.total_price.toFixed(2)}</Text>
+                                                </HStack>
+                                            )}
+                                            <HStack justify="space-between" mt={2}>
+                                                <Text>Paid</Text>
+                                                <Text>${booking.total_price.toFixed(2)}</Text>
+                                            </HStack>
+                                            
+                                            <HStack justify="space-between" color={bookingChanges?.totalBalanceDue < 0 ? "green.500" : "red.500"} fontWeight="bold" mt={2}>
+                                                <Text>{bookingChanges?.totalBalanceDue < 0 ? "Refund:" : "Balance Due:"}</Text>
+                                                <Text>{bookingChanges?.totalBalanceDue < 0 ? "-" : "+"}${Math.abs(bookingChanges?.totalBalanceDue).toFixed(2)}</Text>
+                                            </HStack>
+                                            
+                                            <HStack justify="space-between" fontWeight="bold" mt={2}>
+                                                <Text>Final Total:</Text>
+                                                <Text>${bookingChanges?.newPrice.toFixed(2)}</Text>
+                                            </HStack>
+                                        </Box>
+                                    </>
+                                )}
                             </VStack>
                         </Box>
                     </Flex>

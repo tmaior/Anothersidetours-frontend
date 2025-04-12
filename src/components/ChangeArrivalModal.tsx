@@ -366,7 +366,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
     const guestTotalPrice = calculateGuestPrice();
     const finalTotalPrice = guestTotalPrice + addonsTotalPrice;
     const totalPaidSoFar = booking.total_price - pendingBalance;
-    const totalBalanceDue = finalTotalPrice - totalPaidSoFar - addonsTotalPrice;
+    const totalBalanceDue = pendingBalance;
     const isLoading = isLoadingPendingBalance || isLoadingAddons || isLoadingCardDetails;
 
     return (

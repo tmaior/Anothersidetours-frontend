@@ -341,6 +341,23 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         }
     }, [tourId, isOpen, isLoadingTourId]);
 
+    useEffect(() => {
+        if (isOpen) {
+            const trueTotal = calculateTotalPrice();
+            setAmount(trueTotal);
+            console.log('Calculated Components:', {
+                guestPrice: tierPricing && tierPricing.pricingType === 'flat' ? tierPricing.basePrice : guestPrice,
+                guestQuantity,
+                guestTotal: calculateGuestPrice(),
+                addons: getCombinedAddons(),
+                addonTotal: calculateAddonTotal(),
+                customItems: fetchedCustomItems,
+                customItemsTotal: calculateCustomItemsTotal(),
+                totalCalculated: trueTotal
+            });
+        }
+    }, [isOpen, tierPricing, reservationAddons, fetchedCustomItems, guestQuantity]);
+
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         if (value === '' || value === undefined) {
@@ -357,7 +374,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             setAmount(0);
             return;
         }
-        if (numValue > (booking?.total_price || 0)) {
+        const maxValue = calculateTotalPrice();
+        if (numValue > maxValue) {
             return;
         }
         setAmount(numValue);
@@ -371,6 +389,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             paymentMethodId: booking?.paymentMethodId,
             setupIntentId: booking?.setupIntentId,
             total_price: booking?.total_price,
+            calculated_total: calculateTotalPrice(),
             refund_amount: amount
         });
 
@@ -395,11 +414,11 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             });
             return;
         }
-
-        if (amount <= 0 || amount > (booking?.total_price || 0)) {
+        const maxRefundAmount = calculateTotalPrice();
+        if (amount <= 0 || amount > maxRefundAmount) {
             toast({
                 title: 'Error',
-                description: 'Invalid refund amount. Please enter a value between 0 and the total price.',
+                description: `Invalid refund amount. Please enter a value between 0 and the total price of $${maxRefundAmount.toFixed(2)}.`,
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
@@ -541,6 +560,30 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         }
     };
 
+    const calculateAddonTotal = () => {
+        const addons = getCombinedAddons();
+        return addons.reduce((total, addon) => {
+            return total + (addon.price * addon.quantity);
+        }, 0);
+    };
+
+    const calculateCustomItemsTotal = () => {
+        if (!displayedCustomItems || displayedCustomItems.length === 0) return 0;
+        
+        return displayedCustomItems.reduce((total, item) => {
+            const itemTotal = item.amount * item.quantity;
+            return item.type === 'Discount' ? total - itemTotal : total + itemTotal;
+        }, 0);
+    };
+
+    const calculateTotalPrice = () => {
+        const guestTotal = calculateGuestPrice();
+        const addonTotal = calculateAddonTotal();
+        const customItemsTotal = calculateCustomItemsTotal();
+        
+        return guestTotal + addonTotal + customItemsTotal;
+    };
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="6xl">
             <ModalOverlay />
@@ -585,11 +628,11 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                         type="number"
                                         step="0.01"
                                         min="0"
-                                        max={booking?.total_price}
+                                        max={calculateTotalPrice()}
                                         placeholder="Enter amount"
                                     />
                                     <Text fontSize="sm" color="gray.600" mt={1}>
-                                        up to ${booking?.total_price}
+                                        up to ${calculateTotalPrice().toFixed(2)}
                                     </Text>
                                 </Box>
 
@@ -686,14 +729,20 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                 <Text>${calculateGuestPrice().toFixed(2)}</Text>
                                             </HStack>
 
-                                            {getCombinedAddons().length > 0 ? (
-                                                getCombinedAddons().map((addon) => (
-                                                    <HStack key={addon.id} justify="space-between">
-                                                        <Text>{addon.label || addon.name} (${addon.price.toFixed(2)} x {addon.quantity})</Text>
-                                                        <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
-                                                    </HStack>
-                                                ))
-                                            ) : null}
+                                            {getCombinedAddons().length > 0 && (
+                                                <>
+                                                    {getCombinedAddons().map((addon) => (
+                                                        <HStack key={addon.id} justify="space-between">
+                                                            <Text>{addon.label || addon.name} (${addon.price.toFixed(2)} x {addon.quantity})</Text>
+                                                            <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
+                                                        </HStack>
+                                                    ))}
+                                                    {/*<HStack justify="space-between" mt={1}>*/}
+                                                    {/*    <Text fontWeight="semibold">Add-ons Subtotal</Text>*/}
+                                                    {/*    <Text fontWeight="semibold">${calculateAddonTotal().toFixed(2)}</Text>*/}
+                                                    {/*</HStack>*/}
+                                                </>
+                                            )}
 
                                             {displayedCustomItems && displayedCustomItems.length > 0 && (
                                                 <>
@@ -709,12 +758,16 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                             </Text>
                                                         </HStack>
                                                     ))}
+                                                    <HStack justify="space-between" mt={1}>
+                                                        <Text fontWeight="semibold">Custom Items Subtotal</Text>
+                                                        <Text fontWeight="semibold">${calculateCustomItemsTotal().toFixed(2)}</Text>
+                                                    </HStack>
                                                 </>
                                             )}
                                             
                                             <HStack justify="space-between" mt={2}>
                                                 <Text fontWeight="bold">Total</Text>
-                                                <Text fontWeight="bold">${booking?.total_price}</Text>
+                                                <Text fontWeight="bold">${calculateTotalPrice().toFixed(2)}</Text>
                                             </HStack>
 
                                             {!isLoadingPendingBalance && pendingBalance !== 0 && (
@@ -740,7 +793,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                     <Text>
                                                         Payment *{cardList[0].last4} {formatDate(cardList[0].paymentDate)}
                                                     </Text>
-                                                    <Text>${booking?.total_price}</Text>
+                                                    <Text>${calculateTotalPrice().toFixed(2)}</Text>
                                                 </HStack>
                                             </>
                                         )}
@@ -770,7 +823,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                     
                                     <HStack justify="space-between" mt={4}>
                                         <Text fontWeight="bold">Paid</Text>
-                                        <Text fontWeight="bold">${(booking?.total_price - (refundAmount || 0)).toFixed(2)}</Text>
+                                        <Text fontWeight="bold">${calculateTotalPrice().toFixed(2)}</Text>
                                     </HStack>
                                 </Box>
                             </VStack>

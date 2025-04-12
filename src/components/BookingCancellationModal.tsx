@@ -26,7 +26,7 @@ import {BsCash} from "react-icons/bs";
 import axios from "axios";
 
 const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) => {
-    const [refundAmount, setRefundAmount] = useState(booking.total_price || 0);
+    const [refundAmount, setRefundAmount] = useState(booking?.total_price || 0);
     const [paymentMethod, setPaymentMethod] = useState("Credit Card");
     const [notifyCustomer, setNotifyCustomer] = useState(true);
     const [comment, setComment] = useState("");
@@ -34,13 +34,24 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
     const [cardInfo, setCardInfo] = useState(null);
     const [loadingCardInfo, setLoadingCardInfo] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [reservationAddons, setReservationAddons] = useState([]);
+    const [allAddons, setAllAddons] = useState([]);
+    const [isLoadingAddons, setIsLoadingAddons] = useState(false);
+    const [customItems, setCustomItems] = useState([]);
+    const [isLoadingCustomItems, setIsLoadingCustomItems] = useState(false);
+    const [tierPricing, setTierPricing] = useState(null);
+    const [isLoadingTierPricing, setIsLoadingTierPricing] = useState(false);
+    const [guestQuantity, setGuestQuantity] = useState(booking?.guestQuantity || 0);
+    const [guestPrice, setGuestPrice] = useState(0);
+    const [tourId, setTourId] = useState(null);
     const toast = useToast();
 
     useEffect(() => {
-        if (isOpen && paymentMethod === 'Credit Card') {
+        if (isOpen) {
             fetchOriginalTransaction();
+            fetchReservationDetails();
         }
-    }, [isOpen, paymentMethod, booking?.id]);
+    }, [isOpen, booking?.id]);
 
     const fetchOriginalTransaction = async () => {
         try {
@@ -50,7 +61,12 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
             );
             
             if (response.data && response.data.length > 0) {
-                const createTransaction = response.data.find(t => t.transaction_type === 'CREATE');
+                const createTransaction = response.data.find(t => 
+                    t.transaction_type === 'CREATE' && 
+                    (t.payment_method?.toLowerCase() === 'credit card' || 
+                     t.payment_method?.toLowerCase() === 'card')
+                );
+                
                 if (createTransaction) {
                     setOriginalTransaction(createTransaction);
                     if (createTransaction.metadata && createTransaction.metadata.cardInfo) {
@@ -61,6 +77,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                             last4: 'on file'
                         });
                     }
+                    setPaymentMethod("Credit Card");
+                } else {
+                    setPaymentMethod("Cash");
                 }
             }
         } catch (error) {
@@ -75,6 +94,175 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
         } finally {
             setLoadingCardInfo(false);
         }
+    };
+
+    const fetchReservationDetails = async () => {
+        if (!booking?.id) return;
+        
+        try {
+            const response = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`
+            );
+            
+            if (response.data) {
+                setTourId(response.data.tourId || response.data.tour_id);
+                setGuestQuantity(response.data.guestQuantity || booking.guestQuantity || 0);
+
+                if (response.data.guestQuantity && response.data.total_price) {
+                    setGuestPrice(response.data.total_price / response.data.guestQuantity);
+                } else if (booking.guestQuantity && booking.total_price) {
+                    setGuestPrice(booking.total_price / booking.guestQuantity);
+                }
+
+                if (response.data.tourId || response.data.tour_id) {
+                    fetchTierPricing(response.data.tourId || response.data.tour_id);
+                    fetchAddons(response.data.tourId || response.data.tour_id);
+                }
+
+                fetchCustomItems();
+            }
+        } catch (error) {
+            console.error("Failed to fetch reservation details:", error);
+        }
+    };
+
+    const fetchTierPricing = async (tid) => {
+        if (!tid) return;
+        
+        try {
+            setIsLoadingTierPricing(true);
+            const response = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tid}`
+            );
+            
+            if (response.data && response.data.length > 0) {
+                setTierPricing({
+                    pricingType: response.data[0].pricingType,
+                    basePrice: response.data[0].basePrice,
+                    tierEntries: response.data[0].tierEntries,
+                });
+            }
+        } catch (error) {
+            console.error("Failed to fetch tier pricing:", error);
+        } finally {
+            setIsLoadingTierPricing(false);
+        }
+    };
+
+    const fetchAddons = async (tid) => {
+        if (!tid || !booking?.id) return;
+        
+        try {
+            setIsLoadingAddons(true);
+            const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
+                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`),
+                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tid}`)
+            ]);
+            
+            setReservationAddons(reservationAddonsResponse.data);
+            setAllAddons(allAddonsResponse.data);
+        } catch (error) {
+            console.error("Failed to fetch addons:", error);
+        } finally {
+            setIsLoadingAddons(false);
+        }
+    };
+
+    const fetchCustomItems = async () => {
+        if (!booking?.id) return;
+        
+        try {
+            setIsLoadingCustomItems(true);
+            const response = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${booking.id}`
+            );
+            
+            const formattedItems = response.data.map(item => ({
+                id: item.id,
+                name: item.label,
+                type: item.description,
+                amount: Number(item.amount),
+                quantity: Number(item.quantity)
+            }));
+            
+            setCustomItems(formattedItems);
+        } catch (error) {
+            console.error("Failed to fetch custom items:", error);
+        } finally {
+            setIsLoadingCustomItems(false);
+        }
+    };
+
+    const getCombinedAddons = () => {
+        if (!allAddons.length || !reservationAddons.length) return [];
+        
+        return allAddons.reduce((acc, addon) => {
+            const selectedAddon = reservationAddons.find(resAddon => resAddon.addonId === addon.id);
+            if (addon.type === 'SELECT' && selectedAddon && parseInt(selectedAddon.value, 10) > 0) {
+                acc.push({
+                    ...addon,
+                    quantity: parseInt(selectedAddon.value, 10),
+                });
+            } else if (addon.type === 'CHECKBOX' && selectedAddon && selectedAddon.value === "1") {
+                acc.push({
+                    ...addon,
+                    quantity: 1,
+                });
+            }
+            return acc;
+        }, []);
+    };
+
+    const calculateGuestPrice = () => {
+        if (!tierPricing) {
+            return guestPrice * guestQuantity;
+        }
+
+        if (tierPricing.pricingType === 'flat') {
+            return tierPricing.basePrice * guestQuantity;
+        }
+
+        const applicableTierEntry = tierPricing.tierEntries
+            ?.sort((a, b) => b.quantity - a.quantity)
+            .find(tier => guestQuantity >= tier.quantity);
+
+        if (applicableTierEntry) {
+            return applicableTierEntry.price * guestQuantity;
+        } else {
+            return tierPricing.basePrice * guestQuantity;
+        }
+    };
+
+    const calculateAddonTotal = () => {
+        const addons = getCombinedAddons();
+        return addons.reduce((total, addon) => {
+            return total + (addon.price * addon.quantity);
+        }, 0);
+    };
+
+    const calculateCustomItemsTotal = () => {
+        if (!customItems || customItems.length === 0) return 0;
+        
+        return customItems.reduce((total, item) => {
+            const itemTotal = item.amount * item.quantity;
+            return item.type === 'Discount' ? total - itemTotal : total + itemTotal;
+        }, 0);
+    };
+
+    const calculateTotalPrice = () => {
+        const guestTotal = calculateGuestPrice();
+        const addonTotal = calculateAddonTotal();
+        const customItemsTotal = calculateCustomItemsTotal();
+        
+        return guestTotal + addonTotal + customItemsTotal;
+    };
+
+    const formatDate = (date) => {
+        return new Date(date).toLocaleDateString('en-US', {
+            month: 'numeric',
+            day: 'numeric',
+            year: 'numeric'
+        });
     };
 
     const handleSaveChanges = async () => {
@@ -102,7 +290,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     type: 'CANCELLATION_REFUND',
                     transaction_direction: 'refund',
                     metadata: {
-                        originalPrice: booking.total_price,
+                        originalPrice: calculateTotalPrice(),
                         refundAmount: refundAmount,
                         comment: comment,
                         refundDate: new Date().toISOString()
@@ -139,7 +327,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     transaction_direction: 'refund',
                     notifyCustomer: notifyCustomer,
                     metadata: {
-                        originalPrice: booking.total_price,
+                        originalPrice: calculateTotalPrice(),
                         refundAmount: refundAmount,
                         comment: comment,
                         refundDate: new Date().toISOString()
@@ -263,10 +451,21 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                     <Input
                                         type="number"
                                         value={refundAmount}
-                                        onChange={(e) => setRefundAmount(parseFloat(e.target.value))}
+                                        onChange={(e) => {
+                                            const value = parseFloat(e.target.value);
+                                            if (isNaN(value) || value < 0) {
+                                                setRefundAmount(0);
+                                            } else if (value > calculateTotalPrice()) {
+                                                setRefundAmount(calculateTotalPrice());
+                                            } else {
+                                                setRefundAmount(value);
+                                            }
+                                        }}
+                                        max={calculateTotalPrice()}
+                                        min={0}
                                     />
                                     <Text fontSize="sm" mt={1}>
-                                        up to ${booking.total_price || 0}
+                                        up to ${calculateTotalPrice().toFixed(2)}
                                     </Text>
                                 </Box>
 
@@ -345,56 +544,129 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                             >
                                 <Box w="full">
                                     <Text fontWeight="bold">Purchase Summary</Text>
-                                    <VStack align="stretch" spacing={3}>
-                                        <HStack justifyContent="space-between">
-                                            <Text>Guests (${booking.valuePerGuest || (booking.total_price / booking.guestQuantity) || 149} x {booking.guestQuantity || 2})</Text>
-                                            <Text>${booking.total_price}</Text>
-                                        </HStack>
-                                        <HStack justifyContent="space-between">
-                                            <Text>Cancellation:</Text>
-                                            <Text>-${refundAmount}</Text>
-                                        </HStack>
+                                    <VStack align="stretch" spacing={3} mt={3}>
+                                        {isLoadingTierPricing || isLoadingAddons ? (
+                                            <Text fontSize="sm" color="gray.500">Loading...</Text>
+                                        ) : (
+                                            <>
+                                                <HStack justifyContent="space-between">
+                                                    <Text>
+                                                        {`Guests ($${(tierPricing && tierPricing.pricingType === 'flat' 
+                                                            ? tierPricing.basePrice 
+                                                            : guestPrice).toFixed(2)} × ${guestQuantity})`}
+                                                    </Text>
+                                                    <Text>${calculateGuestPrice().toFixed(2)}</Text>
+                                                </HStack>
+
+                                                {getCombinedAddons().length > 0 && (
+                                                    <>
+                                                        {getCombinedAddons().map((addon) => (
+                                                            <HStack key={addon.id} justify="space-between">
+                                                                <Text>{addon.label || addon.name} (${addon.price.toFixed(2)} x {addon.quantity})</Text>
+                                                                <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
+                                                            </HStack>
+                                                        ))}
+                                                        <HStack justify="space-between" mt={1}>
+                                                            <Text fontWeight="semibold">Add-ons Subtotal</Text>
+                                                            <Text fontWeight="semibold">${calculateAddonTotal().toFixed(2)}</Text>
+                                                        </HStack>
+                                                    </>
+                                                )}
+
+                                                {customItems && customItems.length > 0 && (
+                                                    <>
+                                                        {customItems.map((item) => (
+                                                            <HStack key={item.id} justify="space-between">
+                                                                <Text>
+                                                                    {item.name} (${item.amount.toFixed(2)} × {item.quantity})
+                                                                    {item.type === 'Discount' && ' - Discount'}
+                                                                </Text>
+                                                                <Text>
+                                                                    {item.type === 'Discount' ? '-' : ''}
+                                                                    ${(item.amount * item.quantity).toFixed(2)}
+                                                                </Text>
+                                                            </HStack>
+                                                        ))}
+                                                        <HStack justify="space-between" mt={1}>
+                                                            <Text fontWeight="semibold">Custom Items Subtotal</Text>
+                                                            <Text fontWeight="semibold">${calculateCustomItemsTotal().toFixed(2)}</Text>
+                                                        </HStack>
+                                                    </>
+                                                )}
+                                                
+                                                <HStack justifyContent="space-between" mt={2}>
+                                                    <Text fontWeight="bold">Total:</Text>
+                                                    <Text fontWeight="bold">${calculateTotalPrice().toFixed(2)}</Text>
+                                                </HStack>
+
+                                                <HStack justifyContent="space-between" color="red.500">
+                                                    <Text>Cancellation:</Text>
+                                                    <Text>-${refundAmount.toFixed(2)}</Text>
+                                                </HStack>
+
+                                                <Divider/>
+                                                <HStack justifyContent="space-between">
+                                                    <Text fontWeight="bold">Final Total:</Text>
+                                                    <Text fontWeight="bold">${(calculateTotalPrice() - refundAmount).toFixed(2)}</Text>
+                                                </HStack>
+                                            </>
+                                        )}
                                     </VStack>
-                                    <Divider/>
-                                    <Text fontWeight="bold" align={"end"}>Total: ${booking.total_price - refundAmount}</Text>
                                 </Box>
                                 <Box w="full">
                                     <Text fontWeight="bold">Payment Summary</Text>
-                                    <VStack align="stretch" spacing={3}>
-                                        <HStack justifyContent="space-between">
-                                            <Text>
-                                                Payment {booking.date || "01/02/2025"}:
-                                            </Text>
-                                            <Text fontWeight="bold">
-                                                ${booking.total_price}
-                                            </Text>
-                                        </HStack>
+                                    <VStack align="stretch" spacing={3} mt={3}>
+                                        {cardInfo && (
+                                            <HStack justifyContent="space-between">
+                                                <Text>
+                                                    Payment {booking.dateFormatted || formatDate(new Date().toISOString())}:
+                                                    {cardInfo && ` *${cardInfo.last4 || 'xxxx'}`}
+                                                </Text>
+                                                <Text fontWeight="bold">
+                                                    ${calculateTotalPrice().toFixed(2)}
+                                                </Text>
+                                            </HStack>
+                                        )}
 
                                         <HStack justifyContent="space-between">
                                             <Text color="blue.500">
-                                                Return Payment {new Date().toLocaleDateString()}:
+                                                Return Payment {formatDate(new Date().toISOString())}:
+                                                {paymentMethod === 'Credit Card' && cardInfo && ` *${cardInfo.last4 || 'xxxx'}`}
                                             </Text>
                                             <Text fontWeight="bold" color="blue.500">
-                                                -${refundAmount}
+                                                -${refundAmount.toFixed(2)}
                                             </Text>
                                         </HStack>
+
+                                        <Divider mt={4}/>
+                                        <HStack justifyContent="space-between">
+                                            <Text fontWeight="bold">Paid:</Text>
+                                            <Text fontWeight="bold">${(calculateTotalPrice() - refundAmount).toFixed(2)}</Text>
+                                        </HStack>
                                     </VStack>
-
-                                    <Divider mt={4}/>
-                                    <Text fontWeight="bold" align={"end"}>Paid: ${booking.total_price - refundAmount}</Text>
                                 </Box>
-
                             </VStack>
                         </HStack>
                     </Box>
                 </ModalBody>
 
-                <ModalFooter alignItems={"end"}>
+                <ModalFooter>
                     <HStack>
-                        <Checkbox>Notify Customer</Checkbox>
-                        <Button onClick={onClose}>Skip</Button>
-                        <Button colorScheme="blue" onClick={handleSaveChanges}>
-                            Save Changes</Button>
+                        <Checkbox 
+                            isChecked={notifyCustomer}
+                            onChange={(e) => setNotifyCustomer(e.target.checked)}
+                        >
+                            Notify Customer
+                        </Checkbox>
+                        <Button onClick={onClose}>Cancel</Button>
+                        <Button 
+                            colorScheme="blue" 
+                            onClick={handleSaveChanges} 
+                            isLoading={isSubmitting}
+                            isDisabled={isLoadingTierPricing || isLoadingAddons || isLoadingCustomItems}
+                        >
+                            Process Cancellation
+                        </Button>
                     </HStack>
                 </ModalFooter>
             </ModalContent>

@@ -21,8 +21,8 @@ import {
     VStack
 } from "@chakra-ui/react";
 import React, {useState, useEffect} from "react";
-import {FaRegCreditCard} from "react-icons/fa";
-import {BsCash} from "react-icons/bs";
+import {FaRegCreditCard, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover} from "react-icons/fa";
+import {BsCash, BsCheck2} from "react-icons/bs";
 import axios from "axios";
 
 const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) => {
@@ -69,14 +69,42 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 
                 if (createTransaction) {
                     setOriginalTransaction(createTransaction);
+                    let cardDetails = null;
                     if (createTransaction.metadata && createTransaction.metadata.cardInfo) {
-                        setCardInfo(createTransaction.metadata.cardInfo);
-                    } else {
-                        setCardInfo({
-                            brand: 'Card',
-                            last4: 'on file'
-                        });
+                        cardDetails = createTransaction.metadata.cardInfo;
                     }
+                    if (!cardDetails || !cardDetails.brand || !cardDetails.last4) {
+                        const paymentMethodId = createTransaction.payment_method_id || 
+                                              createTransaction.paymentMethodId || 
+                                              booking.paymentMethodId;
+                        
+                        if (paymentMethodId) {
+                            try {
+                                const paymentMethodResponse = await axios.get(
+                                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`
+                                );
+                                
+                                if (paymentMethodResponse.data) {
+                                    cardDetails = {
+                                        brand: paymentMethodResponse.data.brand || 'card',
+                                        last4: paymentMethodResponse.data.last4 || '1234',
+                                        exp_month: paymentMethodResponse.data.exp_month,
+                                        exp_year: paymentMethodResponse.data.exp_year
+                                    };
+                                }
+                            } catch (err) {
+                                console.error("Failed to fetch payment method details:", err);
+                            }
+                        }
+                    }
+                    if (!cardDetails) {
+                        cardDetails = {
+                            brand: 'card',
+                            last4: '1234'
+                        };
+                    }
+                    
+                    setCardInfo(cardDetails);
                     setPaymentMethod("Credit Card");
                 } else {
                     setPaymentMethod("Cash");
@@ -472,14 +500,15 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                 <Box w="full">
                                     <Text mb={2}>Payment Method</Text>
                                     <HStack spacing={3}>
-                                        <Button
-                                            variant={paymentMethod === "Credit Card" ? "solid" : "outline"}
-                                            onClick={() => setPaymentMethod("Credit Card")}
-                                            leftIcon={<FaRegCreditCard />}
-                                            isDisabled={!originalTransaction}
-                                        >
-                                            Credit Card
-                                        </Button>
+                                        {originalTransaction ? (
+                                            <Button
+                                                variant={paymentMethod === "Credit Card" ? "solid" : "outline"}
+                                                onClick={() => setPaymentMethod("Credit Card")}
+                                                leftIcon={<FaRegCreditCard />}
+                                            >
+                                                Credit Card
+                                            </Button>
+                                        ) : null}
                                         <Button
                                             size="md"
                                             leftIcon={<BsCash />}
@@ -491,12 +520,14 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                         <Button
                                             variant={paymentMethod === "store" ? "solid" : "outline"}
                                             onClick={() => setPaymentMethod("store")}
+                                            leftIcon={<BsCheck2 />}
                                         >
                                             Store Credit
                                         </Button>
                                         <Button
                                             variant={paymentMethod === "other" ? "solid" : "outline"}
                                             onClick={() => setPaymentMethod("other")}
+                                            leftIcon={<BsCheck2 />}
                                         >
                                             Other
                                         </Button>
@@ -504,21 +535,45 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                 </Box>
 
                                 {paymentMethod === 'Credit Card' && (
-                                    <Box w="full" mt={2} mb={4} p={3} borderWidth="1px" borderRadius="md">
+                                    <Box w="full" mt={2} mb={4}>
                                         {loadingCardInfo ? (
-                                            <Flex justify="center" py={2}>
+                                            <Flex justify="center" py={2} borderWidth="1px" borderRadius="md" p={3}>
                                                 <Spinner size="sm" mr={2} />
                                                 <Text>Loading card information...</Text>
                                             </Flex>
                                         ) : cardInfo ? (
-                                            <Flex align="center">
-                                                <Icon as={FaRegCreditCard} mr={2} />
-                                                <Text>
-                                                    {cardInfo.brand || 'Card'} •••• •••• •••• {cardInfo.last4 || 'on file'}
-                                                </Text>
-                                            </Flex>
+                                            <Box 
+                                                borderWidth="1px" 
+                                                borderRadius="md" 
+                                                p={3} 
+                                                bg="white"
+                                                boxShadow="sm"
+                                            >
+                                                <Flex align="center">
+                                                    {cardInfo.brand?.toLowerCase() === 'visa' ? (
+                                                        <Icon as={FaCcVisa} boxSize="24px" color="blue.600" mr={2} />
+                                                    ) : cardInfo.brand?.toLowerCase() === 'mastercard' ? (
+                                                        <Icon as={FaCcMastercard} boxSize="24px" color="red.500" mr={2} />
+                                                    ) : cardInfo.brand?.toLowerCase() === 'amex' ? (
+                                                        <Icon as={FaCcAmex} boxSize="24px" color="blue.500" mr={2} />
+                                                    ) : cardInfo.brand?.toLowerCase() === 'discover' ? (
+                                                        <Icon as={FaCcDiscover} boxSize="24px" color="orange.500" mr={2} />
+                                                    ) : (
+                                                        <Icon as={FaRegCreditCard} boxSize="20px" mr={2} />
+                                                    )}
+                                                    <Text fontWeight="medium">
+                                                        {cardInfo.brand?.toLowerCase() === 'visa' ? 'Visa' : 
+                                                         cardInfo.brand?.toLowerCase() === 'mastercard' ? 'MasterCard' : 
+                                                         cardInfo.brand?.toLowerCase() === 'amex' ? 'American Express' : 
+                                                         cardInfo.brand?.toLowerCase() === 'discover' ? 'Discover' : 
+                                                         cardInfo.brand || 'Card'} •••• •••• •••• {cardInfo.last4 || 'xxxx'}
+                                                    </Text>
+                                                </Flex>
+                                            </Box>
                                         ) : (
-                                            <Text color="gray.500">No saved card information found</Text>
+                                            <Box borderWidth="1px" borderRadius="md" p={3}>
+                                                <Text color="gray.500">No saved card information found</Text>
+                                            </Box>
                                         )}
                                     </Box>
                                 )}
@@ -618,10 +673,23 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                     <VStack align="stretch" spacing={3} mt={3}>
                                         {cardInfo && (
                                             <HStack justifyContent="space-between">
-                                                <Text>
-                                                    Payment {booking.dateFormatted || formatDate(new Date().toISOString())}:
-                                                    {cardInfo && ` *${cardInfo.last4 || 'xxxx'}`}
-                                                </Text>
+                                                <HStack>
+                                                    {cardInfo.brand?.toLowerCase() === 'visa' ? (
+                                                        <Icon as={FaCcVisa} boxSize="20px" color="blue.600" />
+                                                    ) : cardInfo.brand?.toLowerCase() === 'mastercard' ? (
+                                                        <Icon as={FaCcMastercard} boxSize="20px" color="red.500" />
+                                                    ) : cardInfo.brand?.toLowerCase() === 'amex' ? (
+                                                        <Icon as={FaCcAmex} boxSize="20px" color="blue.500" />
+                                                    ) : cardInfo.brand?.toLowerCase() === 'discover' ? (
+                                                        <Icon as={FaCcDiscover} boxSize="20px" color="orange.500" />
+                                                    ) : (
+                                                        <Icon as={FaRegCreditCard} boxSize="16px" />
+                                                    )}
+                                                    <Text>
+                                                        Payment {booking.dateFormatted || formatDate(new Date().toISOString())}:
+                                                        {` *${cardInfo.last4 || 'xxxx'}`}
+                                                    </Text>
+                                                </HStack>
                                                 <Text fontWeight="bold">
                                                     ${calculateTotalPrice().toFixed(2)}
                                                 </Text>
@@ -629,10 +697,33 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                         )}
 
                                         <HStack justifyContent="space-between">
-                                            <Text color="blue.500">
-                                                Return Payment {formatDate(new Date().toISOString())}:
-                                                {paymentMethod === 'Credit Card' && cardInfo && ` *${cardInfo.last4 || 'xxxx'}`}
-                                            </Text>
+                                            <HStack>
+                                                {paymentMethod === 'Credit Card' && cardInfo ? (
+                                                    <>
+                                                        {cardInfo.brand?.toLowerCase() === 'visa' ? (
+                                                            <Icon as={FaCcVisa} boxSize="20px" color="blue.600" />
+                                                        ) : cardInfo.brand?.toLowerCase() === 'mastercard' ? (
+                                                            <Icon as={FaCcMastercard} boxSize="20px" color="red.500" />
+                                                        ) : cardInfo.brand?.toLowerCase() === 'amex' ? (
+                                                            <Icon as={FaCcAmex} boxSize="20px" color="blue.500" />
+                                                        ) : cardInfo.brand?.toLowerCase() === 'discover' ? (
+                                                            <Icon as={FaCcDiscover} boxSize="20px" color="orange.500" />
+                                                        ) : (
+                                                            <Icon as={FaRegCreditCard} boxSize="16px" />
+                                                        )}
+                                                    </>
+                                                ) : paymentMethod === 'Cash' ? (
+                                                    <Icon as={BsCash} boxSize="16px" />
+                                                ) : paymentMethod === 'store' ? (
+                                                    <Icon as={BsCheck2} boxSize="16px" />
+                                                ) : (
+                                                    <Icon as={BsCheck2} boxSize="16px" />
+                                                )}
+                                                <Text color="blue.500">
+                                                    Return Payment {formatDate(new Date().toISOString())}
+                                                    {paymentMethod === 'Credit Card' && cardInfo && ` *${cardInfo.last4 || 'xxxx'}`}
+                                                </Text>
+                                            </HStack>
                                             <Text fontWeight="bold" color="blue.500">
                                                 -${refundAmount.toFixed(2)}
                                             </Text>

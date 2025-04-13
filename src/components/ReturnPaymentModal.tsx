@@ -94,6 +94,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     const [guestQuantity, setGuestQuantity] = useState<number>(0);
     const [guestPrice, setGuestPrice] = useState<number>(0);
     const [pendingTransactions, setPendingTransactions] = useState([]);
+    const [generatedVoucher, setGeneratedVoucher] = useState<{code: string, amount: number} | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
         if (refundAmount) {
@@ -440,7 +442,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             });
             return;
         }
-
+        setIsProcessing(true);
         try {
             if (paymentMethod === 'credit_card') {
                 const paymentIntentId = booking.PaymentTransaction?.[0]?.paymentIntentId || 
@@ -529,6 +531,41 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                         transactionData
                     );
                 }
+                if (paymentMethod === 'store_credit') {
+                    try {
+                        const voucherResponse = await axios.post(
+                            `${process.env.NEXT_PUBLIC_API_URL}/voucher/generate`,
+                            {
+                                amount: amount,
+                                originReservationId: booking.id
+                            }
+                        );
+                        
+                        if (voucherResponse.data && voucherResponse.data.voucher) {
+                            const voucherCode = voucherResponse.data.voucher.code;
+                            setGeneratedVoucher({
+                                code: voucherCode,
+                                amount: amount
+                            });
+                            toast({
+                                title: 'Store Credit Generated',
+                                description: `Voucher code: ${voucherCode} for $${amount.toFixed(2)} has been created.`,
+                                status: 'success',
+                                duration: 8000,
+                                isClosable: true,
+                            });
+                        }
+                    } catch (voucherError) {
+                        console.error('Error generating voucher:', voucherError);
+                        toast({
+                            title: 'Voucher Generation Error',
+                            description: 'The refund was processed, but there was an error creating the store credit voucher.',
+                            status: 'warning',
+                            duration: 5000,
+                            isClosable: true,
+                        });
+                    }
+                }
             }
 
             toast({
@@ -538,7 +575,9 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                 duration: 5000,
                 isClosable: true,
             });
-            onClose();
+            if (paymentMethod !== 'store_credit' || !generatedVoucher) {
+                onClose();
+            }
         } catch (error: any) {
             console.error('Error details:', {
                 message: error.message,
@@ -560,6 +599,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                 duration: 5000,
                 isClosable: true,
             });
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -698,6 +739,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                             <Button
                                                 leftIcon={<FaRegCreditCard />}
                                                 variant={paymentMethod === 'credit_card' ? 'solid' : 'outline'}
+                                                borderColor={paymentMethod === 'credit_card' ? 'blue.500' : 'gray.200'}
+                                                bg={paymentMethod === 'credit_card' ? 'blue.50' : 'white'}
+                                                color={paymentMethod === 'credit_card' ? 'blue.700' : 'gray.700'}
+                                                _hover={{ bg: paymentMethod === 'credit_card' ? 'blue.100' : 'gray.100' }}
                                                 onClick={() => setPaymentMethod('credit_card')}
                                             >
                                                 Credit Card
@@ -706,6 +751,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                         <Button
                                             leftIcon={<BsCash />}
                                             variant={paymentMethod === 'cash' ? 'solid' : 'outline'}
+                                            borderColor={paymentMethod === 'cash' ? 'blue.500' : 'gray.200'}
+                                            bg={paymentMethod === 'cash' ? 'blue.50' : 'white'}
+                                            color={paymentMethod === 'cash' ? 'blue.700' : 'gray.700'}
+                                            _hover={{ bg: paymentMethod === 'cash' ? 'blue.100' : 'gray.100' }}
                                             onClick={() => setPaymentMethod('cash')}
                                         >
                                             Cash
@@ -713,6 +762,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                         <Button
                                             leftIcon={<BsCheck2 />}
                                             variant={paymentMethod === 'store_credit' ? 'solid' : 'outline'}
+                                            borderColor={paymentMethod === 'store_credit' ? 'blue.500' : 'gray.200'}
+                                            bg={paymentMethod === 'store_credit' ? 'blue.50' : 'white'}
+                                            color={paymentMethod === 'store_credit' ? 'blue.700' : 'gray.700'}
+                                            _hover={{ bg: paymentMethod === 'store_credit' ? 'blue.100' : 'gray.100' }}
                                             onClick={() => setPaymentMethod('store_credit')}
                                         >
                                             Store Credit
@@ -720,11 +773,23 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                         <Button
                                             leftIcon={<BsCheck2 />}
                                             variant={paymentMethod === 'other' ? 'solid' : 'outline'}
+                                            borderColor={paymentMethod === 'other' ? 'blue.500' : 'gray.200'}
+                                            bg={paymentMethod === 'other' ? 'blue.50' : 'white'}
+                                            color={paymentMethod === 'other' ? 'blue.700' : 'gray.700'}
+                                            _hover={{ bg: paymentMethod === 'other' ? 'blue.100' : 'gray.100' }}
                                             onClick={() => setPaymentMethod('other')}
                                         >
                                             Other
                                         </Button>
                                     </HStack>
+                                    
+                                    {paymentMethod === 'store_credit' && (
+                                        <Box mt={2} p={3} bg="green.50" borderRadius="md" borderColor="green.200" borderWidth="1px">
+                                            <Text fontSize="sm" color="green.700">
+                                                A voucher code will be generated for the refund amount. The customer can use this voucher for future bookings.
+                                            </Text>
+                                        </Box>
+                                    )}
                                 </Box>
 
                                 {paymentMethod === 'credit_card' && hasOriginalCardPayment && (
@@ -887,22 +952,60 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                 </ModalBody>
 
                 <ModalFooter borderTopWidth={1} borderColor="gray.200">
-                    <HStack spacing={4}>
-                        <Checkbox
-                            isChecked={notifyCustomer}
-                            onChange={(e) => setNotifyCustomer(e.target.checked)}
-                        >
-                            Notify Customer
-                        </Checkbox>
-                        <Button variant="ghost" onClick={onClose}>Skip</Button>
-                        <Button 
-                            colorScheme="blue" 
-                            onClick={handleSaveChanges}
-                            isLoading={isLoading}
-                        >
-                            Save Changes
-                        </Button>
-                    </HStack>
+                    {generatedVoucher ? (
+                        <VStack w="100%" spacing={4} align="stretch">
+                            <Box p={4} bg="green.50" borderRadius="md" borderWidth="1px" borderColor="green.200">
+                                <VStack spacing={3} align="stretch">
+                                    <Text fontWeight="bold" fontSize="lg" color="green.700">
+                                        Store Credit Voucher Generated
+                                    </Text>
+                                    <HStack justify="space-between">
+                                        <Text>Amount:</Text>
+                                        <Text fontWeight="bold">${generatedVoucher.amount.toFixed(2)}</Text>
+                                    </HStack>
+                                    <HStack justify="space-between">
+                                        <Text>Voucher Code:</Text>
+                                        <Box 
+                                            bg="white" 
+                                            p={2} 
+                                            borderRadius="md" 
+                                            fontFamily="monospace" 
+                                            fontWeight="bold"
+                                            fontSize="lg"
+                                            boxShadow="sm"
+                                        >
+                                            {generatedVoucher.code}
+                                        </Box>
+                                    </HStack>
+                                    <Text fontSize="sm" color="gray.600">
+                                        The customer can use this code for future bookings.
+                                    </Text>
+                                </VStack>
+                            </Box>
+                            <Flex justify="flex-end">
+                                <Button colorScheme="blue" onClick={onClose}>
+                                    Close
+                                </Button>
+                            </Flex>
+                        </VStack>
+                    ) : (
+                        <HStack spacing={4}>
+                            <Checkbox
+                                isChecked={notifyCustomer}
+                                onChange={(e) => setNotifyCustomer(e.target.checked)}
+                            >
+                                Notify Customer
+                            </Checkbox>
+                            <Button variant="ghost" onClick={onClose}>Skip</Button>
+                            <Button 
+                                colorScheme="blue" 
+                                onClick={handleSaveChanges}
+                                isLoading={isProcessing}
+                            >
+                                Save Changes
+                            </Button>
+                        </HStack>
+                    )}
                 </ModalFooter>
             </ModalContent>
         </Modal>

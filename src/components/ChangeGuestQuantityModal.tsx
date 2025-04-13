@@ -276,7 +276,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                         onClose();
                     }
                 }
-            } else if (paymentMethod === 'Cash' || paymentMethod === 'Check') {
+            } else if (paymentMethod === 'Cash' || paymentMethod === 'Check' || paymentMethod === 'Other') {
                 const pendingTransactionsResponse = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
                     { params: { payment_status: 'pending' } }
@@ -449,18 +449,15 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                 >
                                     Check
                                 </Button>
+                                <Button
+                                    size="sm"
+                                    variant={paymentMethod === 'Other' ? 'solid' : 'outline'}
+                                    onClick={() => setPaymentMethod('Other')}
+                                    leftIcon={<BsCheck2 />}
+                                >
+                                    Other
+                                </Button>
                             </HStack>
-                            <Button
-                                size="sm"
-                                variant={paymentMethod === 'Other' ? 'solid' : 'outline'}
-                                onClick={() => setPaymentMethod('Other')}
-                                mb={4}
-                                colorScheme="blue"
-                                bg={paymentMethod === 'Other' ? "blue.500" : "blue.50"}
-                                color={paymentMethod === 'Other' ? "white" : "blue.500"}
-                            >
-                                Other
-                            </Button>
 
                             {paymentMethod === 'Credit Card' && (
                                 <Box mt={2} mb={4} p={3} borderWidth="1px" borderRadius="md">

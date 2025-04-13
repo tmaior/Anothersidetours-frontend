@@ -160,39 +160,110 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
     };
 
     const handleSaveLineItems = async () => {
-        if (finalRefundAmount > 0 && reservationId) {
+        const initialItemsTotal = initialItems.reduce((acc, item) => {
+            const totalItem = item.amount * item.quantity;
+            return item.type === "Discount" ? acc - totalItem : acc + totalItem;
+        }, 0);
+        const currentItemsTotal = items.reduce((acc, item) => {
+            if (!item.name && item.amount === 0) return acc;
+            const totalItem = item.amount * item.quantity;
+            return item.type === "Discount" ? acc - totalItem : acc + totalItem;
+        }, 0);
+        
+        const priceDifference = currentItemsTotal - initialItemsTotal;
+        if (Math.abs(priceDifference) > 0.01 && reservationId) {
             try {
                 const reservationResponse = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservationId}`
                 );
                 
-                if (reservationResponse.data && reservationResponse.data.tenantId) {
-                    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
-                        tenant_id: reservationResponse.data.tenantId,
-                        reservation_id: reservationId,
-                        amount: finalRefundAmount,
-                        payment_status: 'pending',
-                        transaction_type: 'REFUND',
-                        transaction_direction: 'refund',
-                        metadata: {
-                            refundReason: 'Custom line items discount',
-                            createdAt: new Date().toISOString()
+                if (reservationResponse.data && 
+                    reservationResponse.data.tenantId && 
+                    reservationResponse.data.status === 'ACCEPTED') {
+                    
+                    const isRefund = priceDifference < 0;
+                    const transactionAmount = Math.abs(priceDifference);
+
+                    const pendingTransactionsResponse = await axios.get(
+                        `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservationId}`,
+                        { params: { payment_status: 'pending' } }
+                    );
+                    
+                    const pendingTransactions = pendingTransactionsResponse.data || [];
+                    const transactionDirection = isRefund ? 'refund' : 'charge';
+
+                    const matchingTransaction = pendingTransactions.find(tx => 
+                        tx.transaction_direction === transactionDirection && 
+                        Math.abs(tx.amount - transactionAmount) < 0.01
+                    );
+                    
+                    if (matchingTransaction) {
+                        await axios.put(
+                            `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${matchingTransaction.id}`,
+                            {
+                                payment_status: 'pending',
+                                updated_at: new Date().toISOString(),
+                                metadata: {
+                                    ...matchingTransaction.metadata,
+                                    updatedAt: new Date().toISOString(),
+                                    customLineItems: items
+                                }
+                            }
+                        );
+                    } else {
+                        const pendingWithSameDirection = pendingTransactions.filter(
+                            tx => tx.transaction_direction === transactionDirection && 
+                                 tx.transaction_type === 'CUSTOM_LINE_ITEMS'
+                        );
+                        
+                        for (const tx of pendingWithSameDirection) {
+                            await axios.put(
+                                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${tx.id}`,
+                                {
+                                    payment_status: 'archived',
+                                    updated_at: new Date().toISOString()
+                                }
+                            );
                         }
-                    });
+                        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
+                            tenant_id: reservationResponse.data.tenantId,
+                            reservation_id: reservationId,
+                            amount: transactionAmount,
+                            payment_status: 'pending',
+                            // payment_method: 'system',
+                            transaction_type: 'CUSTOM_LINE_ITEMS',
+                            transaction_direction: transactionDirection,
+                            description: isRefund 
+                                ? 'Refund due from custom line items update' 
+                                : 'Balance due from custom line items update',
+                            reference_number: `CL-${Date.now().toString().slice(-6)}`,
+                            is_price_adjustment: true,
+                            adjustment_reason: 'custom_line_items_update',
+                            metadata: {
+                                previousItems: initialItems,
+                                currentItems: items,
+                                priceDifference: priceDifference,
+                                createdAt: new Date().toISOString()
+                            }
+                        });
+                    }
+                    const message = isRefund 
+                        ? `A refund of $${transactionAmount.toFixed(2)} has been created.`
+                        : `A balance due of $${transactionAmount.toFixed(2)} has been created.`;
                     
                     toast({
-                        title: "Refund transaction created",
-                        description: `A refund of $${finalRefundAmount.toFixed(2)} has been created.`,
+                        title: isRefund ? "Refund transaction created" : "Balance due created",
+                        description: message,
                         status: "success",
                         duration: 3000,
                         isClosable: true,
                     });
                 }
             } catch (error) {
-                console.error("Error creating refund transaction:", error);
+                console.error("Error creating transaction:", error);
                 toast({
                     title: "Error",
-                    description: "Failed to create refund transaction. Line items will still be saved.",
+                    description: "Failed to create transaction. Line items will still be saved.",
                     status: "error",
                     duration: 5000,
                     isClosable: true,
@@ -210,12 +281,17 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
             return item.type === "Discount" ? acc - totalItem : acc + totalItem;
         }, 0);
         
-        return (originalTotal + lineItemsTotal).toFixed(2);
+        return (basePrice * currentQuantity + lineItemsTotal).toFixed(2);
     };
 
     const currentTotal = parseFloat(calculateTotal());
-    const rawDifference = currentTotal - originalTotal;
-    
+    const initialItemsTotal = initialItems.reduce((acc, item) => {
+        const totalItem = item.amount * item.quantity;
+        return item.type === "Discount" ? acc - totalItem : acc + totalItem;
+    }, 0);
+    const initialTotal = basePrice * currentQuantity + initialItemsTotal;
+    const rawDifference = currentTotal - initialTotal;
+
     const isRefund = rawDifference < 0;
     
     const additionalBalance = !isRefund ? Math.max(0, rawDifference) : 0;
@@ -355,7 +431,7 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                                 <Divider my={4} />
                                 <Flex justify="space-between">
                                     <Text fontWeight="bold" fontSize="lg">Total:</Text>
-                                    <Text fontWeight="bold" fontSize="lg">${(Number(basePrice) * currentQuantity).toFixed(2)}</Text>
+                                    <Text fontWeight="bold" fontSize="lg">${currentTotal.toFixed(2)}</Text>
                                 </Flex>
                                 
                                 {!isLoadingPendingBalance && finalBalanceDue > 0 && (

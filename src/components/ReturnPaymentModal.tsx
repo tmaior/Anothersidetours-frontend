@@ -93,6 +93,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     const [isLoadingTourId, setIsLoadingTourId] = useState<boolean>(true);
     const [guestQuantity, setGuestQuantity] = useState<number>(0);
     const [guestPrice, setGuestPrice] = useState<number>(0);
+    const [pendingTransactions, setPendingTransactions] = useState([]);
 
     useEffect(() => {
         if (refundAmount) {
@@ -227,6 +228,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                     }
                     
                     setPendingBalance(totalPending);
+                    setPendingTransactions(filteredTransactions);
                 }
             } catch (error) {
                 console.error('Error fetching pending transactions:', error);
@@ -390,7 +392,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             setupIntentId: booking?.setupIntentId,
             total_price: booking?.total_price,
             calculated_total: calculateTotalPrice(),
-            refund_amount: amount
+            refund_amount: amount,
+            pendingTransactions: pendingTransactions
         });
 
         if (paymentMethod === 'credit_card' && !selectedCardId) {
@@ -469,23 +472,63 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                     }
                 );
             } else {
-                await axios.post(
-                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
-                    {
-                        tenant_id: booking.id.split('-')[1],
+                const pendingRefundTx = pendingTransactions.find(tx => 
+                    tx.transaction_direction === 'refund' && Math.abs(tx.amount - amount) < 0.01
+                );
+                const tenantId = booking.id.split('-')[1] || '';
+                if (pendingRefundTx) {
+                    await axios.put(
+                        `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${pendingRefundTx.id}`,
+                        {
+                            payment_status: 'completed',
+                            payment_method: paymentMethod,
+                            updated_at: new Date().toISOString(),
+                            metadata: {
+                                ...pendingRefundTx.metadata,
+                                comment: comment,
+                                notifyCustomer: notifyCustomer,
+                                refundDate: new Date().toISOString(),
+                                paymentMethod: paymentMethod
+                            }
+                        }
+                    );
+                } else {
+                    const pendingRefunds = pendingTransactions.filter(tx => tx.transaction_direction === 'refund');
+                    if (pendingRefunds.length > 0) {
+                        for (const tx of pendingRefunds) {
+                            await axios.put(
+                                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${tx.id}`,
+                                {
+                                    payment_status: 'archived',
+                                    updated_at: new Date().toISOString()
+                                }
+                            );
+                        }
+                    }
+                    const transactionData = {
+                        tenant_id: tenantId,
                         reservation_id: booking.id,
                         amount: amount,
                         payment_status: 'completed',
                         payment_method: paymentMethod,
                         transaction_type: 'REFUND',
                         transaction_direction: 'refund',
+                        description: `Refund via ${paymentMethod}`,
+                        reference_number: `RF-${Date.now().toString().slice(-6)}`,
                         metadata: {
                             comment: comment,
                             notifyCustomer: notifyCustomer,
-                            refundDate: new Date().toISOString()
+                            refundDate: new Date().toISOString(),
+                            paymentMethod: paymentMethod,
+                            refundReason: 'return_payment'
                         }
-                    }
-                );
+                    };
+                    
+                    await axios.post(
+                        `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
+                        transactionData
+                    );
+                }
             }
 
             toast({

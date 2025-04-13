@@ -1189,7 +1189,29 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                 );
                 
                 if (response.data && response.data.length > 0) {
-                    setCompletedTransactions(response.data);
+                    const transactions = response.data;
+                    const transactionsWithCardDetails = await Promise.all(
+                        transactions.map(async (transaction) => {
+                            if (transaction.payment_method?.toLowerCase().includes('card') && 
+                                transaction.paymentMethodId) {
+                                try {
+                                    const cardResponse = await axios.get(
+                                        `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${transaction.paymentMethodId}`
+                                    );
+                                    if (cardResponse.data?.last4) {
+                                        return {
+                                            ...transaction,
+                                            cardLast4: cardResponse.data.last4
+                                        };
+                                    }
+                                } catch (error) {
+                                    console.error("Error fetching card details for transaction:", error);
+                                }
+                            }
+                            return transaction;
+                        })
+                    );
+                    setCompletedTransactions(transactionsWithCardDetails);
                 }
             } catch (error) {
                 console.error('Error fetching completed transactions:', error);
@@ -1626,7 +1648,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                                                     borderRadius="md"
                                                     boxShadow="sm"
                                                 >
-                                                    *{transaction.paymentMethodId ? cardDetails?.last4 : 'Card'}
+                                                    *{transaction.cardLast4 || 'Card'}
                                                 </Box>{" "}
                                             </> : 
                                             transaction.payment_method

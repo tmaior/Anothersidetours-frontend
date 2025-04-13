@@ -44,6 +44,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
     const [guestQuantity, setGuestQuantity] = useState(booking?.guestQuantity || 0);
     const [guestPrice, setGuestPrice] = useState(0);
     const [tourId, setTourId] = useState(null);
+    const [generatedVoucher, setGeneratedVoucher] = useState(null);
     const toast = useToast();
 
     useEffect(() => {
@@ -392,40 +393,43 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     }
                 }
             } else if (paymentMethod === "store") {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/generate`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        amount: refundAmount,
-                        originReservationId: booking.id,
-                    }),
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
-                        method: "PUT",
-                        headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify({status: "CANCELED"}),
-                    });
-
-                    if (onStatusChange) {
-                        onStatusChange("CANCELED");
+                try {
+                    const voucherResponse = await axios.post(
+                        `${process.env.NEXT_PUBLIC_API_URL}/voucher/generate`,
+                        {
+                            amount: refundAmount,
+                            originReservationId: booking.id
+                        }
+                    );
+                    
+                    if (voucherResponse.data && voucherResponse.data.voucher) {
+                        const voucherCode = voucherResponse.data.voucher.code;
+                        setGeneratedVoucher({
+                            code: voucherCode,
+                            amount: refundAmount
+                        });
+                        
+                        const bookingResponse = await axios.put(
+                            `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`,
+                            {status: "CANCELED"}
+                        );
+                        
+                        if (bookingResponse.data) {
+                            if (onStatusChange) {
+                                onStatusChange("CANCELED");
+                            }
+                            
+                            toast({
+                                title: "Store Credit Issued",
+                                description: `Voucher ${voucherCode} created successfully.`,
+                                status: "success",
+                                duration: 4000,
+                                isClosable: true,
+                            });
+                        }
                     }
-
-                    toast({
-                        title: "Store Credit Issued",
-                        description: `Voucher ${data.voucher.code} created successfully.`,
-                        status: "success",
-                        duration: 4000,
-                        isClosable: true,
-                    });
-                    onClose();
-                } else {
-                    throw new Error(data.message || "Failed to generate voucher");
+                } catch (error) {
+                    throw new Error(error.response?.data?.message || "Failed to generate voucher");
                 }
             } else {
                 toast({
@@ -521,6 +525,10 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                 variant={paymentMethod === "Credit Card" ? "solid" : "outline"}
                                                 onClick={() => setPaymentMethod("Credit Card")}
                                                 leftIcon={<FaRegCreditCard />}
+                                                borderColor={paymentMethod === "Credit Card" ? 'blue.500' : 'gray.200'}
+                                                bg={paymentMethod === "Credit Card" ? 'blue.50' : 'white'}
+                                                color={paymentMethod === "Credit Card" ? 'blue.700' : 'gray.700'}
+                                                _hover={{ bg: paymentMethod === "Credit Card" ? 'blue.100' : 'gray.100' }}
                                             >
                                                 Credit Card
                                             </Button>
@@ -530,6 +538,10 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                             leftIcon={<BsCash />}
                                             variant={paymentMethod === "Cash" ? "solid" : "outline"}
                                             onClick={() => setPaymentMethod("Cash")}
+                                            borderColor={paymentMethod === "Cash" ? 'blue.500' : 'gray.200'}
+                                            bg={paymentMethod === "Cash" ? 'blue.50' : 'white'}
+                                            color={paymentMethod === "Cash" ? 'blue.700' : 'gray.700'}
+                                            _hover={{ bg: paymentMethod === "Cash" ? 'blue.100' : 'gray.100' }}
                                         >
                                             Cash
                                         </Button>
@@ -537,6 +549,10 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                             variant={paymentMethod === "store" ? "solid" : "outline"}
                                             onClick={() => setPaymentMethod("store")}
                                             leftIcon={<BsCheck2 />}
+                                            borderColor={paymentMethod === "store" ? 'blue.500' : 'gray.200'}
+                                            bg={paymentMethod === "store" ? 'blue.50' : 'white'}
+                                            color={paymentMethod === "store" ? 'blue.700' : 'gray.700'}
+                                            _hover={{ bg: paymentMethod === "store" ? 'blue.100' : 'gray.100' }}
                                         >
                                             Store Credit
                                         </Button>
@@ -544,10 +560,22 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                             variant={paymentMethod === "other" ? "solid" : "outline"}
                                             onClick={() => setPaymentMethod("other")}
                                             leftIcon={<BsCheck2 />}
+                                            borderColor={paymentMethod === "other" ? 'blue.500' : 'gray.200'}
+                                            bg={paymentMethod === "other" ? 'blue.50' : 'white'}
+                                            color={paymentMethod === "other" ? 'blue.700' : 'gray.700'}
+                                            _hover={{ bg: paymentMethod === "other" ? 'blue.100' : 'gray.100' }}
                                         >
                                             Other
                                         </Button>
                                     </HStack>
+                                    
+                                    {paymentMethod === 'store' && (
+                                        <Box mt={2} p={3} bg="green.50" borderRadius="md" borderColor="green.200" borderWidth="1px">
+                                            <Text fontSize="sm" color="green.700">
+                                                A voucher code will be generated for the refund amount. The customer can use this voucher for future bookings.
+                                            </Text>
+                                        </Box>
+                                    )}
                                 </Box>
 
                                 {paymentMethod === 'Credit Card' && (
@@ -758,23 +786,61 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 </ModalBody>
 
                 <ModalFooter>
-                    <HStack>
-                        <Checkbox 
-                            isChecked={notifyCustomer}
-                            onChange={(e) => setNotifyCustomer(e.target.checked)}
-                        >
-                            Notify Customer
-                        </Checkbox>
-                        <Button onClick={onClose}>Cancel</Button>
-                        <Button 
-                            colorScheme="blue" 
-                            onClick={handleSaveChanges} 
-                            isLoading={isSubmitting}
-                            isDisabled={isLoadingTierPricing || isLoadingAddons || isLoadingCustomItems}
-                        >
-                            Process Cancellation
-                        </Button>
-                    </HStack>
+                    {generatedVoucher ? (
+                        <VStack w="100%" spacing={4} align="stretch">
+                            <Box p={4} bg="green.50" borderRadius="md" borderWidth="1px" borderColor="green.200">
+                                <VStack spacing={3} align="stretch">
+                                    <Text fontWeight="bold" fontSize="lg" color="green.700">
+                                        Store Credit Voucher Generated
+                                    </Text>
+                                    <HStack justify="space-between">
+                                        <Text>Amount:</Text>
+                                        <Text fontWeight="bold">${generatedVoucher.amount.toFixed(2)}</Text>
+                                    </HStack>
+                                    <HStack justify="space-between">
+                                        <Text>Voucher Code:</Text>
+                                        <Box 
+                                            bg="white" 
+                                            p={2} 
+                                            borderRadius="md" 
+                                            fontFamily="monospace" 
+                                            fontWeight="bold"
+                                            fontSize="lg"
+                                            boxShadow="sm"
+                                        >
+                                            {generatedVoucher.code}
+                                        </Box>
+                                    </HStack>
+                                    <Text fontSize="sm" color="gray.600">
+                                        The customer can use this code for future bookings.
+                                    </Text>
+                                </VStack>
+                            </Box>
+                            <Flex justify="flex-end">
+                                <Button colorScheme="blue" onClick={onClose}>
+                                    Close
+                                </Button>
+                            </Flex>
+                        </VStack>
+                    ) : (
+                        <HStack>
+                            <Checkbox 
+                                isChecked={notifyCustomer}
+                                onChange={(e) => setNotifyCustomer(e.target.checked)}
+                            >
+                                Notify Customer
+                            </Checkbox>
+                            <Button onClick={onClose}>Cancel</Button>
+                            <Button 
+                                colorScheme="blue" 
+                                onClick={handleSaveChanges} 
+                                isLoading={isSubmitting}
+                                isDisabled={isLoadingTierPricing || isLoadingAddons || isLoadingCustomItems}
+                            >
+                                Process Cancellation
+                            </Button>
+                        </HStack>
+                    )}
                 </ModalFooter>
             </ModalContent>
         </Modal>

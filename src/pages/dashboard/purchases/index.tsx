@@ -59,6 +59,9 @@ import useGuidesStore from "../../../utils/store";
 import RefundModal from "../../../components/RefundModal";
 import BookingCancellationModal from "../../../components/BookingCancellationModal";
 import ReturnPaymentModal from '../../../components/ReturnPaymentModal';
+import {FaRegCreditCard} from 'react-icons/fa';
+import {BsCash} from 'react-icons/bs';
+import {BiCheck} from 'react-icons/bi';
 
 type GuestItemProps = {
     name: string;
@@ -1124,6 +1127,8 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
     } = useDisclosure();
     const [bookingChanges, setBookingChanges] = useState(null);
     const [isReturnPaymentModalOpen, setIsReturnPaymentModalOpen] = useState(false);
+    const [completedTransactions, setCompletedTransactions] = useState([]);
+    const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
 
     useEffect(() => {
         const fetchTierPricing = async () => {
@@ -1171,6 +1176,32 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
             fetchGroupReservations();
         }
     }, [isGroupBooking, reservation?.groupId]);
+
+    useEffect(() => {
+        const fetchCompletedTransactions = async () => {
+            if (!reservation?.id) return;
+            
+            setIsLoadingTransactions(true);
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`,
+                    { params: { payment_status: 'completed' } }
+                );
+                
+                if (response.data && response.data.length > 0) {
+                    setCompletedTransactions(response.data);
+                }
+            } catch (error) {
+                console.error('Error fetching completed transactions:', error);
+            } finally {
+                setIsLoadingTransactions(false);
+            }
+        };
+
+        if (reservation?.id) {
+            fetchCompletedTransactions();
+        }
+    }, [reservation?.id]);
 
     useEffect(() => {
         if (reservation) {
@@ -1423,7 +1454,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
     const paidTotal = parseFloat(reservation?.total_price || '0') - pendingBalance;
     const totalBalanceDue = pendingBalance;
 
-    if (isLoading) {
+    if (isLoading || isLoadingTransactions) {
         if (!reservation) {
             return null;
         }
@@ -1459,6 +1490,25 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
             return applicableTier.price;
         }
         return tierPricingData.basePrice;
+    };
+
+    const getPaymentMethodIcon = (method) => {
+        const methodLower = method ? method.toLowerCase() : '';
+        if (methodLower.includes('card') || methodLower.includes('credit')) {
+            return <FaRegCreditCard />;
+        } else if (methodLower.includes('cash')) {
+            return <BsCash />;
+        } else if (methodLower.includes('check')) {
+            return <BiCheck />;
+        } else {
+            return <FiSend />;
+        }
+    };
+
+    const formatPaymentDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
     };
 
     return (
@@ -1556,177 +1606,114 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                 </Menu>
             </VStack>
 
-            {cardDetails ? (
-                <Box mt={8}>
-                    <Text fontSize="xl" fontWeight="bold">Payment Summary</Text>
-                    <HStack justifyContent="space-between" mt={4}>
-                        <Box as="span" role="img" aria-label="Card Icon" fontSize="lg">
-                            💳
-                        </Box>
-                        <Text>
-                            Payment
-                            <Box
-                                as="span"
-                                bg="white"
-                                px={1}
-                                py={1}
-                                borderRadius="md"
-                                boxShadow="sm"
-                            >
-                                *{cardDetails.last4}
-                            </Box>{" "}
-                            {formatDateToAmerican(formatDate(cardDetails.paymentDate))}
-                        </Text>
-                    </HStack>
-                    <HStack justifyContent="space-between">
-                        <Text>Paid</Text>
-                        <Text fontWeight="bold">${paidTotal.toFixed(2)}</Text>
-                    </HStack>
-                    <Box mt={4}>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            height="28px"
-                            fontSize="sm"
-                            fontWeight="normal"
-                            borderRadius="md"
-                            background="white"
-                            onClick={() => setIsApplyCodeModalOpen(true)}
-                        >
-                            <Text fontWeight="medium">
-                                Apply Code
-                            </Text>
-                        </Button>
-                    </Box>
-
-                    {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && !isRefundTransaction && (
-                        <Box mt={4}>
-                            <HStack justifyContent="space-between">
-                                <Text fontWeight="bold" color="red.500" fontSize="xl">Balance Due</Text>
-                                <Text fontWeight="bold" color="red.500"
-                                      fontSize="xl">${totalBalanceDue.toFixed(2)}</Text>
+            <Box mt={8}>
+                <Text fontSize="xl" fontWeight="bold">Payment Summary</Text>
+                
+                {completedTransactions && completedTransactions.length > 0 ? (
+                    <>
+                        {completedTransactions.map((transaction, index) => (
+                            <HStack key={index} justifyContent="space-between" mt={2}>
+                                <HStack>
+                                    {getPaymentMethodIcon(transaction.payment_method)}
+                                    <Text fontSize="sm">
+                                        Payment {transaction.payment_method && transaction.payment_method.toLowerCase().includes('card') ? 
+                                            <>
+                                                <Box
+                                                    as="span"
+                                                    bg="white"
+                                                    px={1}
+                                                    py={1}
+                                                    borderRadius="md"
+                                                    boxShadow="sm"
+                                                >
+                                                    *{transaction.paymentMethodId ? cardDetails?.last4 : 'Card'}
+                                                </Box>{" "}
+                                            </> : 
+                                            transaction.payment_method
+                                        } {formatPaymentDate(transaction.updated_at || transaction.created_at)}
+                                    </Text>
+                                </HStack>
+                                <Text fontWeight="bold">${transaction.amount.toFixed(2)}</Text>
                             </HStack>
-
-                            <Flex justifyContent="flex-end" mt={2}>
-                                <Box height="36px" width="auto" display="inline-block">
-                                    <Button
-                                        colorScheme="green"
-                                        height="100%"
-                                        width="100%"
-                                        px={6}
-                                        fontSize="sm"
-                                        onClick={onCollectBalanceOpen}
-                                    >
-                                        Collect Balance
-                                    </Button>
-                                </Box>
-                            </Flex>
-                        </Box>
-                    )}
-                    
-                    {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && isRefundTransaction && (
-                        <Box mt={4}>
-                            <HStack justifyContent="space-between">
-                                <Text fontWeight="bold" color="green.500" fontSize="xl">Refund</Text>
-                                <Text fontWeight="bold" color="green.500"
-                                      fontSize="xl">${totalBalanceDue.toFixed(2)}</Text>
-                            </HStack>
-
-                            <Flex justifyContent="flex-end" mt={2}>
-                                <Box height="36px" width="auto" display="inline-block">
-                                    <Button
-                                        colorScheme="green"
-                                        height="100%"
-                                        width="100%"
-                                        px={6}
-                                        fontSize="sm"
-                                        onClick={() => setIsReturnPaymentModalOpen(true)}
-                                    >
-                                        Refund Excess Payment
-                                    </Button>
-                                </Box>
-                            </Flex>
-                        </Box>
-                    )}
-                </Box>
-            ) : (
-                <Box mt={8}>
-                    <Text fontSize="xl" fontWeight="bold">Payment Summary</Text>
+                        ))}
+                        <HStack justifyContent="space-between" mt={2}>
+                            <Text>Paid</Text>
+                            <Text fontWeight="bold">${paidTotal.toFixed(2)}</Text>
+                        </HStack>
+                    </>
+                ) : (
                     <HStack justifyContent="space-between" mt={4}>
                         <Text color="gray.600">No payment method information available</Text>
                     </HStack>
-                    <HStack justifyContent="space-between">
-                        <Text>Total Due</Text>
-                        <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
-                    </HStack>
-                    <Box mt={4}>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            height="28px"
-                            fontSize="sm"
-                            fontWeight="normal"
-                            borderRadius="md"
-                            background="white"
-                            onClick={() => setIsApplyCodeModalOpen(true)}
-                        >
-                            <Text fontWeight="medium">
-                                Apply Code
-                            </Text>
-                        </Button>
-                    </Box>
-
-                    {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && !isRefundTransaction && (
-                        <Box mt={4}>
-                            <HStack justifyContent="space-between">
-                                <Text fontWeight="bold" color="red.500" fontSize="xl">Balance Due</Text>
-                                <Text fontWeight="bold" color="red.500"
-                                      fontSize="xl">${totalBalanceDue.toFixed(2)}</Text>
-                            </HStack>
-
-                            <Flex justifyContent="flex-end" mt={2}>
-                                <Box height="36px" width="auto" display="inline-block">
-                                    <Button
-                                        colorScheme="green"
-                                        height="100%"
-                                        width="100%"
-                                        px={6}
-                                        fontSize="sm"
-                                        onClick={onCollectBalanceOpen}
-                                    >
-                                        Collect Balance
-                                    </Button>
-                                </Box>
-                            </Flex>
-                        </Box>
-                    )}
-                    
-                    {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && isRefundTransaction && (
-                        <Box mt={4}>
-                            <HStack justifyContent="space-between">
-                                <Text fontWeight="bold" color="green.500" fontSize="xl">Refund</Text>
-                                <Text fontWeight="bold" color="green.500"
-                                      fontSize="xl">${totalBalanceDue.toFixed(2)}</Text>
-                            </HStack>
-
-                            <Flex justifyContent="flex-end" mt={2}>
-                                <Box height="36px" width="auto" display="inline-block">
-                                    <Button
-                                        colorScheme="green"
-                                        height="100%"
-                                        width="100%"
-                                        px={6}
-                                        fontSize="sm"
-                                        onClick={() => setIsReturnPaymentModalOpen(true)}
-                                    >
-                                        Refund Excess Payment
-                                    </Button>
-                                </Box>
-                            </Flex>
-                        </Box>
-                    )}
+                )}
+                
+                <Box mt={4}>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        height="28px"
+                        fontSize="sm"
+                        fontWeight="normal"
+                        borderRadius="md"
+                        background="white"
+                        onClick={() => setIsApplyCodeModalOpen(true)}
+                    >
+                        <Text fontWeight="medium">
+                            Apply Code
+                        </Text>
+                    </Button>
                 </Box>
-            )}
+
+                {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && !isRefundTransaction && (
+                    <Box mt={4}>
+                        <HStack justifyContent="space-between">
+                            <Text fontWeight="bold" color="red.500" fontSize="xl">Balance Due</Text>
+                            <Text fontWeight="bold" color="red.500"
+                                  fontSize="xl">${totalBalanceDue.toFixed(2)}</Text>
+                        </HStack>
+
+                        <Flex justifyContent="flex-end" mt={2}>
+                            <Box height="36px" width="auto" display="inline-block">
+                                <Button
+                                    colorScheme="green"
+                                    height="100%"
+                                    width="100%"
+                                    px={6}
+                                    fontSize="sm"
+                                    onClick={onCollectBalanceOpen}
+                                >
+                                    Collect Balance
+                                </Button>
+                            </Box>
+                        </Flex>
+                    </Box>
+                )}
+                
+                {isPurchasePage && !isLoadingPendingBalance && totalBalanceDue > 0 && isRefundTransaction && (
+                    <Box mt={4}>
+                        <HStack justifyContent="space-between">
+                            <Text fontWeight="bold" color="green.500" fontSize="xl">Refund</Text>
+                            <Text fontWeight="bold" color="green.500"
+                                  fontSize="xl">${totalBalanceDue.toFixed(2)}</Text>
+                        </HStack>
+
+                        <Flex justifyContent="flex-end" mt={2}>
+                            <Box height="36px" width="auto" display="inline-block">
+                                <Button
+                                    colorScheme="green"
+                                    height="100%"
+                                    width="100%"
+                                    px={6}
+                                    fontSize="sm"
+                                    onClick={() => setIsReturnPaymentModalOpen(true)}
+                                >
+                                    Refund Excess Payment
+                                </Button>
+                            </Box>
+                        </Flex>
+                    </Box>
+                )}
+            </Box>
 
             <ChangeGuestQuantityModal
                 booking={reservation}

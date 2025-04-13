@@ -30,7 +30,7 @@ import {CiCalendar, CiClock2, CiLocationArrow1, CiSquarePlus} from "react-icons/
 import {IoPersonOutline} from "react-icons/io5";
 import {RiRefund2Line} from "react-icons/ri";
 import {AiOutlineCompass, AiOutlineMail} from "react-icons/ai";
-import {BsBox2, BsTelephone, BsThreeDots} from "react-icons/bs";
+import {BsBox2, BsCash, BsTelephone, BsThreeDots} from "react-icons/bs";
 import {PiPencilSimpleLineDuotone} from "react-icons/pi";
 import {useRouter} from "next/router";
 import {HiOutlineMail} from "react-icons/hi";
@@ -60,7 +60,6 @@ import RefundModal from "../../../components/RefundModal";
 import BookingCancellationModal from "../../../components/BookingCancellationModal";
 import ReturnPaymentModal from '../../../components/ReturnPaymentModal';
 import {FaRegCreditCard} from 'react-icons/fa';
-import {BsCash} from 'react-icons/bs';
 import {BiCheck} from 'react-icons/bi';
 
 type GuestItemProps = {
@@ -1185,15 +1184,21 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`,
-                    { params: { payment_status: 'completed' } }
+                    {params: {payment_status: 'completed'}}
                 );
-                
+
                 if (response.data && response.data.length > 0) {
-                    const transactions = response.data;
+                    const filteredTransactions = response.data.filter(transaction =>
+                        transaction.payment_status === 'completed' &&
+                        transaction.transaction_direction === 'charge'
+                    );
+
                     const transactionsWithCardDetails = await Promise.all(
-                        transactions.map(async (transaction) => {
-                            if (transaction.payment_method?.toLowerCase().includes('card') && 
-                                transaction.paymentMethodId) {
+                        filteredTransactions.map(async (transaction) => {
+                            if (
+                                transaction.payment_method?.toLowerCase().includes('card') &&
+                                transaction.paymentMethodId
+                            ) {
                                 try {
                                     const cardResponse = await axios.get(
                                         `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${transaction.paymentMethodId}`
@@ -1638,21 +1643,21 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                                 <HStack>
                                     {getPaymentMethodIcon(transaction.payment_method)}
                                     <Text fontSize="sm">
-                                        Payment {transaction.payment_method && transaction.payment_method.toLowerCase().includes('card') ? 
-                                            <>
-                                                <Box
-                                                    as="span"
-                                                    bg="white"
-                                                    px={1}
-                                                    py={1}
-                                                    borderRadius="md"
-                                                    boxShadow="sm"
-                                                >
-                                                    *{transaction.cardLast4 || 'Card'}
-                                                </Box>{" "}
-                                            </> : 
-                                            transaction.payment_method
-                                        } {formatPaymentDate(transaction.updated_at || transaction.created_at)}
+                                        Payment {transaction.payment_method && transaction.payment_method.toLowerCase().includes('card') ?
+                                        <>
+                                            <Box
+                                                as="span"
+                                                bg="white"
+                                                px={1}
+                                                py={1}
+                                                borderRadius="md"
+                                                boxShadow="sm"
+                                            >
+                                                *{transaction.cardLast4 || 'Card'}
+                                            </Box>{" "}
+                                        </> :
+                                        transaction.payment_method
+                                    } {formatPaymentDate(transaction.updated_at || transaction.created_at)}
                                     </Text>
                                 </HStack>
                                 <Text fontWeight="bold">${transaction.amount.toFixed(2)}</Text>
@@ -1668,7 +1673,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                         <Text color="gray.600">No payment method information available</Text>
                     </HStack>
                 )}
-                
+
                 <Box mt={4}>
                     <Button
                         size="sm"

@@ -319,24 +319,73 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     });
                     return;
                 }
-                const paymentResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
-                    transactionId: originalTransaction.id,
-                    amount: refundAmount,
-                    paymentMethod: paymentMethod,
-                    bookingId: booking.id,
-                    tag: "Cancellation",
-                    notifyCustomer: notifyCustomer,
-                    type: 'CANCELLATION_REFUND',
-                    transaction_direction: 'refund',
-                    metadata: {
-                        originalPrice: calculateTotalPrice(),
-                        refundAmount: refundAmount,
-                        comment: comment,
-                        refundDate: new Date().toISOString()
-                    }
-                });
+                const paymentIntentId = originalTransaction.paymentIntentId || 
+                                        originalTransaction.stripe_payment_id;
+                
+                if (!paymentIntentId) {
+                    toast({
+                        title: "Error",
+                        description: "No payment intent ID found for this transaction.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                    return;
+                }
 
-                if (paymentResponse.data) {
+                try {
+                    const refundPayload = {
+                        paymentIntentId: paymentIntentId,
+                        paymentMethodId: originalTransaction.paymentMethodId,
+                        amount: refundAmount
+                    };
+
+                    if (!refundPayload.paymentIntentId || refundPayload.paymentIntentId.trim() === '') {
+                        throw new Error('Payment Intent ID cannot be empty');
+                    }
+
+                    if (refundPayload.paymentIntentId.startsWith('seti_')) {
+                        throw new Error('Invalid Payment Intent ID. A setup intent cannot be used for refunds.');
+                    }
+
+                    await axios.post(
+                        `${process.env.NEXT_PUBLIC_API_URL}/refund`,
+                        refundPayload,
+                        {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+                    const tenantId = booking.tenantId || originalTransaction.tenant_id;
+                    
+                    if (!tenantId) {
+                        throw new Error('Tenant ID is missing. Cannot create refund transaction.');
+                    }
+                    
+                    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
+                        tenant_id: tenantId,
+                        reservation_id: booking.id,
+                        amount: refundAmount,
+                        payment_status: 'completed',
+                        payment_method: 'Credit Card',
+                        transaction_type: 'CANCELLATION_REFUND',
+                        transaction_direction: 'refund',
+                        description: `Refund of $${refundAmount.toFixed(2)} processed for cancelled booking`,
+                        reference_number: `RF-${Date.now().toString().slice(-6)}`,
+                        stripe_payment_id: paymentIntentId,
+                        paymentIntentId: paymentIntentId,
+                        metadata: {
+                            originalPrice: calculateTotalPrice(),
+                            refundAmount: refundAmount,
+                            comment: comment,
+                            refundDate: new Date().toISOString(),
+                            cardInfo: cardInfo,
+                            originalTransactionId: originalTransaction.id,
+                            notifyCustomer: notifyCustomer,
+                            paymentMethodId: originalTransaction.paymentMethodId
+                        }
+                    });
                     const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
                         status: "CANCELED"
                     });
@@ -354,6 +403,17 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         }
                         onClose();
                     }
+                } catch (error) {
+                    console.error("Stripe refund error:", error);
+                    toast({
+                        title: "Refund Error",
+                        description: error.response?.data?.message || "Failed to process refund with Stripe.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                    setIsSubmitting(false);
+                    return;
                 }
             } else if (paymentMethod === 'Cash') {
                 const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
@@ -364,12 +424,14 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     payment_method: 'Cash',
                     transaction_type: 'CANCELLATION_REFUND',
                     transaction_direction: 'refund',
-                    notifyCustomer: notifyCustomer,
+                    description: `Cash refund of $${refundAmount.toFixed(2)} for cancelled booking`,
+                    reference_number: `RF-${Date.now().toString().slice(-6)}`,
                     metadata: {
                         originalPrice: calculateTotalPrice(),
                         refundAmount: refundAmount,
                         comment: comment,
-                        refundDate: new Date().toISOString()
+                        refundDate: new Date().toISOString(),
+                        notifyCustomer: notifyCustomer
                     }
                 });
                 

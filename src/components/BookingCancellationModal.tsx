@@ -416,8 +416,22 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     return;
                 }
             } else if (paymentMethod === 'Cash') {
+                const tenantId = booking.tenantId || originalTransaction?.tenant_id;
+                
+                if (!tenantId) {
+                    toast({
+                        title: "Error",
+                        description: "Tenant ID is missing. Cannot create refund transaction.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                    setIsSubmitting(false);
+                    return;
+                }
+                
                 const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
-                    tenant_id: booking.tenantId,
+                    tenant_id: tenantId,
                     reservation_id: booking.id,
                     amount: refundAmount,
                     payment_status: 'completed',
@@ -456,11 +470,26 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 }
             } else if (paymentMethod === "store") {
                 try {
+                    const tenantId = booking.tenantId || originalTransaction?.tenant_id;
+                    
+                    if (!tenantId) {
+                        toast({
+                            title: "Error",
+                            description: "Tenant ID is missing. Cannot create store credit voucher.",
+                            status: "error",
+                            duration: 5000,
+                            isClosable: true,
+                        });
+                        setIsSubmitting(false);
+                        return;
+                    }
+                    
                     const voucherResponse = await axios.post(
                         `${process.env.NEXT_PUBLIC_API_URL}/voucher/generate`,
                         {
                             amount: refundAmount,
-                            originReservationId: booking.id
+                            originReservationId: booking.id,
+                            tenantId: tenantId
                         }
                     );
                     

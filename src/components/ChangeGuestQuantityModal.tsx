@@ -32,6 +32,7 @@ import { FaRegCreditCard } from "react-icons/fa";
 import { BsCash } from "react-icons/bs";
 import { BiCheck } from "react-icons/bi";
 import { format } from 'date-fns';
+import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 
 const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     const toast = useToast();
@@ -51,6 +52,11 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     const [, setTierPricing] = useState(null);
     const [isLoadingTierPricing, setIsLoadingTierPricing] = useState(true);
     const [guestPrice, setGuestPrice] = useState(0);
+    const [showCardForm, setShowCardForm] = useState(false);
+    const [errorMessage, setErrorMessage] = useState(null);
+    const [, setPendingTransaction] = useState(null);
+    const stripe = useStripe();
+    const elements = useElements();
 
     useEffect(() => {
         if (isOpen) {
@@ -229,6 +235,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     const handleCollect = async () => {
         try {
             setIsLoading(true);
+            setErrorMessage(null);
             const finalBookingChanges = {
                 ...bookingChanges,
                 finalAmount: bookingChanges?.finalAmount || Math.abs(bookingChanges?.priceDifference || 0),
@@ -236,45 +243,160 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
             };
             
             const isRefund = finalBookingChanges?.isRefund || finalBookingChanges?.priceDifference < 0;
+            const finalBalance = calculateFinalBalance();
+            const amountToCharge = Math.abs(finalBalance);
             
-            if (paymentMethod === 'Credit Card' && originalTransaction) {
-                const paymentResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
-                    transactionId: originalTransaction.id,
-                    amount: finalBookingChanges.finalAmount,
-                    paymentMethod: paymentMethod,
-                    bookingId: booking.id,
-                    tag: tag || null,
-                    notifyCustomer: notifyCustomer,
-                    type: isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE',
-                    transaction_direction: isRefund ? 'refund' : 'charge',
-                    metadata: {
-                        originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
-                        newGuestQuantity: finalBookingChanges.newGuestQuantity,
-                        originalPrice: finalBookingChanges.originalPrice,
-                        newPrice: finalBookingChanges.newPrice,
-                        totalBalanceDue: finalBookingChanges.totalBalanceDue,
-                        isRefund: isRefund
+            if (paymentMethod === 'Credit Card') {
+                const pendingTransactionsResponse = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
+                    { params: { payment_status: 'pending' } }
+                );
+                
+                const pendingTransactions = pendingTransactionsResponse.data;
+                const currentPendingTransaction = pendingTransactions?.find(t => 
+                    t.transaction_type !== 'CREATE'
+                );
+                
+                if (!currentPendingTransaction) {
+                    toast({
+                        title: "Error",
+                        description: "No pending transaction found for this booking.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                    setIsLoading(false);
+                    return;
+                }
+                
+                setPendingTransaction(currentPendingTransaction);
+                const setupIntentResponse = await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent-for-transaction`,
+                    { transactionId: currentPendingTransaction.id }
+                );
+                
+                if (!setupIntentResponse.data || !setupIntentResponse.data.clientSecret) {
+                    throw new Error("Failed to create setup intent");
+                }
+                
+                const { clientSecret } = setupIntentResponse.data;
+                if (originalTransaction && !showCardForm) {
+                    let paymentMethodId = originalTransaction.paymentMethodId || originalTransaction.payment_method_id;
+
+                    if (!paymentMethodId && booking.paymentMethodId) {
+                        paymentMethodId = booking.paymentMethodId;
                     }
+                    
+                    if (!paymentMethodId) {
+                        throw new Error("Unable to find original payment method");
+                    }
+                    
+                    const paymentResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
+                        transactionId: currentPendingTransaction.id,
+                        paymentMethodId: paymentMethodId,
+                        amount: amountToCharge,
+                        payment_method: 'Credit Card',
+                        bookingId: booking.id,
+                        tag: tag || null,
+                        notifyCustomer: notifyCustomer,
+                        type: isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE',
+                        transaction_direction: isRefund ? 'refund' : 'charge',
+                        metadata: {
+                            originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
+                            newGuestQuantity: finalBookingChanges.newGuestQuantity,
+                            originalPrice: finalBookingChanges.originalPrice,
+                            newPrice: finalBookingChanges.newPrice,
+                            totalBalanceDue: finalBookingChanges.totalBalanceDue,
+                            isRefund: isRefund
+                        }
+                    });
+                    
+                    if (!paymentResponse.data || paymentResponse.data.error) {
+                        throw new Error(paymentResponse.data?.error || "Payment processing failed");
+                    }
+
+                    await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`, {
+                        payment_status: 'completed',
+                        payment_method: 'Credit Card',
+                        paymentMethodId: paymentMethodId,
+                        paymentIntentId: paymentResponse.data.paymentIntentId,
+                        setupIntentId: paymentResponse.data.setupIntentId,
+                        metadata: {
+                            ...currentPendingTransaction.metadata,
+                            paymentProcessedAt: new Date().toISOString(),
+                            processed: true
+                        }
+                    });
+                } else {
+                    const cardElement = elements.getElement(CardElement);
+                    
+                    if (!cardElement) {
+                        setErrorMessage("Card element is not available.");
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
+                        payment_method: {
+                            card: elements.getElement(CardElement),
+                            billing_details: {
+                                name: booking.user?.name || booking.username || 'Customer',
+                                email: booking.user?.email || booking.email || '',
+                            },
+                        },
+                    });
+                    
+                    if (paymentMethodResponse.error) {
+                        setErrorMessage(`Payment failed: ${paymentMethodResponse.error.message}`);
+                        setIsLoading(false);
+                        return;
+                    }
+                    
+                    const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
+                    const setupIntentId = paymentMethodResponse.setupIntent.id;
+                    
+                    const processPaymentResponse = await axios.post(
+                        `${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`,
+                        { 
+                            transactionId: currentPendingTransaction.id,
+                            paymentMethodId: paymentMethodId
+                        }
+                    );
+                    
+                    if (!processPaymentResponse.data || processPaymentResponse.data.error) {
+                        throw new Error(processPaymentResponse.data?.error || "Failed to process payment");
+                    }
+
+                    await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`, {
+                        payment_status: 'completed',
+                        payment_method: 'Credit Card',
+                        paymentMethodId: paymentMethodId,
+                        paymentIntentId: processPaymentResponse.data.paymentIntentId,
+                        setupIntentId: setupIntentId,
+                        metadata: {
+                            ...currentPendingTransaction.metadata,
+                            paymentProcessedAt: new Date().toISOString(),
+                            processed: true
+                        }
+                    });
+                }
+
+                const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
+                    guestQuantity: finalBookingChanges.newGuestQuantity,
+                    total_price: finalBookingChanges.newPrice,
+                    status: booking.status
                 });
 
-                if (paymentResponse.data) {
-                    const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
-                        guestQuantity: finalBookingChanges.newGuestQuantity,
-                        total_price: finalBookingChanges.newPrice,
-                        status: booking.status
+                if (bookingResponse.data) {
+                    toast({
+                        title: "Success",
+                        description: "Payment collected and booking updated successfully.",
+                        status: "success",
+                        duration: 5000,
+                        isClosable: true,
                     });
-
-                    if (bookingResponse.data) {
-                        toast({
-                            title: "Success",
-                            description: "Payment collected and booking updated successfully.",
-                            status: "success",
-                            duration: 5000,
-                            isClosable: true,
-                        });
-                        window.location.reload();
-                        onClose();
-                    }
+                    window.location.reload();
+                    onClose();
                 }
             } else if (paymentMethod === 'Cash' || paymentMethod === 'Check' || paymentMethod === 'Other') {
                 const pendingTransactionsResponse = await axios.get(
@@ -319,7 +441,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                 const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
                     bookingId: booking.id,
                     amount: finalBookingChanges.finalAmount,
-                    paymentMethod: paymentMethod,
+                    payment_method: paymentMethod,
                     tag: tag || null,
                     notifyCustomer: notifyCustomer,
                     type: isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE',
@@ -466,15 +588,59 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                             <Spinner size="sm" mr={2} />
                                             <Text>Loading card information...</Text>
                                         </Flex>
-                                    ) : cardInfo ? (
-                                        <Flex align="center">
-                                            <Icon as={FaRegCreditCard} mr={2} />
-                                            <Text>
-                                                {cardInfo.brand || 'Card'} •••• •••• •••• {cardInfo.last4 || 'on file'}
-                                            </Text>
-                                        </Flex>
+                                    ) : cardInfo && !showCardForm ? (
+                                        <VStack align="stretch" spacing={2}>
+                                            <Flex align="center">
+                                                <Icon as={FaRegCreditCard} mr={2} />
+                                                <Text>
+                                                    {cardInfo.brand || 'Card'} •••• •••• •••• {cardInfo.last4 || 'on file'}
+                                                </Text>
+                                            </Flex>
+                                            <Button size="sm" onClick={() => setShowCardForm(true)}>
+                                                Use a different card
+                                            </Button>
+                                        </VStack>
                                     ) : (
-                                        <Text color="gray.500">No saved card information found</Text>
+                                        <VStack align="stretch" spacing={3}>
+                                            <Text fontWeight="medium">Enter card details</Text>
+                                            <Box 
+                                                p={2} 
+                                                borderWidth="1px" 
+                                                borderRadius="md" 
+                                                borderColor="gray.300"
+                                            >
+                                                <CardElement
+                                                    options={{
+                                                        hidePostalCode: true,
+                                                        style: {
+                                                            base: {
+                                                                iconColor: '#0c0e0e',
+                                                                color: '#000',
+                                                                fontWeight: '500',
+                                                                fontFamily: 'Arial, sans-serif',
+                                                                fontSize: '16px',
+                                                                fontSmoothing: 'antialiased',
+                                                                '::placeholder': {
+                                                                    color: '#aab7c4',
+                                                                },
+                                                            },
+                                                            invalid: {
+                                                                color: '#9e2146',
+                                                                iconColor: '#fa755a',
+                                                            },
+                                                        },
+                                                    }}
+                                                />
+                                            </Box>
+                                            {cardInfo && (
+                                                <Button size="sm" onClick={() => setShowCardForm(false)}>
+                                                    Use saved card
+                                                </Button>
+                                            )}
+                                            {errorMessage && (
+                                                <Text color="red.500" fontSize="sm">{errorMessage}</Text>
+                                            )}
+                                        </VStack>
                                     )}
                                 </Box>
                             )}
@@ -610,7 +776,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                 onClick={handleCollect}
                                 isLoading={isLoading}
                                 loadingText="Processing"
-                                isDisabled={paymentMethod === 'Credit Card' && !originalTransaction}
+                                isDisabled={(paymentMethod === 'Credit Card' && !originalTransaction && !showCardForm) || (paymentMethod === 'Credit Card' && showCardForm && !stripe)}
                             >
                                 {finalBalance < 0 ? "Refund" : "Collect"}
                             </Button>
@@ -699,7 +865,7 @@ const CollectInvoiceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
             const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
                 bookingId: booking.id,
                 amount: bookingChanges.finalAmount,
-                paymentMethod: 'INVOICE',
+                payment_method: 'INVOICE',
                 type: isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE',
                 transaction_direction: isRefund ? 'refund' : 'charge',
                 notifyCustomer: true,
@@ -846,7 +1012,7 @@ const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
             const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
                 bookingId: booking.id,
                 amount: bookingChanges.finalAmount,
-                paymentMethod: 'LATER',
+                payment_method: 'LATER',
                 type: isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE',
                 transaction_direction: isRefund ? 'refund' : 'charge',
                 notifyCustomer: false,

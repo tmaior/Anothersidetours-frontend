@@ -291,36 +291,44 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                         throw new Error("Unable to find original payment method");
                     }
                     
-                    const paymentResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
-                        transactionId: currentPendingTransaction.id,
+                    const updateResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`, {
                         paymentMethodId: paymentMethodId,
-                        amount: amountToCharge,
                         payment_method: 'Credit Card',
-                        bookingId: booking.id,
-                        tag: tag || null,
-                        notifyCustomer: notifyCustomer,
-                        type: isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE',
-                        transaction_direction: isRefund ? 'refund' : 'charge',
+                        amount: amountToCharge,
                         metadata: {
+                            ...currentPendingTransaction.metadata,
                             originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
                             newGuestQuantity: finalBookingChanges.newGuestQuantity,
                             originalPrice: finalBookingChanges.originalPrice,
                             newPrice: finalBookingChanges.newPrice,
                             totalBalanceDue: finalBookingChanges.totalBalanceDue,
-                            isRefund: isRefund
+                            isRefund: isRefund,
+                            tag: tag || null,
+                            notifyCustomer: notifyCustomer
                         }
                     });
+
+                    if (!updateResponse.data) {
+                        throw new Error("Failed to update transaction with payment method");
+                    }
+
+                    const processPaymentResponse = await axios.post(
+                        `${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`,
+                        { 
+                            transactionId: currentPendingTransaction.id
+                        }
+                    );
                     
-                    if (!paymentResponse.data || paymentResponse.data.error) {
-                        throw new Error(paymentResponse.data?.error || "Payment processing failed");
+                    if (!processPaymentResponse.data || processPaymentResponse.data.error) {
+                        throw new Error(processPaymentResponse.data?.error || "Failed to process payment");
                     }
 
                     await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`, {
                         payment_status: 'completed',
                         payment_method: 'Credit Card',
                         paymentMethodId: paymentMethodId,
-                        paymentIntentId: paymentResponse.data.paymentIntentId,
-                        setupIntentId: paymentResponse.data.setupIntentId,
+                        paymentIntentId: processPaymentResponse.data.paymentIntentId,
+                        setupIntentId: processPaymentResponse.data.setupIntentId,
                         metadata: {
                             ...currentPendingTransaction.metadata,
                             paymentProcessedAt: new Date().toISOString(),
@@ -355,11 +363,31 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                     const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
                     const setupIntentId = paymentMethodResponse.setupIntent.id;
                     
+                    const responseUpdate = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`, {
+                        paymentMethodId: paymentMethodId,
+                        payment_method: 'Credit Card',
+                        amount: amountToCharge,
+                        metadata: {
+                            ...currentPendingTransaction.metadata,
+                            originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
+                            newGuestQuantity: finalBookingChanges.newGuestQuantity,
+                            originalPrice: finalBookingChanges.originalPrice,
+                            newPrice: finalBookingChanges.newPrice,
+                            totalBalanceDue: finalBookingChanges.totalBalanceDue,
+                            isRefund: isRefund,
+                            tag: tag || null,
+                            notifyCustomer: notifyCustomer
+                        }
+                    });
+
+                    if (!responseUpdate.data) {
+                        throw new Error("Failed to update transaction with payment method");
+                    }
+
                     const processPaymentResponse = await axios.post(
                         `${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`,
                         { 
-                            transactionId: currentPendingTransaction.id,
-                            paymentMethodId: paymentMethodId
+                            transactionId: currentPendingTransaction.id
                         }
                     );
                     

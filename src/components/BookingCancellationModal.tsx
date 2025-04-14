@@ -551,6 +551,70 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 } catch (error) {
                     throw new Error(error.response?.data?.message || "Failed to generate voucher");
                 }
+            } else if (paymentMethod === "other") {
+                try {
+                    const tenantId = booking.tenantId || originalTransaction?.tenant_id;
+                    
+                    if (!tenantId) {
+                        toast({
+                            title: "Error",
+                            description: "Tenant ID is missing. Cannot process refund.",
+                            status: "error",
+                            duration: 5000,
+                            isClosable: true,
+                        });
+                        setIsSubmitting(false);
+                        return;
+                    }
+                    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
+                        tenant_id: tenantId,
+                        reservation_id: booking.id,
+                        amount: refundAmount,
+                        payment_status: 'completed',
+                        payment_method: 'Other',
+                        transaction_type: 'CANCELLATION_REFUND',
+                        transaction_direction: 'refund',
+                        description: `Refund of $${refundAmount.toFixed(2)} processed for cancelled booking (Other method)`,
+                        reference_number: `RF-${Date.now().toString().slice(-6)}`,
+                        metadata: {
+                            originalPrice: calculateTotalPrice(),
+                            refundAmount: refundAmount,
+                            comment: comment,
+                            refundDate: new Date().toISOString(),
+                            notifyCustomer: notifyCustomer
+                        }
+                    });
+                    
+                    const bookingResponse = await axios.put(
+                        `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}?preserveOriginalTransaction=true`,
+                        {
+                            status: "CANCELED"
+                        }
+                    );
+                    
+                    if (bookingResponse.data) {
+                        toast({
+                            title: "Success",
+                            description: "Refund recorded and booking canceled successfully.",
+                            status: "success",
+                            duration: 5000,
+                            isClosable: true,
+                        });
+                        if (onStatusChange) {
+                            onStatusChange("CANCELED");
+                        }
+                        onClose();
+                    }
+                } catch (error) {
+                    console.error("Failed to process cancellation:", error);
+                    toast({
+                        title: "Error",
+                        description: error.message || "Failed to process cancellation. Please try again.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                }
             } else {
                 toast({
                     title: "No Action",

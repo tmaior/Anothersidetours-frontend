@@ -499,6 +499,27 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                             code: voucherCode,
                             amount: refundAmount
                         });
+
+                        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
+                            tenant_id: tenantId,
+                            reservation_id: booking.id,
+                            amount: refundAmount,
+                            payment_status: 'completed',
+                            payment_method: 'Store Credit',
+                            transaction_type: 'CANCELLATION_REFUND',
+                            transaction_direction: 'refund',
+                            description: `Store credit voucher of $${refundAmount.toFixed(2)} issued for cancelled booking`,
+                            reference_number: `RF-${Date.now().toString().slice(-6)}`,
+                            metadata: {
+                                originalPrice: calculateTotalPrice(),
+                                refundAmount: refundAmount,
+                                comment: comment,
+                                refundDate: new Date().toISOString(),
+                                notifyCustomer: notifyCustomer,
+                                voucherCode: voucherCode,
+                                voucherId: voucherResponse.data.voucher.id
+                            }
+                        });
                         
                         const bookingResponse = await axios.put(
                             `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`,

@@ -386,9 +386,12 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                             paymentMethodId: originalTransaction.paymentMethodId
                         }
                     });
-                    const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
-                        status: "CANCELED"
-                    });
+                    const bookingResponse = await axios.put(
+                        `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}?preserveOriginalTransaction=true`, 
+                        {
+                            status: "CANCELED"
+                        }
+                    );
 
                     if (bookingResponse.data) {
                         toast({
@@ -450,9 +453,12 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 });
                 
                 if (transactionResponse.data) {
-                    const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
-                        status: "CANCELED"
-                    });
+                    const bookingResponse = await axios.put(
+                        `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}?preserveOriginalTransaction=true`,
+                        {
+                            status: "CANCELED"
+                        }
+                    );
 
                     if (bookingResponse.data) {
                         toast({
@@ -522,8 +528,10 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         });
                         
                         const bookingResponse = await axios.put(
-                            `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`,
-                            {status: "CANCELED"}
+                            `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}?preserveOriginalTransaction=true`,
+                            {
+                                status: "CANCELED"
+                            }
                         );
                         
                         if (bookingResponse.data) {

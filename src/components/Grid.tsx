@@ -1,4 +1,4 @@
-import { SimpleGrid, VStack, Text } from "@chakra-ui/react";
+import { SimpleGrid, VStack, Text, Box } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import Quantity from "./Quantity";
 import FormInfo from "./FormInfo";
@@ -55,28 +55,49 @@ const Grid: React.FC<GridProps> = ({
     }, [originalPrice]);
 
     return (
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 2 }} spacing={150} p={"25px"} h={"400px"}>
-            <VStack align="start" spacing={5} marginTop={"-50px"}>
-                <Quantity minGuest={minGuest} />
-                <FormInfo ref={formInfoRef} />
-            </VStack>
+        <Box w="full" px={{ base: 0, md: 2 }} overflowX="hidden">
+            <SimpleGrid 
+                columns={{ base: 1, md: 2, lg: 2 }} 
+                spacing={{ base: 2, sm: 4, md: 10, lg: 40 }} 
+                p={{ base: 2, md: 3, lg: 4 }} 
+                h={{ base: "auto", md: "auto" }}
+                alignItems="flex-start"
+                justifyItems="center"
+                mb={{ base: "80px", md: 0 }}
+            >
+                <VStack 
+                    align="start" 
+                    spacing={5} 
+                    w={{ base: "full", md: "90%" }}
+                    maxW="500px"
+                >
+                    <Quantity minGuest={minGuest} />
+                    <FormInfo ref={formInfoRef} />
+                </VStack>
 
-            <VStack align="start" spacing={4} marginTop={"-20px"}>
-                <DatePicker
-                    title={title}
-                    originalPrice={originalPrice}
-                    selectedDate={selectedDate}
-                    onChange={setSelectedDate}
-                    selectedTime={selectedTime}
-                    onTimeChange={setSelectedTime}
-                />
-                {errorMessage && (
-                    <Text color="red.500" fontSize="sm">
-                        {errorMessage}
-                    </Text>
-                )}
-            </VStack>
-        </SimpleGrid>
+                <VStack 
+                    align={{ base: "center", md: "start" }} 
+                    spacing={4} 
+                    w={{ base: "full", md: "90%" }}
+                    maxW="500px"
+                    pb={{ base: 10, md: 0 }}
+                >
+                    <DatePicker
+                        title={title}
+                        originalPrice={originalPrice}
+                        selectedDate={selectedDate}
+                        onChange={setSelectedDate}
+                        selectedTime={selectedTime}
+                        onTimeChange={setSelectedTime}
+                    />
+                    {errorMessage && (
+                        <Text color="red.500" fontSize="sm">
+                            {errorMessage}
+                        </Text>
+                    )}
+                </VStack>
+            </SimpleGrid>
+        </Box>
     );
 };
 

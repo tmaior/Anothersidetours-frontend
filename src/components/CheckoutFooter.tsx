@@ -53,24 +53,24 @@ export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
                 <Flex
                     position="static"
                     w="full"
-                    h={["auto", "60px"]}
+                    h={{ base: "auto", md: "60px" }}
                     bg="gray.100"
                     align="center"
                     justify="space-between"
                     boxShadow="md"
                     zIndex={1000}
                     px={0}
-                    flexDirection={["column", "row"]}
+                    flexDirection={{ base: "column", md: "row" }}
                     mt={4}
                 >
                     <Button
                         bg="gray.500"
                         color="white"
                         _hover={{bg: "gray.400"}}
-                        h={["auto", "60px"]}
-                        w={["100%", "auto"]}
+                        h={{ base: "50px", md: "60px" }}
+                        w={{ base: "100%", md: "auto" }}
                         px={8}
-                        fontSize="lg"
+                        fontSize={{ base: "md", md: "lg" }}
                         fontWeight="normal"
                         borderRadius={0}
                         onClick={onCheckout}
@@ -78,13 +78,23 @@ export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
                         Back
                     </Button>
 
-                    <Flex align="center" justify="flex-end" flex={5} position="relative">
+                    <Flex 
+                        align="center" 
+                        justify={{ base: "center", md: "flex-end" }} 
+                        flex={5} 
+                        position="relative"
+                        flexDir={{ base: "column", md: "row" }}
+                        w={{ base: "full", md: "auto" }}
+                        p={{ base: 4, md: 0 }}
+                    >
                         <Checkbox
-                            position="absolute"
-                            bottom="70px"
+                            position={{ base: "static", md: "absolute" }}
+                            bottom={{ md: "70px" }}
+                            mb={{ base: 4, md: 0 }}
                             isChecked={isChecked}
                             onChange={handleCheckboxChange}
-                            w="300px"
+                            w={{ base: "full", md: "300px" }}
+                            textAlign={{ base: "center", md: "left" }}
                         >
                             I agree to the{" "}
                             <Link color="teal.500" onClick={(e) => {
@@ -95,19 +105,24 @@ export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
                             </Link>
                         </Checkbox>
 
-                        <HStack spacing={7}>
+                        <HStack 
+                            spacing={{ base: 2, md: 7 }}
+                            w={{ base: "full", md: "auto" }}
+                            justify={{ base: "center", md: "flex-end" }}
+                        >
                             <Image
                                 src="https://checkout.xola.app/images/ssl-secure-encryption.svg"
                                 alt="SSL Secure Encryption"
                                 h="30px"
+                                display={{ base: "none", md: "block" }}
                             />
                             <Button
                                 bg="#5CB85C"
                                 color="white"
                                 _hover={{bg: "#4cae4c"}}
-                                h="60px"
-                                w="400px"
-                                fontSize="lg"
+                                h={{ base: "50px", md: "60px" }}
+                                w={{ base: "full", md: "400px" }}
+                                fontSize={{ base: "md", md: "lg" }}
                                 fontWeight="normal"
                                 borderRadius={0}
                                 isDisabled={!isChecked}
@@ -125,7 +140,7 @@ export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
 
                     <Modal isOpen={isOpen} onClose={onClose} isCentered>
                         <ModalOverlay/>
-                        <ModalContent maxW="600px" maxH="400px">
+                        <ModalContent maxW={{ base: "90%", md: "600px" }} maxH={{ base: "80vh", md: "400px" }}>
                             <ModalHeader>Terms and Conditions</ModalHeader>
                             <ModalCloseButton/>
                             <ModalBody overflowY="auto" padding="20px">

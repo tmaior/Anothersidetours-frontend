@@ -22,11 +22,12 @@ export default function ModalPageLayout({ isOpen, onClose, children, isCheckout 
     return (
         <Box
             marginTop={isCheckout ? "0px" : "-30px"}
-            paddingTop={isCheckout ? "80px" : "0px"}
+            paddingTop={isCheckout ? { base: "20px", md: "80px" } : "0px"}
             display="flex"
             alignItems="center"
             justifyContent="center"
             minHeight="100vh"
+            maxWidth="100vw"
             bg="white"
             position="fixed"
             top="0"
@@ -35,14 +36,19 @@ export default function ModalPageLayout({ isOpen, onClose, children, isCheckout 
             bottom="0"
             zIndex="9999"
             onClick={handleBackgroundClick}
+            overflowY={{ base: "auto", md: "auto" }}
+            overflowX="hidden"
         >
             <Container
-                maxW="6xl"
-                h={"750px"}
+                maxW={{ base: "100%", md: "95%", lg: "6xl" }}
+                h={{ base: "100%", md: "auto" }}
+                minH={{ base: "100vh", md: "750px" }}
                 bg="white"
                 p={0}
                 borderRadius="md"
                 onClick={(e) => e.stopPropagation()}
+                overflowY={{ base: "auto", md: "auto" }}
+                overflowX="hidden"
             >
                 {children}
             </Container>

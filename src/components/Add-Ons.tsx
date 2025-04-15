@@ -52,10 +52,26 @@ export default function AddOns({ addons }: AddOnProps) {
     const checkboxAddons = (addons || []).filter((addon) => addon.type === "CHECKBOX");
 
     return (
-        <Flex direction="column" width="100%" p={4} marginTop={"-120px"}>
+        <Flex 
+            direction="column" 
+            width="100%" 
+            p={{ base: 3, md: 4 }} 
+            mt={{ base: "-40px", md: "-20px", lg: 0 }}
+            mb={{ base: 16, md: 8 }}
+            position="relative"
+            zIndex="0"
+        >
             {addons && addons.length > 0 && (
                 <>
-                    <Text w={"full"} color={"blue.300"}>ADD ONS</Text>
+                    <Text 
+                        w={"full"} 
+                        color={"blue.300"}
+                        fontSize={{ base: "sm", md: "md" }}
+                        fontWeight="medium"
+                        mb={2}
+                    >
+                        ADD ONS
+                    </Text>
 
                     {selectAddons.map((addon) => (
                         <PickupSpinner
@@ -65,12 +81,12 @@ export default function AddOns({ addons }: AddOnProps) {
                             value={quantities[addon.id] || 0}
                             onChange={(value) => handleQuantityChange(addon.id, value)}
                             note={addon.description}
-                            pl={95}
+                            pl={{ base: 4, md: 95 }}
                         />
                     ))}
 
                     {checkboxAddons.map((addon) => (
-                        <Box key={addon.id} mt={4} pl={95}>
+                        <Box key={addon.id} mt={4} pl={{ base: 4, md: 95 }}>
                             <CustomCheckbox
                                 title={addon.label}
                                 description={addon.description}

@@ -414,31 +414,64 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                     py={4}
                     overflowY="auto"
                 >
-                    <HStack>
-                        <HStack w="500px">
-                            <HStack>
-                                <Flex w="40%" h="40%">
+                    <Flex
+                        direction={{ base: "column", md: "row" }}
+                        w="full"
+                    >
+                        <HStack 
+                            w={{ base: "full", md: "500px" }}
+                            alignItems="flex-start"
+                            flexWrap={{ base: "wrap", md: "nowrap" }}
+                        >
+                            <HStack
+                                spacing={{ base: 2, md: 4 }}
+                                alignItems="flex-start"
+                                flexWrap={{ base: "wrap", md: "nowrap" }}
+                            >
+                                <Flex w={{ base: "100px", md: "40%" }} h={{ base: "100px", md: "40%" }}>
                                     <Box
                                         bgImage={imageUrl}
                                         bgPosition="center"
                                         bgSize="cover"
-                                        boxSize="150px"
+                                        boxSize={{ base: "100px", md: "150px" }}
                                     />
                                 </Flex>
-                                <Flex direction="column" align="flex-start" w="400px" ml="-10">
+                                <Flex 
+                                    direction="column" 
+                                    align="flex-start" 
+                                    w={{ base: "calc(100% - 110px)", md: "400px" }} 
+                                    ml={{ base: 2, md: "-10" }}
+                                >
                                     <Text fontSize="lg" fontWeight="bold">{title}</Text>
-                                    <VStack align="flex-start" spacing={0} h={"80px"} marginLeft={1}>
+                                    <VStack align="flex-start" spacing={0} h={{ base: "auto", md: "80px" }} marginLeft={1}>
                                         <Text>{name}</Text>
-                                        <HStack spacing={6} marginTop={"-3"}>
+                                        <HStack 
+                                            spacing={{ base: 2, md: 6 }} 
+                                            marginTop={"-3"}
+                                            flexWrap={{ base: "wrap", md: "nowrap" }}
+                                        >
                                             <HStack spacing={2}>
                                                 <ImUsers/>
                                                 <Text>{guestQuantity} Reserved</Text>
                                             </HStack>
                                             <Spacer/>
-                                            <VStack align="flex-start" spacing={1}>
+                                            <VStack 
+                                                align="flex-start" 
+                                                spacing={1}
+                                                w={{ base: "full", md: "auto" }}
+                                                mt={{ base: 1, md: 0 }}
+                                            >
                                                 <HStack spacing={2}>
                                                     <MdEmail/>
-                                                    <Text>{email}</Text>
+                                                    <Text 
+                                                        fontSize={{ base: "sm", md: "md" }}
+                                                        maxW={{ base: "200px", md: "300px" }}
+                                                        overflow="hidden"
+                                                        textOverflow="ellipsis"
+                                                        whiteSpace="nowrap"
+                                                    >
+                                                        {email}
+                                                    </Text>
                                                 </HStack>
                                                 <HStack spacing={2}>
                                                     <FaPhoneAlt/>
@@ -462,7 +495,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                                                 </HStack>
                                             </VStack>
                                         </HStack>
-                                        <HStack marginTop={"-3"}>
+                                        <HStack marginTop={{ base: 2, md: "-3" }}>
                                             <SlCalender/>
                                             <Text>{selectedDate ? format(selectedDate, 'dd MMM yyyy') : "No Date Selected"}</Text>
                                         </HStack>
@@ -480,7 +513,13 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                         </HStack>
 
                         <Spacer/>
-                        <VStack w="full" p={4} spacing={4} align="stretch">
+                        <VStack 
+                            w={{ base: "full", md: "auto" }} 
+                            p={4} 
+                            spacing={4} 
+                            align="stretch"
+                            mt={{ base: 4, md: 0 }}
+                        >
                             {guestQuantity && pricePerGuest !== undefined ? (
                                 <HStack w="full">
                                     <Text>{`Guests (${guestQuantity} × $${Number(pricePerGuest).toFixed(2)})`}</Text>
@@ -506,11 +545,11 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                                 <Text>${totalAmount.toFixed(2)}</Text>
                             </HStack>
                         </VStack>
-                    </HStack>
+                    </Flex>
                     <Divider color={"gray.400"} marginTop={"10px"} marginBottom={"20px"}/>
                     
                     {errorMessage && (
-                        <Box mt={4} w={"470px"}>
+                        <Box mt={4} w={{ base: "full", md: "470px" }}>
                             <Alert status="error">
                                 <AlertIcon/>
                                 <Text>{errorMessage}</Text>
@@ -519,20 +558,20 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                     )}
                 </Box>
                 
-                <Box flex="1" minHeight="100px" />
+                <Box flex="1" minHeight={{ base: "50px", md: "100px" }} />
                 
                 <Box px={6} mb={4}>
                     <Text mb={2} fontWeight="medium">Payment Details</Text>
-                    <div style={{
-                        borderBottom: '1px solid #9E9E9E',
-                        borderTop: '1px solid #9E9E9E',
-                        borderLeft: '1px solid #9E9E9E',
-                        borderRight: '1px solid #9E9E9E',
-                        paddingBottom: '8px',
-                        marginBottom: '16px',
-                        padding: '4px 8px',
-                        width: '400px'
-                    }}>
+                    <Box
+                        borderBottom="1px solid #9E9E9E"
+                        borderTop="1px solid #9E9E9E"
+                        borderLeft="1px solid #9E9E9E"
+                        borderRight="1px solid #9E9E9E"
+                        paddingBottom="8px"
+                        marginBottom="16px"
+                        padding="4px 8px"
+                        width={{ base: "100%", md: "400px" }}
+                    >
                         <CardElement
                             options={{
                                 hidePostalCode: true,
@@ -555,7 +594,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                                 },
                             }}
                         />
-                    </div>
+                    </Box>
                 </Box>
                 
                 <Box mt="auto">

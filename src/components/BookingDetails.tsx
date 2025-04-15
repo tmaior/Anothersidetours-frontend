@@ -210,6 +210,10 @@ export default function BookingDetails({
             direction="column" 
             minHeight="89vh"
             justify="space-between"
+            w="full"
+            maxW="100vw"
+            overflow="hidden"
+            position="relative"
         >
             <Box>
                 <Navbar title={title} description={description}/>
@@ -228,7 +232,7 @@ export default function BookingDetails({
                 <AddOns addons={addons}/>
             </Box>
             
-            <Box mt="auto" mb={4} marginTop="-30px">
+            <Box mt="auto" mb={4} marginTop="-30px" zIndex="1">
                 <FooterBar onContinue={handleValidation} continueText={"CONTINUE"}/>
             </Box>
         </Flex>

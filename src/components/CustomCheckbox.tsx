@@ -19,15 +19,26 @@ const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
     };
 
     return (
-        <VStack align="flex-start" spacing={2}>
-            <Text fontWeight="normal">{title}</Text>
-            <Flex align="center">
+        <VStack align="flex-start" spacing={2} w="full">
+            <Text fontWeight="normal" fontSize={{ base: "sm", md: "md" }}>{title}</Text>
+            <Flex 
+                align="flex-start"
+                direction={{ base: "column", sm: "row" }} 
+                w="full"
+            >
                 <Checkbox
                     isChecked={isChecked}
                     onChange={handleCheckboxChange}
                     size="lg"
                 />
-                <Text ml={2} color="gray">{description}</Text>
+                <Text 
+                    ml={{ base: 0, sm: 2 }} 
+                    mt={{ base: 1, sm: 0 }}
+                    color="gray"
+                    fontSize={{ base: "xs", md: "sm" }}
+                >
+                    {description}
+                </Text>
             </Flex>
         </VStack>
     );

@@ -9,7 +9,7 @@ interface PickupSpinnerProps {
     onChange: (value: number) => void;
     minValue: number;
     note?: string;
-    pl?: number;
+    pl?: number | object;
 }
 
 const PickupSpinner: React.FC<PickupSpinnerProps> = ({
@@ -19,6 +19,7 @@ const PickupSpinner: React.FC<PickupSpinnerProps> = ({
                                                          onChange,
                                                          minValue,
                                                          note,
+                                                         pl = 95
                                                      }) => {
     const handleAdd = () => {
         onChange(value + 1);
@@ -31,13 +32,13 @@ const PickupSpinner: React.FC<PickupSpinnerProps> = ({
     };
 
     return (
-        <Flex flexDir={"column"} width="100%" >
-            <Text color={"blue.300"}>{title}</Text>
+        <Flex flexDir={"column"} width="100%" mt={2} mb={2}>
+            <Text color={"blue.300"} fontSize={{ base: "sm", md: "md" }} fontWeight="medium">{title}</Text>
 
-            <Box pl={95}>
+            <Box pl={pl}>
                 <VStack align="flex-start" spacing={2} w="full">
-                    {description && <Text>{description}</Text>}
-                    <HStack spacing={"10px"} w="full">
+                    {description && <Text fontSize={{ base: "sm", md: "md" }}>{description}</Text>}
+                    <HStack spacing={"10px"} w="full" flexWrap={{ base: "wrap", md: "nowrap" }}>
                         <HStack spacing={2}>
                             <IconButton
                                 size="sm"
@@ -60,7 +61,7 @@ const PickupSpinner: React.FC<PickupSpinnerProps> = ({
                             />
                         </HStack>
                         {note && (
-                            <Text fontSize="md" color="gray">
+                            <Text fontSize={{ base: "xs", md: "md" }} color="gray" mt={{ base: 1, md: 0 }}>
                                 {note}
                             </Text>
                         )}

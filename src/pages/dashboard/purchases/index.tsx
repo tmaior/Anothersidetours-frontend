@@ -1193,7 +1193,8 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                 if (response.data && response.data.length > 0) {
                     const filteredTransactions = response.data.filter(transaction =>
                         transaction.payment_status === 'completed' &&
-                        transaction.transaction_direction === 'charge'
+                        (transaction.transaction_direction === 'charge' || 
+                         transaction.transaction_direction === 'refund')
                     );
 
                     const transactionsWithCardDetails = await Promise.all(
@@ -1691,25 +1692,25 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                     </HStack>
                 ))}
 
-                {isLoadingAdjustments ? (
-                    <HStack justifyContent="center">
-                        <Spinner size="sm"/>
-                        <Text>Loading Adjustments...</Text>
-                    </HStack>
-                ) : (
-                    guestAdjustments && guestAdjustments.map((adjustment) => (
-                        <HStack key={adjustment.id} justifyContent="space-between">
-                            <Text>
-                                Guest Adjustment ({adjustment.originalGuestQuantity} → {adjustment.newGuestQuantity})
-                                {adjustment.status === 'pending'}
-                                {adjustment.status === 'archived'}
-                            </Text>
-                            <Text color={adjustment.isRefund ? "red.500" : "green.500"}>
-                                {adjustment.isRefund ? "-" : "+"}${adjustment.amount.toFixed(2)}
-                            </Text>
-                        </HStack>
-                    ))
-                )}
+                {/*{isLoadingAdjustments ? (*/}
+                {/*    <HStack justifyContent="center">*/}
+                {/*        <Spinner size="sm"/>*/}
+                {/*        <Text>Loading Adjustments...</Text>*/}
+                {/*    </HStack>*/}
+                {/*) : (*/}
+                {/*    guestAdjustments && guestAdjustments.map((adjustment) => (*/}
+                {/*        <HStack key={adjustment.id} justifyContent="space-between">*/}
+                {/*            <Text>*/}
+                {/*                Guest Adjustment ({adjustment.originalGuestQuantity} → {adjustment.newGuestQuantity})*/}
+                {/*                {adjustment.status === 'pending'}*/}
+                {/*                {adjustment.status === 'archived'}*/}
+                {/*            </Text>*/}
+                {/*            <Text color={adjustment.isRefund ? "red.500" : "green.500"}>*/}
+                {/*                {adjustment.isRefund ? "-" : "+"}${adjustment.amount.toFixed(2)}*/}
+                {/*            </Text>*/}
+                {/*        </HStack>*/}
+                {/*    ))*/}
+                {/*)}*/}
 
                 {!isLoadingAdjustments && voucherTransactions && voucherTransactions.map((voucher) => (
                     <HStack key={voucher.id} justifyContent="space-between">
@@ -1774,7 +1775,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                                 <HStack>
                                     {getPaymentMethodIcon(transaction.payment_method)}
                                     <Text fontSize="sm">
-                                        Payment {transaction.payment_method && transaction.payment_method.toLowerCase().includes('card') ?
+                                        {transaction.transaction_direction === 'refund' ? 'Refund' : 'Payment'} {transaction.payment_method && transaction.payment_method.toLowerCase().includes('card') ?
                                         <>
                                             <Box
                                                 as="span"
@@ -1791,7 +1792,9 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                                     } {formatPaymentDate(transaction.updated_at || transaction.created_at)}
                                     </Text>
                                 </HStack>
-                                <Text fontWeight="bold">${transaction.amount.toFixed(2)}</Text>
+                                <Text fontWeight="bold" color={transaction.transaction_direction === 'refund' ? 'red.500' : 'inherit'}>
+                                    {transaction.transaction_direction === 'refund' ? '-' : ''}${transaction.amount.toFixed(2)}
+                                </Text>
                             </HStack>
                         ))}
                         <HStack justifyContent="space-between" mt={2}>

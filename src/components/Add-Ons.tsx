@@ -53,30 +53,34 @@ export default function AddOns({ addons }: AddOnProps) {
 
     return (
         <Flex direction="column" width="100%" p={4} marginTop={"-120px"}>
-            <Text w={"full"} color={"blue.300"}>ADD ONS</Text>
+            {addons && addons.length > 0 && (
+                <>
+                    <Text w={"full"} color={"blue.300"}>ADD ONS</Text>
 
-            {selectAddons.map((addon) => (
-                <PickupSpinner
-                    key={addon.id}
-                    title={addon.label}
-                    minValue={0}
-                    value={quantities[addon.id] || 0}
-                    onChange={(value) => handleQuantityChange(addon.id, value)}
-                    note={addon.description}
-                    pl={95}
-                />
-            ))}
+                    {selectAddons.map((addon) => (
+                        <PickupSpinner
+                            key={addon.id}
+                            title={addon.label}
+                            minValue={0}
+                            value={quantities[addon.id] || 0}
+                            onChange={(value) => handleQuantityChange(addon.id, value)}
+                            note={addon.description}
+                            pl={95}
+                        />
+                    ))}
 
-            {checkboxAddons.map((addon) => (
-                <Box key={addon.id} mt={4} pl={95}>
-                    <CustomCheckbox
-                        title={addon.label}
-                        description={addon.description}
-                        isChecked={checkedAddons[addon.id] || false}
-                        onChange={(isChecked) => handleCheckboxChange(addon.id, isChecked)}
-                    />
-                </Box>
-            ))}
+                    {checkboxAddons.map((addon) => (
+                        <Box key={addon.id} mt={4} pl={95}>
+                            <CustomCheckbox
+                                title={addon.label}
+                                description={addon.description}
+                                isChecked={checkedAddons[addon.id] || false}
+                                onChange={(isChecked) => handleCheckboxChange(addon.id, isChecked)}
+                            />
+                        </Box>
+                    ))}
+                </>
+            )}
         </Flex>
     );
 }

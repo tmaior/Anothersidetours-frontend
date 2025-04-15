@@ -5,6 +5,7 @@ import Grid from "./Grid";
 import AddOns from "./Add-Ons";
 import {useGuest} from "../contexts/GuestContext";
 import debounce from 'lodash.debounce';
+import {Flex, Box} from "@chakra-ui/react";
 
 interface BookingDetailsProps {
     onContinue?: () => void;
@@ -205,22 +206,31 @@ export default function BookingDetails({
     };
 
     return (
-        <>
-            <Navbar title={title} description={description}/>
-            <Grid
-                originalPrice={calculatedPrice.toString()}
-                formInfoRef={formInfoRef}
-                minGuest={minGuests}
-                selectedDate={localSelectedDate}
-                setSelectedDate={setLocalSelectedDate}
-                selectedTime={localSelectedTime}
-                setSelectedTime={setLocalSelectedTime}
-                errorMessage={errorMessage}
-                title={title}
-                totalPrice={(calculatedPrice * (guestQuantity || 1)).toString()}
-            />
-            <AddOns addons={addons}/>
-            <FooterBar onContinue={handleValidation} continueText={"CONTINUE"}/>
-        </>
+        <Flex 
+            direction="column" 
+            minHeight="90vh"
+            justify="space-between"
+        >
+            <Box>
+                <Navbar title={title} description={description}/>
+                <Grid
+                    originalPrice={calculatedPrice.toString()}
+                    formInfoRef={formInfoRef}
+                    minGuest={minGuests}
+                    selectedDate={localSelectedDate}
+                    setSelectedDate={setLocalSelectedDate}
+                    selectedTime={localSelectedTime}
+                    setSelectedTime={setLocalSelectedTime}
+                    errorMessage={errorMessage}
+                    title={title}
+                    totalPrice={(calculatedPrice * (guestQuantity || 1)).toString()}
+                />
+                <AddOns addons={addons}/>
+            </Box>
+            
+            <Box mt="auto">
+                <FooterBar onContinue={handleValidation} continueText={"CONTINUE"}/>
+            </Box>
+        </Flex>
     );
 }

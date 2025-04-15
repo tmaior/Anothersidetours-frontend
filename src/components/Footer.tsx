@@ -19,7 +19,8 @@ export default function FooterBar({onContinue, continueText}: FooterBarProps) {
             zIndex={1000}
             px={0}
             flexDirection={["column", "row"]}
-            mt={9}
+            mt="auto"
+            marginTop={["10px", "20px"]}
         >
             <HStack spacing={4} pl={8} py={[4, 0]}>
                 <Text fontSize="sm" color="gray.500">

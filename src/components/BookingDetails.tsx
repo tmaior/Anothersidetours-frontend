@@ -208,7 +208,7 @@ export default function BookingDetails({
     return (
         <Flex 
             direction="column" 
-            minHeight="90vh"
+            minHeight="89vh"
             justify="space-between"
         >
             <Box>
@@ -228,7 +228,7 @@ export default function BookingDetails({
                 <AddOns addons={addons}/>
             </Box>
             
-            <Box mt="auto">
+            <Box mt="auto" mb={4} marginTop="-30px">
                 <FooterBar onContinue={handleValidation} continueText={"CONTINUE"}/>
             </Box>
         </Flex>

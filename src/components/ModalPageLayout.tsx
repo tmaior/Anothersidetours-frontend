@@ -5,9 +5,10 @@ interface ModalPageLayoutProps {
     isOpen: boolean;
     onClose?: () => void;
     children: React.ReactNode;
+    isCheckout?: boolean;
 }
 
-export default function ModalPageLayout({ isOpen, onClose, children }: ModalPageLayoutProps) {
+export default function ModalPageLayout({ isOpen, onClose, children, isCheckout = false }: ModalPageLayoutProps) {
     if (!isOpen) {
         return null;
     }
@@ -20,12 +21,19 @@ export default function ModalPageLayout({ isOpen, onClose, children }: ModalPage
 
     return (
         <Box
-            marginTop={"-30px"}
+            marginTop={isCheckout ? "0px" : "-30px"}
+            paddingTop={isCheckout ? "40px" : "0px"}
             display="flex"
             alignItems="center"
             justifyContent="center"
             minHeight="100vh"
-            // bg="rgba(0, 0, 0, 0.5)"
+            bg="white"
+            position="fixed"
+            top="0"
+            left="0"
+            right="0"
+            bottom="0"
+            zIndex="9999"
             onClick={handleBackgroundClick}
         >
             <Container

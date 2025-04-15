@@ -395,7 +395,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
 
     return (
         <>
-            <Box w="full" h="full" bg="white" display="flex" flexDirection="column">
+            <Box w="full" h="full" bg="white" display="flex" flexDirection="column" pt={10}>
                 <Flex 
                     justifyContent="center" 
                     alignItems="center" 

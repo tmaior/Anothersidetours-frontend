@@ -136,7 +136,7 @@ export default function BookingDetailsPage({reservationData}) {
                 />
             </ModalPageLayout>
 
-            <ModalPageLayout isOpen={isCheckoutOpen}>
+            <ModalPageLayout isOpen={isCheckoutOpen} isCheckout={true}>
                 <CheckoutModal
                     isOpen={isCheckoutOpen}
                     title={tourData.name}

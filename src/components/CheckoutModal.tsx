@@ -395,187 +395,196 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
 
     return (
         <>
-            <Modal isOpen={isOpen} onClose={handleClose} isCentered size="6xl">
-                <ModalOverlay/>
-                <Flex
-                    justifyContent="center"
-                    alignItems="center"
-                    maxH="100vh"
+            <Box w="full" h="full" bg="white" display="flex" flexDirection="column">
+                <Flex 
+                    justifyContent="center" 
+                    alignItems="center" 
+                    p={4} 
+                    fontWeight="bold" 
+                    fontSize="lg"
+                >
+                    CHECKOUT
+                </Flex>
+                <Divider color={"gray.400"}/>
+                <Box
+                    flex="1"
+                    minH="auto"
+                    maxH="none"
+                    px={6}
+                    py={4}
                     overflowY="auto"
                 >
-                    <ModalContent
-                        w="full"
-                        maxW="1200px"
-                        minH="700px"
-                        bg="white"
-                    >
-                        <ModalHeader marginLeft={"500"} alignContent={"center"}>{"CHECKOUT"}</ModalHeader>
-                        <Divider color={"gray.400"}/>
-                        {/*<ModalCloseButton onClick={onClose}/>*/}
-                        <ModalBody
-                            minH="auto"
-                            maxH="80vh"
-                        >
+                    <HStack>
+                        <HStack w="500px">
                             <HStack>
-                                <HStack w="500px">
-                                    <HStack>
-                                        <Flex w="40%" h="40%">
-                                            <Box
-                                                bgImage={imageUrl}
-                                                bgPosition="center"
-                                                bgSize="cover"
-                                                boxSize="150px"
-                                            />
-                                        </Flex>
-                                        <Flex direction="column" align="flex-start" w="400px" ml="-10">
-                                            <Text fontSize="lg" fontWeight="bold">{title}</Text>
-                                            <VStack align="flex-start" spacing={0} h={"80px"} marginLeft={1}>
-                                                <Text>{name}</Text>
-                                                <HStack spacing={6} marginTop={"-3"}>
-                                                    <HStack spacing={2}>
-                                                        <ImUsers/>
-                                                        <Text>{guestQuantity} Reserved</Text>
-                                                    </HStack>
-                                                    <Spacer/>
-                                                    <VStack align="flex-start" spacing={1}>
-                                                        <HStack spacing={2}>
-                                                            <MdEmail/>
-                                                            <Text>{email}</Text>
-                                                        </HStack>
-                                                        <HStack spacing={2}>
-                                                            <FaPhoneAlt/>
-                                                            <Text>
-                                                                {phone ? (
-                                                                    <InputMask
-                                                                        mask="(999) 999-9999"
-                                                                        value={phone}
-                                                                        disabled
-                                                                        render={(inputProps) => (
-                                                                            <ChakraInput {...inputProps} isDisabled
-                                                                                         variant="unstyled"
-                                                                                         border="none"
-                                                                                         width="auto"/>
-                                                                        )}
-                                                                    />
-                                                                ) : (
-                                                                    "None informed"
+                                <Flex w="40%" h="40%">
+                                    <Box
+                                        bgImage={imageUrl}
+                                        bgPosition="center"
+                                        bgSize="cover"
+                                        boxSize="150px"
+                                    />
+                                </Flex>
+                                <Flex direction="column" align="flex-start" w="400px" ml="-10">
+                                    <Text fontSize="lg" fontWeight="bold">{title}</Text>
+                                    <VStack align="flex-start" spacing={0} h={"80px"} marginLeft={1}>
+                                        <Text>{name}</Text>
+                                        <HStack spacing={6} marginTop={"-3"}>
+                                            <HStack spacing={2}>
+                                                <ImUsers/>
+                                                <Text>{guestQuantity} Reserved</Text>
+                                            </HStack>
+                                            <Spacer/>
+                                            <VStack align="flex-start" spacing={1}>
+                                                <HStack spacing={2}>
+                                                    <MdEmail/>
+                                                    <Text>{email}</Text>
+                                                </HStack>
+                                                <HStack spacing={2}>
+                                                    <FaPhoneAlt/>
+                                                    <Text>
+                                                        {phone ? (
+                                                            <InputMask
+                                                                mask="(999) 999-9999"
+                                                                value={phone}
+                                                                disabled
+                                                                render={(inputProps) => (
+                                                                    <ChakraInput {...inputProps} isDisabled
+                                                                                variant="unstyled"
+                                                                                border="none"
+                                                                                width="auto"/>
                                                                 )}
-                                                            </Text>
-                                                        </HStack>
-                                                    </VStack>
-                                                </HStack>
-                                                <HStack marginTop={"-3"}>
-                                                    <SlCalender/>
-                                                    <Text>{selectedDate ? format(selectedDate, 'dd MMM yyyy') : "No Date Selected"}</Text>
-                                                </HStack>
-                                                <HStack>
-                                                    <MdOutlineAccessTime/>
-                                                    <Text> {selectedTime} PST</Text>
+                                                            />
+                                                        ) : (
+                                                            "None informed"
+                                                        )}
+                                                    </Text>
                                                 </HStack>
                                             </VStack>
-                                            <Flex w="full" mt={4} p={1} justify="flex-end">
-                                                <Link color="blue.500" textAlign="right" marginRight={5}
-                                                      fontSize="smaller">Modify</Link>
-                                            </Flex>
-                                        </Flex>
-                                    </HStack>
-                                </HStack>
-
-                                <Spacer/>
-                                <VStack w="full" p={4} spacing={4} align="stretch">
-                                    {guestQuantity && pricePerGuest !== undefined ? (
-                                        <HStack w="full">
-                                            <Text>{`Guests (${guestQuantity} × $${Number(pricePerGuest).toFixed(2)})`}</Text>
-                                            <Spacer />
-                                            <Text>${guestTotal.toFixed(2)}</Text>
                                         </HStack>
-                                    ) : (
-                                        <Text>No pricing information available.</Text>
-                                    )}
-                                    {detailedAddons.map((addon) => (
-                                        <HStack w="full" key={addon.id}>
-                                            <Text>{`${addon.label} (${addon.quantity} × $${addon.price.toFixed(2)})`}</Text>
-                                            <Spacer/>
-                                            <Text>${addon.total.toFixed(2)}</Text>
+                                        <HStack marginTop={"-3"}>
+                                            <SlCalender/>
+                                            <Text>{selectedDate ? format(selectedDate, 'dd MMM yyyy') : "No Date Selected"}</Text>
                                         </HStack>
-                                    ))}
-                                    <Link color="blue.500" onClick={openCodeModal} fontSize="sm">
-                                        Have a code?
-                                    </Link>
-                                    <HStack w="full" marginTop={"-4"}>
-                                        <Text>Total</Text>
-                                        <Spacer/>
-                                        <Text>${totalAmount.toFixed(2)}</Text>
-                                    </HStack>
-                                </VStack>
+                                        <HStack>
+                                            <MdOutlineAccessTime/>
+                                            <Text> {selectedTime} PST</Text>
+                                        </HStack>
+                                    </VStack>
+                                    <Flex w="full" mt={4} p={1} justify="flex-end">
+                                        <Link color="blue.500" textAlign="right" marginRight={5}
+                                            fontSize="smaller">Modify</Link>
+                                    </Flex>
+                                </Flex>
                             </HStack>
-                            <Divider color={"gray.400"} marginTop={"10px"} marginBottom={"150px"}/>
-                            <div style={{
-                                borderBottom: '1px solid #9E9E9E',
-                                borderTop: '1px solid #9E9E9E',
-                                borderLeft: '1px solid #9E9E9E',
-                                borderRight: '1px solid #9E9E9E',
-                                paddingBottom: '8px',
-                                marginBottom: '16px',
-                                padding: '4px 8px',
-                                width: '400px'
-                            }}>
-                                <CardElement
-                                    options={{
-                                        hidePostalCode: true,
-                                        style: {
-                                            base: {
-                                                iconColor: '#0c0e0e',
-                                                color: '#000',
-                                                fontWeight: '500',
-                                                fontFamily: 'Arial, sans-serif',
-                                                fontSize: '16px',
-                                                fontSmoothing: 'antialiased',
-                                                '::placeholder': {
-                                                    color: '#aab7c4',
-                                                },
-                                            },
-                                            invalid: {
-                                                color: '#9e2146',
-                                                iconColor: '#fa755a',
-                                            },
-                                        },
-                                    }}
-                                />
-                            </div>
-                            {errorMessage && (
-                                <Box mt={4} w={"470px"}>
-                                    <Alert status="error">
-                                        <AlertIcon/>
-                                        <Text>{errorMessage}</Text>
-                                    </Alert>
-                                </Box>
+                        </HStack>
+
+                        <Spacer/>
+                        <VStack w="full" p={4} spacing={4} align="stretch">
+                            {guestQuantity && pricePerGuest !== undefined ? (
+                                <HStack w="full">
+                                    <Text>{`Guests (${guestQuantity} × $${Number(pricePerGuest).toFixed(2)})`}</Text>
+                                    <Spacer />
+                                    <Text>${guestTotal.toFixed(2)}</Text>
+                                </HStack>
+                            ) : (
+                                <Text>No pricing information available.</Text>
                             )}
+                            {detailedAddons.map((addon) => (
+                                <HStack w="full" key={addon.id}>
+                                    <Text>{`${addon.label} (${addon.quantity} × $${addon.price.toFixed(2)})`}</Text>
+                                    <Spacer/>
+                                    <Text>${addon.total.toFixed(2)}</Text>
+                                </HStack>
+                            ))}
+                            <Link color="blue.500" onClick={openCodeModal} fontSize="sm">
+                                Have a code?
+                            </Link>
+                            <HStack w="full" marginTop={"-4"}>
+                                <Text>Total</Text>
+                                <Spacer/>
+                                <Text>${totalAmount.toFixed(2)}</Text>
+                            </HStack>
+                        </VStack>
+                    </HStack>
+                    <Divider color={"gray.400"} marginTop={"10px"} marginBottom={"20px"}/>
+                    
+                    {errorMessage && (
+                        <Box mt={4} w={"470px"}>
+                            <Alert status="error">
+                                <AlertIcon/>
+                                <Text>{errorMessage}</Text>
+                            </Alert>
+                        </Box>
+                    )}
+                </Box>
+                
+                <Box flex="1" minHeight="100px" />
+                
+                <Box px={6} mb={4}>
+                    <Text mb={2} fontWeight="medium">Payment Details</Text>
+                    <div style={{
+                        borderBottom: '1px solid #9E9E9E',
+                        borderTop: '1px solid #9E9E9E',
+                        borderLeft: '1px solid #9E9E9E',
+                        borderRight: '1px solid #9E9E9E',
+                        paddingBottom: '8px',
+                        marginBottom: '16px',
+                        padding: '4px 8px',
+                        width: '400px'
+                    }}>
+                        <CardElement
+                            options={{
+                                hidePostalCode: true,
+                                style: {
+                                    base: {
+                                        iconColor: '#0c0e0e',
+                                        color: '#000',
+                                        fontWeight: '500',
+                                        fontFamily: 'Arial, sans-serif',
+                                        fontSize: '16px',
+                                        fontSmoothing: 'antialiased',
+                                        '::placeholder': {
+                                            color: '#aab7c4',
+                                        },
+                                    },
+                                    invalid: {
+                                        color: '#9e2146',
+                                        iconColor: '#fa755a',
+                                    },
+                                },
+                            }}
+                        />
+                    </div>
+                </Box>
+                
+                <Box mt="auto">
+                    <CheckoutFooter totalAmount={totalAmount} onCheckout={onBack}
+                                    onPayment={handlePayAndOpenAdditional}/>
+                </Box>
+            </Box>
+            
+            {isAdditionalOpen && (
+                <InformationAdditionalModal isOpen={isAdditionalOpen} onClose={closeAdditionalModal}/>
+            )}
+
+            {isCodeModalOpen && (
+                <Modal isOpen={isCodeModalOpen} onClose={closeCodeModal} isCentered>
+                    <ModalOverlay/>
+                    <ModalContent>
+                        <ModalHeader>Add a code to this booking</ModalHeader>
+                        <ModalCloseButton/>
+                        <Divider/>
+                        <ModalBody>
+                            <HStack><Input placeholder="Enter code"/></HStack>
                         </ModalBody>
-                        <CheckoutFooter totalAmount={totalAmount} onCheckout={onBack}
-                                        onPayment={handlePayAndOpenAdditional}/>
+                        <ModalFooter>
+                            <Button variant="ghost" onClick={closeCodeModal}>Cancel</Button>
+                            <Button colorScheme="green" ml={3}>Apply Code</Button>
+                        </ModalFooter>
                     </ModalContent>
-
-                </Flex>
-            </Modal>
-            <InformationAdditionalModal isOpen={isAdditionalOpen} onClose={closeAdditionalModal}/>
-
-            <Modal isOpen={isCodeModalOpen} onClose={closeCodeModal} isCentered>
-                <ModalOverlay/>
-                <ModalContent>
-                    <ModalHeader>Add a code to this booking</ModalHeader>
-                    <ModalCloseButton/>
-                    <Divider/>
-                    <ModalBody>
-                        <HStack><Input placeholder="Enter code"/></HStack>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button variant="ghost" onClick={closeCodeModal}>Cancel</Button>
-                        <Button colorScheme="green" ml={3}>Apply Code</Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
+                </Modal>
+            )}
         </>
-    )
-        ;
+    );
 }

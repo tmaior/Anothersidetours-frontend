@@ -136,13 +136,15 @@ export default function BookingDetailsPage({reservationData}) {
                 />
             </ModalPageLayout>
 
-            <CheckoutModal
-                isOpen={isCheckoutOpen}
-                title={tourData.name}
-                valuePrice={finalPrice}
-                onClose={handleCloseCheckout}
-                onBack={handleBackToBooking}
-            />
+            <ModalPageLayout isOpen={isCheckoutOpen}>
+                <CheckoutModal
+                    isOpen={isCheckoutOpen}
+                    title={tourData.name}
+                    valuePrice={finalPrice}
+                    onClose={handleCloseCheckout}
+                    onBack={handleBackToBooking}
+                />
+            </ModalPageLayout>
         </>
     );
 }

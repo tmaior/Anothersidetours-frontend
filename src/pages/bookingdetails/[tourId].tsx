@@ -3,6 +3,8 @@ import {useEffect, useState} from "react";
 import {useDisclosure,} from "@chakra-ui/react";
 import BookingDetails from "../../components/BookingDetails";
 import CheckoutModal from "../../components/CheckoutModal";
+import InformationAdditionalModal from "../../components/InformationAditionalModal";
+import FinalModal from "../../components/FinalModal";
 import {useGuest} from "../../contexts/GuestContext";
 import ModalPageLayout from "../../components/ModalPageLayout";
 
@@ -22,13 +24,37 @@ export default function BookingDetailsPage({reservationData}) {
         onOpen: openCheckout,
         onClose: closeCheckout,
     } = useDisclosure();
+    const {
+        isOpen: isAdditionalOpen,
+        onOpen: openAdditionalModal,
+        onClose: closeAdditionalModal,
+    } = useDisclosure();
+    const {
+        isOpen: isFinalOpen,
+        onOpen: openFinalModal,
+        onClose: closeFinalModal,
+    } = useDisclosure();
 
     const [tourData, setTourData] = useState(reservationData || null);
     const [loadingStatus, setLoadingStatus] = useState(null);
     const [errorMessage, setErrorMessage] = useState(null);
     const [finalPrice, setFinalPrice] = useState(0);
     const [, setTierPricing] = useState(null);
+    const [hasAdditionalFields, setHasAdditionalFields] = useState(false);
 
+    useEffect(() => {
+        if (tourIdAsString) {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${tourIdAsString}`)
+                .then(response => response.json())
+                .then(data => {
+                    setHasAdditionalFields(data.length > 0);
+                })
+                .catch(error => {
+                    console.error("Error fetching additional fields:", error);
+                    setHasAdditionalFields(false);
+                });
+        }
+    }, [tourIdAsString]);
 
     useEffect(() => {
         const tourIdToFetch = reservationData?.tourId || tourId;
@@ -115,6 +141,16 @@ export default function BookingDetailsPage({reservationData}) {
 
     const handleCloseCheckout = () => {
         closeCheckout();
+        if (hasAdditionalFields) {
+            openAdditionalModal();
+        } else {
+            openFinalModal();
+        }
+    };
+
+    const handleAdditionalComplete = () => {
+        closeAdditionalModal();
+        openFinalModal();
     };
 
     return (
@@ -145,6 +181,16 @@ export default function BookingDetailsPage({reservationData}) {
                     onBack={handleBackToBooking}
                 />
             </ModalPageLayout>
+
+            <InformationAdditionalModal 
+                isOpen={isAdditionalOpen} 
+                onClose={handleAdditionalComplete} 
+            />
+            
+            <FinalModal 
+                isOpen={isFinalOpen} 
+                onClose={closeFinalModal} 
+            />
         </>
     );
 }

@@ -27,7 +27,6 @@ import {ImUsers} from "react-icons/im";
 import {SlCalender} from "react-icons/sl";
 import {MdEmail, MdOutlineAccessTime} from "react-icons/md";
 import {format} from "date-fns";
-import InformationAdditionalModal from "./InformationAditionalModal";
 import {FaPhoneAlt} from "react-icons/fa";
 import InputMask from "react-input-mask";
 import {CardElement, useElements, useStripe} from "@stripe/react-stripe-js";
@@ -59,7 +58,6 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
         setReservationId,
         imageUrl,
     } = useGuest();
-    const {isOpen: isAdditionalOpen, onOpen: openAdditionalModal, onClose: closeAdditionalModal} = useDisclosure();
 
     const pricePerGuest = valuePrice;
     const guestTotal = Number(guestQuantity) * Number(pricePerGuest);
@@ -372,11 +370,10 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                 console.error("Error during email sending:", emailError);
             }
 
-            onClose();
-            if (!isInvoicePayment) {
-                openAdditionalModal();
-            } else {
+            if (isInvoicePayment) {
                 window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_URL || window.location.origin}/payment-success?reservation=${reservation.id}`;
+            } else {
+                onClose();
             }
         } catch (error) {
             console.error("Error during payment setup:", error.message || error);
@@ -603,10 +600,6 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                 </Box>
             </Box>
             
-            {isAdditionalOpen && (
-                <InformationAdditionalModal isOpen={isAdditionalOpen} onClose={closeAdditionalModal}/>
-            )}
-
             {isCodeModalOpen && (
                 <Modal isOpen={isCodeModalOpen} onClose={closeCodeModal} isCentered>
                     <ModalOverlay/>

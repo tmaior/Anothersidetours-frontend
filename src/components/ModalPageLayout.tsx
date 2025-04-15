@@ -22,7 +22,7 @@ export default function ModalPageLayout({ isOpen, onClose, children, isCheckout 
     return (
         <Box
             marginTop={isCheckout ? "0px" : "-30px"}
-            paddingTop={isCheckout ? "40px" : "0px"}
+            paddingTop={isCheckout ? "80px" : "0px"}
             display="flex"
             alignItems="center"
             justifyContent="center"

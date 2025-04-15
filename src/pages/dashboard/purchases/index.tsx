@@ -1640,7 +1640,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
             bg="gray.100"
             borderRadius="md"
             boxShadow="sm"
-            marginTop={{base: "0", md: "0", lg: "-270px"}}
+            marginTop={{base: "0", md: "0", lg: "-470px"}}
             marginLeft={{base: "0", md: "0", lg: "200px"}}
             padding={{base: "10px", md: "20px"}}
             position="relative"

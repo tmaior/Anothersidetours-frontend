@@ -1119,6 +1119,9 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
     const [pendingBalance, setPendingBalance] = useState(0);
     const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState(true);
     const [isRefundTransaction, setIsRefundTransaction] = useState(false);
+    const [guestAdjustments, setGuestAdjustments] = useState([]);
+    const [voucherTransactions, setVoucherTransactions] = useState([]);
+    const [isLoadingAdjustments, setIsLoadingAdjustments] = useState(true);
     const {
         isOpen: isCollectBalanceOpen,
         onOpen: onCollectBalanceOpen,
@@ -1228,6 +1231,93 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
         if (reservation?.id) {
             fetchCompletedTransactions();
         }
+    }, [reservation?.id]);
+
+    useEffect(() => {
+        const fetchAdjustments = async () => {
+            if (!reservation?.id) return;
+            
+            setIsLoadingAdjustments(true);
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`
+                );
+                
+                if (response.data && response.data.length > 0) {
+                    const guestAdjustmentTransactions = response.data.filter(transaction => 
+                        (transaction.transaction_type === 'GUEST_QUANTITY_CHANGE' || 
+                         transaction.transaction_type === 'GUEST_QUANTITY_REFUND')
+                    );
+
+                    const processedAdjustments = guestAdjustmentTransactions.map(transaction => {
+                        let metadata = transaction.metadata;
+                        if (typeof metadata === 'string') {
+                            try {
+                                metadata = JSON.parse(metadata);
+                            } catch (error) {
+                                console.error("Error parsing metadata:", error);
+                                metadata = {};
+                            }
+                        }
+                        
+                        return {
+                            id: transaction.id,
+                            amount: transaction.amount,
+                            date: transaction.created_at || transaction.updated_at,
+                            isRefund: transaction.transaction_direction === 'refund',
+                            originalGuestQuantity: metadata?.originalGuestQuantity,
+                            newGuestQuantity: metadata?.newGuestQuantity,
+                            status: transaction.payment_status
+                        };
+                    });
+                    
+                    setGuestAdjustments(processedAdjustments);
+
+                    const vouchers = response.data.filter(transaction => {
+                        let metadata = transaction.metadata;
+                        if (typeof metadata === 'string') {
+                            try {
+                                metadata = JSON.parse(metadata);
+                            } catch (error) {
+                                return false;
+                            }
+                        }
+                        
+                        return metadata && 
+                               typeof metadata === 'object' && 
+                               'voucherCode' in metadata;
+                    });
+                    
+                    const processedVouchers = vouchers.map(transaction => {
+                        let metadata = transaction.metadata;
+                        if (typeof metadata === 'string') {
+                            try {
+                                metadata = JSON.parse(metadata);
+                            } catch (error) {
+                                metadata = {};
+                            }
+                        }
+                        
+                        return {
+                            id: transaction.id,
+                            amount: transaction.amount,
+                            date: transaction.created_at || transaction.updated_at,
+                            voucherCode: metadata.voucherCode,
+                            isRefund: transaction.transaction_direction === 'refund',
+                            status: transaction.payment_status
+                        };
+                    });
+                    
+                    setVoucherTransactions(processedVouchers);
+                }
+            } catch (error) {
+                console.error('Error fetching adjustment transactions:', error);
+            } finally {
+                setIsLoadingAdjustments(false);
+            }
+        };
+        
+        fetchAdjustments();
     }, [reservation?.id]);
 
     useEffect(() => {
@@ -1593,6 +1683,40 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                         </Text>
                     </HStack>
                 ))}
+
+                {isLoadingAdjustments ? (
+                    <HStack justifyContent="center">
+                        <Spinner size="sm"/>
+                        <Text>Loading Adjustments...</Text>
+                    </HStack>
+                ) : (
+                    guestAdjustments && guestAdjustments.map((adjustment) => (
+                        <HStack key={adjustment.id} justifyContent="space-between">
+                            <Text>
+                                Guest Adjustment ({adjustment.originalGuestQuantity} → {adjustment.newGuestQuantity})
+                                {adjustment.status === 'pending'}
+                                {adjustment.status === 'archived'}
+                            </Text>
+                            <Text color={adjustment.isRefund ? "red.500" : "green.500"}>
+                                {adjustment.isRefund ? "-" : "+"}${adjustment.amount.toFixed(2)}
+                            </Text>
+                        </HStack>
+                    ))
+                )}
+
+                {!isLoadingAdjustments && voucherTransactions && voucherTransactions.map((voucher) => (
+                    <HStack key={voucher.id} justifyContent="space-between">
+                        <Text>
+                            Voucher (Code: {voucher.voucherCode})
+                            {voucher.status === 'pending' && " (Pending)"}
+                            {voucher.status === 'archived' && " (Archived)"}
+                        </Text>
+                        <Text color="red.500">
+                            -${voucher.amount.toFixed(2)}
+                        </Text>
+                    </HStack>
+                ))}
+                
                 <Divider/>
                 <HStack justifyContent="space-between">
                     <Text fontWeight="bold">Total</Text>

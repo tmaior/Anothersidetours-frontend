@@ -1267,12 +1267,15 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                             isRefund: transaction.transaction_direction === 'refund',
                             originalGuestQuantity: metadata?.originalGuestQuantity,
                             newGuestQuantity: metadata?.newGuestQuantity,
-                            status: transaction.payment_status
+                            status: transaction.payment_status,
+                            createdAt: new Date(transaction.created_at || new Date())
                         };
                     });
-                    
-                    setGuestAdjustments(processedAdjustments);
 
+                    const sortedAdjustments = processedAdjustments.sort((a, b) => 
+                        a.createdAt.getTime() - b.createdAt.getTime()
+                    );
+                    setGuestAdjustments(sortedAdjustments);
                     const vouchers = response.data.filter(transaction => {
                         let metadata = transaction.metadata;
                         if (typeof metadata === 'string') {
@@ -1304,11 +1307,15 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                             date: transaction.created_at || transaction.updated_at,
                             voucherCode: metadata.voucherCode,
                             isRefund: transaction.transaction_direction === 'refund',
-                            status: transaction.payment_status
+                            status: transaction.payment_status,
+                            createdAt: new Date(transaction.created_at || new Date())
                         };
                     });
+                    const sortedVouchers = processedVouchers.sort((a, b) => 
+                        a.createdAt.getTime() - b.createdAt.getTime()
+                    );
                     
-                    setVoucherTransactions(processedVouchers);
+                    setVoucherTransactions(sortedVouchers);
                 }
             } catch (error) {
                 console.error('Error fetching adjustment transactions:', error);

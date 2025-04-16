@@ -5,8 +5,8 @@ import BookingDetails from "../../components/BookingDetails";
 import CheckoutModal from "../../components/CheckoutModal";
 import InformationAdditionalModal from "../../components/InformationAditionalModal";
 import FinalModal from "../../components/FinalModal";
-import {useGuest} from "../../contexts/GuestContext";
 import ModalPageLayout from "../../components/ModalPageLayout";
+import {useGuest} from "../../contexts/GuestContext";
 
 export default function BookingDetailsPage({reservationData}) {
     const router = useRouter();
@@ -155,7 +155,11 @@ export default function BookingDetailsPage({reservationData}) {
 
     return (
         <>
-            <ModalPageLayout isOpen={isBookingOpen}>
+            <ModalPageLayout 
+                isOpen={isBookingOpen} 
+                width={{ base: "98%", md: "95%", lg: "1000px" }}
+                minHeight={{ base: "90vh", md: "700px" }}
+            >
                 <BookingDetails
                     tourId={tourIdAsString}
                     title={tourData.name}
@@ -172,7 +176,12 @@ export default function BookingDetailsPage({reservationData}) {
                 />
             </ModalPageLayout>
 
-            <ModalPageLayout isOpen={isCheckoutOpen} isCheckout={true}>
+            <ModalPageLayout 
+                isOpen={isCheckoutOpen} 
+                isCheckout={true}
+                width={{ base: "98%", md: "95%", lg: "1000px" }}
+                minHeight={{ base: "90vh", md: "700px" }}
+            >
                 <CheckoutModal
                     isOpen={isCheckoutOpen}
                     title={tourData.name}
@@ -182,14 +191,22 @@ export default function BookingDetailsPage({reservationData}) {
                 />
             </ModalPageLayout>
 
-            <ModalPageLayout isOpen={isAdditionalOpen}>
+            <ModalPageLayout 
+                isOpen={isAdditionalOpen}
+                width={{ base: "98%", md: "95%", lg: "1000px" }}
+                minHeight={{ base: "90vh", md: "700px" }}
+            >
                 <InformationAdditionalModal 
                     isOpen={isAdditionalOpen} 
                     onClose={handleAdditionalComplete} 
                 />
             </ModalPageLayout>
             
-            <ModalPageLayout isOpen={isFinalOpen}>
+            <ModalPageLayout 
+                isOpen={isFinalOpen}
+                width={{ base: "98%", md: "95%", lg: "1000px" }}
+                minHeight={{ base: "90vh", md: "700px" }}
+            >
                 <FinalModal 
                     isOpen={isFinalOpen} 
                     onClose={closeFinalModal} 

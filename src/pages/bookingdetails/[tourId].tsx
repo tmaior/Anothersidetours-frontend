@@ -182,15 +182,19 @@ export default function BookingDetailsPage({reservationData}) {
                 />
             </ModalPageLayout>
 
-            <InformationAdditionalModal 
-                isOpen={isAdditionalOpen} 
-                onClose={handleAdditionalComplete} 
-            />
+            <ModalPageLayout isOpen={isAdditionalOpen}>
+                <InformationAdditionalModal 
+                    isOpen={isAdditionalOpen} 
+                    onClose={handleAdditionalComplete} 
+                />
+            </ModalPageLayout>
             
-            <FinalModal 
-                isOpen={isFinalOpen} 
-                onClose={closeFinalModal} 
-            />
+            <ModalPageLayout isOpen={isFinalOpen}>
+                <FinalModal 
+                    isOpen={isFinalOpen} 
+                    onClose={closeFinalModal} 
+                />
+            </ModalPageLayout>
         </>
     );
 }

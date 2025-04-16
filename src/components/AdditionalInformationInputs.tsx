@@ -1,5 +1,5 @@
 import React from "react";
-import { VStack, Text, Textarea } from "@chakra-ui/react";
+import {VStack, Text, Textarea} from "@chakra-ui/react";
 
 interface InputData {
     id: string;
@@ -20,12 +20,12 @@ export default function AdditionalInformation({
     return (
         <VStack spacing={4} align="start" width="100%">
             {inputs.map((input) => (
-                <div key={input.id}>
+                <div key={input.id} style={{width: "100%"}}>
                     <Text fontWeight="bold" mb={2}>
                         {input.title}
                     </Text>
                     <Textarea
-                        placeholder={`Enter ${input.title}`}
+                        placeholder={`Enter the the answer.`}
                         value={updatedValues[input.id] || ""}
                         onChange={(e) => onInputChange(input.id, e.target.value)}
                         onInput={(e) => {
@@ -33,18 +33,19 @@ export default function AdditionalInformation({
                             target.style.height = "auto";
                             target.style.height = `${target.scrollHeight}px`;
                         }}
-                        resize="none"
-                        rows={1}
+                        resize="vertical"
+                        rows={2}
                         minHeight="6em"
-                        maxHeight="12em"
+                        maxHeight="150px"
+                        w="100%"
                         maxLength={500}
-                        _focus={{ borderColor: "blue.400" }}
+                        _focus={{borderColor: "blue.400"}}
                         sx={{
                             overflow: "hidden",
                             wordWrap: "break-word",
                             lineHeight: "1.5em",
                             height: "auto",
-                            maxHeight: "9em",
+                            transition: "height 0.2s ease",
                         }}
                     />
                 </div>

@@ -1,4 +1,4 @@
-import {Button, Flex, HStack, Image, Text} from "@chakra-ui/react";
+import {Button, Flex, HStack, Image} from "@chakra-ui/react";
 
 interface FooterBarProps {
     onContinue?: () => void;
@@ -23,9 +23,9 @@ export default function FooterBar({onContinue, continueText}: FooterBarProps) {
             marginTop={["10px", "20px"]}
         >
             <HStack spacing={4} pl={8} py={[4, 0]}>
-                <Text fontSize="sm" color="gray.500">
-                    POWERED BY
-                </Text>
+                {/*<Text fontSize="sm" color="gray.500">*/}
+                {/*    POWERED BY*/}
+                {/*</Text>*/}
                 <Image
                     src="/assets/logo.png"
                     alt="another side logo"
@@ -33,16 +33,16 @@ export default function FooterBar({onContinue, continueText}: FooterBarProps) {
                 />
             </HStack>
             <Flex align="center" justify="flex-end" flex={1}>
-                <HStack spacing={4} pr={4}>
-                    <Image
-                        src="https://checkout.xola.app/images/ssl-secure-encryption.svg"
-                        alt="SSL Secure Encryption"
-                        h="30px"
-                    />
-                </HStack>
+                {/*<HStack spacing={4} pr={4}>*/}
+                {/*    <Image*/}
+                {/*        src="https://checkout.xola.app/images/ssl-secure-encryption.svg"*/}
+                {/*        alt="SSL Secure Encryption"*/}
+                {/*        h="30px"*/}
+                {/*    />*/}
+                {/*</HStack>*/}
 
                 {onContinue && continueText && (
-                    <Button bg="#5CB85C" color="white" _hover={{bg: "#4cae4c"}} h={["auto", "60px"]}
+                    <Button bg="#0574BC" color="white" _hover={{bg: "#0554BC"}} h={["auto", "60px"]}
                             w={["100%", "auto"]} px={8} fontSize="lg" fontWeight="normal" borderRadius={0}
                             onClick={onContinue}> {continueText} </Button>)}
             </Flex>

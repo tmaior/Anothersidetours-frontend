@@ -64,6 +64,7 @@ export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
                     mt={4}
                 >
                     <Button
+                        mr={8}
                         bg="gray.500"
                         color="white"
                         _hover={{bg: "gray.400"}}
@@ -77,6 +78,11 @@ export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
                     >
                         Back
                     </Button>
+                    <Image
+                        src="/assets/logo.png"
+                        alt="another side logo"
+                        h="50px"
+                    />
 
                     <Flex 
                         align="center" 
@@ -110,16 +116,16 @@ export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
                             w={{ base: "full", md: "auto" }}
                             justify={{ base: "center", md: "flex-end" }}
                         >
-                            <Image
-                                src="https://checkout.xola.app/images/ssl-secure-encryption.svg"
-                                alt="SSL Secure Encryption"
-                                h="30px"
-                                display={{ base: "none", md: "block" }}
-                            />
+                            {/*<Image*/}
+                            {/*    src="https://checkout.xola.app/images/ssl-secure-encryption.svg"*/}
+                            {/*    alt="SSL Secure Encryption"*/}
+                            {/*    h="30px"*/}
+                            {/*    display={{ base: "none", md: "block" }}*/}
+                            {/*/>*/}
                             <Button
-                                bg="#5CB85C"
+                                bg="#0574BC"
                                 color="white"
-                                _hover={{bg: "#4cae4c"}}
+                                _hover={{bg: "#0554BC"}}
                                 h={{ base: "50px", md: "60px" }}
                                 w={{ base: "full", md: "400px" }}
                                 fontSize={{ base: "md", md: "lg" }}

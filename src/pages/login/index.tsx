@@ -12,6 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { useRouter } from "next/router";
+import axios from "axios";
 
 export default function Login() {
     const router = useRouter();
@@ -19,6 +20,7 @@ export default function Login() {
     const [formData, setFormData] = useState({ email: "", password: "" });
     const [errors, setErrors] = useState({ email: false, password: false });
     const [apiError, setApiError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -27,6 +29,8 @@ export default function Login() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setApiError("");
 
         const newErrors = {
             email: !formData.email.includes("@"),
@@ -36,25 +40,26 @@ export default function Login() {
 
         if (!newErrors.email && !newErrors.password) {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employee/login`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(formData),
-                });
+                const res = await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/auth/login`, 
+                    formData,
+                    { withCredentials: true }
+                );
 
-                const data = await res.json();
-
-                if (res.ok) {
-                    localStorage.setItem("user", JSON.stringify(data.employee));
+                if (res.data) {
+                    localStorage.setItem("user", JSON.stringify(res.data.employee));
                     router.push("/select-city");
                 } else {
-                    setApiError(data.message || "Invalid credentials");
+                    setApiError("Invalid response from server");
                 }
-            } catch {
-                setApiError("Failed to connect to the server");
+            } catch (error) {
+                const message = error.response?.data?.message || "Failed to connect to the server";
+                setApiError(message);
+            } finally {
+                setLoading(false);
             }
+        } else {
+            setLoading(false);
         }
     };
 
@@ -112,7 +117,14 @@ export default function Login() {
                             </Text>
                         )}
 
-                        <Button colorScheme="blue" type="submit" width="full" mt={4}>
+                        <Button 
+                            colorScheme="blue" 
+                            type="submit" 
+                            width="full" 
+                            mt={4} 
+                            isLoading={loading}
+                            loadingText="Logging in"
+                        >
                             Login
                         </Button>
                     </VStack>

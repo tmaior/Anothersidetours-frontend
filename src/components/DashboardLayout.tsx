@@ -40,6 +40,7 @@ import {AiOutlineDashboard, AiOutlinePlus} from "react-icons/ai";
 import {IoMdAppstore} from "react-icons/io";
 import {useGuest} from "../contexts/GuestContext";
 import {CartProvider} from "../contexts/CartContext";
+import LogoutButton from "./LogoutButton";
 
 export default function DashboardLayout({children}: { children: React.ReactNode }) {
     const router = useRouter();
@@ -739,20 +740,30 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                         transition: "background 0.2s ease-in-out",
                                     }}>Help Center</MenuItem>
                                     <MenuDivider borderColor="#333"/>
-                                    <MenuItem
+                                    {/*<MenuItem*/}
+                                    {/*    bg="#222324"*/}
+                                    {/*    color={"white"}*/}
+                                    {/*    _hover={{*/}
+                                    {/*        background: "rgba(255, 255, 255, 0.1)",*/}
+                                    {/*        transition: "background 0.2s ease-in-out",*/}
+                                    {/*    }}*/}
+                                    {/*    onClick={() => {*/}
+                                    {/*        localStorage.removeItem("user");*/}
+                                    {/*        router.push("/login");*/}
+                                    {/*    }}*/}
+                                    {/*>*/}
+                                    {/*    Logout*/}
+                                    {/*</MenuItem>*/}
+                                    <LogoutButton
+                                        as={MenuItem}
                                         bg="#222324"
-                                        color={"white"}
-                                        _hover={{
-                                            background: "rgba(255, 255, 255, 0.1)",
-                                            transition: "background 0.2s ease-in-out",
-                                        }}
-                                        onClick={() => {
-                                            localStorage.removeItem("user");
-                                            router.push("/login");
-                                        }}
+                                        color="white"
+                                        w="100%"
+                                        justifyContent="flex-start"
+                                        _hover={{ background: "rgba(255,255,255,0.1)" }}
                                     >
                                         Logout
-                                    </MenuItem>
+                                    </LogoutButton>
                                     <MenuDivider borderColor="#333"/>
                                     <MenuItem bg="#222324" color={"white"} icon={<AiOutlinePlus/>} _hover={{
                                         background: "rgba(255, 255, 255, 0.1)",

@@ -41,6 +41,7 @@ import {IoMdAppstore} from "react-icons/io";
 import {useGuest} from "../contexts/GuestContext";
 import {CartProvider} from "../contexts/CartContext";
 import LogoutButton from "./LogoutButton";
+import axios from "axios";
 
 export default function DashboardLayout({children}: { children: React.ReactNode }) {
     const router = useRouter();
@@ -52,6 +53,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     const [noTenants, setNoTenants] = useState(false);
     const toast = useToast();
     const [key, setKey] = useState(router.asPath);
+    const [user, setUser] = useState(null);
 
     useEffect(() => {
         const handleRouteChange = (url) => {
@@ -131,6 +133,24 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
             setIsLoading(false);
         }
     }, [noTenants, toast, tenantId, tenants, setTenantId]);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
+                    withCredentials: true,
+                });
+                
+                if (response.data) {
+                    setUser(response.data);
+                }
+            } catch (error) {
+                console.error("Authentication error:", error);
+                router.push("/login");
+            }
+        };
+        checkAuth();
+    }, [router]);
 
     const [newTenant, setNewTenant] = useState({title: "", description: "", image: null});
 

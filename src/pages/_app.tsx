@@ -9,6 +9,7 @@ import {AddTourProvider} from "../contexts/AddTourContext";
 import { CartProvider } from "../contexts/CartContext";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import DashboardLayout from "./dashboard/layout";
 
 const stripePromise = loadStripe("pk_test_51QE4KYKc0WzdjQx65NTl5uBMLpZQZPSw4CluGm7Qff9INcWRMDRJmnE1yUph5jHrvBzgVo17xnRVMzDxXOtZznWy00ov8IFsJD");
 
@@ -19,7 +20,8 @@ export default function App({Component, pageProps}: AppProps) {
     useEffect(() => {
         setPathKey(router.asPath);
     }, [router.asPath]);
-    
+
+    const isDashboard = router.pathname.startsWith('/dashboard');
     return (
         <CartProvider>
             <GuestProvider>
@@ -27,7 +29,13 @@ export default function App({Component, pageProps}: AppProps) {
                     <DemographicsProvider>
                         <ChakraProvider theme={theme}>
                             <Elements stripe={stripePromise}>
-                                <Component {...pageProps} key={pathKey} />
+                                {isDashboard ? (
+                                    <DashboardLayout>
+                                        <Component {...pageProps} key={pathKey} />
+                                    </DashboardLayout>
+                                ) : (
+                                    <Component {...pageProps} key={pathKey} />
+                                )}
                             </Elements>
                         </ChakraProvider>
                     </DemographicsProvider>

@@ -37,8 +37,9 @@ import ChangeArrivalModal from "../../../components/ChangeArrivalModal";
 import SendMessageModal from "../../../components/SendMessageModal";
 import {format, parse} from "date-fns";
 import useGuidesStore from "../../../utils/store";
+import withPermission from "../../../utils/withPermission";
 
-export default function ReservationDetail({reservation, onCloseDetail, setReservations}) {
+function ReservationDetail({reservation, onCloseDetail, setReservations}) {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [selectedGuide, setSelectedGuide] = useState([]);
@@ -545,3 +546,4 @@ export default function ReservationDetail({reservation, onCloseDetail, setReserv
         </Box>
     );
 }
+export default withPermission(ReservationDetail, "RESERVATION_READ");

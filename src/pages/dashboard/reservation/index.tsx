@@ -21,7 +21,7 @@ import React, {useEffect, useState} from "react";
 import {useRouter} from "next/router";
 import ReservationDetail from "../reservation-details";
 import {useGuest} from "../../../contexts/GuestContext";
-import withAuth from "../../../utils/withAuth";
+import withPermission from "../../../utils/withPermission";
 import NotesFromReservationModalicon from "../../../components/NotesFromReservationModalicon";
 import CustomDatePicker from "../../../components/DatePickerDefault";
 
@@ -453,4 +453,4 @@ function Dashboard() {
     );
 }
 
-export default withAuth(Dashboard);
+export default withPermission(Dashboard, "DASHBOARD_ACCESS");

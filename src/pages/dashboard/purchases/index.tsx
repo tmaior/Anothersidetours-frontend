@@ -61,6 +61,7 @@ import BookingCancellationModal from "../../../components/BookingCancellationMod
 import ReturnPaymentModal from '../../../components/ReturnPaymentModal';
 import {FaRegCreditCard} from 'react-icons/fa';
 import {BiCheck} from 'react-icons/bi';
+import withPermission from "../../../utils/withPermission";
 
 type GuestItemProps = {
     name: string;
@@ -2256,4 +2257,4 @@ const PurchasesPage = () => {
     );
 };
 
-export default withAuth(PurchasesPage);
+export default withPermission(PurchasesPage, 'RESERVATION_READ');

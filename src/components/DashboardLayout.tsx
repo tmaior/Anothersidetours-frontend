@@ -26,7 +26,7 @@ import {
     VStack
 } from "@chakra-ui/react";
 import {useRouter} from "next/router";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {SlCalender} from "react-icons/sl";
 import {FaBoxArchive, FaUsersGear} from "react-icons/fa6";
 import {MdAddchart, MdOutlineCategory} from "react-icons/md";
@@ -54,6 +54,8 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     const toast = useToast();
     const [key, setKey] = useState(router.asPath);
     const [user, setUser] = useState(null);
+    const [userPermissions, setUserPermissions] = useState([]);
+    const currentToastIdRef = useRef(null);
 
     useEffect(() => {
         const handleRouteChange = (url) => {
@@ -143,6 +145,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                 
                 if (response.data) {
                     setUser(response.data);
+                    setUserPermissions(response.data.permissions || []);
                 }
             } catch (error) {
                 console.error("Authentication error:", error);
@@ -152,6 +155,29 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
         checkAuth();
     }, [router]);
 
+    const hasPermission = (permission) => {
+        if (!user) return false;
+        const isAdmin = user.roles?.some(role => role.name === 'ADMIN');
+        if (isAdmin) return true;
+        return userPermissions.includes(permission);
+    };
+
+    const handleNavigate = (path, requiredPermission) => {
+        if (!requiredPermission || hasPermission(requiredPermission)) {
+            window.location.href = path;
+        } else {
+            if (currentToastIdRef.current) {
+                toast.close(currentToastIdRef.current);
+            }
+            currentToastIdRef.current = toast({
+                title: "Access Denied",
+                description: "You don't have permission to access this page. Please contact your administrator.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
     const [newTenant, setNewTenant] = useState({title: "", description: "", image: null});
 
     const handleAddTenant = async () => {
@@ -244,20 +270,12 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             _hover={{cursor: "pointer"}}
                         >
                         </Text>
-                        {/*<Text*/}
-                        {/*    fontSize="md"*/}
-                        {/*    color="gray.400"*/}
-                        {/*    pl={4}*/}
-                        {/*    onClick={() => router.push("/dashboard/tenant")}*/}
-                        {/*    _hover={{ cursor: "pointer", color: "gray.200" }}*/}
-                        {/*>*/}
-                        {/*    Register Tenant*/}
-                        {/*</Text>*/}
+                        
                         <Text
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/reservation"}
+                            onClick={() => handleNavigate("/dashboard/reservation", "DASHBOARD_ACCESS")}
                         >
                             <Button
                                 marginTop={"-130px"}
@@ -286,7 +304,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/purchases"}
+                            onClick={() => handleNavigate("/dashboard/purchases", "RESERVATION_READ")}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -315,7 +333,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/under-construction"}
+                            onClick={() => handleNavigate("/dashboard/under-construction", "EMPLOYEE_READ")}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -344,7 +362,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/list-tours"}
+                            onClick={() => handleNavigate("/dashboard/list-tours", "TOUR_READ")}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -373,7 +391,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/under-construction"}
+                            onClick={() => handleNavigate("/dashboard/under-construction", "REPORT_ACCESS")}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -402,7 +420,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/reports"}
+                            onClick={() => handleNavigate("/dashboard/reports", "REPORT_ACCESS")}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -431,7 +449,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/under-construction"}
+                            onClick={() => handleNavigate("/dashboard/under-construction", "ROLE_READ")}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -460,7 +478,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/under-construction"}
+                            onClick={() => handleNavigate("/dashboard/under-construction", "ROLE_READ")}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -489,7 +507,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/under-construction"}
+                            onClick={() => handleNavigate("/dashboard/under-construction", "ROLE_READ")}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -518,7 +536,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/settings"}
+                            onClick={() => handleNavigate("/dashboard/settings", "ROLE_READ")}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -547,7 +565,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/guides"}
+                            onClick={() => handleNavigate("/dashboard/guides", "EMPLOYEE_READ")}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -576,7 +594,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/list-addons"}
+                            onClick={() => handleNavigate("/dashboard/list-addons", "TOUR_READ")}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -605,7 +623,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/categories"}
+                            onClick={() => handleNavigate("/dashboard/categories", "TOUR_READ")}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -634,7 +652,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => window.location.href = "/dashboard/blackouts"}
+                            onClick={() => handleNavigate("/dashboard/blackouts", "TOUR_READ")}
                         >
                             <Button
                                 marginLeft={"-5"}
@@ -760,20 +778,6 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                         transition: "background 0.2s ease-in-out",
                                     }}>Help Center</MenuItem>
                                     <MenuDivider borderColor="#333"/>
-                                    {/*<MenuItem*/}
-                                    {/*    bg="#222324"*/}
-                                    {/*    color={"white"}*/}
-                                    {/*    _hover={{*/}
-                                    {/*        background: "rgba(255, 255, 255, 0.1)",*/}
-                                    {/*        transition: "background 0.2s ease-in-out",*/}
-                                    {/*    }}*/}
-                                    {/*    onClick={() => {*/}
-                                    {/*        localStorage.removeItem("user");*/}
-                                    {/*        router.push("/login");*/}
-                                    {/*    }}*/}
-                                    {/*>*/}
-                                    {/*    Logout*/}
-                                    {/*</MenuItem>*/}
                                     <LogoutButton
                                         as={MenuItem}
                                         bg="#222324"

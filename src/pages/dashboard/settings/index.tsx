@@ -6,8 +6,10 @@ import SettingsList, { SettingsPage } from '../../../components/SettingsList'
 import UnderConstruction from '../../../components/UnderConstruction';
 import CompanyProfileForm from '../../../components/CompanyProfileForm';
 import ButtonCodeSettings from '../../../components/ButtonCodeSettings';
+import UsersAccessPage from '../../../components/UsersAccessPage';
+import withPermission from '../../../utils/withPermission';
 
-export default function Settings() {
+function Settings() {
     const [currentPage, setCurrentPage] = useState<SettingsPage>(SettingsPage.MyProfile);
 
     const handlePageChange = (page: SettingsPage) => {
@@ -22,6 +24,8 @@ export default function Settings() {
                 return <CompanyProfileForm />;
             case SettingsPage.ButtonCode:
                 return <ButtonCodeSettings />;
+            case SettingsPage.UsersAccess:
+                return <UsersAccessPage />;
             default:
                 return <UnderConstruction pageName={currentPage} />;
         }
@@ -74,3 +78,4 @@ export default function Settings() {
     )
 }
 
+export default withPermission(Settings, 'ROLE_READ');

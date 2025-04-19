@@ -28,6 +28,7 @@ function GuideForm() {
         phone: "",
         bio: "",
         imageUrl: "",
+        available: true
     });
     const [loading, setLoading] = useState(false);
     const toast = useToast();
@@ -40,9 +41,19 @@ function GuideForm() {
             setIsEditing(true);
             const fetchGuide = async () => {
                 try {
-                    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/guides/${id}`);
-                    setFormData(response.data);
-                } catch {
+                    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/guides/${id}`, {
+                        withCredentials: true
+                    });
+                    setFormData({
+                        name: response.data.name || "",
+                        email: response.data.email || "",
+                        phone: response.data.phone || "",
+                        bio: response.data.bio || "",
+                        imageUrl: response.data.imageUrl || "",
+                        available: response.data.available !== false
+                    });
+                } catch (error) {
+                    console.error("Error fetching guide data:", error);
                     toast({
                         title: "Error",
                         description: "Failed to fetch guide data.",
@@ -106,6 +117,7 @@ function GuideForm() {
                             headers: {
                                 "Content-Type": "multipart/form-data",
                             },
+                            withCredentials: true
                         }
                     );
                     
@@ -123,15 +135,22 @@ function GuideForm() {
                     });
                 }
             }
-            
+
             const guideData = {
-                ...formData,
-                imageUrl,
-                tenantId,
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone || '',
+                bio: formData.bio || '',
+                imageUrl: imageUrl || '',
+                tenantId: tenantId,
+                status: "Active",
+                available: formData.available
             };
             
             if (isEditing) {
-                await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/guides/${id}`, guideData);
+                await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/guides/${id}`, guideData, {
+                    withCredentials: true
+                });
                 toast({
                     title: "Guide Updated",
                     description: "The guide was successfully updated.",
@@ -140,7 +159,9 @@ function GuideForm() {
                     isClosable: true,
                 });
             } else {
-                await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/guides`, guideData);
+                await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/guides`, guideData, {
+                    withCredentials: true
+                });
                 toast({
                     title: "Guide Created",
                     description: "The guide was successfully created.",
@@ -150,12 +171,13 @@ function GuideForm() {
                 });
             }
             router.push("/dashboard/guides");
-        } catch {
+        } catch (error) {
+            console.error("Error saving guide:", error);
             toast({
                 title: "Error",
-                description: "Failed to save guide.",
+                description: "Failed to save guide: " + (error.response?.data?.message || error.message),
                 status: "error",
-                duration: 3000,
+                duration: 5000,
                 isClosable: true,
             });
         } finally {
@@ -178,7 +200,7 @@ function GuideForm() {
 
                 <Box>
                     <Heading size="md" mb={6}>
-                        Details
+                        Guide Details
                     </Heading>
 
                     <FormControl isRequired mb={4}>

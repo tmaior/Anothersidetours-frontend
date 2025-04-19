@@ -71,8 +71,10 @@ const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
         Promise.all([fetchGuides, fetchAssignedGuides])
             .then(([guidesResponse, assignedResponse]) => {
                 const mappedGuides = guidesResponse.data.map(guide => ({
-                    ...guide,
-                    available: guide.isActive !== false
+                    id: guide.id, 
+                    name: guide.name, 
+                    email: guide.email,
+                    available: (guide.isActive !== undefined ? guide.isActive : guide.available) !== false
                 }));
                 setGuides(mappedGuides);
 

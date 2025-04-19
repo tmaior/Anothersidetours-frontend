@@ -9,6 +9,8 @@ interface Guide {
     imageUrl?: string;
     bio?: string;
     available: boolean;
+    isActive?: boolean;
+    status?: string;
 }
 
 export function useGuides() {
@@ -19,7 +21,18 @@ export function useGuides() {
         axios
             .get(`${process.env.NEXT_PUBLIC_API_URL}/guides`)
             .then((response) => {
-                setGuidesList(response.data);
+                const guidesData = response.data.map(guide => ({
+                    id: guide.id,
+                    name: guide.name,
+                    email: guide.email,
+                    phone: guide.phone || "",
+                    imageUrl: guide.imageUrl || "",
+                    bio: guide.bio || "",
+                    status: guide.status || "Active",
+                    isActive: guide.isActive !== false,
+                    available: guide.isActive !== false
+                }));
+                setGuidesList(guidesData);
             })
             .catch((error) => {
                 console.error("Failed to fetch guides", error);

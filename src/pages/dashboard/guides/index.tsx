@@ -5,7 +5,6 @@ import withAuth from "../../../utils/withAuth";
 import DashboardLayout from "../../../components/DashboardLayout";
 import {useRouter} from "next/router";
 import axios from "axios";
-import {useGuest} from "../../../contexts/GuestContext";
 
 interface Guide {
     id: string;
@@ -15,6 +14,7 @@ interface Guide {
     phone?: string;
     imageUrl?: string;
     available: boolean;
+    isActive?: boolean;
 }
 
 function GuidesPage() {
@@ -23,22 +23,29 @@ function GuidesPage() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const toast = useToast();
-    const {tenantId} = useGuest();
 
     useEffect(() => {
         const fetchGuides = async () => {
             try {
-
                 const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/guides`, {
                     withCredentials: true
                 });
-                setGuides(response.data);
+                const guidesData = response.data.map(guide => ({
+                    id: guide.id,
+                    name: guide.name,
+                    email: guide.email,
+                    status: guide.status || "Active",
+                    phone: guide.phone || "",
+                    imageUrl: guide.imageUrl || "",
+                    available: guide.isActive !== false
+                }));
+                setGuides(guidesData);
             } catch (error) {
                 console.error("Failed to load guides:", error);
                 setError("Failed to load guides.");
                 toast({
                     title: "Error",
-                    description: "Failed to load guides.",
+                    description: "Failed to load guides: " + (error.response?.data?.message || error.message),
                     status: "error",
                     duration: 3000,
                     isClosable: true,
@@ -49,7 +56,7 @@ function GuidesPage() {
         };
         
         fetchGuides();
-    }, [toast, tenantId]);
+    }, [toast]);
 
     const handleEdit = (id: string) => {
         router.push(`/dashboard/new-guide/${id}`);
@@ -64,17 +71,17 @@ function GuidesPage() {
             setGuides(guides.filter((guide) => guide.id !== id));
             
             toast({
-                title: "Guide Deleted",
-                description: "The guide has been successfully deleted.",
+                title: "Guide Removed",
+                description: "The guide role was successfully removed.",
                 status: "success",
                 duration: 3000,
                 isClosable: true,
             });
         } catch (error) {
-            console.error("Failed to delete guide:", error);
+            console.error("Failed to remove guide:", error);
             toast({
                 title: "Error",
-                description: "Failed to delete the guide.",
+                description: "Failed to remove the guide: " + (error.response?.data?.message || error.message),
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -116,7 +123,7 @@ function GuidesPage() {
                                 id={guide.id}
                                 name={guide.name}
                                 email={guide.email}
-                                status={guide.status || "Active"}
+                                status={guide.status}
                                 imageUrl={guide.imageUrl}
                                 onEdit={() => handleEdit(guide.id)}
                                 onDelete={() => handleDelete(guide.id)}

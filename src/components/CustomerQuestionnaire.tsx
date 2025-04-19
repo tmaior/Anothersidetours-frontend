@@ -1,4 +1,4 @@
-import React, {useState, forwardRef, useImperativeHandle, ForwardedRef} from "react";
+import React, {useState, forwardRef, useImperativeHandle, ForwardedRef, useEffect} from "react";
 import {Badge, Box, Button, HStack, IconButton, Input, Text, VStack} from "@chakra-ui/react";
 import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
 import {FaUser} from "react-icons/fa";
@@ -8,8 +8,28 @@ export interface QuestionnaireRef {
     resetQuestions: () => void;
 }
 
-const CustomerQuestionnaire = forwardRef((props, ref: ForwardedRef<QuestionnaireRef>) => {
+interface CustomerQuestionnaireProps {
+    isEditing?: boolean;
+}
+
+const CustomerQuestionnaire = forwardRef((props: CustomerQuestionnaireProps, ref: ForwardedRef<QuestionnaireRef>) => {
+    const { isEditing = false } = props;
     const [questions, setQuestions] = useState<Array<{id: number, label: string, required: boolean}>>([]);
+
+    useEffect(() => {
+        if (isEditing) {
+            try {
+                const savedQuestions = window.localStorage.getItem('tourQuestions');
+                if (savedQuestions) {
+                    const parsedQuestions = JSON.parse(savedQuestions);
+                    setQuestions(parsedQuestions);
+                    window.localStorage.removeItem('tourQuestions');
+                }
+            } catch (error) {
+                console.error("Error loading questions from localStorage:", error);
+            }
+        }
+    }, [isEditing]);
 
     useImperativeHandle(ref, () => ({
         getQuestions: () => questions,

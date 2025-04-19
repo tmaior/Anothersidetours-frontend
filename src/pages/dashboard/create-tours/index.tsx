@@ -2222,7 +2222,7 @@ function SchedulesAvailabilityStep({
                                     </ModalContent>
                                 </Modal>
                             </Box>
-                            <CustomerQuestionnaire ref={questionnaireRef}/>
+                            <CustomerQuestionnaire ref={questionnaireRef} isEditing={isEditing}/>
                         </Box>
                         <Divider/>
                         <HStack justify="space-between">

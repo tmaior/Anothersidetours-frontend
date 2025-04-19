@@ -16,7 +16,9 @@ function EditTourPage() {
         setTourId,
         setCancellationPolicy,
         setConsiderations,
-        setSchedule
+        setSchedule,
+        setIncludedItems,
+        setBringItems
     } = useGuest();
 
     const [isLoading, setIsLoading] = useState(true);
@@ -41,6 +43,51 @@ function EditTourPage() {
                 setCancellationPolicy(tourData.Cancellation_Policy || "");
                 setConsiderations(tourData.Considerations || "");
                 setTourId(id as string);
+
+                try {
+                    const whatsIncludedRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/whats-included/${id}`);
+                    if (whatsIncludedRes.ok) {
+                        const whatsIncludedData = await whatsIncludedRes.json();
+                        if (Array.isArray(whatsIncludedData)) {
+                            const items = whatsIncludedData.map(item => item.item || "");
+                            setIncludedItems(items);
+                        }
+                    } else {
+                        console.error("Failed to fetch What's Included:", whatsIncludedRes.status);
+                    }
+                } catch (includedItemsError) {
+                    console.error("Error fetching included items:", includedItemsError);
+                }
+                try {
+                    const whatToBringRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/what-to-bring/${id}`);
+                    if (whatToBringRes.ok) {
+                        const whatToBringData = await whatToBringRes.json();
+                        if (Array.isArray(whatToBringData)) {
+                            const items = whatToBringData.map(item => item.item || "");
+                            setBringItems(items);
+                        }
+                    } else {
+                        console.error("Failed to fetch What to Bring:", whatToBringRes.status);
+                    }
+                } catch (bringItemsError) {
+                    console.error("Error fetching bring items:", bringItemsError);
+                }
+                try {
+                    const additionalInfoRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${id}`);
+                    if (additionalInfoRes.ok) {
+                        const additionalInfoData = await additionalInfoRes.json();
+                        if (Array.isArray(additionalInfoData) && additionalInfoData.length > 0) {
+                            const formattedQuestions = additionalInfoData.map(question => ({
+                                id: Date.now() + Math.floor(Math.random() * 10000),
+                                label: question.title,
+                                required: false
+                            }));
+                            window.localStorage.setItem('tourQuestions', JSON.stringify(formattedQuestions));
+                        }
+                    }
+                } catch (additionalInfoError) {
+                    console.error("Error fetching additional information:", additionalInfoError);
+                }
 
                 try {
                     const pricingRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${id}`);
@@ -86,7 +133,7 @@ function EditTourPage() {
         }
 
         fetchTourData();
-    }, [id, setDescription, setImagePreview, setOperationProcedures, setPrice, setTitle, setTourId, setCancellationPolicy, setConsiderations, setSchedule, setPricingData]);
+    }, [id, setDescription, setImagePreview, setOperationProcedures, setPrice, setTitle, setTourId, setCancellationPolicy, setConsiderations, setSchedule, setIncludedItems, setBringItems]);
 
     if (isLoading) {
         return <div>Carregando dados...</div>;

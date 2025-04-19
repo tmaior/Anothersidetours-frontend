@@ -535,6 +535,30 @@ const PurchaseDetails = ({reservation}) => {
             setLocalGuides(reservationGuides[reservation.id] || []);
         }
     }, [reservation, reservationGuides]);
+
+    useEffect(() => {
+        if (reservation?.id && (!reservationGuides[reservation.id] || reservationGuides[reservation.id].length === 0)) {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservation.id}/guides`)
+                .then(response => {
+                    if (response.ok) return response.json();
+                    throw new Error('Failed to fetch guides');
+                })
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        const formattedGuides = data.map(item => ({
+                            id: item.guideId,
+                            name: item.guide.name,
+                            email: item.guide.email || ''
+                        }));
+                        setReservationGuides(reservation.id, formattedGuides);
+                    }
+                })
+                .catch(error => {
+                    console.error("Failed to fetch guides for reservation:", error);
+                });
+        }
+    }, [reservation?.id, reservationGuides, setReservationGuides]);
+
     if (!reservation) {
         return <Text>No reservation Available</Text>;
     }

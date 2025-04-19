@@ -4,6 +4,11 @@ import axios from "axios";
 interface Guide {
     id: string;
     name: string;
+    email: string;
+    phone?: string;
+    imageUrl?: string;
+    bio?: string;
+    available: boolean;
 }
 
 export function useGuides() {
@@ -14,11 +19,7 @@ export function useGuides() {
         axios
             .get(`${process.env.NEXT_PUBLIC_API_URL}/guides`)
             .then((response) => {
-                const guides = response.data.map((guide) => ({
-                    id: guide.id,
-                    name: guide.name,
-                }));
-                setGuidesList(guides);
+                setGuidesList(response.data);
             })
             .catch((error) => {
                 console.error("Failed to fetch guides", error);

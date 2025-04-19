@@ -8,19 +8,19 @@ import axios from "axios";
 import {useGuest} from "../../../contexts/GuestContext";
 
 interface Guide {
-    id: number;
+    id: string;
     name: string;
+    email: string;
     status: string;
-    initials: string;
+    phone?: string;
     imageUrl?: string;
+    available: boolean;
 }
 
 function GuidesPage() {
     const router = useRouter();
     const [guides, setGuides] = useState<Guide[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [loading, setLoading] = useState<boolean>(true);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [error, setError] = useState<string | null>(null);
     const toast = useToast();
     const {tenantId} = useGuest();
@@ -28,27 +28,41 @@ function GuidesPage() {
     useEffect(() => {
         const fetchGuides = async () => {
             try {
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/guides/byTenant/${tenantId}`);
+
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/guides`, {
+                    withCredentials: true
+                });
                 setGuides(response.data);
-            } catch {
+            } catch (error) {
+                console.error("Failed to load guides:", error);
                 setError("Failed to load guides.");
+                toast({
+                    title: "Error",
+                    description: "Failed to load guides.",
+                    status: "error",
+                    duration: 3000,
+                    isClosable: true,
+                });
             } finally {
                 setLoading(false);
             }
         };
-        if (tenantId) {
-            fetchGuides();
-        }
-    }, [tenantId]);
+        
+        fetchGuides();
+    }, [toast, tenantId]);
 
-    const handleEdit = (id: number) => {
+    const handleEdit = (id: string) => {
         router.push(`/dashboard/new-guide/${id}`);
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         try {
-            await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/guides/${id}`);
+            await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/guides/${id}`, {
+                withCredentials: true
+            });
+            
             setGuides(guides.filter((guide) => guide.id !== id));
+            
             toast({
                 title: "Guide Deleted",
                 description: "The guide has been successfully deleted.",
@@ -56,7 +70,8 @@ function GuidesPage() {
                 duration: 3000,
                 isClosable: true,
             });
-        } catch {
+        } catch (error) {
+            console.error("Failed to delete guide:", error);
             toast({
                 title: "Error",
                 description: "Failed to delete the guide.",
@@ -85,21 +100,29 @@ function GuidesPage() {
                         />
                     </Flex>
                     <Button colorScheme="blue" onClick={handleAdd}>
-                        + Add
+                        + Add Guide
                     </Button>
                 </Flex>
                 <Divider borderColor="gray.300" w={"100%"} marginLeft={"5px"}/>
                 <VStack spacing={4} mt={4}>
-                    {guides.map((guide) => (
-                        <GuideItem
-                            key={guide.id}
-                            name={guide.name}
-                            status={guide.status}
-                            imageUrl={guide.imageUrl}
-                            onEdit={() => handleEdit(guide.id)}
-                            onDelete={() => handleDelete(guide.id)}
-                        />
-                    ))}
+                    {loading ? (
+                        <Box>Loading guides...</Box>
+                    ) : guides.length === 0 ? (
+                        <Box>No guides found.</Box>
+                    ) : (
+                        guides.map((guide) => (
+                            <GuideItem
+                                key={guide.id}
+                                id={guide.id}
+                                name={guide.name}
+                                email={guide.email}
+                                status={guide.status || "Active"}
+                                imageUrl={guide.imageUrl}
+                                onEdit={() => handleEdit(guide.id)}
+                                onDelete={() => handleDelete(guide.id)}
+                            />
+                        ))
+                    )}
                 </VStack>
             </Box>
         </DashboardLayout>

@@ -1,8 +1,11 @@
-import {Avatar, Badge, Box, Grid, GridItem, IconButton, Text} from "@chakra-ui/react";
+import {Avatar, Badge, Box, Grid, GridItem, IconButton, Text, VStack, HStack} from "@chakra-ui/react";
 import {DeleteIcon, EditIcon} from "@chakra-ui/icons";
+import {CiAt} from "react-icons/ci";
 
 interface GuideItemProps {
+    id: string;
     name: string;
+    email: string;
     status: string;
     imageUrl?: string;
     onEdit: () => void;
@@ -10,20 +13,22 @@ interface GuideItemProps {
 }
 
 export default function GuideItem({
-                                      name,
-                                      status,
-                                      imageUrl,
-                                      onEdit,
-                                      onDelete,
-                                  }: GuideItemProps) {
+    id,
+    name,
+    email,
+    status,
+    imageUrl,
+    onEdit,
+    onDelete,
+}: GuideItemProps) {
     return (
         <Box
-            marginTop={"10"}
             w={{ base: "40%", md: "50%", lg: "1100px" }}
             borderWidth="1px"
             borderRadius="lg"
             overflow="hidden"
             p={4}
+            mb={2}
         >
             <Grid
                 templateColumns="1fr 150px 1fr"
@@ -32,7 +37,13 @@ export default function GuideItem({
                 <GridItem>
                     <Box display="flex" alignItems="center">
                         <Avatar name={name} src={imageUrl || undefined} mr={4}/>
-                        <Text fontWeight="bold">{name}</Text>
+                        <VStack align="start" spacing={0}>
+                            <Text fontWeight="bold">{name}</Text>
+                            <HStack spacing={1} fontSize="sm" color="gray.600">
+                                <CiAt />
+                                <Text>{email}</Text>
+                            </HStack>
+                        </VStack>
                     </Box>
                 </GridItem>
 

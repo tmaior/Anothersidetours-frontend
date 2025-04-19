@@ -17,72 +17,142 @@ import {
 import {useEffect, useState} from "react";
 import axios from "axios";
 import useGuidesStore from "../utils/store";
+import {useGuideAssignment} from "../hooks/useGuideAssignment";
 
 interface Guide {
     id: string;
     name: string;
-    expertise: string;
+    email: string;
+    available: boolean;
+}
+
+interface GuideInfo {
+    id: string;
+    name: string;
+    email: string;
 }
 
 const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
     const [searchTerm, setSearchTerm] = useState("");
-    const [selectedGuides, setSelectedGuides] = useState([]);
-    const [guides, setGuides] = useState([]);
+    const [selectedGuides, setSelectedGuides] = useState<string[]>([]);
+    const [guides, setGuides] = useState<Guide[]>([]);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const toast = useToast();
     const { setReservationGuides } = useGuidesStore();
+    const { assignGuides } = useGuideAssignment();
 
     useEffect(() => {
-        if (isOpen) {
-            setLoading(true);
-
-            const fetchGuides = axios.get(`${process.env.NEXT_PUBLIC_API_URL}/guides`);
-
-            const fetchAssignedGuides = axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservationId}/guides`
-            );
-
-            Promise.all([fetchGuides, fetchAssignedGuides])
-                .then(([guidesResponse, assignedResponse]) => {
-                    setGuides(guidesResponse.data);
-
-                    const assignedGuideNames = assignedResponse.data.map((item) => item.guide.name);
-                    setSelectedGuides(assignedGuideNames);
-                })
-                .catch((error) => {
-                    console.error("Failed to fetch guides", error);
-                    toast({
-                        title: "Error",
-                        description: "Failed to load guides",
-                        status: "error",
-                        duration: 3000,
-                        isClosable: true,
-                    });
-                })
-                .finally(() => setLoading(false));
+        if (!isOpen) return;
+        
+        if (!reservationId) {
+            toast({
+                title: "Error",
+                description: "No reservation ID provided",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            onClose();
+            return;
         }
-    }, [toast,isOpen, reservationId]);
 
-    const toggleGuide = (guideName) => {
-        if (selectedGuides.includes(guideName)) {
-            setSelectedGuides(selectedGuides.filter((name) => name !== guideName));
+        setLoading(true);
+
+        const fetchGuides = axios.get(`${process.env.NEXT_PUBLIC_API_URL}/guides`, {
+            withCredentials: true
+        });
+
+        const fetchAssignedGuides = axios.get(
+            `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservationId}/guides`,
+            { withCredentials: true }
+        );
+
+        Promise.all([fetchGuides, fetchAssignedGuides])
+            .then(([guidesResponse, assignedResponse]) => {
+                const mappedGuides = guidesResponse.data.map(guide => ({
+                    ...guide,
+                    available: guide.isActive !== false
+                }));
+                setGuides(mappedGuides);
+
+                const assignedGuideIds = assignedResponse.data.map(item => item.guideId);
+                setSelectedGuides(assignedGuideIds);
+            })
+            .catch((error) => {
+                console.error("Failed to fetch guides:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to load guides: " + (error.response?.data?.message || error.message),
+                    status: "error",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            })
+            .finally(() => setLoading(false));
+    }, [toast, isOpen, reservationId, onClose]);
+
+    const toggleGuide = (guideId: string) => {
+        if (selectedGuides.includes(guideId)) {
+            setSelectedGuides(selectedGuides.filter(id => id !== guideId));
         } else {
-            setSelectedGuides([...selectedGuides, guideName]);
+            setSelectedGuides([...selectedGuides, guideId]);
         }
     };
 
-    const handleSave = () => {
-        const selectedGuidesWithIds = selectedGuides.map((name) => {
-            const guide = guides.find((g) => g.name === name);
-            return guide ? {id: guide.id, name: guide.name} : null;
-        }).filter(Boolean) as Guide[];
-        onSelectGuide(selectedGuidesWithIds);
-        setReservationGuides(reservationId, selectedGuidesWithIds);
-        onClose();
+    const handleSave = async () => {
+        if (!reservationId) {
+            toast({
+                title: "Error",
+                description: "No reservation ID provided",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        setSaving(true);
+
+        try {
+            const selectedGuidesWithInfo: GuideInfo[] = guides
+                .filter(guide => selectedGuides.includes(guide.id))
+                .map(guide => ({
+                    id: guide.id, 
+                    name: guide.name, 
+                    email: guide.email
+                }));
+            await assignGuides(reservationId, selectedGuides);
+
+            setReservationGuides(reservationId, selectedGuidesWithInfo);
+            onSelectGuide(selectedGuidesWithInfo);
+            
+            toast({
+                title: "Success",
+                description: `Successfully assigned ${selectedGuides.length} guides to the reservation.`,
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+            
+            onClose();
+        } catch (error) {
+            console.error("Error saving guides:", error);
+            toast({
+                title: "Error",
+                description: "Failed to assign guides: " + (error.response?.data?.message || error.message),
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        } finally {
+            setSaving(false);
+        }
     };
 
-    const filteredGuides = guides.filter((guide) =>
-        guide.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredGuides = guides.filter(guide =>
+        guide.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        guide.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -93,7 +163,7 @@ const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
                 <ModalBody>
                     <VStack align="stretch" spacing={4}>
                         <Input
-                            placeholder="Search"
+                            placeholder="Search guides..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             size="md"
@@ -103,25 +173,27 @@ const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
                             <Text>Loading guides...</Text>
                         ) : filteredGuides.length > 0 ? (
                             filteredGuides.map((guide) => (
-                                <HStack key={guide.name} justify="space-between" width="100%">
+                                <HStack key={guide.id} justify="space-between" width="100%">
                                     <Checkbox
-                                        isChecked={selectedGuides.includes(guide.name)}
-                                        onChange={() => toggleGuide(guide.name)}
+                                        isChecked={selectedGuides.includes(guide.id)}
+                                        onChange={() => toggleGuide(guide.id)}
                                         isDisabled={!guide.available}
+                                        fontSize="sm"
                                     >
                                         <Text
+                                            fontSize="sm"
                                             color={guide.available ? "black" : "gray.400"}
                                         >
-                                            {`${guide.name} ${!guide.available ? "(unavailable)" : ""}`}
+                                            {guide.name}
                                         </Text>
                                     </Checkbox>
-                                    {selectedGuides.includes(guide.name) && (
+                                    {selectedGuides.includes(guide.id) && (
                                         <Text color="green.500">✔</Text>
                                     )}
                                 </HStack>
                             ))
                         ) : (
-                            <Text>No guide available</Text>
+                            <Text>No guides available</Text>
                         )}
                     </VStack>
                 </ModalBody>
@@ -129,7 +201,12 @@ const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
                     <Button onClick={onClose} variant="outline" mr={3}>
                         Cancel
                     </Button>
-                    <Button colorScheme="green" onClick={handleSave}>
+                    <Button 
+                        colorScheme="green" 
+                        onClick={handleSave}
+                        isLoading={saving}
+                        loadingText="Saving"
+                    >
                         Save
                     </Button>
                 </ModalFooter>

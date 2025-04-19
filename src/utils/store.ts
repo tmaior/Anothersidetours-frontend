@@ -3,7 +3,7 @@ import {create} from 'zustand';
 export interface Guide {
     id: string;
     name: string;
-    expertise: string;
+    email: string;
 }
 
 export interface GuidesStore {

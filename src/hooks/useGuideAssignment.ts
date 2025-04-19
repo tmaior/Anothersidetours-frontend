@@ -6,34 +6,58 @@ export function useGuideAssignment() {
     const [error, setError] = useState<string | null>(null);
 
     const assignGuides = async (reservationId: string, guideIds: string[]) => {
+        if (!reservationId) {
+            console.error("No reservation ID provided");
+            setError("No reservation ID provided");
+            return;
+        }
         setIsAssigning(true);
         setError(null);
+        
         try {
             const response = await axios.put(
                 `${process.env.NEXT_PUBLIC_API_URL}/guides/assign-guides/${reservationId}`,
-                {guideIds}
+                {guideIds},
+                {
+                    withCredentials: true
+                }
             );
             return response.data;
         } catch (err) {
             console.error("Failed to assign guides:", err);
-            setError(err.response?.data?.message || "Failed to assign guides");
+            const errorMessage = err.response?.data?.message || "Failed to assign guides";
+            console.error("Error message:", errorMessage);
+            setError(errorMessage);
+            throw err;
         } finally {
             setIsAssigning(false);
         }
     };
 
     const removeGuides = async (reservationId: string, guideIds: string[]) => {
+        if (!reservationId) {
+            console.error("No reservation ID provided");
+            setError("No reservation ID provided");
+            return;
+        }
         setIsAssigning(true);
         setError(null);
+        
         try {
             const response = await axios.put(
                 `${process.env.NEXT_PUBLIC_API_URL}/guides/remove-tour/${reservationId}`,
-                {data: {guideIds}}
+                {guideIds},
+                {
+                    withCredentials: true
+                }
             );
             return response.data;
         } catch (err) {
             console.error("Failed to remove guides:", err);
-            setError(err.response?.data?.message || "Failed to remove guides");
+            const errorMessage = err.response?.data?.message || "Failed to remove guides";
+            console.error("Error message:", errorMessage);
+            setError(errorMessage);
+            throw err;
         } finally {
             setIsAssigning(false);
         }

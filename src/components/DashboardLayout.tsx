@@ -304,7 +304,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             fontSize="md"
                             color="gray.400"
                             pl={4}
-                            onClick={() => handleNavigate("/dashboard/purchases", "RESERVATION_READ")}
+                            onClick={() => handleNavigate("/dashboard/purchases", "RESERVATION_MANAGE")}
                         >
                             <Button
                                 marginLeft={"-5"}

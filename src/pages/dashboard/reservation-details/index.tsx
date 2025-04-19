@@ -39,7 +39,7 @@ import {format, parse} from "date-fns";
 import useGuidesStore from "../../../utils/store";
 import withPermission from "../../../utils/withPermission";
 
-function ReservationDetail({reservation, onCloseDetail, setReservations}) {
+function ReservationDetail({reservation, onCloseDetail, setReservations, hasManageReservationPermission = false}) {
     const [isGuideModalOpen, setGuideModalOpen] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [selectedGuide, setSelectedGuide] = useState([]);
@@ -359,22 +359,26 @@ function ReservationDetail({reservation, onCloseDetail, setReservations}) {
                 </HStack>
             </HStack>
             <HStack spacing={4} mt={4}>
-                <Button
-                    size="sm"
-                    colorScheme="green"
-                    onClick={handleAccept}
-                    isDisabled={currentStatus !== "PENDING"}
-                >
-                    Accept
-                </Button>
-                <Button
-                    size="sm"
-                    colorScheme="red"
-                    onClick={confirmReject}
-                    isDisabled={currentStatus !== "PENDING"}
-                >
-                    Reject
-                </Button>
+                {hasManageReservationPermission && (
+                    <>
+                        <Button
+                            size="sm"
+                            colorScheme="green"
+                            onClick={handleAccept}
+                            isDisabled={currentStatus !== "PENDING"}
+                        >
+                            Accept
+                        </Button>
+                        <Button
+                            size="sm"
+                            colorScheme="red"
+                            onClick={confirmReject}
+                            isDisabled={currentStatus !== "PENDING"}
+                        >
+                            Reject
+                        </Button>
+                    </>
+                )}
                 <Button size="sm" variant="outline"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -393,14 +397,16 @@ function ReservationDetail({reservation, onCloseDetail, setReservations}) {
                     Change Arrival
                 </Button>
 
-                <Button size="sm" variant="outline"
-                        color={"red.500"}
-                        onClick={onConfirmOpen}
-                        isDisabled={currentStatus == "CANCELED" || currentStatus == "REJECTED"}
-                >
-                    <FaRegTimesCircle style={{marginRight: '8px'}}/>
-                    Cancel Reservations
-                </Button>
+                {hasManageReservationPermission && (
+                    <Button size="sm" variant="outline"
+                            color={"red.500"}
+                            onClick={onConfirmOpen}
+                            isDisabled={currentStatus == "CANCELED" || currentStatus == "REJECTED"}
+                    >
+                        <FaRegTimesCircle style={{marginRight: '8px'}}/>
+                        Cancel Reservations
+                    </Button>
+                )}
                 <Button size="sm" variant="outline">Email Roster</Button>
                 <Button size="sm" variant="outline">Export Roster</Button>
                 <Button size="sm" variant="outline" color={"green"}> + Purchase</Button>
@@ -457,16 +463,18 @@ function ReservationDetail({reservation, onCloseDetail, setReservations}) {
                         {displayGuideText()}
                     </Text>
 
-                    <Button
-                        variant="link"
-                        size="xs"
-                        onClick={() => setGuideModalOpen(true)}
-                        color="black"
-                        fontWeight={"bold"}
-                    >
-                        <CiSquarePlus size={"17px"}/>
-                        Manage Guides
-                    </Button>
+                    {hasManageReservationPermission && (
+                        <Button
+                            variant="link"
+                            size="xs"
+                            onClick={() => setGuideModalOpen(true)}
+                            color="black"
+                            fontWeight={"bold"}
+                        >
+                            <CiSquarePlus size={"17px"}/>
+                            Manage Guides
+                        </Button>
+                    )}
                 </Box>
                 <ManageGuidesModal
                     isOpen={isGuideModalOpen}

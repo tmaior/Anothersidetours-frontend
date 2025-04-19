@@ -24,16 +24,21 @@ import {useGuest} from "../../../contexts/GuestContext";
 import withPermission from "../../../utils/withPermission";
 import NotesFromReservationModalicon from "../../../components/NotesFromReservationModalicon";
 import CustomDatePicker from "../../../components/DatePickerDefault";
+import axios from "axios";
 
 function Dashboard() {
     const [searchTerm, setSearchTerm] = useState("");
     const [loadedDates, setLoadedDates] = useState([]);
     const {tenantId} = useGuest();
     const [reservations, setReservations] = useState([]);
-
+    
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [isDetailVisible, setIsDetailVisible] = useState(false);
     const [userDetails, setUserDetails] = useState({});
+    const [userPermissions, setUserPermissions] = useState([]);
+    const [userRoles, setUserRoles] = useState([]);
+    const [userId, setUserId] = useState("");
+    const [hasManageReservationPermission, setHasManageReservationPermission] = useState(false);
 
     const router = useRouter();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -49,20 +54,67 @@ function Dashboard() {
     );
 
     useEffect(() => {
+        const fetchUserProfileAndPermissions = async () => {
+            try {
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
+                    withCredentials: true,
+                });
+                const userData = response.data;
+                setUserPermissions(userData.permissions || []);
+                setUserRoles(userData.roles || []);
+                setUserId(userData.id);
+                const isAdmin = userData.roles.some(role => role.name === 'ADMIN');
+                const canManageReservations = userData.permissions.includes('MANAGE_RESERVATION');
+                setHasManageReservationPermission(isAdmin || canManageReservations);
+            } catch (error) {
+                console.error("Error fetching user profile:", error);
+            }
+        };
+
+        fetchUserProfileAndPermissions();
+    }, []);
+
+    useEffect(() => {
         const fetchReservations = async () => {
-            if (!tenantId) return;
+            if (!tenantId || !userId) return;
             setIsLoading(true);
 
             try {
-                const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/byTenantId/${tenantId}`
-                );
-
-                if (!response.ok) {
-                    throw new Error("Failed to fetch reservations");
+                let data = [];
+                if (hasManageReservationPermission) {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/byTenantId/${tenantId}`);
+                    
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch reservations");
+                    }
+                    data = await response.json();
+                } else {
+                    const allResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/byTenantId/${tenantId}`);
+                    
+                    if (!allResponse.ok) {
+                        throw new Error("Failed to fetch reservations");
+                    }
+                    
+                    const allData = await allResponse.json();
+                    const filteredData = [];
+                    
+                    for (const reservation of allData) {
+                        try {
+                            const guidesResponse = await fetch(
+                                `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservation.id}/guides`
+                            );
+                            if (guidesResponse.ok) {
+                                const guides = await guidesResponse.json();
+                                if (guides.some(guide => guide.guideId === userId)) {
+                                    filteredData.push(reservation);
+                                }
+                            }
+                        } catch (error) {
+                            console.error(`Error checking guides for reservation ${reservation.id}:`, error);
+                        }
+                    }
+                    data = filteredData;
                 }
-
-                const data = await response.json();
 
                 const reservationsWithUserDetails = await Promise.all(
                     data.map(async (reservation) => {
@@ -203,8 +255,10 @@ function Dashboard() {
             }
         };
 
-        fetchReservations();
-    }, [userDetails,tenantId]);
+        if (userId && tenantId) {
+            fetchReservations();
+        }
+    }, [userDetails, tenantId, userId, hasManageReservationPermission]);
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -434,6 +488,7 @@ function Dashboard() {
                             reservation={selectedReservation}
                             onCloseDetail={handleCloseDetail}
                             setReservations={setReservations}
+                            hasManageReservationPermission={hasManageReservationPermission}
                         />
                     </Box>
                 )}

@@ -20,6 +20,7 @@ import AddUserModal from './AddUserModal';
 import RoleFilterModal from './RoleFilterModal';
 import {MdPhone} from "react-icons/md";
 import {CiAt} from "react-icons/ci";
+import ResetPasswordModal from './ResetPasswordModal';
 
 type UserRole = {
     id: string;
@@ -61,10 +62,13 @@ const UsersAccessPage: React.FC = () => {
     const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
     const [availableRoles, setAvailableRoles] = useState<{ id: string, name: string }[]>([]);
     const [userToEdit, setUserToEdit] = useState<User | null>(null);
+    const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
     const toast = useToast();
 
     const {isOpen: isAddUserOpen, onOpen: onAddUserOpen, onClose: onAddUserClose} = useDisclosure();
     const {isOpen: isRoleFilterOpen, onOpen: onRoleFilterOpen, onClose: onRoleFilterClose} = useDisclosure();
+    const {isOpen: isResetPasswordOpen, onOpen: onResetPasswordOpen, onClose: onResetPasswordClose} = useDisclosure();
+    const [userToResetPassword, setUserToResetPassword] = useState<User | null>(null);
 
     const fetchUsers = async () => {
         setIsLoading(true);
@@ -98,9 +102,24 @@ const UsersAccessPage: React.FC = () => {
         }
     };
 
+    const fetchCurrentUserProfile = async () => {
+        try {
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
+                withCredentials: true
+            });
+            
+            const userData = response.data;
+            const isAdmin = userData.roles.some(role => role.name === 'ADMIN');
+            setIsCurrentUserAdmin(isAdmin);
+        } catch (error) {
+            console.error('Error fetching user profile:', error);
+        }
+    };
+
     useEffect(() => {
         fetchUsers();
         fetchRoles();
+        fetchCurrentUserProfile();
     }, [toast]);
 
     const handleRevokeAccess = async (userId: string) => {
@@ -144,6 +163,11 @@ const UsersAccessPage: React.FC = () => {
     const handleCloseUserModal = () => {
         setUserToEdit(null);
         onAddUserClose();
+    };
+
+    const handleResetPassword = (user: User) => {
+        setUserToResetPassword(user);
+        onResetPasswordOpen();
     };
 
     const filteredUsers = users.filter(user => {
@@ -343,6 +367,17 @@ const UsersAccessPage: React.FC = () => {
                                             mr={2}
                                             onClick={() => handleEditUser(user)}
                                         />
+                                        {isCurrentUserAdmin && (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                colorScheme="orange"
+                                                mr={2}
+                                                onClick={() => handleResetPassword(user)}
+                                            >
+                                                Reset Password
+                                            </Button>
+                                        )}
                                         <Button
                                             size="sm"
                                             variant="outline"
@@ -371,6 +406,12 @@ const UsersAccessPage: React.FC = () => {
                 onClose={onRoleFilterClose}
                 onApplyFilters={handleApplyRoleFilters}
                 selectedRoles={selectedRoleIds}
+            />
+
+            <ResetPasswordModal
+                isOpen={isResetPasswordOpen}
+                onClose={onResetPasswordClose}
+                user={userToResetPassword}
             />
         </Box>
     );

@@ -118,9 +118,10 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserAdde
     setIsLoading(true);
     try {
       if (isEditing && userToEdit) {
-        await axios.put(
-          `${process.env.NEXT_PUBLIC_API_URL}/employees/${userToEdit.id}`,
+        await axios.patch(
+          `${process.env.NEXT_PUBLIC_API_URL}/employee`,
           {
+            id: userToEdit.id,
             name,
             email,
             phone: phone || undefined,
@@ -141,10 +142,11 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserAdde
         });
       } else {
         await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/employees`,
+          `${process.env.NEXT_PUBLIC_API_URL}/employee/register`,
           {
             name,
             email,
+            password: "defaultPassword123",
             phone: phone || undefined,
             roleIds: roles,
             isActive: true

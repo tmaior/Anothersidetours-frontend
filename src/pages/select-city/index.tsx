@@ -12,6 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 interface Tenant {
     imageUrl: string;
@@ -38,18 +39,31 @@ export default function SelectCity() {
         const fetchTenants = async () => {
             try {
                 setLoading(true);
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`);
-                
-                if (!res.ok) {
-                    throw new Error(`Error ${res.status}: Failed to fetch tenants`);
-                }
-                
-                const data = await res.json();
-                setTenants(data);
+                const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/tenants`, {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                setTenants(res.data);
                 setError("");
             } catch (error) {
                 console.error("Failed to fetch tenants:", error);
+                if (error.response) {
+                    console.error("Response Details", {
+                        status: error.response.status,
+                        data: error.response.data,
+                        headers: error.response.headers
+                    });
+                }
+                
                 setError("Failed to load cities. Please try again.");
+
+                if (error.response && error.response.status === 401) {
+                    localStorage.removeItem("user");
+                    router.push("/login");
+                }
             } finally {
                 setLoading(false);
             }

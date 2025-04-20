@@ -14,6 +14,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
 
+axios.defaults.withCredentials = true;
 export default function Login() {
     const router = useRouter();
 
@@ -43,16 +44,32 @@ export default function Login() {
                 const res = await axios.post(
                     `${process.env.NEXT_PUBLIC_API_URL}/auth/login`, 
                     formData,
-                    { withCredentials: true }
+                    { 
+                        withCredentials: true,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    }
                 );
-
-                if (res.data) {
+                if (res.data && res.data.employee) {
                     localStorage.setItem("user", JSON.stringify(res.data.employee));
+
+                    try {
+                        await axios.get(
+                            `${process.env.NEXT_PUBLIC_API_URL}/auth/profile`,
+                            { withCredentials: true }
+                        );
+                    } catch (profileErr) {
+                        console.error("Error getting profile:", profileErr);
+                    }
                     router.push("/select-city");
                 } else {
-                    setApiError("Invalid response from server");
+                    console.error("Invalid response:", res.data);
+                    setApiError("User data not found  response");
                 }
             } catch (error) {
+                console.error("Login Error", error);
                 const message = error.response?.data?.message || "Failed to connect to the server";
                 setApiError(message);
             } finally {

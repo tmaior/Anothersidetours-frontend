@@ -89,7 +89,14 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
 
         if (!tenants.length) {
             setIsLoading(true);
-            fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`)
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`, {
+                method: "GET",
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+            })
                 .then((response) => response.json())
                 .then((data) => {
                     setTenants(data);
@@ -107,7 +114,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     }
 
                     const currentTenantId = storedTenantId || tenantId;
-                    
+
                     if (!currentTenantId && data.length > 0) {
                         const defaultTenant = data[0];
                         setSelectedTenant(defaultTenant);
@@ -142,7 +149,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                 const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
                     withCredentials: true,
                 });
-                
+
                 if (response.data) {
                     setUser(response.data);
                     setUserPermissions(response.data.permissions || []);
@@ -270,7 +277,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             _hover={{cursor: "pointer"}}
                         >
                         </Text>
-                        
+
                         <Text
                             fontSize="md"
                             color="gray.400"
@@ -679,14 +686,15 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         </Text>
                     </VStack>
 
-                    <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"} marginTop={"-60px"} position="relative" zIndex={100}>
-                        <Menu 
-                            placement="right-start" 
-                            offset={[0, 0]} 
-                            closeOnSelect={false} 
-                            isLazy 
-                            lazyBehavior="keepMounted" 
-                            gutter={0} 
+                    <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"} marginTop={"-60px"} position="relative"
+                         zIndex={100}>
+                        <Menu
+                            placement="right-start"
+                            offset={[0, 0]}
+                            closeOnSelect={false}
+                            isLazy
+                            lazyBehavior="keepMounted"
+                            gutter={0}
                             strategy="fixed"
                         >
                             <MenuButton
@@ -731,8 +739,8 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                 </HStack>
                             </MenuButton>
                             <Portal>
-                                <MenuList 
-                                    minW="300px" 
+                                <MenuList
+                                    minW="300px"
                                     bg="#222324"
                                     maxH="calc(100vh - 120px)"
                                     overflowY="auto"
@@ -784,7 +792,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                         color="white"
                                         w="100%"
                                         justifyContent="flex-start"
-                                        _hover={{ background: "rgba(255,255,255,0.1)" }}
+                                        _hover={{background: "rgba(255,255,255,0.1)"}}
                                     >
                                         Logout
                                     </LogoutButton>
@@ -801,12 +809,12 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     </Box>
                 </Box>
 
-                <Box 
-                    flex="1" 
-                    p={8} 
-                    marginLeft="250px" 
-                    maxW="calc(100% - 250px)" 
-                    overflowY="auto" 
+                <Box
+                    flex="1"
+                    p={8}
+                    marginLeft="250px"
+                    maxW="calc(100% - 250px)"
+                    overflowY="auto"
                     minH="100vh"
                     position="relative"
                     zIndex={1}

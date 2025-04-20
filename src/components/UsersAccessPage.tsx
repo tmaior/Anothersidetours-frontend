@@ -60,6 +60,7 @@ const UsersAccessPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
     const [availableRoles, setAvailableRoles] = useState<{ id: string, name: string }[]>([]);
+    const [userToEdit, setUserToEdit] = useState<User | null>(null);
     const toast = useToast();
 
     const {isOpen: isAddUserOpen, onOpen: onAddUserOpen, onClose: onAddUserClose} = useDisclosure();
@@ -133,6 +134,16 @@ const UsersAccessPage: React.FC = () => {
 
     const handleApplyRoleFilters = (roleIds: string[]) => {
         setSelectedRoleIds(roleIds);
+    };
+
+    const handleEditUser = (user: User) => {
+        setUserToEdit(user);
+        onAddUserOpen();
+    };
+
+    const handleCloseUserModal = () => {
+        setUserToEdit(null);
+        onAddUserClose();
     };
 
     const filteredUsers = users.filter(user => {
@@ -330,8 +341,7 @@ const UsersAccessPage: React.FC = () => {
                                             icon={<FiEdit/>}
                                             variant="ghost"
                                             mr={2}
-                                            onClick={() => {
-                                            }}
+                                            onClick={() => handleEditUser(user)}
                                         />
                                         <Button
                                             size="sm"
@@ -351,8 +361,9 @@ const UsersAccessPage: React.FC = () => {
 
             <AddUserModal
                 isOpen={isAddUserOpen}
-                onClose={onAddUserClose}
+                onClose={handleCloseUserModal}
                 onUserAdded={fetchUsers}
+                userToEdit={userToEdit}
             />
 
             <RoleFilterModal

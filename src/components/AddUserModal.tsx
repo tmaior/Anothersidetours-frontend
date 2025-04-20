@@ -26,13 +26,23 @@ type Role = {
   description: string;
 };
 
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  employeeRoles: { id: string; role: { id: string; name: string } }[];
+  isActive: boolean;
+};
+
 type AddUserModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onUserAdded: () => void;
+  userToEdit?: User | null;
 };
 
-const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserAdded }) => {
+const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserAdded, userToEdit }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -41,6 +51,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserAdde
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
+  const isEditing = !!userToEdit;
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -66,6 +77,24 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserAdde
     }
   }, [isOpen, toast]);
 
+  useEffect(() => {
+    if (isOpen) {
+      if (userToEdit) {
+        setName(userToEdit.name);
+        setEmail(userToEdit.email);
+        setPhone(userToEdit.phone || '');
+        const userRoleIds = userToEdit.employeeRoles.map(er => er.role.id);
+        setRoles(userRoleIds);
+      } else {
+        setName('');
+        setEmail('');
+        setPhone('');
+        setRoles([]);
+      }
+      setErrors({});
+    }
+  }, [isOpen, userToEdit]);
+
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
@@ -88,27 +117,51 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserAdde
 
     setIsLoading(true);
     try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/employees`,
-        {
-          name,
-          email,
-          phone: phone || undefined,
-          roleIds: roles,
-          isActive: true
-        },
-        {
-          withCredentials: true
-        }
-      );
+      if (isEditing && userToEdit) {
+        await axios.put(
+          `${process.env.NEXT_PUBLIC_API_URL}/employees/${userToEdit.id}`,
+          {
+            name,
+            email,
+            phone: phone || undefined,
+            roleIds: roles,
+            isActive: userToEdit.isActive
+          },
+          {
+            withCredentials: true
+          }
+        );
 
-      toast({
-        title: 'Success',
-        description: 'User has been added successfully',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
+        toast({
+          title: 'Success',
+          description: 'User has been updated successfully',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/employees`,
+          {
+            name,
+            email,
+            phone: phone || undefined,
+            roleIds: roles,
+            isActive: true
+          },
+          {
+            withCredentials: true
+          }
+        );
+
+        toast({
+          title: 'Success',
+          description: 'User has been added successfully',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
 
       setName('');
       setEmail('');
@@ -117,10 +170,10 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserAdde
       onUserAdded();
       onClose();
     } catch (error) {
-      console.error('Error adding user:', error);
+      console.error(`Error ${isEditing ? 'updating' : 'adding'} user:`, error);
       toast({
         title: 'Error',
-        description: 'Failed to add user',
+        description: `Failed to ${isEditing ? 'update' : 'add'} user`,
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -138,7 +191,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserAdde
     <Modal isOpen={isOpen} onClose={onClose} size="md">
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Add New User</ModalHeader>
+        <ModalHeader>{isEditing ? 'Edit User' : 'Add New User'}</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <VStack spacing={4}>
@@ -196,7 +249,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserAdde
             onClick={handleSubmit}
             isLoading={isLoading}
           >
-            Add User
+            {isEditing ? 'Save Changes' : 'Add User'}
           </Button>
         </ModalFooter>
       </ModalContent>

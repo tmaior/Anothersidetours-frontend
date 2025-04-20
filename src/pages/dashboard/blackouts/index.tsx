@@ -39,6 +39,16 @@ interface BlackoutDatePayload {
     tenantId: string;
 }
 
+class HttpError extends Error {
+    public status: number;
+
+    constructor(status: number, message: string) {
+        super(message);
+        this.status = status;
+        Object.setPrototypeOf(this, HttpError.prototype);
+    }
+}
+
 function BlackoutDatesManagement() {
     const [blackoutDates, setBlackoutDates] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -57,17 +67,38 @@ function BlackoutDatesManagement() {
 
     useEffect(() => {
         async function fetchData() {
+            const fetchJson = async (url: string) => {
+                const res = await fetch(url, {
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                    },
+                });
+
+                if (!res.ok) {
+                    throw new HttpError(res.status, res.statusText);
+                }
+                return res.json();
+            };
+
             try {
                 const [blackoutResponse, categoryResponse] = await Promise.all([
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/byTenantId/${tenantId}`),
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/byTenantId/${tenantId}`),
+                    fetchJson(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/byTenantId/${tenantId}`),
+                    fetchJson(`${process.env.NEXT_PUBLIC_API_URL}/categories/byTenantId/${tenantId}`),
                 ]);
-                const [blackoutData, categoryData] = await Promise.all([
-                    blackoutResponse.json(),
-                    categoryResponse.json(),
-                ]);
-                setBlackoutDates(blackoutData);
-                setCategories(categoryData);
+                setBlackoutDates(blackoutResponse);
+                setCategories(categoryResponse);
+
+                if (blackoutResponse.length === 0) {
+                    toast({
+                        title: 'No blackout',
+                        description: 'No blackout date registered.',
+                        status: 'info',
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                }
             } catch (error) {
                 console.error("Error fetching data:", error);
                 toast({
@@ -103,6 +134,7 @@ function BlackoutDatesManagement() {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/${id}`, {
                 method: 'DELETE',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -196,6 +228,7 @@ function BlackoutDatesManagement() {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates`, {
                 method: "POST",
+                credentials: 'include',
                 headers: {
                     "Content-Type": "application/json",
                 },

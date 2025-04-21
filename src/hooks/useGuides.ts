@@ -19,7 +19,11 @@ export function useGuides() {
 
     useEffect(() => {
         axios
-            .get(`${process.env.NEXT_PUBLIC_API_URL}/guides`)
+            .get(`${process.env.NEXT_PUBLIC_API_URL}/guides`,
+                {
+                    method:'GET',
+                    withCredentials: true,
+                })
             .then((response) => {
                 const guidesData = response.data.map(guide => ({
                     id: guide.id,

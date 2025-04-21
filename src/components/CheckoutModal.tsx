@@ -42,7 +42,15 @@ interface CheckoutModalProps {
     isInvoicePayment?: boolean;
 }
 
-export default function CheckoutModal({isOpen, onClose, onBack, title, valuePrice, reservationId: propReservationId, isInvoicePayment = false}: CheckoutModalProps) {
+export default function CheckoutModal({
+                                          isOpen,
+                                          onClose,
+                                          onBack,
+                                          title,
+                                          valuePrice,
+                                          reservationId: propReservationId,
+                                          isInvoicePayment = false
+                                      }: CheckoutModalProps) {
     const {isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal} = useDisclosure();
     const {
         tourId,
@@ -54,7 +62,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
         selectedDate,
         selectedTime,
         detailedAddons,
-        reservationId: contextReservationId, 
+        reservationId: contextReservationId,
         setReservationId,
         imageUrl,
     } = useGuest();
@@ -86,7 +94,10 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
 
     const fetchTransactionId = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservationId}?payment_method=invoice&payment_status=pending`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservationId}?payment_method=invoice&payment_status=pending`,
+                {
+                    credentials: 'include',
+                });
             if (!response.ok) {
                 throw new Error("Failed to fetch transaction data");
             }
@@ -108,7 +119,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
             let reservation;
             let recipientEmail = email;
             if (isInvoicePayment && reservationId) {
-                reservation = { id: reservationId };
+                reservation = {id: reservationId};
             } else {
                 if (!userId) {
                     console.error("User ID is not available.");
@@ -118,10 +129,11 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
 
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
                     method: 'PUT',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ statusCheckout: "COMPLETED" }),
+                    body: JSON.stringify({statusCheckout: "COMPLETED"}),
                 });
 
                 if (!response.ok) throw new Error("Failed to update user status");
@@ -168,6 +180,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
 
                 const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/booking-details`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
                     },
@@ -193,13 +206,14 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
             const setupIntentEndpoint = isInvoicePayment && transactionId
                 ? `${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent-for-transaction`
                 : `${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`;
-                
+
             const setupIntentData = isInvoicePayment && transactionId
-                ? { transactionId: transactionId }
-                : { reservationId: reservation.id };
+                ? {transactionId: transactionId}
+                : {reservationId: reservation.id};
 
             const setupIntentResponse = await fetch(setupIntentEndpoint, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -235,11 +249,12 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                 : `${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`;
 
             const savePaymentData = isInvoicePayment && transactionId
-                ? { paymentMethodId, transactionId: transactionId }
-                : { paymentMethodId, reservationId: reservation.id };
+                ? {paymentMethodId, transactionId: transactionId}
+                : {paymentMethodId, reservationId: reservation.id};
 
             const savePaymentMethodResponse = await fetch(saveEndpoint, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -255,6 +270,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
             if (isInvoicePayment && transactionId) {
                 const processPaymentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({transactionId}),
                 });
@@ -275,6 +291,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
 
                 const updateTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${transactionId}`, {
                     method: 'PUT',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
                     },
@@ -318,7 +335,10 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
 
             try {
                 if (reservation && reservation.id) {
-                    const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservation.id}`);
+                    const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservation.id}`,
+                        {
+                            credentials:'include',
+                        });
                     if (reservationResponse.ok) {
                         const reservationData = await reservationResponse.json();
                         if (reservationData.user && reservationData.user.email) {
@@ -334,6 +354,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
             try {
                 const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mail/send-reservation-email`, {
                     method: "POST",
+                    credentials:'include',
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({
                         toEmail: recipientEmail,
@@ -349,8 +370,8 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                             duration: "2",
                             quantity: guestQuantity,
                             tourTitle: title,
-                            description: isInvoicePayment 
-                                ? "Your invoice payment has been received" 
+                            description: isInvoicePayment
+                                ? "Your invoice payment has been received"
                                 : "Your reservation is pending",
                             totals: [
                                 {label: "total", amount: `$${totalAmount.toFixed(2)}`},
@@ -393,11 +414,11 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
     return (
         <>
             <Box w="full" h="full" bg="white" display="flex" flexDirection="column" pt={20}>
-                <Flex 
-                    justifyContent="center" 
-                    alignItems="center" 
-                    p={4} 
-                    fontWeight="bold" 
+                <Flex
+                    justifyContent="center"
+                    alignItems="center"
+                    p={4}
+                    fontWeight="bold"
                     fontSize="lg"
                 >
                     CHECKOUT
@@ -412,57 +433,58 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                     overflowY="auto"
                 >
                     <Flex
-                        direction={{ base: "column", md: "row" }}
+                        direction={{base: "column", md: "row"}}
                         w="full"
                     >
-                        <HStack 
-                            w={{ base: "full", md: "500px" }}
+                        <HStack
+                            w={{base: "full", md: "500px"}}
                             alignItems="flex-start"
-                            flexWrap={{ base: "wrap", md: "nowrap" }}
+                            flexWrap={{base: "wrap", md: "nowrap"}}
                         >
                             <HStack
-                                spacing={{ base: 2, md: 4 }}
+                                spacing={{base: 2, md: 4}}
                                 alignItems="flex-start"
-                                flexWrap={{ base: "wrap", md: "nowrap" }}
+                                flexWrap={{base: "wrap", md: "nowrap"}}
                             >
-                                <Flex w={{ base: "100px", md: "40%" }} h={{ base: "100px", md: "40%" }}>
+                                <Flex w={{base: "100px", md: "40%"}} h={{base: "100px", md: "40%"}}>
                                     <Box
                                         bgImage={imageUrl}
                                         bgPosition="center"
                                         bgSize="cover"
-                                        boxSize={{ base: "100px", md: "150px" }}
+                                        boxSize={{base: "100px", md: "150px"}}
                                     />
                                 </Flex>
-                                <Flex 
-                                    direction="column" 
-                                    align="flex-start" 
-                                    w={{ base: "calc(100% - 110px)", md: "400px" }} 
-                                    ml={{ base: 2, md: "-10" }}
+                                <Flex
+                                    direction="column"
+                                    align="flex-start"
+                                    w={{base: "calc(100% - 110px)", md: "400px"}}
+                                    ml={{base: 2, md: "-10"}}
                                 >
                                     <Text fontSize="lg" fontWeight="bold">{title}</Text>
-                                    <VStack align="flex-start" spacing={0} h={{ base: "auto", md: "80px" }} marginLeft={1}>
+                                    <VStack align="flex-start" spacing={0} h={{base: "auto", md: "80px"}}
+                                            marginLeft={1}>
                                         <Text>{name}</Text>
-                                        <HStack 
-                                            spacing={{ base: 2, md: 6 }} 
+                                        <HStack
+                                            spacing={{base: 2, md: 6}}
                                             marginTop={"-3"}
-                                            flexWrap={{ base: "wrap", md: "nowrap" }}
+                                            flexWrap={{base: "wrap", md: "nowrap"}}
                                         >
                                             <HStack spacing={2}>
                                                 <ImUsers/>
                                                 <Text>{guestQuantity} Reserved</Text>
                                             </HStack>
                                             <Spacer/>
-                                            <VStack 
-                                                align="flex-start" 
+                                            <VStack
+                                                align="flex-start"
                                                 spacing={1}
-                                                w={{ base: "full", md: "auto" }}
-                                                mt={{ base: 1, md: 0 }}
+                                                w={{base: "full", md: "auto"}}
+                                                mt={{base: 1, md: 0}}
                                             >
                                                 <HStack spacing={2}>
                                                     <MdEmail/>
-                                                    <Text 
-                                                        fontSize={{ base: "sm", md: "md" }}
-                                                        maxW={{ base: "200px", md: "300px" }}
+                                                    <Text
+                                                        fontSize={{base: "sm", md: "md"}}
+                                                        maxW={{base: "200px", md: "300px"}}
                                                         overflow="hidden"
                                                         textOverflow="ellipsis"
                                                         whiteSpace="nowrap"
@@ -480,9 +502,9 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                                                                 disabled
                                                                 render={(inputProps) => (
                                                                     <ChakraInput {...inputProps} isDisabled
-                                                                                variant="unstyled"
-                                                                                border="none"
-                                                                                width="auto"/>
+                                                                                 variant="unstyled"
+                                                                                 border="none"
+                                                                                 width="auto"/>
                                                                 )}
                                                             />
                                                         ) : (
@@ -492,7 +514,7 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                                                 </HStack>
                                             </VStack>
                                         </HStack>
-                                        <HStack marginTop={{ base: 2, md: "-3" }}>
+                                        <HStack marginTop={{base: 2, md: "-3"}}>
                                             <SlCalender/>
                                             <Text>{selectedDate ? format(selectedDate, 'dd MMM yyyy') : "No Date Selected"}</Text>
                                         </HStack>
@@ -503,24 +525,24 @@ export default function CheckoutModal({isOpen, onClose, onBack, title, valuePric
                                     </VStack>
                                     <Flex w="full" mt={4} p={1} justify="flex-end">
                                         <Link color="blue.500" textAlign="right" marginRight={5}
-                                            fontSize="smaller">Modify</Link>
+                                              fontSize="smaller">Modify</Link>
                                     </Flex>
                                 </Flex>
                             </HStack>
                         </HStack>
 
                         <Spacer/>
-                        <VStack 
-                            w={{ base: "full", md: "auto" }} 
-                            p={4} 
-                            spacing={4} 
+                        <VStack
+                            w={{base: "full", md: "auto"}}
+                            p={4}
+                            spacing={4}
                             align="stretch"
-                            mt={{ base: 4, md: 0 }}
+                            mt={{base: 4, md: 0}}
                         >
                             {guestQuantity && pricePerGuest !== undefined ? (
                                 <HStack w="full">
                                     <Text>{`Guests (${guestQuantity} × $${Number(pricePerGuest).toFixed(2)})`}</Text>
-                                    <Spacer />
+                                    <Spacer/>
                                     <Text>${guestTotal.toFixed(2)}</Text>
                                 </HStack>
                             ) : (

@@ -41,10 +41,6 @@ export default function SelectCity() {
                 setLoading(true);
                 const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/tenants`, {
                     withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    }
                 });
                 setTenants(res.data);
                 setError("");

@@ -21,7 +21,6 @@ export function useGuides() {
         axios
             .get(`${process.env.NEXT_PUBLIC_API_URL}/guides`,
                 {
-                    method:'GET',
                     withCredentials: true,
                 })
             .then((response) => {

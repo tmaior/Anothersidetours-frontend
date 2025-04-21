@@ -48,7 +48,6 @@ import {MdOutlineCancel, MdOutlineLocalPrintshop, MdOutlineRefresh} from 'react-
 import CancelConfirmationModal from "../../../components/CancelConfirmationModal";
 import PurchaseNotes from "../../../components/PurchaseNotes";
 import useWindowWidth from "../../../hooks/useWindowWidth";
-import withAuth from "../../../utils/withAuth";
 import PurchaseSummaryDetailed from "../../../components/PurchaseSummaryDetailed";
 import CustomLineItemsModal, {LineItem} from "../../../components/CustomLineItemsModal";
 import ApplyCodeModal from '../../../components/ApplyCodeModal';
@@ -302,7 +301,10 @@ const PurchaseList = ({
             setIsLoading(true);
             try {
                 const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/with-users/byTenantId/${tenantId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/with-users/byTenantId/${tenantId}`,
+                    {
+                        credentials: "include",
+                    }
                 );
                 const data = await response.json();
                 setReservations(data);
@@ -538,7 +540,10 @@ const PurchaseDetails = ({reservation}) => {
 
     useEffect(() => {
         if (reservation?.id && (!reservationGuides[reservation.id] || reservationGuides[reservation.id].length === 0)) {
-            fetch(`${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservation.id}/guides`)
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservation.id}/guides`,
+                {
+                    credentials: 'include',
+                })
                 .then(response => {
                     if (response.ok) return response.json();
                     throw new Error('Failed to fetch guides');
@@ -1164,7 +1169,10 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
             setIsLoadingTierPricing(true);
             try {
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${reservation.tour.id}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${reservation.tour.id}`,
+                    {
+                        withCredentials: true,
+                    }
                 );
 
                 if (response.data && response.data.length > 0) {
@@ -1189,8 +1197,12 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
             setIsLoadingGroup(true);
             try {
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/byGroupId/${reservation.groupId}`
-                );
+                        `${process.env.NEXT_PUBLIC_API_URL}/reservations/byGroupId/${reservation.groupId}`,
+                        {
+                            withCredentials: true,
+                        }
+                    )
+                ;
                 setGroupReservations(response.data);
             } catch (error) {
                 console.error('Error fetching group reservations:', error);
@@ -1207,19 +1219,22 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
     useEffect(() => {
         const fetchCompletedTransactions = async () => {
             if (!reservation?.id) return;
-            
+
             setIsLoadingTransactions(true);
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`,
-                    {params: {payment_status: 'completed'}}
+                    {
+                        withCredentials: true,
+                        params: {payment_status: 'completed'}
+                    }
                 );
 
                 if (response.data && response.data.length > 0) {
                     const filteredTransactions = response.data.filter(transaction =>
                         transaction.payment_status === 'completed' &&
-                        (transaction.transaction_direction === 'charge' || 
-                         transaction.transaction_direction === 'refund')
+                        (transaction.transaction_direction === 'charge' ||
+                            transaction.transaction_direction === 'refund')
                     );
 
                     const transactionsWithCardDetails = await Promise.all(
@@ -1230,7 +1245,10 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                             ) {
                                 try {
                                     const cardResponse = await axios.get(
-                                        `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${transaction.paymentMethodId}`
+                                        `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${transaction.paymentMethodId}`,
+                                        {
+                                            withCredentials: true,
+                                        }
                                     );
                                     if (cardResponse.data?.last4) {
                                         return {
@@ -1266,13 +1284,16 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
             setIsLoadingAdjustments(true);
             try {
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`,
+                    {
+                        withCredentials: true,
+                    }
                 );
                 
                 if (response.data && response.data.length > 0) {
-                    const guestAdjustmentTransactions = response.data.filter(transaction => 
-                        (transaction.transaction_type === 'GUEST_QUANTITY_CHANGE' || 
-                         transaction.transaction_type === 'GUEST_QUANTITY_REFUND')
+                    const guestAdjustmentTransactions = response.data.filter(transaction =>
+                        (transaction.transaction_type === 'GUEST_QUANTITY_CHANGE' ||
+                            transaction.transaction_type === 'GUEST_QUANTITY_REFUND')
                     );
 
                     const processedAdjustments = guestAdjustmentTransactions.map(transaction => {
@@ -1298,7 +1319,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                         };
                     });
 
-                    const sortedAdjustments = processedAdjustments.sort((a, b) => 
+                    const sortedAdjustments = processedAdjustments.sort((a, b) =>
                         a.createdAt.getTime() - b.createdAt.getTime()
                     );
                     setGuestAdjustments(sortedAdjustments);
@@ -1311,12 +1332,12 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                                 return false;
                             }
                         }
-                        
-                        return metadata && 
-                               typeof metadata === 'object' && 
-                               'voucherCode' in metadata;
+
+                        return metadata &&
+                            typeof metadata === 'object' &&
+                            'voucherCode' in metadata;
                     });
-                    
+
                     const processedVouchers = vouchers.map(transaction => {
                         let metadata = transaction.metadata;
                         if (typeof metadata === 'string') {
@@ -1337,7 +1358,7 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                             createdAt: new Date(transaction.created_at || new Date())
                         };
                     });
-                    const sortedVouchers = processedVouchers.sort((a, b) => 
+                    const sortedVouchers = processedVouchers.sort((a, b) =>
                         a.createdAt.getTime() - b.createdAt.getTime()
                     );
                     
@@ -1364,11 +1385,17 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
 
             try {
                 const reservationAddonsResponse = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${reservation.id}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${reservation.id}`,
+                    {
+                        withCredentials: true,
+                    }
                 );
 
                 const allAddonsResponse = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${reservation.tour.id}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${reservation.tour.id}`,
+                    {
+                        withCredentials: true,
+                    }
                 );
 
                 setReservationAddons(reservationAddonsResponse.data);
@@ -1399,7 +1426,10 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
 
             try {
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${reservation.id}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${reservation.id}`,
+                    {
+                        withCredentials: true,
+                    }
                 );
 
                 const customItems = response.data.map(item => ({
@@ -1435,7 +1465,10 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
 
         try {
             await axios.delete(
-                `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${reservation.id}`
+                `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${reservation.id}`,
+                {
+                    withCredentials: true,
+                }
             );
             if (items.length > 0) {
                 const customItemsPayload = items.map(item => ({
@@ -1518,7 +1551,10 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
             }
             try {
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${reservation.paymentMethodId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${reservation.paymentMethodId}`,
+                    {
+                        withCredentials: true,
+                    }
                 );
                 setCardDetails(response.data);
             } catch (error) {
@@ -1548,7 +1584,12 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`,
-                    {params: {payment_status: 'pending'}}
+                    {
+                        withCredentials: true,
+                        params: {
+                            payment_status: 'pending'
+                        }
+                    }
                 );
 
                 if (response.data && response.data.length > 0) {
@@ -1645,20 +1686,20 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
     const getPaymentMethodIcon = (method) => {
         const methodLower = method ? method.toLowerCase() : '';
         if (methodLower.includes('card') || methodLower.includes('credit')) {
-            return <FaRegCreditCard />;
+            return <FaRegCreditCard/>;
         } else if (methodLower.includes('cash')) {
-            return <BsCash />;
+            return <BsCash/>;
         } else if (methodLower.includes('check')) {
-            return <BiCheck />;
+            return <BiCheck/>;
         } else {
-            return <FiSend />;
+            return <FiSend/>;
         }
     };
 
     const formatPaymentDate = (dateString) => {
         if (!dateString) return '';
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+        return date.toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'});
     };
 
     return (
@@ -1817,7 +1858,8 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                                     } {formatPaymentDate(transaction.updated_at || transaction.created_at)}
                                     </Text>
                                 </HStack>
-                                <Text fontWeight="bold" color={transaction.transaction_direction === 'refund' ? 'red.500' : 'inherit'}>
+                                <Text fontWeight="bold"
+                                      color={transaction.transaction_direction === 'refund' ? 'red.500' : 'inherit'}>
                                     {transaction.transaction_direction === 'refund' ? '-' : ''}${transaction.amount.toFixed(2)}
                                 </Text>
                             </HStack>
@@ -2015,11 +2057,17 @@ const PurchasesPage = () => {
     const fetchAddonsForReservation = useCallback(async (reservationId: string, tourId?: string) => {
         try {
             const reservationAddonsResponse = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${reservationId}`
+                `${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${reservationId}`,
+                {
+                    withCredentials: true,
+                }
             );
 
             const allAddonsResponse = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`
+                `${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`,
+                {
+                    withCredentials: true,
+                }
             );
 
             const reservationAddons = reservationAddonsResponse.data;
@@ -2123,7 +2171,10 @@ const PurchasesPage = () => {
         const fetchReservations = async () => {
             try {
                 const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/with-users/byTenantId/${tenantId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/with-users/byTenantId/${tenantId}`,
+                    {
+                        credentials: 'include',
+                    }
                 );
                 const data = await response.json();
 

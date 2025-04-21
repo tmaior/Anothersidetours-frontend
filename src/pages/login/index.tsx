@@ -46,10 +46,6 @@ export default function Login() {
                     formData,
                     { 
                         withCredentials: true,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        }
                     }
                 );
                 if (res.data && res.data.employee) {

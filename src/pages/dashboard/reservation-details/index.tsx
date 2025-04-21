@@ -129,26 +129,27 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
     const handleAccept = async () => {
         try {
             const transactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`);
-            
+
             if (!transactionResponse.ok) throw new Error("Failed to get payment transaction data");
-            
+
             const transactionData = await transactionResponse.json();
-            
+
             if (!transactionData || transactionData.length === 0) {
                 throw new Error("No payment transaction found for this reservation");
             }
-            
+
             const transaction = transactionData[0];
             const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
                 method: "POST",
+                credentials: "include",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
                     transactionId: transaction.id
                 }),
             });
-            
+
             if (!paymentResponse.ok) throw new Error("Failed to process payment");
-            
+
             const paymentResult = await paymentResponse.json();
 
             const parsedDate = parse(reservation.dateFormatted, 'MMM dd, yyyy', new Date());
@@ -156,7 +157,10 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
 
             const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mail/send-reservation-email`, {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
                 body: JSON.stringify({
                     toEmail: reservation.user?.email,
                     emailData: {
@@ -186,7 +190,11 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                 prevDays.map((dayObj) => ({
                     ...dayObj,
                     reservations: dayObj.reservations.map((r) =>
-                        r.id === reservation.id ? {...r, status: "ACCEPTED", paymentIntentId: paymentResult.paymentIntentId} : r
+                        r.id === reservation.id ? {
+                            ...r,
+                            status: "ACCEPTED",
+                            paymentIntentId: paymentResult.paymentIntentId
+                        } : r
                     ),
                 }))
             );
@@ -212,24 +220,38 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
 
     const confirmReject = async () => {
         try {
-            const transactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`);
-            
+            const transactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`,
+                {
+                    method: "GET",
+                    credentials: 'include',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                    },
+                }
+            );
+
             if (!transactionResponse.ok) throw new Error("Failed to get payment transaction data");
-            
+
             const transactionData = await transactionResponse.json();
-            
+
             if (transactionData && transactionData.length > 0) {
                 const transaction = transactionData[0];
                 if (transaction.paymentMethodId) {
                     await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/invalidate-payment-method`, {
                         method: "POST",
-                        headers: {"Content-Type": "application/json"},
+                        credentials: 'include',
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
                         body: JSON.stringify({paymentMethodId: transaction.paymentMethodId}),
                     });
                 }
             } else if (reservation.paymentMethodId) {
                 await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/invalidate-payment-method`, {
                     method: "POST",
+                    credentials: 'include',
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({paymentMethodId: reservation.paymentMethodId}),
                 });
@@ -240,6 +262,7 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
 
             const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mail/send-reservation-email`, {
                 method: "POST",
+                credentials: 'include',
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
                     toEmail: reservation.user?.email,
@@ -268,6 +291,7 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
 
             await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservation.id}`, {
                 method: "PUT",
+                credentials: "include",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({status: "REJECTED"}),
             });
@@ -554,4 +578,5 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
         </Box>
     );
 }
+
 export default withPermission(ReservationDetail, "RESERVATION_READ");

@@ -10,7 +10,9 @@ export function useReservationGuides(reservationId: string) {
         if (reservationId) {
             setLoading(true);
             axios
-                .get(`${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservationId}/guides`)
+                .get(`${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservationId}/guides`, {
+                    withCredentials: true,
+                })
                 .then((response) => {
                     setGuides(response.data.map((item) => item.guide));
                 })

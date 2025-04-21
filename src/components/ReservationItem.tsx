@@ -63,7 +63,15 @@ const ReservationItem = ({
 
     const handleNoteClick = async (item) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${item.id}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${item.id}`,
+                {
+                    method: "GET",
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    }
+                });
             const data = await response.json();
             onNoteClick(data, item.id);
         } catch (error) {
@@ -82,7 +90,15 @@ const ReservationItem = ({
         if (itemId) {
             try {
                 const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${itemId}/guides`
+                    `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${itemId}/guides`,
+                    {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        }
+                    }
                 );
                 if (response.ok) {
                     const data = await response.json();

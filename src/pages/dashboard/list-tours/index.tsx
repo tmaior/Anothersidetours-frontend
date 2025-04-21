@@ -9,6 +9,7 @@ import {
     Box,
     Button,
     Center,
+    Container,
     Divider,
     Grid,
     GridItem,
@@ -27,7 +28,6 @@ import {
     useColorModeValue,
     useToast,
     VStack,
-    Container,
 } from "@chakra-ui/react";
 import React, {useEffect, useRef, useState} from "react";
 import {useRouter} from "next/router";
@@ -55,11 +55,18 @@ function ListTours() {
         async function fetchData() {
             try {
                 const toursResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                    }
                 );
                 const toursData = await toursResponse.json();
-                const nonDeletedTours = Array.isArray(toursData) 
-                    ? toursData.filter(tour => !tour.isDeleted) 
+                const nonDeletedTours = Array.isArray(toursData)
+                    ? toursData.filter(tour => !tour.isDeleted)
                     : [];
                 setTours(nonDeletedTours);
                 setFilteredTours(nonDeletedTours);
@@ -110,7 +117,7 @@ function ListTours() {
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ isDeleted: true }),
+                    body: JSON.stringify({isDeleted: true}),
                 }
             );
 
@@ -149,7 +156,7 @@ function ListTours() {
 
     return (
         <DashboardLayout>
-            <Container maxW="container.xl" px={{ base: 2, md: 4 }} centerContent>
+            <Container maxW="container.xl" px={{base: 2, md: 4}} centerContent>
                 <Box w="full" maxW="1400px">
                     <HStack
                         mb={4}
@@ -158,14 +165,14 @@ function ListTours() {
                         justify="center"
                         alignItems="center"
                     >
-                        <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="medium" textAlign="center">
+                        <Text fontSize={{base: "xl", md: "2xl"}} fontWeight="medium" textAlign="center">
                             Products
                         </Text>
-                        <Center height="50px" display={{ base: "none", md: "flex" }}>
+                        <Center height="50px" display={{base: "none", md: "flex"}}>
                             <Divider orientation="vertical" borderWidth="1px"/>
                         </Center>
 
-                        <InputGroup w={{ base: "100%", md: "600px" }}
+                        <InputGroup w={{base: "100%", md: "600px"}}
                                     flex="1">
                             <InputLeftElement pointerEvents="none">
                                 <SearchIcon color="gray.400"/>
@@ -179,7 +186,7 @@ function ListTours() {
                         </InputGroup>
 
                         <Button
-                            w={{ base: "100%", md: "200px" }}
+                            w={{base: "100%", md: "200px"}}
                             colorScheme="blue"
                             onClick={() => router.push("/dashboard/create-tours")}
                         >
@@ -189,15 +196,15 @@ function ListTours() {
 
                     <Divider orientation="horizontal" borderWidth="1px" color={"black"}/>
 
-                    <Grid 
-                        templateColumns={{ 
-                            base: "1fr", 
+                    <Grid
+                        templateColumns={{
+                            base: "1fr",
                             sm: "1fr",
-                            md: "repeat(2, 1fr)", 
+                            md: "repeat(2, 1fr)",
                             lg: "repeat(2, 1fr)",
                             xl: "repeat(2, 1fr)"
                         }}
-                        gap={{ base: 4, md: 5, lg: 6 }}
+                        gap={{base: 4, md: 5, lg: 6}}
                         mt={6}
                         justifyContent="stretch"
                         mx="auto"
@@ -206,20 +213,20 @@ function ListTours() {
                         {filteredTours.map((tour) => (
                             <GridItem
                                 key={tour.id}
-                                p={{ base: 4, md: 5, lg: 6 }}
+                                p={{base: 4, md: 5, lg: 6}}
                                 bg="gray.50"
                                 borderRadius="lg"
                                 boxShadow="lg"
                                 display="flex"
                                 flexDirection="column"
                                 justifyContent="flex-start"
-                                minHeight={{ base: "180px", md: "200px", lg: "220px" }}
+                                minHeight={{base: "180px", md: "200px", lg: "220px"}}
                                 width="100%"
                                 position="relative"
                                 transition="all 0.3s ease"
-                                _hover={{ 
+                                _hover={{
                                     transform: "translateY(-5px)",
-                                    boxShadow: "xl" 
+                                    boxShadow: "xl"
                                 }}
                             >
                                 <HStack position="absolute" top={4} right={4} spacing={2}>
@@ -297,28 +304,29 @@ function ListTours() {
                                         </Button>
                                     </Text>
                                 )}
-                                <HStack spacing={{ base: 3, md: 5 }} align="start" flexWrap={{ base: "wrap", md: "nowrap" }} width="100%">
+                                <HStack spacing={{base: 3, md: 5}} align="start" flexWrap={{base: "wrap", md: "nowrap"}}
+                                        width="100%">
                                     <Image
                                         src={tour.imageUrl || "https://via.placeholder.com/150x100"}
                                         alt={tour.name}
-                                        boxSize={{ base: "130px", md: "160px", lg: "180px" }}
-                                        minWidth={{ base: "130px", md: "160px", lg: "180px" }}
+                                        boxSize={{base: "130px", md: "160px", lg: "180px"}}
+                                        minWidth={{base: "130px", md: "160px", lg: "180px"}}
                                         objectFit="cover"
                                         borderRadius="md"
                                     />
-                                    <Box flex="1" width="100%" pr={{ base: 2, md: 4 }}>
+                                    <Box flex="1" width="100%" pr={{base: 2, md: 4}}>
                                         <Heading
-                                            fontSize={{ base: "md", md: "lg", lg: "xl" }}
+                                            fontSize={{base: "md", md: "lg", lg: "xl"}}
                                             noOfLines={2}
                                             wordBreak="break-word"
                                             whiteSpace="normal"
                                             width="100%">
                                             {tour.name}
                                         </Heading>
-                                        <Text 
-                                            mt={2} 
-                                            noOfLines={{ base: 3, lg: 4 }} 
-                                            fontSize={{ base: "sm", md: "md", lg: "lg" }}
+                                        <Text
+                                            mt={2}
+                                            noOfLines={{base: 3, lg: 4}}
+                                            fontSize={{base: "sm", md: "md", lg: "lg"}}
                                             width="100%"
                                         >
                                             {tour.description}
@@ -326,10 +334,12 @@ function ListTours() {
 
                                         <HStack mt={3}>
                                             {tour.isPrivate && (
-                                                <Badge colorScheme="yellow" fontSize={{ base: "xs", lg: "sm" }}>Private</Badge>
+                                                <Badge colorScheme="yellow"
+                                                       fontSize={{base: "xs", lg: "sm"}}>Private</Badge>
                                             )}
                                             {tour.isHidden && (
-                                                <Badge colorScheme="gray" fontSize={{ base: "xs", lg: "sm" }}>Hidden</Badge>
+                                                <Badge colorScheme="gray"
+                                                       fontSize={{base: "xs", lg: "sm"}}>Hidden</Badge>
                                             )}
                                         </HStack>
                                     </Box>

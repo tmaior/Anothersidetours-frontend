@@ -31,7 +31,7 @@ function Dashboard() {
     const [loadedDates, setLoadedDates] = useState([]);
     const {tenantId} = useGuest();
     const [reservations, setReservations] = useState([]);
-    
+
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [isDetailVisible, setIsDetailVisible] = useState(false);
     const [userDetails, setUserDetails] = useState({});
@@ -82,26 +82,53 @@ function Dashboard() {
             try {
                 let data = [];
                 if (hasManageReservationPermission) {
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/byTenantId/${tenantId}`);
-                    
+                    const response = await fetch(
+                        `${process.env.NEXT_PUBLIC_API_URL}/reservations/byTenantId/${tenantId}`,
+                        {
+                            method: 'GET',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                            },
+                        }
+                    );
+
                     if (!response.ok) {
                         throw new Error("Failed to fetch reservations");
                     }
                     data = await response.json();
                 } else {
-                    const allResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/byTenantId/${tenantId}`);
-                    
+                    const allResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/byTenantId/${tenantId}`,
+                        {
+                            method: 'GET',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                            }
+                        }
+                    );
+
                     if (!allResponse.ok) {
                         throw new Error("Failed to fetch reservations");
                     }
-                    
+
                     const allData = await allResponse.json();
                     const filteredData = [];
-                    
+
                     for (const reservation of allData) {
                         try {
                             const guidesResponse = await fetch(
-                                `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservation.id}/guides`
+                                `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservation.id}/guides`,
+                                {
+                                    method: 'GET',
+                                    credentials: 'include',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                    }
+                                }
                             );
                             if (guidesResponse.ok) {
                                 const guides = await guidesResponse.json();
@@ -121,7 +148,15 @@ function Dashboard() {
                         if (reservation.user_id) {
                             if (!userDetails[reservation.user_id]) {
                                 const userResponse = await fetch(
-                                    `${process.env.NEXT_PUBLIC_API_URL}/users/${reservation.user_id}`
+                                    `${process.env.NEXT_PUBLIC_API_URL}/users/${reservation.user_id}`,
+                                    {
+                                        method: 'GET',
+                                        credentials: 'include',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Accept': 'application/json',
+                                        }
+                                    }
                                 );
                                 if (userResponse.ok) {
                                     const userData = await userResponse.json();

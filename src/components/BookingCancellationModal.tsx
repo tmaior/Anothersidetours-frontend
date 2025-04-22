@@ -392,7 +392,54 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 });
                 return;
             }
+            
             setIsSubmitting(true);
+
+            try {
+                const reservationResponse = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`,
+                    { withCredentials: true }
+                );
+                
+                if (reservationResponse.data && reservationResponse.data.status === "CANCELED") {
+                    toast({
+                        title: "Already Canceled",
+                        description: "This reservation has already been canceled.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                    setIsSubmitting(false);
+                    return;
+                }
+
+                const transactionsResponse = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
+                    { withCredentials: true }
+                );
+                
+                if (transactionsResponse.data && transactionsResponse.data.length > 0) {
+                    const hasCancellationTransaction = transactionsResponse.data.some(
+                        transaction => 
+                            transaction.transaction_type === 'CANCELLATION_REFUND' || 
+                            (transaction.description && transaction.description.toLowerCase().includes('cancelled booking'))
+                    );
+                    
+                    if (hasCancellationTransaction) {
+                        toast({
+                            title: "Already Processed",
+                            description: "A refund for this booking has already been processed.",
+                            status: "error",
+                            duration: 5000,
+                            isClosable: true,
+                        });
+                        setIsSubmitting(false);
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error("Error checking reservation status:", error);
+            }
 
             if (paymentMethod === 'Credit Card') {
                 if (!originalTransaction) {
@@ -735,6 +782,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     duration: 4000,
                     isClosable: true,
                 });
+                setIsSubmitting(false);
             }
         } catch (error) {
             console.error("Failed to process cancellation:", error);

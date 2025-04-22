@@ -3,9 +3,13 @@ import {
     Box,
     Button,
     Checkbox,
+    Divider,
     Flex,
     HStack,
+    Icon,
     Input,
+    InputGroup,
+    InputLeftElement,
     Modal,
     ModalBody,
     ModalCloseButton,
@@ -13,28 +17,23 @@ import {
     ModalFooter,
     ModalHeader,
     ModalOverlay,
+    Spinner,
     Table,
     TableContainer,
     Text,
+    Textarea,
+    useDisclosure,
     useToast,
     VStack,
-    Icon,
-    useDisclosure,
-    Divider,
-    InputGroup,
-    InputLeftElement,
-    Textarea,
-    Spinner,
 } from "@chakra-ui/react";
 import axios from "axios";
-import { BsCheck2 } from "react-icons/bs";
-import { FaRegCreditCard } from "react-icons/fa";
-import { BsCash } from "react-icons/bs";
-import { BiCheck } from "react-icons/bi";
-import { format } from 'date-fns';
-import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import {BsCash, BsCheck2} from "react-icons/bs";
+import {FaRegCreditCard} from "react-icons/fa";
+import {BiCheck} from "react-icons/bi";
+import {format} from 'date-fns';
+import {CardElement, useElements, useStripe} from "@stripe/react-stripe-js";
 
-const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
+const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
     const toast = useToast();
     const [paymentMethod, setPaymentMethod] = useState('Credit Card');
     const [notifyCustomer, setNotifyCustomer] = useState(true);
@@ -69,13 +68,16 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
 
     const fetchTierPricing = async () => {
         if (!booking?.tourId) return;
-        
+
         try {
             setIsLoadingTierPricing(true);
             const response = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`
+                `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`,
+                {
+                    withCredentials: true,
+                }
             );
-            
+
             if (response.data && response.data.length > 0) {
                 const pricingData = response.data[0];
                 setTierPricing(pricingData);
@@ -109,25 +111,28 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
             ?.sort((a, b) => b.quantity - a.quantity)
             .find(tier => guestQuantity >= tier.quantity);
 
-        return applicableTier 
+        return applicableTier
             ? applicableTier.price * guestQuantity
             : pricingData.basePrice * guestQuantity;
     };
     const fetchPendingTransactions = async () => {
         if (!booking?.id) return;
-        
+
         setIsLoadingPendingBalance(true);
         try {
             const response = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
-                { params: { payment_status: 'pending' } }
+                {
+                    withCredentials: true
+                    , params: {payment_status: 'pending'}
+                }
             );
-            
+
             if (response.data && response.data.length > 0) {
                 const filteredTransactions = response.data.filter(
                     transaction => transaction.transaction_type !== 'CREATE'
                 );
-                
+
                 let totalPending = 0;
                 filteredTransactions.forEach(transaction => {
                     if (transaction.transaction_direction === 'refund') {
@@ -136,7 +141,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                         totalPending += transaction.amount;
                     }
                 });
-                
+
                 setPendingBalance(totalPending);
             }
         } catch (error) {
@@ -149,31 +154,37 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     const fetchTransactionAndCardInfo = async () => {
         try {
             setLoadingCardInfo(true);
-            
+
             const response = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`
+                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
+                {
+                    withCredentials: true,
+                }
             );
-            
+
             if (response.data && response.data.length > 0) {
-                const createTransaction = response.data.find(t => 
-                    t.transaction_type === 'CREATE' && 
-                    (t.payment_method?.toLowerCase() === 'credit card' || 
-                     t.payment_method?.toLowerCase() === 'card')
+                const createTransaction = response.data.find(t =>
+                    t.transaction_type === 'CREATE' &&
+                    (t.payment_method?.toLowerCase() === 'credit card' ||
+                        t.payment_method?.toLowerCase() === 'card')
                 );
                 if (createTransaction) {
                     setOriginalTransaction(createTransaction);
                     setHasOriginalCardPayment(true);
                     setPaymentMethod('Credit Card');
-                    const paymentMethodId = booking.paymentMethodId || 
-                                          createTransaction.payment_method_id ||
-                                          createTransaction.paymentMethodId;
-                    
+                    const paymentMethodId = booking.paymentMethodId ||
+                        createTransaction.payment_method_id ||
+                        createTransaction.paymentMethodId;
+
                     if (paymentMethodId) {
                         try {
                             const cardResponse = await axios.get(
-                                `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`
+                                `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`,
+                                {
+                                    withCredentials: true
+                                }
                             );
-                            
+
                             if (cardResponse.data) {
                                 setCardInfo({
                                     brand: cardResponse.data.brand,
@@ -219,8 +230,14 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
         try {
             setIsLoadingAddons(true);
             const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
-                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`),
-                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${booking.tourId}`)
+                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`,
+                    {
+                        withCredentials: true
+                    }),
+                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${booking.tourId}`,
+                    {
+                        withCredentials: true
+                    })
             ]);
 
             setAllAddons(allAddonsResponse.data);
@@ -241,22 +258,25 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                 finalAmount: bookingChanges?.finalAmount || Math.abs(bookingChanges?.priceDifference || 0),
                 totalBalanceDue: bookingChanges?.totalBalanceDue || pendingBalance || 0
             };
-            
+
             const isRefund = finalBookingChanges?.isRefund || finalBookingChanges?.priceDifference < 0;
             const finalBalance = calculateFinalBalance();
             const amountToCharge = Math.abs(finalBalance);
-            
+
             if (paymentMethod === 'Credit Card') {
                 const pendingTransactionsResponse = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
-                    { params: { payment_status: 'pending' } }
+                    {
+                        withCredentials: true
+                        , params: {payment_status: 'pending'}
+                    }
                 );
-                
+
                 const pendingTransactions = pendingTransactionsResponse.data;
-                const currentPendingTransaction = pendingTransactions?.find(t => 
+                const currentPendingTransaction = pendingTransactions?.find(t =>
                     t.transaction_type !== 'CREATE'
                 );
-                
+
                 if (!currentPendingTransaction) {
                     toast({
                         title: "Error",
@@ -268,45 +288,51 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                     setIsLoading(false);
                     return;
                 }
-                
+
                 setPendingTransaction(currentPendingTransaction);
                 const setupIntentResponse = await axios.post(
                     `${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent-for-transaction`,
-                    { transactionId: currentPendingTransaction.id }
+                    {
+                        withCredentials: true
+                        , transactionId: currentPendingTransaction.id
+                    }
                 );
-                
+
                 if (!setupIntentResponse.data || !setupIntentResponse.data.clientSecret) {
                     throw new Error("Failed to create setup intent");
                 }
-                
-                const { clientSecret } = setupIntentResponse.data;
+
+                const {clientSecret} = setupIntentResponse.data;
                 if (originalTransaction && !showCardForm) {
                     let paymentMethodId = originalTransaction.paymentMethodId || originalTransaction.payment_method_id;
 
                     if (!paymentMethodId && booking.paymentMethodId) {
                         paymentMethodId = booking.paymentMethodId;
                     }
-                    
+
                     if (!paymentMethodId) {
                         throw new Error("Unable to find original payment method");
                     }
-                    
+
                     const updateResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`, {
-                        paymentMethodId: paymentMethodId,
-                        payment_method: 'Credit Card',
-                        amount: amountToCharge,
-                        metadata: {
-                            ...currentPendingTransaction.metadata,
-                            originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
-                            newGuestQuantity: finalBookingChanges.newGuestQuantity,
-                            originalPrice: finalBookingChanges.originalPrice,
-                            newPrice: finalBookingChanges.newPrice,
-                            totalBalanceDue: finalBookingChanges.totalBalanceDue,
-                            isRefund: isRefund,
-                            tag: tag || null,
-                            notifyCustomer: notifyCustomer
-                        }
-                    });
+                            paymentMethodId: paymentMethodId,
+                            payment_method: 'Credit Card',
+                            amount: amountToCharge,
+                            metadata: {
+                                ...currentPendingTransaction.metadata,
+                                originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
+                                newGuestQuantity: finalBookingChanges.newGuestQuantity,
+                                originalPrice: finalBookingChanges.originalPrice,
+                                newPrice: finalBookingChanges.newPrice,
+                                totalBalanceDue: finalBookingChanges.totalBalanceDue,
+                                isRefund: isRefund,
+                                tag: tag || null,
+                                notifyCustomer: notifyCustomer
+                            }
+                        },
+                        {
+                            withCredentials: true
+                        });
 
                     if (!updateResponse.data) {
                         throw new Error("Failed to update transaction with payment method");
@@ -314,30 +340,36 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
 
                     const processPaymentResponse = await axios.post(
                         `${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`,
-                        { 
+                        {
                             transactionId: currentPendingTransaction.id
+                        },
+                        {
+                            withCredentials: true
                         }
                     );
-                    
+
                     if (!processPaymentResponse.data || processPaymentResponse.data.error) {
                         throw new Error(processPaymentResponse.data?.error || "Failed to process payment");
                     }
 
                     await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`, {
-                        payment_status: 'completed',
-                        payment_method: 'Credit Card',
-                        paymentMethodId: paymentMethodId,
-                        paymentIntentId: processPaymentResponse.data.paymentIntentId,
-                        setupIntentId: processPaymentResponse.data.setupIntentId,
-                        metadata: {
-                            ...currentPendingTransaction.metadata,
-                            paymentProcessedAt: new Date().toISOString(),
-                            processed: true
-                        }
-                    });
+                            payment_status: 'completed',
+                            payment_method: 'Credit Card',
+                            paymentMethodId: paymentMethodId,
+                            paymentIntentId: processPaymentResponse.data.paymentIntentId,
+                            setupIntentId: processPaymentResponse.data.setupIntentId,
+                            metadata: {
+                                ...currentPendingTransaction.metadata,
+                                paymentProcessedAt: new Date().toISOString(),
+                                processed: true
+                            }
+                        },
+                        {
+                            withCredentials: true
+                        });
                 } else {
                     const cardElement = elements.getElement(CardElement);
-                    
+
                     if (!cardElement) {
                         setErrorMessage("Card element is not available.");
                         setIsLoading(false);
@@ -353,32 +385,35 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                             },
                         },
                     });
-                    
+
                     if (paymentMethodResponse.error) {
                         setErrorMessage(`Payment failed: ${paymentMethodResponse.error.message}`);
                         setIsLoading(false);
                         return;
                     }
-                    
+
                     const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
                     const setupIntentId = paymentMethodResponse.setupIntent.id;
-                    
+
                     const responseUpdate = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`, {
-                        paymentMethodId: paymentMethodId,
-                        payment_method: 'Credit Card',
-                        amount: amountToCharge,
-                        metadata: {
-                            ...currentPendingTransaction.metadata,
-                            originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
-                            newGuestQuantity: finalBookingChanges.newGuestQuantity,
-                            originalPrice: finalBookingChanges.originalPrice,
-                            newPrice: finalBookingChanges.newPrice,
-                            totalBalanceDue: finalBookingChanges.totalBalanceDue,
-                            isRefund: isRefund,
-                            tag: tag || null,
-                            notifyCustomer: notifyCustomer
-                        }
-                    });
+                            paymentMethodId: paymentMethodId,
+                            payment_method: 'Credit Card',
+                            amount: amountToCharge,
+                            metadata: {
+                                ...currentPendingTransaction.metadata,
+                                originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
+                                newGuestQuantity: finalBookingChanges.newGuestQuantity,
+                                originalPrice: finalBookingChanges.originalPrice,
+                                newPrice: finalBookingChanges.newPrice,
+                                totalBalanceDue: finalBookingChanges.totalBalanceDue,
+                                isRefund: isRefund,
+                                tag: tag || null,
+                                notifyCustomer: notifyCustomer
+                            }
+                        },
+                        {
+                            withCredentials: true
+                        });
 
                     if (!responseUpdate.data) {
                         throw new Error("Failed to update transaction with payment method");
@@ -386,33 +421,41 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
 
                     const processPaymentResponse = await axios.post(
                         `${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`,
-                        { 
+                        {
                             transactionId: currentPendingTransaction.id
+                        },
+                        {
+                            withCredentials: true
                         }
                     );
-                    
+
                     if (!processPaymentResponse.data || processPaymentResponse.data.error) {
                         throw new Error(processPaymentResponse.data?.error || "Failed to process payment");
                     }
 
                     await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`, {
-                        payment_status: 'completed',
-                        payment_method: 'Credit Card',
-                        paymentMethodId: paymentMethodId,
-                        paymentIntentId: processPaymentResponse.data.paymentIntentId,
-                        setupIntentId: setupIntentId,
-                        metadata: {
-                            ...currentPendingTransaction.metadata,
-                            paymentProcessedAt: new Date().toISOString(),
-                            processed: true
-                        }
-                    });
+                            payment_status: 'completed',
+                            payment_method: 'Credit Card',
+                            paymentMethodId: paymentMethodId,
+                            paymentIntentId: processPaymentResponse.data.paymentIntentId,
+                            setupIntentId: setupIntentId,
+                            metadata: {
+                                ...currentPendingTransaction.metadata,
+                                paymentProcessedAt: new Date().toISOString(),
+                                processed: true
+                            }
+                        },
+                        {
+                            withCredentials: true
+                        });
                 }
 
                 const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
                     guestQuantity: finalBookingChanges.newGuestQuantity,
                     total_price: finalBookingChanges.newPrice,
                     status: booking.status
+                }, {
+                    withCredentials: true
                 });
 
                 if (bookingResponse.data) {
@@ -429,14 +472,17 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
             } else if (paymentMethod === 'Cash' || paymentMethod === 'Check' || paymentMethod === 'Other') {
                 const pendingTransactionsResponse = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
-                    { params: { payment_status: 'pending' } }
+                    {
+                        withCredentials: true,
+                        params: {payment_status: 'pending'}
+                    }
                 );
-                
+
                 const pendingTransactions = pendingTransactionsResponse.data;
-                const pendingTransaction = pendingTransactions?.find(t => 
+                const pendingTransaction = pendingTransactions?.find(t =>
                     t.transaction_type !== 'CREATE'
                 );
-                
+
                 if (pendingTransaction) {
                     await axios.put(
                         `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${pendingTransaction.id}`,
@@ -444,9 +490,12 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                             payment_method: paymentMethod,
                             payment_status: 'completed',
                             transaction_direction: isRefund ? 'refund' : 'charge'
+                        },
+                        {
+                            withCredentials: true
                         }
                     );
-                    
+
                     toast({
                         title: "Success",
                         description: isRefund ? "Refund processed successfully." : "Payment collected successfully.",
@@ -467,27 +516,32 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                 }
             } else {
                 const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
-                    bookingId: booking.id,
-                    amount: finalBookingChanges.finalAmount,
-                    payment_method: paymentMethod,
-                    tag: tag || null,
-                    notifyCustomer: notifyCustomer,
-                    type: isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE',
-                    transaction_direction: isRefund ? 'refund' : 'charge',
-                    metadata: {
-                        originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
-                        newGuestQuantity: finalBookingChanges.newGuestQuantity,
-                        originalPrice: finalBookingChanges.originalPrice,
-                        newPrice: finalBookingChanges.newPrice,
-                        totalBalanceDue: finalBookingChanges.totalBalanceDue,
-                        isRefund: isRefund
-                    }
-                });
-                
+                        bookingId: booking.id,
+                        amount: finalBookingChanges.finalAmount,
+                        payment_method: paymentMethod,
+                        tag: tag || null,
+                        notifyCustomer: notifyCustomer,
+                        type: isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE',
+                        transaction_direction: isRefund ? 'refund' : 'charge',
+                        metadata: {
+                            originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
+                            newGuestQuantity: finalBookingChanges.newGuestQuantity,
+                            originalPrice: finalBookingChanges.originalPrice,
+                            newPrice: finalBookingChanges.newPrice,
+                            totalBalanceDue: finalBookingChanges.totalBalanceDue,
+                            isRefund: isRefund
+                        }
+                    },
+                    {
+                        withCredentials: true
+                    });
+
                 const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
                     guestQuantity: finalBookingChanges.newGuestQuantity,
                     total_price: finalBookingChanges.newPrice,
                     status: booking.status
+                }, {
+                    withCredentials: true
                 });
 
                 if (transactionResponse.data && bookingResponse.data) {
@@ -539,7 +593,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
         const totalBalance = bookingChanges?.totalBalanceDue !== undefined
             ? bookingChanges.totalBalanceDue
             : pendingBalance || 0;
-        
+
         return isNaN(totalBalance) ? 0 : totalBalance;
     };
     const addonsTotalPrice = combinedAddons.reduce(
@@ -556,19 +610,19 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="4xl">
-            <ModalOverlay />
+            <ModalOverlay/>
             <ModalContent>
                 <ModalHeader textAlign="center">
                     {finalBalance < 0 ? "Process Refund" : "Collect Payment"}
                 </ModalHeader>
-                <ModalCloseButton />
+                <ModalCloseButton/>
                 <ModalBody>
                     <Flex>
                         <Box flex="1" mr={4}>
                             <Text mb={2}>Amount</Text>
                             <InputGroup mb={4}>
                                 <InputLeftElement pointerEvents="none">$</InputLeftElement>
-                                <Input value={(bookingChanges?.priceDifference || 0).toFixed(2)} readOnly />
+                                <Input value={(bookingChanges?.priceDifference || 0).toFixed(2)} readOnly/>
                             </InputGroup>
 
                             <Text mb={2}>Payment Method</Text>
@@ -578,7 +632,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                         size="sm"
                                         variant={paymentMethod === 'Credit Card' ? 'solid' : 'outline'}
                                         onClick={() => setPaymentMethod('Credit Card')}
-                                        leftIcon={<FaRegCreditCard />}
+                                        leftIcon={<FaRegCreditCard/>}
                                     >
                                         Credit Card
                                     </Button>
@@ -587,7 +641,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                     size="sm"
                                     variant={paymentMethod === 'Cash' ? 'solid' : 'outline'}
                                     onClick={() => setPaymentMethod('Cash')}
-                                    leftIcon={<BsCash />}
+                                    leftIcon={<BsCash/>}
                                 >
                                     Cash
                                 </Button>
@@ -595,7 +649,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                     size="sm"
                                     variant={paymentMethod === 'Check' ? 'solid' : 'outline'}
                                     onClick={() => setPaymentMethod('Check')}
-                                    leftIcon={<BiCheck />}
+                                    leftIcon={<BiCheck/>}
                                 >
                                     Check
                                 </Button>
@@ -603,7 +657,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                     size="sm"
                                     variant={paymentMethod === 'Other' ? 'solid' : 'outline'}
                                     onClick={() => setPaymentMethod('Other')}
-                                    leftIcon={<BsCheck2 />}
+                                    leftIcon={<BsCheck2/>}
                                 >
                                     Other
                                 </Button>
@@ -613,15 +667,16 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                 <Box mt={2} mb={4} p={3} borderWidth="1px" borderRadius="md">
                                     {loadingCardInfo ? (
                                         <Flex justify="center" py={2}>
-                                            <Spinner size="sm" mr={2} />
+                                            <Spinner size="sm" mr={2}/>
                                             <Text>Loading card information...</Text>
                                         </Flex>
                                     ) : cardInfo && !showCardForm ? (
                                         <VStack align="stretch" spacing={2}>
                                             <Flex align="center">
-                                                <Icon as={FaRegCreditCard} mr={2} />
+                                                <Icon as={FaRegCreditCard} mr={2}/>
                                                 <Text>
-                                                    {cardInfo.brand || 'Card'} •••• •••• •••• {cardInfo.last4 || 'on file'}
+                                                    {cardInfo.brand || 'Card'} •••• ••••
+                                                    •••• {cardInfo.last4 || 'on file'}
                                                 </Text>
                                             </Flex>
                                             <Button size="sm" onClick={() => setShowCardForm(true)}>
@@ -631,10 +686,10 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                     ) : (
                                         <VStack align="stretch" spacing={3}>
                                             <Text fontWeight="medium">Enter card details</Text>
-                                            <Box 
-                                                p={2} 
-                                                borderWidth="1px" 
-                                                borderRadius="md" 
+                                            <Box
+                                                p={2}
+                                                borderWidth="1px"
+                                                borderRadius="md"
                                                 borderColor="gray.300"
                                             >
                                                 <CardElement
@@ -674,9 +729,9 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                             )}
 
                             <Text mb={2}>Tag</Text>
-                            <Input 
-                                placeholder="Add a tag" 
-                                value={tag} 
+                            <Input
+                                placeholder="Add a tag"
+                                value={tag}
                                 onChange={(e) => setTag(e.target.value)}
                             />
                         </Box>
@@ -711,7 +766,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                                     <Text>${guestPrice.toFixed(2)}</Text>
                                                 </HStack>
                                             </VStack>
-                                            
+
                                             {combinedAddons.length > 0 ? (
                                                 combinedAddons.map((addon) => (
                                                     <HStack key={addon.id} justifyContent="space-between">
@@ -728,20 +783,22 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                                 <Text fontWeight="bold">Total</Text>
                                                 <Text fontWeight="bold">${totalPrice.toFixed(2)}</Text>
                                             </HStack>
-                                            
+
                                             {finalBalance !== 0 && (
                                                 <HStack justify="space-between" mt={2}>
-                                                    <Text fontWeight="bold" color={finalBalance < 0 ? "green.500" : "red.500"}>
+                                                    <Text fontWeight="bold"
+                                                          color={finalBalance < 0 ? "green.500" : "red.500"}>
                                                         {finalBalance < 0 ? "Refund Due" : "Balance Due"}
                                                     </Text>
-                                                    <Text fontWeight="bold" color={finalBalance < 0 ? "green.500" : "red.500"}>
+                                                    <Text fontWeight="bold"
+                                                          color={finalBalance < 0 ? "green.500" : "red.500"}>
                                                         ${Math.abs(finalBalance).toFixed(2)}
                                                     </Text>
                                                 </HStack>
                                             )}
                                         </Box>
 
-                                        <Divider />
+                                        <Divider/>
 
                                         <Box>
                                             <Text fontWeight="bold" mb={2}>Payment Summary</Text>
@@ -773,12 +830,14 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                                 <Text>Paid</Text>
                                                 <Text>${booking.total_price.toFixed(2)}</Text>
                                             </HStack>
-                                            
-                                            <HStack justify="space-between" color={finalBalance < 0 ? "green.500" : "red.500"} fontWeight="bold" mt={2}>
+
+                                            <HStack justify="space-between"
+                                                    color={finalBalance < 0 ? "green.500" : "red.500"} fontWeight="bold"
+                                                    mt={2}>
                                                 <Text>{finalBalance < 0 ? "Refund:" : "Balance Due:"}</Text>
                                                 <Text>${Math.abs(finalBalance).toFixed(2)}</Text>
                                             </HStack>
-                                            
+
                                             <HStack justify="space-between" fontWeight="bold" mt={2}>
                                                 <Text>Final Total:</Text>
                                                 <Text>${totalPrice.toFixed(2)}</Text>
@@ -799,8 +858,8 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                             <Button colorScheme="gray" onClick={handleLater}>
                                 Later
                             </Button>
-                            <Button 
-                                colorScheme="blue" 
+                            <Button
+                                colorScheme="blue"
                                 onClick={handleCollect}
                                 isLoading={isLoading}
                                 loadingText="Processing"
@@ -816,7 +875,7 @@ const CollectPaymentModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     );
 };
 
-const CollectInvoiceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
+const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
     const toast = useToast();
     const [tag, setTag] = useState('');
     const [message, setMessage] = useState('');
@@ -830,37 +889,32 @@ const CollectInvoiceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                 const year = parseInt(dateParts[0], 10);
                 const month = parseInt(dateParts[1], 10) - 1;
                 const day = parseInt(dateParts[2], 10);
-                
+
                 return new Date(year, month, day);
-            }
-            else if (booking.selectedDate) {
+            } else if (booking.selectedDate) {
                 const dateParts = booking.selectedDate.split('T')[0].split('-');
                 const year = parseInt(dateParts[0], 10);
                 const month = parseInt(dateParts[1], 10) - 1;
                 const day = parseInt(dateParts[2], 10);
-                
+
                 return new Date(year, month, day);
-            }
-            else if (booking.dateFormatted) {
+            } else if (booking.dateFormatted) {
                 try {
                     const parts = booking.dateFormatted.split(' ');
                     const month = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
                         .indexOf(parts[0].toLowerCase());
                     const day = parseInt(parts[1].replace(',', ''), 10);
                     const year = parseInt(parts[2], 10);
-                    
+
                     return new Date(year, month, day);
                 } catch (e) {
                     return new Date(booking.dateFormatted);
                 }
-            } 
-            else if (booking.date) {
+            } else if (booking.date) {
                 return new Date(booking.date);
-            } 
-            else if (booking.tourDate) {
+            } else if (booking.tourDate) {
                 return new Date(booking.tourDate);
-            } 
-            else {
+            } else {
                 console.warn("No date found in booking, using current date");
                 return new Date();
             }
@@ -877,42 +931,47 @@ const CollectInvoiceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
         const day = bookingDate.getDate();
         const localDate = new Date(year, month, day);
         localDate.setDate(localDate.getDate() - daysBeforeArrival);
-        
+
         return localDate;
     };
-    
+
     const dueDate = calculateDueDate();
     const formattedDueDate = format(dueDate, 'MMMM d, yyyy');
     const formattedBookingDate = format(bookingDate, 'MMMM d, yyyy');
     const handleSendInvoice = async () => {
         try {
             setIsLoading(true);
-            
+
             const isRefund = bookingChanges?.isRefund || bookingChanges?.priceDifference < 0;
-            
+
             const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
-                bookingId: booking.id,
-                amount: bookingChanges.finalAmount,
-                payment_method: 'INVOICE',
-                type: isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE',
-                transaction_direction: isRefund ? 'refund' : 'charge',
-                notifyCustomer: true,
-                tag: tag || null,
-                message: message || null,
-                dueDate: dueDate.toISOString(),
-                metadata: {
-                    originalGuestQuantity: bookingChanges.originalGuestQuantity,
-                    newGuestQuantity: bookingChanges.newGuestQuantity,
-                    originalPrice: bookingChanges.originalPrice,
-                    newPrice: bookingChanges.newPrice,
-                    totalBalanceDue: bookingChanges.totalBalanceDue,
-                    isRefund: isRefund
-                }
-            });
+                    bookingId: booking.id,
+                    amount: bookingChanges.finalAmount,
+                    payment_method: 'INVOICE',
+                    type: isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE',
+                    transaction_direction: isRefund ? 'refund' : 'charge',
+                    notifyCustomer: true,
+                    tag: tag || null,
+                    message: message || null,
+                    dueDate: dueDate.toISOString(),
+                    metadata: {
+                        originalGuestQuantity: bookingChanges.originalGuestQuantity,
+                        newGuestQuantity: bookingChanges.newGuestQuantity,
+                        originalPrice: bookingChanges.originalPrice,
+                        newPrice: bookingChanges.newPrice,
+                        totalBalanceDue: bookingChanges.totalBalanceDue,
+                        isRefund: isRefund
+                    }
+                },
+                {
+                    withCredentials: true,
+                });
             const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
                 guestQuantity: bookingChanges.newGuestQuantity,
                 total_price: bookingChanges.newPrice,
                 status: booking.status
+            }, {
+                withCredentials: true,
             });
 
             if (transactionResponse.data && bookingResponse.data) {
@@ -942,26 +1001,26 @@ const CollectInvoiceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="lg">
-            <ModalOverlay />
+            <ModalOverlay/>
             <ModalContent>
                 <ModalHeader textAlign="center">Collect Payment via Invoice</ModalHeader>
-                <ModalCloseButton />
+                <ModalCloseButton/>
                 <ModalBody>
                     <VStack spacing={4} align="stretch">
                         <Box>
                             <Text mb={2}>Amount</Text>
                             <InputGroup>
                                 <InputLeftElement pointerEvents="none">$</InputLeftElement>
-                                <Input value={bookingChanges?.priceDifference.toFixed(2)} readOnly />
+                                <Input value={bookingChanges?.priceDifference.toFixed(2)} readOnly/>
                             </InputGroup>
                         </Box>
-                        
+
                         <Box>
                             <Text mb={2}>Payment due</Text>
                             <Flex align="center">
-                                <Input 
-                                    type="number" 
-                                    value={daysBeforeArrival} 
+                                <Input
+                                    type="number"
+                                    value={daysBeforeArrival}
                                     onChange={(e) => {
                                         const value = parseInt(e.target.value, 10);
                                         if (!isNaN(value)) {
@@ -980,22 +1039,22 @@ const CollectInvoiceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                 Reservation date: {formattedBookingDate}
                             </Text>
                         </Box>
-                        
+
                         <Box>
                             <Text mb={2}>Message</Text>
-                            <Textarea 
-                                placeholder="Optional message to include in invoice" 
+                            <Textarea
+                                placeholder="Optional message to include in invoice"
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 height="120px"
                             />
                         </Box>
-                        
+
                         <Box>
                             <Text mb={2}>Tag</Text>
-                            <Input 
-                                placeholder="Add a tag" 
-                                value={tag} 
+                            <Input
+                                placeholder="Add a tag"
+                                value={tag}
                                 onChange={(e) => setTag(e.target.value)}
                             />
                         </Box>
@@ -1005,8 +1064,8 @@ const CollectInvoiceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                     <Button variant="outline" mr={3} onClick={onClose}>
                         Cancel
                     </Button>
-                    <Button 
-                        colorScheme="blue" 
+                    <Button
+                        colorScheme="blue"
                         onClick={handleSendInvoice}
                         isLoading={isLoading}
                         loadingText="Sending"
@@ -1019,10 +1078,10 @@ const CollectInvoiceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     );
 };
 
-const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
+const CollectBalanceModal = ({isOpen, onClose, bookingChanges, booking}) => {
     const toast = useToast();
-    const { isOpen: isPaymentModalOpen, onOpen: onPaymentModalOpen, onClose: onPaymentModalClose } = useDisclosure();
-    const { isOpen: isInvoiceModalOpen, onOpen: onInvoiceModalOpen, onClose: onInvoiceModalClose } = useDisclosure();
+    const {isOpen: isPaymentModalOpen, onOpen: onPaymentModalOpen, onClose: onPaymentModalClose} = useDisclosure();
+    const {isOpen: isInvoiceModalOpen, onOpen: onInvoiceModalOpen, onClose: onInvoiceModalClose} = useDisclosure();
 
     const handleCollectNow = () => {
         onClose();
@@ -1038,26 +1097,32 @@ const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
         try {
             const isRefund = bookingChanges?.isRefund || false;
             const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
-                bookingId: booking.id,
-                amount: bookingChanges.finalAmount,
-                payment_method: 'LATER',
-                type: isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE',
-                transaction_direction: isRefund ? 'refund' : 'charge',
-                notifyCustomer: false,
-                metadata: {
-                    originalGuestQuantity: bookingChanges.originalGuestQuantity,
-                    newGuestQuantity: bookingChanges.newGuestQuantity,
-                    originalPrice: bookingChanges.originalPrice,
-                    newPrice: bookingChanges.newPrice,
-                    totalBalanceDue: bookingChanges.totalBalanceDue,
-                    isRefund: isRefund
-                }
-            });
+                    bookingId: booking.id,
+                    amount: bookingChanges.finalAmount,
+                    payment_method: 'LATER',
+                    type: isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE',
+                    transaction_direction: isRefund ? 'refund' : 'charge',
+                    notifyCustomer: false,
+                    metadata: {
+                        originalGuestQuantity: bookingChanges.originalGuestQuantity,
+                        newGuestQuantity: bookingChanges.newGuestQuantity,
+                        originalPrice: bookingChanges.originalPrice,
+                        newPrice: bookingChanges.newPrice,
+                        totalBalanceDue: bookingChanges.totalBalanceDue,
+                        isRefund: isRefund
+                    }
+                },
+                {
+                    withCredentials: true,
+                });
             const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
-                guestQuantity: bookingChanges.newGuestQuantity,
-                total_price: bookingChanges.newPrice,
-                status: booking.status
-            });
+                    guestQuantity: bookingChanges.newGuestQuantity,
+                    total_price: bookingChanges.newPrice,
+                    status: booking.status
+                },
+                {
+                    withCredentials: true,
+                });
 
             if (transactionResponse.data && bookingResponse.data) {
                 toast({
@@ -1085,14 +1150,14 @@ const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     return (
         <>
             <Modal isOpen={isOpen} onClose={onClose} size="4xl">
-                <ModalOverlay />
+                <ModalOverlay/>
                 <ModalContent>
                     <ModalHeader textAlign="center">
-                        {bookingChanges?.isRefund 
-                            ? "How Do You Want To Process Refund?" 
+                        {bookingChanges?.isRefund
+                            ? "How Do You Want To Process Refund?"
                             : "How Do You Want To Collect Balance?"}
                     </ModalHeader>
-                    <ModalCloseButton />
+                    <ModalCloseButton/>
                     <ModalBody>
                         <VStack spacing={4} align="stretch">
                             <Box
@@ -1101,20 +1166,20 @@ const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                 borderWidth="1px"
                                 borderRadius="md"
                                 onClick={handleCollectNow}
-                                _hover={{ bg: "gray.50" }}
+                                _hover={{bg: "gray.50"}}
                             >
                                 <Flex align="center">
-                                    <Icon as={FaRegCreditCard} boxSize={5} mr={4} />
+                                    <Icon as={FaRegCreditCard} boxSize={5} mr={4}/>
                                     <Box textAlign="left">
                                         <Text fontWeight="bold">
-                                            {bookingChanges?.isRefund 
-                                                ? "Process Refund Now" 
+                                            {bookingChanges?.isRefund
+                                                ? "Process Refund Now"
                                                 : "Collect Balance Now"}
                                         </Text>
                                         <Text>
-                                            Use standard methods of {bookingChanges?.isRefund 
-                                                ? "processing refund" 
-                                                : "collecting balance"}
+                                            Use standard methods of {bookingChanges?.isRefund
+                                            ? "processing refund"
+                                            : "collecting balance"}
                                         </Text>
                                     </Box>
                                 </Flex>
@@ -1126,14 +1191,14 @@ const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                 borderWidth="1px"
                                 borderRadius="md"
                                 onClick={handleCollectViaInvoice}
-                                _hover={{ bg: "gray.50" }}
+                                _hover={{bg: "gray.50"}}
                             >
                                 <Flex align="center">
-                                    <Icon as={BsCheck2} boxSize={5} mr={4} />
+                                    <Icon as={BsCheck2} boxSize={5} mr={4}/>
                                     <Box textAlign="left">
                                         <Text fontWeight="bold">
-                                            {bookingChanges?.isRefund 
-                                                ? "Process Refund via Invoice" 
+                                            {bookingChanges?.isRefund
+                                                ? "Process Refund via Invoice"
                                                 : "Collect Balance via Invoice"}
                                         </Text>
                                         <Text>Send an invoice to the organizer</Text>
@@ -1147,19 +1212,19 @@ const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
                                 borderWidth="1px"
                                 borderRadius="md"
                                 onClick={handleCollectLater}
-                                _hover={{ bg: "gray.50" }}
+                                _hover={{bg: "gray.50"}}
                             >
                                 <Flex align="center">
-                                    <Icon as={BsCash} boxSize={5} mr={4} />
+                                    <Icon as={BsCash} boxSize={5} mr={4}/>
                                     <Box textAlign="left">
                                         <Text fontWeight="bold">
-                                            {bookingChanges?.isRefund 
-                                                ? "Process Refund Later" 
+                                            {bookingChanges?.isRefund
+                                                ? "Process Refund Later"
                                                 : "Collect Balance Later"}
                                         </Text>
                                         <Text>
-                                            {bookingChanges?.isRefund 
-                                                ? "Process refund" 
+                                            {bookingChanges?.isRefund
+                                                ? "Process refund"
                                                 : "Collect balance"} later
                                         </Text>
                                     </Box>
@@ -1191,7 +1256,7 @@ const CollectBalanceModal = ({ isOpen, onClose, bookingChanges, booking }) => {
     );
 };
 
-const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGuestCount }) => {
+const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGuestCount}) => {
     const [tierPricing, setTierPricing] = useState(null);
     const [bookingChanges, setBookingChanges] = useState(null);
     const [changesConfirmed, setChangesConfirmed] = useState(false);
@@ -1204,17 +1269,24 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
     const [allAddons, setAllAddons] = useState([]);
     const [isLoadingAddons, setIsLoadingAddons] = useState(true);
     const toast = useToast();
-    const { isOpen: isCollectBalanceOpen, onOpen: onCollectBalanceOpen, onClose: onCollectBalanceClose } = useDisclosure();
+    const {
+        isOpen: isCollectBalanceOpen,
+        onOpen: onCollectBalanceOpen,
+        onClose: onCollectBalanceClose
+    } = useDisclosure();
 
     useEffect(() => {
         const fetchTierPricing = async () => {
             if (!booking?.tourId) return;
-            
+
             try {
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`,
+                    {
+                        withCredentials: true,
+                    }
                 );
-                
+
                 if (response.data && response.data.length > 0) {
                     setTierPricing(response.data[0]);
                 }
@@ -1225,19 +1297,22 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
 
         const fetchPendingTransactions = async () => {
             if (!booking?.id) return;
-            
+
             setIsLoadingPendingBalance(true);
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
-                    { params: { payment_status: 'pending' } }
+                    {
+                        withCredentials: true
+                        , params: {payment_status: 'pending'}
+                    }
                 );
-                
+
                 if (response.data && response.data.length > 0) {
                     const filteredTransactions = response.data.filter(
                         transaction => transaction.transaction_type !== 'CREATE'
                     );
-                    
+
                     let totalPending = 0;
                     filteredTransactions.forEach(transaction => {
                         if (transaction.transaction_direction === 'refund') {
@@ -1246,7 +1321,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                             totalPending += transaction.amount;
                         }
                     });
-                    
+
                     setPendingBalance(totalPending);
                 }
             } catch (error) {
@@ -1264,7 +1339,10 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
             setIsLoadingCardDetails(true);
             try {
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${booking.paymentMethodId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${booking.paymentMethodId}`,
+                    {
+                        withCredentials: true,
+                    }
                 );
                 setCardDetails(response.data);
             } catch (error) {
@@ -1276,12 +1354,18 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
 
         const fetchAddons = async () => {
             if (!booking?.id || !booking.tourId) return;
-            
+
             setIsLoadingAddons(true);
             try {
                 const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
-                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`),
-                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${booking.tourId}`)
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`,
+                        {
+                            withCredentials: true,
+                        }),
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${booking.tourId}`,
+                        {
+                            withCredentials: true,
+                        })
                 ]);
                 setAllAddons(allAddonsResponse.data);
                 setReservationAddons(reservationAddonsResponse.data);
@@ -1316,7 +1400,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
             .sort((a, b) => b.quantity - a.quantity)
             .find(tier => guestCount >= tier.quantity);
 
-        return applicableTier 
+        return applicableTier
             ? applicableTier.price * guestCount
             : tierPricing.basePrice * guestCount;
     };
@@ -1334,7 +1418,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
             .sort((a, b) => b.quantity - a.quantity)
             .find(tier => quantity >= tier.quantity);
 
-        return applicableTier 
+        return applicableTier
             ? applicableTier.price
             : tierPricing.basePrice;
     };
@@ -1348,11 +1432,13 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
         const date = new Date(dateString);
         return date.toISOString().split("T")[0];
     };
+
     function formatDateToAmerican(date) {
         if (!date) return '';
         const [year, month, day] = date.split("-");
         return `${month}/${day}/${year}`;
     }
+
     const guestTotalPrice = calculateGuestPrice();
 
     const oldPricePerGuest = calculatePricePerGuest(booking.guestQuantity);
@@ -1389,11 +1475,11 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
     );
 
     const finalTotalPrice = guestTotalPrice + addonsTotalPrice;
-    
-    const totalBalanceDue = guestCount === booking.guestQuantity 
-        ? pendingBalance 
+
+    const totalBalanceDue = guestCount === booking.guestQuantity
+        ? pendingBalance
         : pendingBalance + priceDifference;
-    
+
     const isRefund = totalBalanceDue < 0;
     const displayBalanceValue = Math.abs(totalBalanceDue);
     const paidTotal = booking.total_price;
@@ -1428,21 +1514,24 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
 
             const pendingTransactionsResponse = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
-                { params: { payment_status: 'pending' } }
+                {
+                    withCredentials: true
+                    , params: {payment_status: 'pending'}
+                }
             );
-            
+
             const pendingTransactions = pendingTransactionsResponse.data;
             const pendingTransaction = pendingTransactions?.find(t => t.transaction_type !== 'CREATE');
             let pendingBalance = 0;
 
             if (pendingTransaction) {
-                pendingBalance = pendingTransaction.transaction_direction === 'refund' 
-                    ? -pendingTransaction.amount 
+                pendingBalance = pendingTransaction.transaction_direction === 'refund'
+                    ? -pendingTransaction.amount
                     : pendingTransaction.amount;
             }
 
             let totalBalanceDue = priceDifference + pendingBalance;
-            
+
             const isRefund = totalBalanceDue < 0;
             const finalAmount = Math.abs(totalBalanceDue);
             const transactionType = isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE';
@@ -1463,15 +1552,18 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
             setBookingChanges(bookingChangesObj);
 
             let transactionSuccess = false;
-            
+
             const hasPendingTransaction = pendingTransactions && pendingTransactions.length > 0;
             const createTransaction = pendingTransactions?.find(t => t.transaction_type === 'CREATE');
-            
+
             if (createTransaction && priceDifference < 0) {
                 await axios.put(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${createTransaction.id}`,
                     {
                         amount: createTransaction.amount + finalAmount
+                    },
+                    {
+                        withCredentials: true
                     }
                 );
 
@@ -1484,7 +1576,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                         payment_status: 'archived',
                         transaction_type: 'REFUND',
                         is_history: true,
-                        transaction_direction: 'refund', 
+                        transaction_direction: 'refund',
                         parent_transaction_id: createTransaction.id,
                         metadata: {
                             originalGuestQuantity: booking.guestQuantity,
@@ -1499,15 +1591,21 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                             addons: combinedAddons,
                             addonsTotalPrice: addonsTotalPrice
                         }
+                    },
+                    {
+                        withCredentials: true
                     }
                 );
-                
+
                 transactionSuccess = true;
             } else if (createTransaction && priceDifference > 0) {
                 await axios.put(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${createTransaction.id}`,
                     {
                         amount: createTransaction.amount + finalAmount
+                    },
+                    {
+                        withCredentials: true
                     }
                 );
                 await axios.post(
@@ -1534,9 +1632,12 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                             addons: combinedAddons,
                             addonsTotalPrice: addonsTotalPrice
                         }
+                    },
+                    {
+                        withCredentials: true
                     }
                 );
-                
+
                 transactionSuccess = true;
             } else {
                 if (hasPendingTransaction) {
@@ -1547,6 +1648,9 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                             {
                                 is_history: true,
                                 payment_status: 'archived'
+                            },
+                            {
+                                withCredentials: true
                             }
                         );
                         const transactionData = {
@@ -1570,12 +1674,15 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                 addonsTotalPrice: addonsTotalPrice
                             }
                         };
-                        
+
                         await axios.post(
                             `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
-                            transactionData
+                            transactionData,
+                            {
+                                withCredentials: true
+                            }
                         );
-                        
+
                         transactionSuccess = true;
                     }
                 }
@@ -1603,31 +1710,37 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
 
                 await axios.post(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
-                    transactionData
+                    transactionData,
+                    {
+                        withCredentials: true
+                    }
                 );
-                
+
                 transactionSuccess = true;
             }
-            
+
             try {
                 await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
                     guestQuantity: guestCount,
                     total_price: updatedTotalPrice,
                     status: booking.status
-                });
-                const actionType = priceDifference > 0 ? "additional charge" : 
-                                  priceDifference < 0 ? "refund" : "change";
-                
+                },
+                    {
+                        withCredentials: true
+                    });
+                const actionType = priceDifference > 0 ? "additional charge" :
+                    priceDifference < 0 ? "refund" : "change";
+
                 toast({
                     title: "Success",
-                    description: transactionSuccess 
+                    description: transactionSuccess
                         ? `Booking updated successfully. The ${actionType} will be processed later.`
                         : `Booking updated successfully. Note: The ${actionType} transaction will need to be created manually.`,
                     status: "success",
                     duration: 3000,
                     isClosable: true,
                 });
-                
+
                 setChangesConfirmed(true);
             } catch (bookingError) {
                 console.error("Error updating booking:", bookingError);
@@ -1753,7 +1866,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                                         <Text>${guestTotalPrice.toFixed(2)}</Text>
                                                     </HStack>
                                                 </VStack>
-                                                
+
                                                 {combinedAddons.length > 0 ? (
                                                     combinedAddons.map((addon) => (
                                                         <HStack key={addon.id} justifyContent="space-between">
@@ -1764,19 +1877,21 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                                 ) : (
                                                     <Text>No add-ons selected.</Text>
                                                 )}
-                                                
+
                                                 <Divider my={2}/>
                                                 <HStack justify="space-between">
                                                     <Text fontWeight="bold">Total</Text>
                                                     <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                                                 </HStack>
-                                                
+
                                                 {totalBalanceDue !== 0 && (
                                                     <HStack justify="space-between" mt={2}>
-                                                        <Text fontWeight="bold" color={isRefund ? "green.500" : "red.500"}>
+                                                        <Text fontWeight="bold"
+                                                              color={isRefund ? "green.500" : "red.500"}>
                                                             {isRefund ? "Refund Due" : "Balance Due"}
                                                         </Text>
-                                                        <Text fontWeight="bold" color={isRefund ? "green.500" : "red.500"}>
+                                                        <Text fontWeight="bold"
+                                                              color={isRefund ? "green.500" : "red.500"}>
                                                             ${displayBalanceValue.toFixed(2)}
                                                         </Text>
                                                     </HStack>
@@ -1790,7 +1905,8 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                                     {cardDetails && (
                                                         <HStack justify="space-between">
                                                             <HStack spacing={2}>
-                                                                <Box as="span" role="img" aria-label="Card Icon" fontSize="lg">
+                                                                <Box as="span" role="img" aria-label="Card Icon"
+                                                                     fontSize="lg">
                                                                     💳
                                                                 </Box>
                                                                 <Text>
@@ -1828,8 +1944,8 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                             Cancel
                         </Button>
                         {!changesConfirmed ? (
-                            <Button 
-                                colorScheme="blue" 
+                            <Button
+                                colorScheme="blue"
                                 onClick={handleChangeConfirm}
                                 isLoading={isLoading}
                                 loadingText="Updating"
@@ -1837,10 +1953,10 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                 Modify
                             </Button>
                         ) : (
-                            <Button 
-                                colorScheme="green" 
-                                onClick={handleComplete} 
-                                leftIcon={<BsCheck2 />}
+                            <Button
+                                colorScheme="green"
+                                onClick={handleComplete}
+                                leftIcon={<BsCheck2/>}
                             >
                                 Done
                             </Button>
@@ -1849,7 +1965,7 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                 </ModalContent>
             </Modal>
 
-            <CollectBalanceModal 
+            <CollectBalanceModal
                 isOpen={isCollectBalanceOpen}
                 onClose={onCollectBalanceClose}
                 bookingChanges={bookingChanges}
@@ -1860,4 +1976,4 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
 };
 
 export default ChangeGuestQuantityModal;
-export { CollectBalanceModal };
+export {CollectBalanceModal};

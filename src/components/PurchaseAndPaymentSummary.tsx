@@ -83,8 +83,12 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
 
                 try {
                     const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
-                        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`),
-                        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${booking.tourId}`)
+                        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`,{
+                            withCredentials: true,
+                        }),
+                        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${booking.tourId}`,{
+                            withCredentials: true,
+                        })
                     ]);
 
                     setInternalAllAddons(allAddonsResponse.data);
@@ -107,7 +111,10 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
             const fetchCardDetails = async () => {
                 try {
                     const response = await axios.get(
-                        `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${booking.paymentMethodId}`
+                        `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${booking.paymentMethodId}`,
+                    {
+                        withCredentials: true,
+                    }
                     );
                     setInternalCardDetails(response.data);
                 } catch (error) {
@@ -129,7 +136,9 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
 
             try {
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`,{
+                        withCredentials: true,
+                    }
                 );
                 
                 if (response.data && response.data.length > 0) {
@@ -154,7 +163,8 @@ const PurchaseAndPaymentSummary: React.FC<PurchaseAndPaymentSummaryProps> = ({
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
-                    { params: { payment_status: 'pending' } }
+                    { withCredentials:true ,
+                    params: { payment_status: 'pending' } }
                 );
                 
                 if (response.data && response.data.length > 0) {

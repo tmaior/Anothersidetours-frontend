@@ -41,7 +41,10 @@ export default function InformationAdditionalModal({
     
     useEffect(() => {
         if (isOpen) {
-            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${tourId}`)
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${tourId}`,
+                {
+                    credentials: 'include',
+                })
                 .then((response) => response.json())
                 .then((data) => {
                     setInputs(data);
@@ -56,7 +59,10 @@ export default function InformationAdditionalModal({
                     }
                 });
             if (!title || !description) {
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`)
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`,
+                    {
+                        credentials: 'include',
+                    })
                     .then(response => response.json())
                     .then(data => {
                         setTourDetails({
@@ -81,6 +87,7 @@ export default function InformationAdditionalModal({
             Object.entries(updatedValues).map(([additionalInformationId, value]) =>
                 fetch(`${process.env.NEXT_PUBLIC_API_URL}/customer-additional-information`, {
                     method: "POST",
+                    credentials: 'include',
                     headers: {
                         "Content-Type": "application/json",
                     },

@@ -84,7 +84,8 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
         try {
             const response = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservationId}`,
-                { params: { payment_status: 'pending' } }
+                { withCredentials:true
+                    ,params: { payment_status: 'pending' } }
             );
             
             if (response.data && response.data.length > 0) {
@@ -114,7 +115,10 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
         
         try {
             const response = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservationId}`
+                `${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservationId}`,
+                {
+                    withCredentials:true
+                }
             );
             
             if (response.data && response.data.total_price) {
@@ -134,7 +138,10 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
         
         if (isExistingItem && reservationId) {
             try {
-                await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/custom-items/item/${id}`);
+                await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/custom-items/item/${id}`,
+                    {
+                        withCredentials:true
+                    });
                 toast({
                     title: "Item removed successfully",
                     status: "success",
@@ -174,7 +181,10 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
         if (Math.abs(priceDifference) > 0.01 && reservationId) {
             try {
                 const reservationResponse = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservationId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservationId}`,
+                    {
+                        withCredentials:true
+                    }
                 );
                 
                 if (reservationResponse.data && 
@@ -186,7 +196,8 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
 
                     const pendingTransactionsResponse = await axios.get(
                         `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservationId}`,
-                        { params: { payment_status: 'pending' } }
+                        { withCredentials: true ,
+                            params: { payment_status: 'pending' } }
                     );
                     
                     const pendingTransactions = pendingTransactionsResponse.data || [];
@@ -208,6 +219,9 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                                     updatedAt: new Date().toISOString(),
                                     customLineItems: items
                                 }
+                            },
+                            {
+                                withCredentials: true
                             }
                         );
                     } else {
@@ -222,6 +236,9 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                                 {
                                     payment_status: 'archived',
                                     updated_at: new Date().toISOString()
+                                },
+                                {
+                                    withCredentials: true
                                 }
                             );
                         }
@@ -245,7 +262,10 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                                 priceDifference: priceDifference,
                                 createdAt: new Date().toISOString()
                             }
-                        });
+                        },
+                            {
+                                withCredentials: true
+                            });
                     }
                     const message = isRefund 
                         ? `A refund of $${transactionAmount.toFixed(2)} has been created.`

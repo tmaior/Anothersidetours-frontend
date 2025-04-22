@@ -34,7 +34,10 @@ export default function NotesSection({reservationId}) {
 
     const fetchNotes = useCallback(async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${reservationId}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${reservationId}`,
+                {
+                    credentials: 'include',
+                });
             const data = await response.json();
             setNotes(data);
         } catch (error) {
@@ -51,6 +54,7 @@ export default function NotesSection({reservationId}) {
             try {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes`, {
                     method: "POST",
+                    credentials: 'include',
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -94,6 +98,7 @@ export default function NotesSection({reservationId}) {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${noteId}`, {
                 method: "DELETE",
+                credentials: 'include',
             });
 
             if (!response.ok) throw new Error("Failed to delete note");

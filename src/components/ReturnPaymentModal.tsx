@@ -116,7 +116,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             setIsLoadingCustomItems(true);
             try {
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${booking.id}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${booking.id}`,
+                    {
+                        withCredentials: true,
+                    }
                 );
 
                 const customItems = response.data.map(item => ({
@@ -154,7 +157,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             try {
                 if (booking?.id) {
                     const transactionsResponse = await axios.get(
-                        `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`
+                        `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
+                        {
+                            withCredentials: true,
+                        }
                     );
                     const createTransaction = transactionsResponse.data?.find(
                         (t: any) => t.transaction_type === 'CREATE' && 
@@ -170,7 +176,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                createTransaction.paymentMethodId;
                         if (paymentMethodId) {
                             const response = await axios.get(
-                                `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`
+                                `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`,
+                                {
+                                    withCredentials: true,
+                                }
                             );
                             if (response.data) {
                                 const cardData: CardDetails = {
@@ -179,8 +188,6 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                     last4: response.data.last4,
                                     paymentDate: response.data.paymentDate
                                 };
-                                
-                                console.log('Card data formatted:', cardData);
                                 setCardList([cardData]);
                                 setSelectedCardId(cardData.id);
                             }
@@ -211,7 +218,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
-                    { params: { payment_status: 'pending' } }
+                    { withCredentials:true
+                        ,params: { payment_status: 'pending' } }
                 );
                 
                 if (response.data && response.data.length > 0) {
@@ -252,13 +260,13 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             
             setIsLoadingTourId(true);
             try {
-                console.log("Fetching reservation details for:", booking.id);
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`,
+                {
+                    withCredentials:true
+                }
                 );
-                
-                console.log("Reservation data:", response.data);
-                
+
                 if (response.data) {
                     if (response.data.tourId) {
                         setTourId(response.data.tourId);
@@ -293,8 +301,12 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
             try {
                 const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
-                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`),
-                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`)
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`,{
+                        withCredentials:true
+                    }),
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`,{
+                        withCredentials:true
+                    })
                 ]);
 
                 setAllAddons(allAddonsResponse.data);
@@ -320,7 +332,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
             try {
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourId}`,
+                {
+                    withCredentials:true
+                }
                 );
                 
                 if (response.data && response.data.length > 0) {
@@ -386,18 +401,6 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     };
 
     const handleSaveChanges = async () => {
-        console.log('Starting save changes...');
-        console.log('Current booking state:', {
-            id: booking?.id,
-            paymentIntentId: booking?.paymentIntentId,
-            paymentMethodId: booking?.paymentMethodId,
-            setupIntentId: booking?.setupIntentId,
-            total_price: booking?.total_price,
-            calculated_total: calculateTotalPrice(),
-            refund_amount: amount,
-            pendingTransactions: pendingTransactions
-        });
-
         if (paymentMethod === 'credit_card' && !selectedCardId) {
             toast({
                 title: 'Error',
@@ -467,7 +470,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                 await axios.post(
                     `${process.env.NEXT_PUBLIC_API_URL}/refund`,
                     refundPayload,
-                    {
+                    { withCredentials:true,
                         headers: {
                             'Content-Type': 'application/json'
                         }
@@ -492,6 +495,9 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 refundDate: new Date().toISOString(),
                                 paymentMethod: paymentMethod
                             }
+                        },
+                        {
+                            withCredentials:true,
                         }
                     );
                 } else {
@@ -503,6 +509,9 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 {
                                     payment_status: 'archived',
                                     updated_at: new Date().toISOString()
+                                },
+                                {
+                                    withCredentials:true,
                                 }
                             );
                         }
@@ -528,7 +537,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                     
                     await axios.post(
                         `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
-                        transactionData
+                        transactionData,
+                        {
+                            withCredentials:true,
+                        }
                     );
                 }
                 if (paymentMethod === 'store_credit') {
@@ -538,6 +550,9 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                             {
                                 amount: amount,
                                 originReservationId: booking.id
+                            },
+                            {
+                                withCredentials:true,
                             }
                         );
                         

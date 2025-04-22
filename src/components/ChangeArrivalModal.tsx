@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useState} from "react";
 import {
-    Box, 
+    Box,
     Button,
     Checkbox,
     Divider,
@@ -47,20 +47,23 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
     useEffect(() => {
         const fetchPendingTransactions = async () => {
             if (!booking?.id) return;
-            
+
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
-                    { params: { payment_status: 'pending' } }
+                    {
+                        withCredentials: true
+                        , params: {payment_status: 'pending'}
+                    }
                 );
-                
+
                 if (response.data && response.data.length > 0) {
                     const filteredTransactions = response.data.filter(
                         transaction => transaction.transaction_type !== 'CREATE'
                     );
-                    
+
                     let totalPending = 0;
-                    
+
                     for (const transaction of filteredTransactions) {
                         if (transaction.transaction_direction === 'refund') {
                             totalPending -= transaction.amount;
@@ -68,7 +71,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                             totalPending += transaction.amount;
                         }
                     }
-                    
+
                     setPendingBalance(totalPending);
                 }
             } catch (error) {
@@ -77,7 +80,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                 setIsLoadingPendingBalance(false);
             }
         };
-        
+
         if (isOpen) {
             fetchPendingTransactions();
         }
@@ -89,8 +92,12 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
 
             try {
                 const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
-                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`),
-                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${booking.tourId}`)
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`,
+                        {withCredentials: true}),
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${booking.tourId}`,
+                        {
+                            withCredentials: true
+                        })
                 ]);
 
                 setAllAddons(allAddonsResponse.data);
@@ -110,10 +117,13 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
     useEffect(() => {
         const fetchCardDetails = async () => {
             if (!booking.paymentMethodId) return;
-            
+
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${booking.paymentMethodId}`
+                    ,{
+                        withCredentials: true
+                    }
                 );
                 setCardDetails(response.data);
             } catch (error) {
@@ -136,9 +146,10 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
 
             try {
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`,
+                    {withCredentials: true}
                 );
-                
+
                 if (response.data && response.data.length > 0) {
                     setTierPricing({
                         pricingType: response.data[0].pricingType,
@@ -162,7 +173,10 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
 
         try {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${tourId}`
+                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${tourId}`,
+                {
+                    credentials: "include",
+                }
             );
             const data = await res.json();
 
@@ -279,7 +293,10 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
 
             const response = await axios.put(
                 `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`,
-                updates
+                updates,
+                {
+                    withCredentials: true,
+                }
             );
             console.log("Update successful:", response.data);
             toast({
@@ -343,7 +360,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
             .sort((a, b) => b.quantity - a.quantity)
             .find(tier => booking.guestQuantity >= tier.quantity);
 
-        return applicableTier 
+        return applicableTier
             ? applicableTier.price * booking.guestQuantity
             : tierPricing.basePrice * booking.guestQuantity;
     };
@@ -482,13 +499,15 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                                             <Text fontWeight="bold">Total</Text>
                                             <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                                         </HStack>
-                                        
+
                                         {totalBalanceDue !== 0 && (
                                             <HStack justify="space-between" mt={2}>
-                                                <Text fontWeight="bold" color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                <Text fontWeight="bold"
+                                                      color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
                                                     {totalBalanceDue < 0 ? "Refund Due" : "Balance Due"}
                                                 </Text>
-                                                <Text fontWeight="bold" color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                <Text fontWeight="bold"
+                                                      color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
                                                     ${Math.abs(totalBalanceDue).toFixed(2)}
                                                 </Text>
                                             </HStack>

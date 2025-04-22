@@ -1482,7 +1482,9 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
 
                 await axios.post(
                     `${process.env.NEXT_PUBLIC_API_URL}/custom-items`,
-                    {items: customItemsPayload, reservationId: reservation.id}
+                    {items: customItemsPayload, reservationId: reservation.id},{
+                        withCredentials: true,
+                    }
                 );
             }
             toast({

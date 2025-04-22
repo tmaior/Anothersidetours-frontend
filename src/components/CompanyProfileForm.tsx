@@ -55,7 +55,10 @@ export default function CompanyProfileForm() {
     try {
       setLoading(true);
       if (tenantId) {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/company-profile/tenant/${tenantId}`);
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/company-profile/tenant/${tenantId}`,
+            {
+              withCredentials: true
+            });
         if (response.data) {
           setCompanyProfile(response.data);
           if (response.data.logoUrl) {
@@ -64,7 +67,10 @@ export default function CompanyProfileForm() {
           return;
         }
       }
-      const fallbackResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/company-profile`);
+      const fallbackResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/company-profile`,
+          {
+            withCredentials: true
+          });
       if (fallbackResponse.data && fallbackResponse.data.length > 0) {
         setCompanyProfile(fallbackResponse.data[0]);
         if (fallbackResponse.data[0].logoUrl) {
@@ -146,12 +152,14 @@ export default function CompanyProfileForm() {
       let response;
       if (companyProfile.id) {
         response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/company-profile/${companyProfile.id}`, formData, {
+          withCredentials: true,
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
       } else {
         response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/company-profile`, formData, {
+          withCredentials: true,
           headers: {
             'Content-Type': 'multipart/form-data'
           }

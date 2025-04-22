@@ -50,6 +50,7 @@ export default function PhotoUpload({ onImageUploaded, onFileSelected, imageUrl 
                 `${process.env.NEXT_PUBLIC_API_URL}/upload`,
                 formData,
                 {
+                    withCredentials: true,
                     headers: {
                         "Content-Type": "multipart/form-data",
                     },

@@ -46,13 +46,19 @@ function ToursPage() {
     useEffect(() => {
         const fetchTours = async () => {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`);
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`,{
+                    method: "GET",
+                    credentials: "include",
+                });
                 const data = await res.json();
                 setTours(data);
                 const pricingData = {};
                 for (const tour of data) {
                     try {
-                        const pricingRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tour.id}`);
+                        const pricingRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tour.id}`,{
+                            method: "GET",
+                            credentials: "include",
+                        });
                         if (pricingRes.ok) {
                             const pricingInfo = await pricingRes.json();
                             if (pricingInfo && pricingInfo.length > 0) {

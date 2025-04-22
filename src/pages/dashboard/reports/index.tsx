@@ -43,6 +43,7 @@ export default function Reports() {
         `${process.env.NEXT_PUBLIC_API_URL}/reservations`,
         {
           method: "GET",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },

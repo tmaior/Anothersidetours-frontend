@@ -241,7 +241,9 @@ const PurchasePage = () => {
             if (!tourId) return;
 
             setLoadingAddons(true);
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`,{
+                credentials: 'include',
+            });
             const data = await res.json();
             setAddonsMap(prev => ({
                 ...prev,
@@ -489,7 +491,9 @@ const PurchasePage = () => {
                 if (existingTour) {
                     setTour(existingTour);
                 } else {
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`);
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`,{
+                        credentials: 'include',
+                    });
                     if (!res.ok) throw new Error('Tour not found');
                     const data = await res.json();
                     setTour(data);
@@ -549,7 +553,10 @@ const PurchasePage = () => {
             try {
                 setLoadingSchedules(true);
                 const res = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${tourId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${tourId}`,
+                    {
+                        credentials: 'include',
+                    }
                 );
                 const data = await res.json();
 
@@ -610,7 +617,10 @@ const PurchasePage = () => {
         if (!tourId) return;
         try {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${tourId}`
+                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/listScheduleByTourId/${tourId}`,
+                {
+                    credentials: 'include',
+                }
             );
             const data = await res.json();
 
@@ -693,7 +703,9 @@ const PurchasePage = () => {
             if (cart.length === 0) return;
             const promises = cart.map(async (item) => {
                 try {
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${item.id}`);
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${item.id}`,{
+                        credentials: 'include',
+                    });
                     if (response.ok) {
                         const data = await response.json();
                         setTierPricing(prev => {
@@ -891,6 +903,7 @@ const PurchasePage = () => {
 
             const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
                 method: "POST",
+                credentials: 'include',
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(userPayload),
             });
@@ -903,6 +916,7 @@ const PurchasePage = () => {
             userId = userResult.id;
             const updateUserResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
                 method: 'PUT',
+                credentials: 'include',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({statusCheckout: "COMPLETED"}),
             });
@@ -972,6 +986,7 @@ const PurchasePage = () => {
 
             const reservationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(requestBody),
             });
@@ -989,8 +1004,11 @@ const PurchasePage = () => {
                     try {
                         await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/purchase-notes`, {
                             reservationId,
-                            description: purchaseNote
-                        });
+                            description: purchaseNote,
+                        },
+                            {
+                                withCredentials: true,
+                            });
                     } catch (noteError) {
                         console.error("Error saving purchase note:", noteError);
                     }
@@ -1008,6 +1026,7 @@ const PurchasePage = () => {
 
                     const customItemsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/custom-items`, {
                         method: "POST",
+                        credentials: 'include',
                         headers: {"Content-Type": "application/json"},
                         body: JSON.stringify({items: customItemsPayload, reservationId}),
                     });
@@ -1077,6 +1096,7 @@ const PurchasePage = () => {
 
                         await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mail/send-reservation-email`, {
                             method: 'POST',
+                            credentials: 'include',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
@@ -1095,6 +1115,7 @@ const PurchasePage = () => {
                 if (paymentMethod === 'cash') {
                     const cashPaymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                         method: 'POST',
+                        credentials: 'include',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
                             amount: finalCartTotal,
@@ -1142,6 +1163,7 @@ const PurchasePage = () => {
 
                         const paymentTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                             method: 'POST',
+                            credentials: 'include',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({
                                 amount: finalCartTotal, 
@@ -1178,6 +1200,7 @@ const PurchasePage = () => {
                     } else {
                         const paymentTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                             method: 'POST',
+                            credentials: 'include',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({
                                 amount: finalCartTotal,
@@ -1212,6 +1235,7 @@ const PurchasePage = () => {
 
                     const paymentTransactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                         method: 'POST',
+                        credentials: 'include',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
                             amount: finalCartTotal,
@@ -1249,6 +1273,7 @@ const PurchasePage = () => {
 
                     const setupIntentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent-for-transaction`, {
                         method: 'POST',
+                        credentials: 'include',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({transactionId}),
                     });
@@ -1282,6 +1307,7 @@ const PurchasePage = () => {
 
                     const savePMRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method-for-transaction`, {
                         method: 'POST',
+                        credentials: 'include',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({paymentMethodId, transactionId}),
                     });
@@ -1292,6 +1318,7 @@ const PurchasePage = () => {
 
                     const processPaymentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
                         method: 'POST',
+                        credentials: 'include',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({transactionId}),
                     });
@@ -1308,6 +1335,7 @@ const PurchasePage = () => {
 
                     const paymentTransactionRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                         method: 'POST',
+                        credentials: 'include',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
                             amount: finalCartTotal,
@@ -1344,6 +1372,7 @@ const PurchasePage = () => {
                     if (voucherValid && appliedVoucherCode) {
                         const redeemResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/redeem`, {
                             method: 'POST',
+                            credentials: 'include',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
@@ -1372,6 +1401,7 @@ const PurchasePage = () => {
                         Object.entries(additionalInformationResponses).map(([additionalInformationId, value]) =>
                             fetch(`${process.env.NEXT_PUBLIC_API_URL}/customer-additional-information`, {
                                 method: "POST",
+                                credentials: 'include',
                                 headers: {
                                     "Content-Type": "application/json",
                                 },
@@ -1417,6 +1447,7 @@ const PurchasePage = () => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voucher/validate`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -1482,7 +1513,10 @@ const PurchasePage = () => {
             if (!currentTourId) return;
 
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${currentTourId}`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${currentTourId}`,
+                    {
+                        credentials: 'include',
+                    });
                 const data = await response.json();
                 setAdditionalInformationQuestions(data);
 

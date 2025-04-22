@@ -50,6 +50,7 @@ const AddEventNoteModal = ({isOpen,onSave, onClose, eventDetails, reservationId}
             try {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes`, {
                     method: "POST",
+                    credentials: 'include',
                     headers: {
                         "Content-Type": "application/json",
                     },

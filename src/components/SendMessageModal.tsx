@@ -70,7 +70,10 @@ const SendMessageModal = ({isOpen, onClose, eventDetails}) => {
                     subject: emailSubject,
                     text: emailBody.replace(/<[^>]*>/g, ''),
                     html: emailBody,
-                });
+                },
+                    {
+                        withCredentials: true,
+                    });
             }
 
             // if (smsEnabled) {

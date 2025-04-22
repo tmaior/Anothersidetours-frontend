@@ -9,7 +9,8 @@ import {
     Image,
     Input,
     Modal,
-    ModalBody, ModalCloseButton,
+    ModalBody,
+    ModalCloseButton,
     ModalContent,
     ModalFooter,
     ModalHeader,
@@ -20,8 +21,8 @@ import {
     useToast,
     VStack
 } from "@chakra-ui/react";
-import React, {useState, useEffect} from "react";
-import {FaRegCreditCard, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover} from "react-icons/fa";
+import React, {useEffect, useState} from "react";
+import {FaCcAmex, FaCcDiscover, FaCcMastercard, FaCcVisa, FaRegCreditCard} from "react-icons/fa";
 import {BsCash, BsCheck2} from "react-icons/bs";
 import axios from "axios";
 
@@ -58,16 +59,19 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
         try {
             setLoadingCardInfo(true);
             const response = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`
+                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
+                {
+                    withCredentials: true,
+                }
             );
-            
+
             if (response.data && response.data.length > 0) {
-                const createTransaction = response.data.find(t => 
-                    t.transaction_type === 'CREATE' && 
-                    (t.payment_method?.toLowerCase() === 'credit card' || 
-                     t.payment_method?.toLowerCase() === 'card')
+                const createTransaction = response.data.find(t =>
+                    t.transaction_type === 'CREATE' &&
+                    (t.payment_method?.toLowerCase() === 'credit card' ||
+                        t.payment_method?.toLowerCase() === 'card')
                 );
-                
+
                 if (createTransaction) {
                     setOriginalTransaction(createTransaction);
                     let cardDetails = null;
@@ -75,16 +79,19 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         cardDetails = createTransaction.metadata.cardInfo;
                     }
                     if (!cardDetails || !cardDetails.brand || !cardDetails.last4) {
-                        const paymentMethodId = createTransaction.payment_method_id || 
-                                              createTransaction.paymentMethodId || 
-                                              booking.paymentMethodId;
-                        
+                        const paymentMethodId = createTransaction.payment_method_id ||
+                            createTransaction.paymentMethodId ||
+                            booking.paymentMethodId;
+
                         if (paymentMethodId) {
                             try {
                                 const paymentMethodResponse = await axios.get(
-                                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`
+                                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`,
+                                    {
+                                        withCredentials: true,
+                                    }
                                 );
-                                
+
                                 if (paymentMethodResponse.data) {
                                     cardDetails = {
                                         brand: paymentMethodResponse.data.brand || 'card',
@@ -127,12 +134,15 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
     const fetchReservationDetails = async () => {
         if (!booking?.id) return;
-        
+
         try {
             const response = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`
+                `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`,
+                {
+                    withCredentials: true,
+                }
             );
-            
+
             if (response.data) {
                 setTourId(response.data.tourId || response.data.tour_id);
                 setGuestQuantity(response.data.guestQuantity || booking.guestQuantity || 0);
@@ -157,13 +167,16 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
     const fetchTierPricing = async (tid) => {
         if (!tid) return;
-        
+
         try {
             setIsLoadingTierPricing(true);
             const response = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tid}`
+                `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tid}`,
+                {
+                    withCredentials: true,
+                }
             );
-            
+
             if (response.data && response.data.length > 0) {
                 setTierPricing({
                     pricingType: response.data[0].pricingType,
@@ -180,14 +193,20 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
     const fetchAddons = async (tid) => {
         if (!tid || !booking?.id) return;
-        
+
         try {
             setIsLoadingAddons(true);
             const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
-                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`),
-                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tid}`)
+                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`,
+                    {
+                        withCredentials: true,
+                    }),
+                axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tid}`,
+                    {
+                        withCredentials: true,
+                    }),
             ]);
-            
+
             setReservationAddons(reservationAddonsResponse.data);
             setAllAddons(allAddonsResponse.data);
         } catch (error) {
@@ -199,13 +218,16 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
     const fetchCustomItems = async () => {
         if (!booking?.id) return;
-        
+
         try {
             setIsLoadingCustomItems(true);
             const response = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${booking.id}`
+                `${process.env.NEXT_PUBLIC_API_URL}/custom-items/reservation/${booking.id}`,
+                {
+                    withCredentials: true,
+                }
             );
-            
+
             const formattedItems = response.data.map(item => ({
                 id: item.id,
                 name: item.label,
@@ -213,7 +235,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 amount: Number(item.amount),
                 quantity: Number(item.quantity)
             }));
-            
+
             setCustomItems(formattedItems);
         } catch (error) {
             console.error("Failed to fetch custom items:", error);
@@ -224,7 +246,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
     const getCombinedAddons = () => {
         if (!allAddons.length || !reservationAddons.length) return [];
-        
+
         return allAddons.reduce((acc, addon) => {
             const selectedAddon = reservationAddons.find(resAddon => resAddon.addonId === addon.id);
             if (addon.type === 'SELECT' && selectedAddon && parseInt(selectedAddon.value, 10) > 0) {
@@ -271,7 +293,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
     const calculateCustomItemsTotal = () => {
         if (!customItems || customItems.length === 0) return 0;
-        
+
         return customItems.reduce((total, item) => {
             const itemTotal = item.amount * item.quantity;
             return item.type === 'Discount' ? total - itemTotal : total + itemTotal;
@@ -282,7 +304,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
         const guestTotal = calculateGuestPrice();
         const addonTotal = calculateAddonTotal();
         const customItemsTotal = calculateCustomItemsTotal();
-        
+
         return guestTotal + addonTotal + customItemsTotal;
     };
 
@@ -307,7 +329,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 return;
             }
             setIsSubmitting(true);
-            
+
             if (paymentMethod === 'Credit Card') {
                 if (!originalTransaction) {
                     toast({
@@ -319,9 +341,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     });
                     return;
                 }
-                const paymentIntentId = originalTransaction.paymentIntentId || 
-                                        originalTransaction.stripe_payment_id;
-                
+                const paymentIntentId = originalTransaction.paymentIntentId ||
+                    originalTransaction.stripe_payment_id;
+
                 if (!paymentIntentId) {
                     toast({
                         title: "Error",
@@ -358,39 +380,43 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         }
                     );
                     const tenantId = booking.tenantId || originalTransaction.tenant_id;
-                    
+
                     if (!tenantId) {
                         throw new Error('Tenant ID is missing. Cannot create refund transaction.');
                     }
-                    
+
                     await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
-                        tenant_id: tenantId,
-                        reservation_id: booking.id,
-                        amount: refundAmount,
-                        payment_status: 'completed',
-                        payment_method: 'Credit Card',
-                        transaction_type: 'CANCELLATION_REFUND',
-                        transaction_direction: 'refund',
-                        description: `Refund of $${refundAmount.toFixed(2)} processed for cancelled booking`,
-                        reference_number: `RF-${Date.now().toString().slice(-6)}`,
-                        stripe_payment_id: paymentIntentId,
-                        paymentIntentId: paymentIntentId,
-                        metadata: {
-                            originalPrice: calculateTotalPrice(),
-                            refundAmount: refundAmount,
-                            comment: comment,
-                            refundDate: new Date().toISOString(),
-                            cardInfo: cardInfo,
-                            originalTransactionId: originalTransaction.id,
-                            notifyCustomer: notifyCustomer,
-                            paymentMethodId: originalTransaction.paymentMethodId
-                        }
-                    });
+                            tenant_id: tenantId,
+                            reservation_id: booking.id,
+                            amount: refundAmount,
+                            payment_status: 'completed',
+                            payment_method: 'Credit Card',
+                            transaction_type: 'CANCELLATION_REFUND',
+                            transaction_direction: 'refund',
+                            description: `Refund of $${refundAmount.toFixed(2)} processed for cancelled booking`,
+                            reference_number: `RF-${Date.now().toString().slice(-6)}`,
+                            stripe_payment_id: paymentIntentId,
+                            paymentIntentId: paymentIntentId,
+                            metadata: {
+                                originalPrice: calculateTotalPrice(),
+                                refundAmount: refundAmount,
+                                comment: comment,
+                                refundDate: new Date().toISOString(),
+                                cardInfo: cardInfo,
+                                originalTransactionId: originalTransaction.id,
+                                notifyCustomer: notifyCustomer,
+                                paymentMethodId: originalTransaction.paymentMethodId
+                            }
+                        },
+                        {
+                            withCredentials: true,
+                        });
                     const bookingResponse = await axios.put(
-                        `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}?preserveOriginalTransaction=true`, 
+                        `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}?preserveOriginalTransaction=true`,
                         {
                             status: "CANCELED"
-                        }
+                        },
+                        {withCredentials: true}
                     );
 
                     if (bookingResponse.data) {
@@ -420,7 +446,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 }
             } else if (paymentMethod === 'Cash') {
                 const tenantId = booking.tenantId || originalTransaction?.tenant_id;
-                
+
                 if (!tenantId) {
                     toast({
                         title: "Error",
@@ -432,7 +458,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     setIsSubmitting(false);
                     return;
                 }
-                
+
                 const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                     tenant_id: tenantId,
                     reservation_id: booking.id,
@@ -450,13 +476,19 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         refundDate: new Date().toISOString(),
                         notifyCustomer: notifyCustomer
                     }
-                });
-                
+                },
+                    {
+                        withCredentials: true
+                    });
+
                 if (transactionResponse.data) {
                     const bookingResponse = await axios.put(
                         `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}?preserveOriginalTransaction=true`,
                         {
                             status: "CANCELED"
+                        },
+                        {
+                            withCredentials: true
                         }
                     );
 
@@ -477,7 +509,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
             } else if (paymentMethod === "store") {
                 try {
                     const tenantId = booking.tenantId || originalTransaction?.tenant_id;
-                    
+
                     if (!tenantId) {
                         toast({
                             title: "Error",
@@ -489,16 +521,19 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         setIsSubmitting(false);
                         return;
                     }
-                    
+
                     const voucherResponse = await axios.post(
                         `${process.env.NEXT_PUBLIC_API_URL}/voucher/generate`,
                         {
                             amount: refundAmount,
                             originReservationId: booking.id,
                             tenantId: tenantId
+                        },
+                        {
+                            withCredentials: true
                         }
                     );
-                    
+
                     if (voucherResponse.data && voucherResponse.data.voucher) {
                         const voucherCode = voucherResponse.data.voucher.code;
                         setGeneratedVoucher({
@@ -525,20 +560,26 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                 voucherCode: voucherCode,
                                 voucherId: voucherResponse.data.voucher.id
                             }
-                        });
-                        
+                        },
+                            {
+                                withCredentials: true
+                            });
+
                         const bookingResponse = await axios.put(
                             `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}?preserveOriginalTransaction=true`,
                             {
                                 status: "CANCELED"
+                            },
+                            {
+                                withCredentials: true
                             }
                         );
-                        
+
                         if (bookingResponse.data) {
                             if (onStatusChange) {
                                 onStatusChange("CANCELED");
                             }
-                            
+
                             toast({
                                 title: "Store Credit Issued",
                                 description: `Voucher ${voucherCode} created successfully.`,
@@ -554,7 +595,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
             } else if (paymentMethod === "other") {
                 try {
                     const tenantId = booking.tenantId || originalTransaction?.tenant_id;
-                    
+
                     if (!tenantId) {
                         toast({
                             title: "Error",
@@ -583,15 +624,21 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                             refundDate: new Date().toISOString(),
                             notifyCustomer: notifyCustomer
                         }
-                    });
-                    
+                    },
+                        {
+                            withCredentials: true
+                        });
+
                     const bookingResponse = await axios.put(
                         `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}?preserveOriginalTransaction=true`,
                         {
                             status: "CANCELED"
+                        },
+                        {
+                            withCredentials: true
                         }
                     );
-                    
+
                     if (bookingResponse.data) {
                         toast({
                             title: "Success",
@@ -645,7 +692,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 <ModalHeader textAlign="center">
                     Reduce Booking Value and Return Payment
                 </ModalHeader>
-                <ModalCloseButton />
+                <ModalCloseButton/>
                 <ModalBody>
                     <Box>
                         <HStack align="start" spacing={10}>
@@ -708,55 +755,57 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                             <Button
                                                 variant={paymentMethod === "Credit Card" ? "solid" : "outline"}
                                                 onClick={() => setPaymentMethod("Credit Card")}
-                                                leftIcon={<FaRegCreditCard />}
+                                                leftIcon={<FaRegCreditCard/>}
                                                 borderColor={paymentMethod === "Credit Card" ? 'blue.500' : 'gray.200'}
                                                 bg={paymentMethod === "Credit Card" ? 'blue.50' : 'white'}
                                                 color={paymentMethod === "Credit Card" ? 'blue.700' : 'gray.700'}
-                                                _hover={{ bg: paymentMethod === "Credit Card" ? 'blue.100' : 'gray.100' }}
+                                                _hover={{bg: paymentMethod === "Credit Card" ? 'blue.100' : 'gray.100'}}
                                             >
                                                 Credit Card
                                             </Button>
                                         ) : null}
                                         <Button
                                             size="md"
-                                            leftIcon={<BsCash />}
+                                            leftIcon={<BsCash/>}
                                             variant={paymentMethod === "Cash" ? "solid" : "outline"}
                                             onClick={() => setPaymentMethod("Cash")}
                                             borderColor={paymentMethod === "Cash" ? 'blue.500' : 'gray.200'}
                                             bg={paymentMethod === "Cash" ? 'blue.50' : 'white'}
                                             color={paymentMethod === "Cash" ? 'blue.700' : 'gray.700'}
-                                            _hover={{ bg: paymentMethod === "Cash" ? 'blue.100' : 'gray.100' }}
+                                            _hover={{bg: paymentMethod === "Cash" ? 'blue.100' : 'gray.100'}}
                                         >
                                             Cash
                                         </Button>
                                         <Button
                                             variant={paymentMethod === "store" ? "solid" : "outline"}
                                             onClick={() => setPaymentMethod("store")}
-                                            leftIcon={<BsCheck2 />}
+                                            leftIcon={<BsCheck2/>}
                                             borderColor={paymentMethod === "store" ? 'blue.500' : 'gray.200'}
                                             bg={paymentMethod === "store" ? 'blue.50' : 'white'}
                                             color={paymentMethod === "store" ? 'blue.700' : 'gray.700'}
-                                            _hover={{ bg: paymentMethod === "store" ? 'blue.100' : 'gray.100' }}
+                                            _hover={{bg: paymentMethod === "store" ? 'blue.100' : 'gray.100'}}
                                         >
                                             Store Credit
                                         </Button>
                                         <Button
                                             variant={paymentMethod === "other" ? "solid" : "outline"}
                                             onClick={() => setPaymentMethod("other")}
-                                            leftIcon={<BsCheck2 />}
+                                            leftIcon={<BsCheck2/>}
                                             borderColor={paymentMethod === "other" ? 'blue.500' : 'gray.200'}
                                             bg={paymentMethod === "other" ? 'blue.50' : 'white'}
                                             color={paymentMethod === "other" ? 'blue.700' : 'gray.700'}
-                                            _hover={{ bg: paymentMethod === "other" ? 'blue.100' : 'gray.100' }}
+                                            _hover={{bg: paymentMethod === "other" ? 'blue.100' : 'gray.100'}}
                                         >
                                             Other
                                         </Button>
                                     </HStack>
-                                    
+
                                     {paymentMethod === 'store' && (
-                                        <Box mt={2} p={3} bg="green.50" borderRadius="md" borderColor="green.200" borderWidth="1px">
+                                        <Box mt={2} p={3} bg="green.50" borderRadius="md" borderColor="green.200"
+                                             borderWidth="1px">
                                             <Text fontSize="sm" color="green.700">
-                                                A voucher code will be generated for the refund amount. The customer can use this voucher for future bookings.
+                                                A voucher code will be generated for the refund amount. The customer can
+                                                use this voucher for future bookings.
                                             </Text>
                                         </Box>
                                     )}
@@ -766,35 +815,38 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                     <Box w="full" mt={2} mb={4}>
                                         {loadingCardInfo ? (
                                             <Flex justify="center" py={2} borderWidth="1px" borderRadius="md" p={3}>
-                                                <Spinner size="sm" mr={2} />
+                                                <Spinner size="sm" mr={2}/>
                                                 <Text>Loading card information...</Text>
                                             </Flex>
                                         ) : cardInfo ? (
-                                            <Box 
-                                                borderWidth="1px" 
-                                                borderRadius="md" 
-                                                p={3} 
+                                            <Box
+                                                borderWidth="1px"
+                                                borderRadius="md"
+                                                p={3}
                                                 bg="white"
                                                 boxShadow="sm"
                                             >
                                                 <Flex align="center">
                                                     {cardInfo.brand?.toLowerCase() === 'visa' ? (
-                                                        <Icon as={FaCcVisa} boxSize="24px" color="blue.600" mr={2} />
+                                                        <Icon as={FaCcVisa} boxSize="24px" color="blue.600" mr={2}/>
                                                     ) : cardInfo.brand?.toLowerCase() === 'mastercard' ? (
-                                                        <Icon as={FaCcMastercard} boxSize="24px" color="red.500" mr={2} />
+                                                        <Icon as={FaCcMastercard} boxSize="24px" color="red.500"
+                                                              mr={2}/>
                                                     ) : cardInfo.brand?.toLowerCase() === 'amex' ? (
-                                                        <Icon as={FaCcAmex} boxSize="24px" color="blue.500" mr={2} />
+                                                        <Icon as={FaCcAmex} boxSize="24px" color="blue.500" mr={2}/>
                                                     ) : cardInfo.brand?.toLowerCase() === 'discover' ? (
-                                                        <Icon as={FaCcDiscover} boxSize="24px" color="orange.500" mr={2} />
+                                                        <Icon as={FaCcDiscover} boxSize="24px" color="orange.500"
+                                                              mr={2}/>
                                                     ) : (
-                                                        <Icon as={FaRegCreditCard} boxSize="20px" mr={2} />
+                                                        <Icon as={FaRegCreditCard} boxSize="20px" mr={2}/>
                                                     )}
                                                     <Text fontWeight="medium">
-                                                        {cardInfo.brand?.toLowerCase() === 'visa' ? 'Visa' : 
-                                                         cardInfo.brand?.toLowerCase() === 'mastercard' ? 'MasterCard' : 
-                                                         cardInfo.brand?.toLowerCase() === 'amex' ? 'American Express' : 
-                                                         cardInfo.brand?.toLowerCase() === 'discover' ? 'Discover' : 
-                                                         cardInfo.brand || 'Card'} •••• •••• •••• {cardInfo.last4 || 'xxxx'}
+                                                        {cardInfo.brand?.toLowerCase() === 'visa' ? 'Visa' :
+                                                            cardInfo.brand?.toLowerCase() === 'mastercard' ? 'MasterCard' :
+                                                                cardInfo.brand?.toLowerCase() === 'amex' ? 'American Express' :
+                                                                    cardInfo.brand?.toLowerCase() === 'discover' ? 'Discover' :
+                                                                        cardInfo.brand || 'Card'} •••• ••••
+                                                        •••• {cardInfo.last4 || 'xxxx'}
                                                     </Text>
                                                 </Flex>
                                             </Box>
@@ -808,8 +860,8 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
                                 <Box w="full">
                                     <Text mb={2}>Comment</Text>
-                                    <Textarea 
-                                        placeholder="Cancellation reason" 
+                                    <Textarea
+                                        placeholder="Cancellation reason"
                                         value={comment}
                                         onChange={(e) => setComment(e.target.value)}
                                     />
@@ -834,8 +886,8 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                             <>
                                                 <HStack justifyContent="space-between">
                                                     <Text>
-                                                        {`Guests ($${(tierPricing && tierPricing.pricingType === 'flat' 
-                                                            ? tierPricing.basePrice 
+                                                        {`Guests ($${(tierPricing && tierPricing.pricingType === 'flat'
+                                                            ? tierPricing.basePrice
                                                             : guestPrice).toFixed(2)} × ${guestQuantity})`}
                                                     </Text>
                                                     <Text>${calculateGuestPrice().toFixed(2)}</Text>
@@ -851,7 +903,8 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                         ))}
                                                         <HStack justify="space-between" mt={1}>
                                                             <Text fontWeight="semibold">Add-ons Subtotal</Text>
-                                                            <Text fontWeight="semibold">${calculateAddonTotal().toFixed(2)}</Text>
+                                                            <Text
+                                                                fontWeight="semibold">${calculateAddonTotal().toFixed(2)}</Text>
                                                         </HStack>
                                                     </>
                                                 )}
@@ -872,11 +925,12 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                         ))}
                                                         <HStack justify="space-between" mt={1}>
                                                             <Text fontWeight="semibold">Custom Items Subtotal</Text>
-                                                            <Text fontWeight="semibold">${calculateCustomItemsTotal().toFixed(2)}</Text>
+                                                            <Text
+                                                                fontWeight="semibold">${calculateCustomItemsTotal().toFixed(2)}</Text>
                                                         </HStack>
                                                     </>
                                                 )}
-                                                
+
                                                 <HStack justifyContent="space-between" mt={2}>
                                                     <Text fontWeight="bold">Total:</Text>
                                                     <Text fontWeight="bold">${calculateTotalPrice().toFixed(2)}</Text>
@@ -890,7 +944,8 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                 <Divider/>
                                                 <HStack justifyContent="space-between">
                                                     <Text fontWeight="bold">Final Total:</Text>
-                                                    <Text fontWeight="bold">${(calculateTotalPrice() - refundAmount).toFixed(2)}</Text>
+                                                    <Text
+                                                        fontWeight="bold">${(calculateTotalPrice() - refundAmount).toFixed(2)}</Text>
                                                 </HStack>
                                             </>
                                         )}
@@ -903,15 +958,15 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                             <HStack justifyContent="space-between">
                                                 <HStack>
                                                     {cardInfo.brand?.toLowerCase() === 'visa' ? (
-                                                        <Icon as={FaCcVisa} boxSize="20px" color="blue.600" />
+                                                        <Icon as={FaCcVisa} boxSize="20px" color="blue.600"/>
                                                     ) : cardInfo.brand?.toLowerCase() === 'mastercard' ? (
-                                                        <Icon as={FaCcMastercard} boxSize="20px" color="red.500" />
+                                                        <Icon as={FaCcMastercard} boxSize="20px" color="red.500"/>
                                                     ) : cardInfo.brand?.toLowerCase() === 'amex' ? (
-                                                        <Icon as={FaCcAmex} boxSize="20px" color="blue.500" />
+                                                        <Icon as={FaCcAmex} boxSize="20px" color="blue.500"/>
                                                     ) : cardInfo.brand?.toLowerCase() === 'discover' ? (
-                                                        <Icon as={FaCcDiscover} boxSize="20px" color="orange.500" />
+                                                        <Icon as={FaCcDiscover} boxSize="20px" color="orange.500"/>
                                                     ) : (
-                                                        <Icon as={FaRegCreditCard} boxSize="16px" />
+                                                        <Icon as={FaRegCreditCard} boxSize="16px"/>
                                                     )}
                                                     <Text>
                                                         Payment {booking.dateFormatted || formatDate(new Date().toISOString())}:
@@ -929,23 +984,23 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                 {paymentMethod === 'Credit Card' && cardInfo ? (
                                                     <>
                                                         {cardInfo.brand?.toLowerCase() === 'visa' ? (
-                                                            <Icon as={FaCcVisa} boxSize="20px" color="blue.600" />
+                                                            <Icon as={FaCcVisa} boxSize="20px" color="blue.600"/>
                                                         ) : cardInfo.brand?.toLowerCase() === 'mastercard' ? (
-                                                            <Icon as={FaCcMastercard} boxSize="20px" color="red.500" />
+                                                            <Icon as={FaCcMastercard} boxSize="20px" color="red.500"/>
                                                         ) : cardInfo.brand?.toLowerCase() === 'amex' ? (
-                                                            <Icon as={FaCcAmex} boxSize="20px" color="blue.500" />
+                                                            <Icon as={FaCcAmex} boxSize="20px" color="blue.500"/>
                                                         ) : cardInfo.brand?.toLowerCase() === 'discover' ? (
-                                                            <Icon as={FaCcDiscover} boxSize="20px" color="orange.500" />
+                                                            <Icon as={FaCcDiscover} boxSize="20px" color="orange.500"/>
                                                         ) : (
-                                                            <Icon as={FaRegCreditCard} boxSize="16px" />
+                                                            <Icon as={FaRegCreditCard} boxSize="16px"/>
                                                         )}
                                                     </>
                                                 ) : paymentMethod === 'Cash' ? (
-                                                    <Icon as={BsCash} boxSize="16px" />
+                                                    <Icon as={BsCash} boxSize="16px"/>
                                                 ) : paymentMethod === 'store' ? (
-                                                    <Icon as={BsCheck2} boxSize="16px" />
+                                                    <Icon as={BsCheck2} boxSize="16px"/>
                                                 ) : (
-                                                    <Icon as={BsCheck2} boxSize="16px" />
+                                                    <Icon as={BsCheck2} boxSize="16px"/>
                                                 )}
                                                 <Text color="blue.500">
                                                     Return Payment {formatDate(new Date().toISOString())}
@@ -960,7 +1015,8 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                         <Divider mt={4}/>
                                         <HStack justifyContent="space-between">
                                             <Text fontWeight="bold">Paid:</Text>
-                                            <Text fontWeight="bold">${(calculateTotalPrice() - refundAmount).toFixed(2)}</Text>
+                                            <Text
+                                                fontWeight="bold">${(calculateTotalPrice() - refundAmount).toFixed(2)}</Text>
                                         </HStack>
                                     </VStack>
                                 </Box>
@@ -983,11 +1039,11 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                     </HStack>
                                     <HStack justify="space-between">
                                         <Text>Voucher Code:</Text>
-                                        <Box 
-                                            bg="white" 
-                                            p={2} 
-                                            borderRadius="md" 
-                                            fontFamily="monospace" 
+                                        <Box
+                                            bg="white"
+                                            p={2}
+                                            borderRadius="md"
+                                            fontFamily="monospace"
                                             fontWeight="bold"
                                             fontSize="lg"
                                             boxShadow="sm"
@@ -1008,16 +1064,16 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         </VStack>
                     ) : (
                         <HStack>
-                            <Checkbox 
+                            <Checkbox
                                 isChecked={notifyCustomer}
                                 onChange={(e) => setNotifyCustomer(e.target.checked)}
                             >
                                 Notify Customer
                             </Checkbox>
                             <Button onClick={onClose}>Cancel</Button>
-                            <Button 
-                                colorScheme="blue" 
-                                onClick={handleSaveChanges} 
+                            <Button
+                                colorScheme="blue"
+                                onClick={handleSaveChanges}
                                 isLoading={isSubmitting}
                                 isDisabled={isLoadingTierPricing || isLoadingAddons || isLoadingCustomItems}
                             >

@@ -61,6 +61,7 @@ export default function MyProfileForm() {
         `${process.env.NEXT_PUBLIC_API_URL}/employee/${userDataToObject.id}`,
         {
           method: 'GET',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json'
           }
@@ -129,6 +130,7 @@ export default function MyProfileForm() {
 
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employee`, {
                 method: 'PATCH',
+              credentials: 'include',
                 headers: {
                   'Content-Type': 'application/json'
                 },
@@ -209,6 +211,7 @@ export default function MyProfileForm() {
           `${process.env.NEXT_PUBLIC_API_URL}/employee/update-password`,
           {
             method: 'PATCH',
+            credentials: 'include',
             headers: {
               'Content-Type': 'application/json'
             },

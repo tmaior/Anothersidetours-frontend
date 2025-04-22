@@ -29,7 +29,9 @@ function EditTourPage() {
 
         async function fetchTourData() {
             try {
-                const tourRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`);
+                const tourRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`,{
+                    credentials: "include",
+                });
                 if (!tourRes.ok) {
                     throw new Error("Error when searching for tour");
                 }
@@ -45,7 +47,9 @@ function EditTourPage() {
                 setTourId(id as string);
 
                 try {
-                    const whatsIncludedRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/whats-included/${id}`);
+                    const whatsIncludedRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/whats-included/${id}`,{
+                        credentials: "include",
+                    });
                     if (whatsIncludedRes.ok) {
                         const whatsIncludedData = await whatsIncludedRes.json();
                         if (Array.isArray(whatsIncludedData)) {
@@ -59,7 +63,9 @@ function EditTourPage() {
                     console.error("Error fetching included items:", includedItemsError);
                 }
                 try {
-                    const whatToBringRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/what-to-bring/${id}`);
+                    const whatToBringRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/what-to-bring/${id}`,{
+                        credentials: "include",
+                    });
                     if (whatToBringRes.ok) {
                         const whatToBringData = await whatToBringRes.json();
                         if (Array.isArray(whatToBringData)) {
@@ -73,7 +79,9 @@ function EditTourPage() {
                     console.error("Error fetching bring items:", bringItemsError);
                 }
                 try {
-                    const additionalInfoRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${id}`);
+                    const additionalInfoRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${id}`,{
+                        credentials: "include",
+                    });
                     if (additionalInfoRes.ok) {
                         const additionalInfoData = await additionalInfoRes.json();
                         if (Array.isArray(additionalInfoData) && additionalInfoData.length > 0) {
@@ -90,7 +98,9 @@ function EditTourPage() {
                 }
 
                 try {
-                    const pricingRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${id}`);
+                    const pricingRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${id}`,{
+                        credentials: "include",
+                    });
                     if (pricingRes.ok) {
                         const pricingData = await pricingRes.json();
                         setPricingData(pricingData);
@@ -100,7 +110,9 @@ function EditTourPage() {
                 }
 
                 try {
-                    const schedulesRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/schedules/${id}`);
+                    const schedulesRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/schedules/${id}`,{
+                        credentials: "include",
+                    });
                     if (schedulesRes.ok) {
                         const schedulesData = await schedulesRes.json();
                         const formattedSchedules = schedulesData.map(schedule => ({

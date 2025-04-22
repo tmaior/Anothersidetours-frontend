@@ -89,7 +89,11 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 let combinedBlockedDates: string[] = [];
                 const categoryBlockedTimes: { date: string; startTime: string; endTime: string }[] = [];
 
-                const tourResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`);
+                const tourResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`,
+                    {
+                        method: 'GET',
+                        credentials: 'include',
+                    });
                 if (!tourResponse.ok) throw new Error('Failed to fetch tour details');
 
                 const tourData = await tourResponse.json();
@@ -121,6 +125,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                         `${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/filter`,
                         {
                             method: "POST",
+                            credentials: 'include',
                             headers: {
                                 "Content-Type": "application/json",
                             },
@@ -166,7 +171,11 @@ const DatePicker: React.FC<DatePickerProps> = ({
                     });
                 }
 
-                const globalResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/global`);
+                const globalResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blackout-dates/global`,
+                    {
+                        method: 'GET',
+                        credentials: 'include',
+                    });
                 if (!globalResponse.ok) throw new Error('Failed to fetch global blackout dates');
 
                 const globalData = await globalResponse.json();
@@ -365,7 +374,10 @@ const DatePicker: React.FC<DatePickerProps> = ({
     const fetchAvailableTimes = useCallback(async () => {
         try {
             const response = await axios.get<Schedule[]>(
-                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/schedules/${tourId}`
+                `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/schedules/${tourId}`,
+                {
+                    withCredentials: true,
+                }
             );
 
             if (Array.isArray(response.data)) {

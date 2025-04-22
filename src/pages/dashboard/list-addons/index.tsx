@@ -32,7 +32,10 @@ function ListAddons() {
         async function fetchData() {
             try {
                 const addonsRes = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/addons/byTenantId/${tenantId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/addons/byTenantId/${tenantId}`,
+                    {
+                        credentials: "include",
+                    }
                 );
                 const addonsData = await addonsRes.json();
                 setAddons(addonsData);
@@ -66,7 +69,8 @@ function ListAddons() {
             try {
                 const response = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/addons/${selectedAddon}`,
-                    {method: "DELETE"}
+                    {method: "DELETE",
+                    credentials: "include",}
                 );
 
                 if (!response.ok) {

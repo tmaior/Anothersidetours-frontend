@@ -50,7 +50,9 @@ function AddonContentPage() {
         async function fetchData() {
             if (addonId) {
                 setIsEditing(true);
-                const addonRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`);
+                const addonRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`,{
+                    credentials: "include",
+                });
                 const addonData = await addonRes.json();
                 setFormData({
                     tourId: addonData.tourId || "",
@@ -64,7 +66,9 @@ function AddonContentPage() {
                 setPrice(addonData.price ? addonData.price.toString() : "0");
             }
 
-            const toursRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`);
+            const toursRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`,{
+                credentials: "include",
+            });
             const toursData = await toursRes.json();
             setTours(toursData);
         }
@@ -112,6 +116,7 @@ function AddonContentPage() {
         try {
             const response = await fetch(endpoint, {
                 method,
+                credentials: "include",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(payload),
             });
@@ -145,6 +150,7 @@ function AddonContentPage() {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/${addonId}`, {
                 method: "DELETE",
+                credentials: "include",
             });
 
             if (!response.ok) {

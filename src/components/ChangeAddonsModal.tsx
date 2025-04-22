@@ -22,7 +22,7 @@ import {
 } from "@chakra-ui/react";
 import React, {useEffect, useState} from "react";
 import axios from "axios";
-import { CollectBalanceModal } from "./ChangeGuestQuantityModal";
+import {CollectBalanceModal} from "./ChangeGuestQuantityModal";
 
 export default function ChangeAddOns({isOpen, onClose, booking}) {
     const [selectedAddons, setSelectedAddons] = useState({});
@@ -38,7 +38,11 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
     const [tierPricing, setTierPricing] = useState(null);
     const [bookingChanges, setBookingChanges] = useState(null);
     const [changesConfirmed, setChangesConfirmed] = useState(false);
-    const { isOpen: isCollectBalanceOpen, onOpen: onCollectBalanceOpen, onClose: onCollectBalanceClose } = useDisclosure();
+    const {
+        isOpen: isCollectBalanceOpen,
+        onOpen: onCollectBalanceOpen,
+        onClose: onCollectBalanceClose
+    } = useDisclosure();
 
     useEffect(() => {
         const fetchAddons = async () => {
@@ -46,8 +50,14 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
 
             try {
                 const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
-                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`),
-                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${booking.tourId}`)
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`,
+                        {
+                            withCredentials: true,
+                        }),
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${booking.tourId}`,
+                        {
+                            withCredentials: true,
+                        })
                 ]);
 
                 setAllAddons(allAddonsResponse.data);
@@ -87,19 +97,22 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
 
         const fetchPendingTransactions = async () => {
             if (!booking?.id) return;
-            
+
             setIsLoadingPendingBalance(true);
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
-                    { params: { payment_status: 'pending' } }
+                    {
+                        withCredentials: true,
+                        params: {payment_status: 'pending'}
+                    }
                 );
-                
+
                 if (response.data && response.data.length > 0) {
                     const filteredTransactions = response.data.filter(
                         transaction => transaction.transaction_type !== 'CREATE'
                     );
-                    
+
                     let totalPending = 0;
                     filteredTransactions.forEach(transaction => {
                         if (transaction.transaction_direction === 'refund') {
@@ -108,7 +121,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                             totalPending += transaction.amount;
                         }
                     });
-                    
+
                     setPendingBalance(totalPending);
                 }
             } catch (error) {
@@ -125,7 +138,10 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
             }
             try {
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${booking.paymentMethodId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${booking.paymentMethodId}`,
+                    {
+                        withCredentials: true,
+                    }
                 );
                 setCardDetails(response.data);
             } catch (error) {
@@ -140,9 +156,12 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
 
             try {
                 const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${booking.tourId}`,
+                    {
+                        withCredentials: true,
+                    }
                 );
-                
+
                 if (response.data && response.data.length > 0) {
                     setTierPricing(response.data[0]);
                 }
@@ -203,7 +222,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
             const updatedAddonsTotalPrice = combinedAddons.reduce(
                 (sum, addon) => sum + (addon.price * addon.quantity), 0
             );
-            
+
             const priceDifference = updatedAddonsTotalPrice - originalAddonsTotal;
             const totalBalanceDue = priceDifference + pendingBalance;
             const isRefund = totalBalanceDue < 0;
@@ -226,13 +245,16 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
 
             const pendingTransactionsResponse = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
-                { params: { payment_status: 'pending' } }
+                {
+                    withCredentials: true,
+                    params: {payment_status: 'pending'}
+                }
             );
-            
+
             const pendingTransactions = pendingTransactionsResponse.data;
             const hasPendingTransaction = pendingTransactions && pendingTransactions.length > 0;
             const createTransaction = pendingTransactions?.find(t => t.transaction_type === 'CREATE');
-            
+
             let transactionSuccess = false;
 
             if (createTransaction && priceDifference < 0) {
@@ -240,6 +262,9 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${createTransaction.id}`,
                     {
                         amount: createTransaction.amount + priceDifference
+                    },
+                    {
+                        withCredentials: true,
                     }
                 );
 
@@ -265,15 +290,21 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                             isRefund: true,
                             totalBalanceDue: totalBalanceDue
                         }
+                    },
+                    {
+                        withCredentials: true,
                     }
                 );
-                
+
                 transactionSuccess = true;
             } else if (createTransaction && priceDifference > 0) {
                 await axios.put(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${createTransaction.id}`,
                     {
                         amount: createTransaction.amount + priceDifference
+                    },
+                    {
+                        withCredentials: true,
                     }
                 );
                 await axios.post(
@@ -298,9 +329,12 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                             isRefund: false,
                             totalBalanceDue: totalBalanceDue
                         }
+                    },
+                    {
+                        withCredentials: true,
                     }
                 );
-                
+
                 transactionSuccess = true;
             } else {
                 if (hasPendingTransaction) {
@@ -311,6 +345,9 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                             {
                                 is_history: true,
                                 payment_status: 'archived'
+                            },
+                            {
+                                withCredentials: true,
                             }
                         );
                         const transactionData = {
@@ -332,12 +369,15 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                 totalBalanceDue: totalBalanceDue
                             }
                         };
-                        
+
                         await axios.post(
                             `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
-                            transactionData
+                            transactionData,
+                            {
+                                withCredentials: true,
+                            }
                         );
-                        
+
                         transactionSuccess = true;
                     }
                 }
@@ -364,7 +404,10 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
 
                 await axios.post(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
-                    transactionData
+                    transactionData,
+                    {
+                        withCredentials: true,
+                    }
                 );
                 transactionSuccess = true;
             }
@@ -380,25 +423,33 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                     if (numericValue > 0) {
                         if (reservationAddonId) {
                             await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/${reservationAddonId}`, {
-                                tenantId: booking.tenantId,
-                                reservationId: booking.id,
-                                value: value.toString(),
-                            });
+                                    tenantId: booking.tenantId,
+                                    reservationId: booking.id,
+                                    value: value.toString(),
+                                },
+                                {
+                                    withCredentials: true,
+                                });
                         } else {
                             await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons`, {
-                                tenantId: booking.tenantId,
-                                reservationId: booking.id,
-                                addonId,
-                                value: value.toString(),
-                            });
+                                    tenantId: booking.tenantId,
+                                    reservationId: booking.id,
+                                    addonId,
+                                    value: value.toString(),
+                                },
+                                {
+                                    withCredentials: true,
+                                });
                         }
                     } else if (reservationAddonId) {
-                        await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/${reservationAddonId}`, {
-                            data: {
-                                tenantId: booking.tenantId,
-                                reservationId: booking.id,
-                            },
-                        });
+                        await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/${reservationAddonId}`,
+                            {
+                                withCredentials: true,
+                                data: {
+                                    tenantId: booking.tenantId,
+                                    reservationId: booking.id,
+                                },
+                            });
                     }
                 } else if (addon.type === 'CHECKBOX') {
                     if (value) {
@@ -407,17 +458,24 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                 tenantId: booking.tenantId,
                                 reservationId: booking.id,
                                 value: "1",
-                            });
+                            },
+                                {
+                                    withCredentials: true,
+                                });
                         } else {
                             await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons`, {
                                 tenantId: booking.tenantId,
                                 reservationId: booking.id,
                                 addonId,
                                 value: "1",
-                            });
+                            },
+                                {
+                                    withCredentials: true,
+                                });
                         }
                     } else if (reservationAddonId) {
                         await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/${reservationAddonId}`, {
+                            withCredentials: true,
                             data: {
                                 tenantId: booking.tenantId,
                                 reservationId: booking.id,
@@ -430,7 +488,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
             const actionType = priceDifference > 0 ? "charge" : priceDifference < 0 ? "refund" : "change";
             toast({
                 title: "Success",
-                description: transactionSuccess 
+                description: transactionSuccess
                     ? `Add-ons updated successfully. The ${actionType} will be processed later.`
                     : `Add-ons updated successfully. Note: The ${actionType} transaction will need to be created manually.`,
                 status: "success",
@@ -470,7 +528,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
             ?.sort((a, b) => b.quantity - a.quantity)
             .find(tier => booking.guestQuantity >= tier.quantity);
 
-        return applicableTier 
+        return applicableTier
             ? applicableTier.price * booking.guestQuantity
             : (tierPricing.basePrice || 0) * booking.guestQuantity;
     };
@@ -497,10 +555,10 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
     const originalAddons = reservationAddons.map(resAddon => {
         const addon = allAddons.find(a => a.id === resAddon.addonId);
         if (!addon) return null;
-        
+
         return {
             ...addon,
-            quantity: addon.type === 'SELECT' 
+            quantity: addon.type === 'SELECT'
                 ? parseInt(resAddon.value, 10) || 0
                 : resAddon.value === "1" ? 1 : 0
         };
@@ -589,7 +647,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                                             textAlign="center"
                                                             mx={2}
                                                         />
-                                                        <Button size="sm" onClick={() => handleIncrement(addon.id)} 
+                                                        <Button size="sm" onClick={() => handleIncrement(addon.id)}
                                                                 disabled={changesConfirmed}>
                                                             +
                                                         </Button>
@@ -657,19 +715,21 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                                 <Text fontWeight="bold">Total</Text>
                                                 <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
                                             </HStack>
-                                            
+
                                             {totalBalanceDue !== 0 && (
                                                 <HStack justify="space-between" mt={2}>
-                                                    <Text fontWeight="bold" color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                    <Text fontWeight="bold"
+                                                          color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
                                                         {totalBalanceDue < 0 ? "Refund Due" : "Balance Due"}
                                                     </Text>
-                                                    <Text fontWeight="bold" color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                    <Text fontWeight="bold"
+                                                          color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
                                                         ${Math.abs(totalBalanceDue).toFixed(2)}
                                                     </Text>
                                                 </HStack>
                                             )}
                                         </Box>
-                                        
+
                                         {cardDetails && (
                                             <Box>
                                                 <Text fontWeight="bold" mb={2}>
@@ -678,7 +738,8 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                                 <VStack align="stretch" spacing={2}>
                                                     <HStack justify="space-between">
                                                         <HStack spacing={2}>
-                                                            <Box as="span" role="img" aria-label="Card Icon" fontSize="lg">
+                                                            <Box as="span" role="img" aria-label="Card Icon"
+                                                                 fontSize="lg">
                                                                 💳
                                                             </Box>
                                                             <Text>
@@ -718,9 +779,9 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                             <Button colorScheme="gray" mr={2} onClick={onClose}>
                                 Cancel
                             </Button>
-                            <Button 
-                                colorScheme="blue" 
-                                onClick={handleSaveChanges} 
+                            <Button
+                                colorScheme="blue"
+                                onClick={handleSaveChanges}
                                 isLoading={isSaving}
                                 isDisabled={changesConfirmed}
                             >
@@ -730,9 +791,9 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                     </ModalFooter>
                 </ModalContent>
             </Modal>
-            
+
             {bookingChanges && (
-                <CollectBalanceModal 
+                <CollectBalanceModal
                     isOpen={isCollectBalanceOpen}
                     onClose={onCollectBalanceClose}
                     bookingChanges={bookingChanges}

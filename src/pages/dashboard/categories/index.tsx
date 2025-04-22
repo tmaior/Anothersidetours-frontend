@@ -71,7 +71,10 @@ function CategoryManagement() {
 
     const fetchCategories = useCallback(async (tenantId) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/byTenantId/${tenantId}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/byTenantId/${tenantId}`,{
+                method: "GET",
+                credentials: "include",
+            });
             if (!response.ok) throw new Error("Failed to fetch categories");
             const data = await response.json();
             setCategories(data);
@@ -89,7 +92,11 @@ function CategoryManagement() {
 
     const fetchTours = useCallback(async (tenantId) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`,
+                {
+                    method: "GET",
+                    credentials: "include",
+                });
             if (!response.ok) throw new Error("Failed to fetch tours");
             const data = await response.json();
             setAllTours(data);
@@ -128,6 +135,7 @@ function CategoryManagement() {
                 `${process.env.NEXT_PUBLIC_API_URL}/categories`,
                 {
                     method: "POST",
+                    credentials: "include",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify(newCategory),
                 }
@@ -165,6 +173,7 @@ function CategoryManagement() {
                 `${process.env.NEXT_PUBLIC_API_URL}/categories/${categoryId}`,
                 {
                     method: "DELETE",
+                    credentials: "include",
                 }
             );
 
@@ -233,6 +242,7 @@ function CategoryManagement() {
                 ...toursToConnect.map((tourId) =>
                     fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`, {
                         method: "PUT",
+                        credentials: "include",
                         headers: {"Content-Type": "application/json"},
                         body: JSON.stringify({categoryId: selectedCategory.id}),
                     })
@@ -240,6 +250,7 @@ function CategoryManagement() {
                 ...toursToDisconnect.map((tourId) =>
                     fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`, {
                         method: "PUT",
+                        credentials: "include",
                         headers: {"Content-Type": "application/json"},
                         body: JSON.stringify({categoryId: null}),
                     })

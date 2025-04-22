@@ -47,7 +47,9 @@ export default function ListReservations() {
     useEffect(() => {
         async function fetchReservations() {
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations`,{
+                    credentials: "include",
+                });
                 const data = await response.json();
                 setReservations(Array.isArray(data) ? data : []);
                 setFilteredReservations(Array.isArray(data) ? data : []);
@@ -78,12 +80,16 @@ export default function ListReservations() {
 
     async function fetchReservationAddons(reservationId) {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${reservationId}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${reservationId}`,{
+                credentials: "include",
+            });
             const reservationAddons = await response.json();
 
             return await Promise.all(
                 reservationAddons.map(async (addon) => {
-                    const addonResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/${addon.addonId}`);
+                    const addonResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons/${addon.addonId}`,{
+                        credentials: "include",
+                    });
                     const addonDetails = await addonResponse.json();
 
                     return {
@@ -101,7 +107,9 @@ export default function ListReservations() {
     useEffect(() => {
         async function fetchAddons() {
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addons`,{
+                    credentials: "include",
+                });
                 const data = await response.json();
                 setAvailableAddons(data || []);
             } catch (error) {
@@ -195,6 +203,7 @@ export default function ListReservations() {
 
             await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons`, {
                 method: "POST",
+                credentials: "include",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     tenantId: reservation.tenantId,
@@ -224,6 +233,7 @@ export default function ListReservations() {
 
             await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${selectedReservation}`, {
                 method: "PUT",
+                credentials: "include",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     total_price: newTotalPrice,
@@ -322,7 +332,9 @@ export default function ListReservations() {
 
     async function fetchUserById(userId) {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`,{
+                credentials: "include",
+            });
             return await response.json();
         } catch (error) {
             console.error("Error fetching user data:", error);
@@ -348,7 +360,10 @@ export default function ListReservations() {
     async function fetchAdditionalInformation(reservationId) {
         try {
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/customer-additional-information?reservationId=${reservationId}`
+                `${process.env.NEXT_PUBLIC_API_URL}/customer-additional-information?reservationId=${reservationId}`,
+                {
+                    credentials: "include",
+                }
             );
             const data = await response.json();
             return data.map((info) => ({
@@ -366,6 +381,7 @@ export default function ListReservations() {
             try {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes`, {
                     method: "POST",
+                    credentials: "include",
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -409,6 +425,7 @@ export default function ListReservations() {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${noteId}`, {
                 method: "DELETE",
+                credentials: "include",
             });
 
             if (!response.ok) throw new Error("Failed to delete note");
@@ -447,7 +464,10 @@ export default function ListReservations() {
             });
             const fetchNotes = async (reservationId) => {
                 try {
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${reservationId}`);
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notes/${reservationId}`,
+                        {
+                            credentials: "include",
+                        });
                     const data = await response.json();
                     setNotes((prevNotes) => ({
                         ...prevNotes,
@@ -484,6 +504,7 @@ export default function ListReservations() {
         try {
             const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/confirm-payment`, {
                 method: "POST",
+                credentials: "include",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     email: reservation.user?.email,
@@ -497,6 +518,7 @@ export default function ListReservations() {
 
             await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${selectedReservation}`, {
                 method: "PUT",
+                credentials: "include",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: "ACCEPTED" }),
             });
@@ -549,12 +571,14 @@ export default function ListReservations() {
         try {
             await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/invalidate-payment-method`, {
                 method: "POST",
+                credentials: "include",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ paymentMethodId: reservation.paymentMethodId }),
             });
 
             await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${selectedReservation}`, {
                 method: "PUT",
+                credentials: "include",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: "REJECTED" }),
             });

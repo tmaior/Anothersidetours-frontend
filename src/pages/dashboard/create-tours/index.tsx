@@ -1136,6 +1136,7 @@ function SchedulesAvailabilityStep({
                         `${process.env.NEXT_PUBLIC_API_URL}/upload`,
                         formData,
                         {
+                            withCredentials: true,
                             headers: {
                                 "Content-Type": "multipart/form-data",
                             },
@@ -1163,6 +1164,7 @@ function SchedulesAvailabilityStep({
 
             const tourResponse = await fetch(url, {
                 method,
+                credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -1192,7 +1194,10 @@ function SchedulesAvailabilityStep({
 
             if (isEditing) {
                 const currentDemographicsResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/demographics/demographicByTourId/${tourId}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/demographics/demographicByTourId/${tourId}`,
+                {
+                    credentials: "include",
+                }
                 );
                 
                 if (!currentDemographicsResponse.ok) {
@@ -1207,6 +1212,7 @@ function SchedulesAvailabilityStep({
                                     `${process.env.NEXT_PUBLIC_API_URL}/demographics/${tourId}/${currentDemo.id}`,
                                     {
                                         method: "DELETE",
+                                        credentials: "include",
                                         headers: { "Content-Type": "application/json" }
                                     }
                                 );
@@ -1224,6 +1230,7 @@ function SchedulesAvailabilityStep({
                                         `${process.env.NEXT_PUBLIC_API_URL}/demographics/assign-to-tour`,
                                         {
                                             method: "POST",
+                                            credentials: "include",
                                             headers: {"Content-Type": "application/json"},
                                             body: JSON.stringify({
                                                 tourId,
@@ -1250,6 +1257,7 @@ function SchedulesAvailabilityStep({
                             `${process.env.NEXT_PUBLIC_API_URL}/demographics/assign-to-tour`,
                             {
                                 method: "POST",
+                                credentials: "include",
                                 headers: {"Content-Type": "application/json"},
                                 body: JSON.stringify({
                                     tourId,
@@ -1287,6 +1295,7 @@ function SchedulesAvailabilityStep({
                     `${process.env.NEXT_PUBLIC_API_URL}/tour-schedules/${tourId}`,
                     {
                         method: "POST",
+                        credentials: "include",
                         headers: {
                             "Content-Type": "application/json"
                         },
@@ -1304,6 +1313,7 @@ function SchedulesAvailabilityStep({
                     bringItems.map((item) =>
                         fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/what-to-bring`, {
                             method: "POST",
+                            credentials: "include",
                             headers: {"Content-Type": "application/json"},
                             body: JSON.stringify({tourId, item})
                         })
@@ -1316,6 +1326,7 @@ function SchedulesAvailabilityStep({
                     includedItems.map((item) =>
                         fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/whats-included`, {
                             method: "POST",
+                            credentials: "include",
                             headers: {"Content-Type": "application/json"},
                             body: JSON.stringify({tourId, item})
                         })
@@ -1331,6 +1342,7 @@ function SchedulesAvailabilityStep({
                         questions.map(question =>
                             fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information`, {
                                 method: "POST",
+                                credentials: "include",
                                 headers: {"Content-Type": "application/json"},
                                 body: JSON.stringify({
                                     tourId,
@@ -1345,13 +1357,16 @@ function SchedulesAvailabilityStep({
             if (selectedDemographics.length > 0) {
                 if (isEditing) {
                     try {
-                        const checkRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourId}`);
+                        const checkRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourId}`,{
+                            credentials: "include",
+                        });
                         if (checkRes.ok) {
                             const existingPricing = await checkRes.json();
                             for (const existing of existingPricing) {
                                 if (existing.pricingType !== pricingStructure) {
                                     await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/${existing.id}`, {
                                         method: "DELETE",
+                                        credentials: "include",
                                         headers: {"Content-Type": "application/json"}
                                     });
                                 }
@@ -1414,6 +1429,7 @@ function SchedulesAvailabilityStep({
                         }
                         return fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing`, {
                             method: "POST",
+                            credentials: "include",
                             headers: {"Content-Type": "application/json"},
                             body: JSON.stringify(pricingData)
                         });
@@ -1454,7 +1470,9 @@ function SchedulesAvailabilityStep({
 
     const fetchTourDemographics = useCallback(async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics/demographicByTourId/${tourId}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics/demographicByTourId/${tourId}`,{
+                credentials: "include",
+            });
             const data = await response.json();
             if (data && Array.isArray(data)) {
                 setSelectedDemographics(data);
@@ -1478,7 +1496,9 @@ function SchedulesAvailabilityStep({
     }, [tourId, fetchTourDemographics]);
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics/tenant/${tenantId}`)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics/tenant/${tenantId}`,{
+            credentials: "include",
+        })
             .then((res) => res.json())
             .then((data) => setAvailableDemographics(Array.isArray(data) ? data : []))
             .catch((err) => console.error("Error fetching available demographics:", err));
@@ -1508,6 +1528,7 @@ function SchedulesAvailabilityStep({
 
                 const response = await fetch(url, {
                     method: "DELETE",
+                    credentials: "include",
                     headers: { 
                         "Content-Type": "application/json"
                     }
@@ -1579,6 +1600,7 @@ function SchedulesAvailabilityStep({
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/demographics`, {
                 method: "POST",
+                credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
                 },

@@ -37,6 +37,7 @@ function CreateTenantModal({isOpen, onClose, addTenantToList}) {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`, {
                 method: "POST",
+                credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
                 },

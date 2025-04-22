@@ -128,7 +128,9 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
 
     const handleAccept = async () => {
         try {
-            const transactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`);
+            const transactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`,{
+                credentials: "include",
+            });
 
             if (!transactionResponse.ok) throw new Error("Failed to get payment transaction data");
 
@@ -157,6 +159,7 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
 
             const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mail/send-reservation-email`, {
                 method: "POST",
+                credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
                     "Accept": "application/json",

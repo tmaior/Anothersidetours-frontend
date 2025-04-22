@@ -54,7 +54,9 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
     const fetchPurchaseNotes = useCallback(async () => {
         try {
             setIsLoading(true);
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/purchase-notes/${reservationId}`);
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/purchase-notes/${reservationId}`,{
+                withCredentials:true
+            });
             setPurchaseNotes(response.data);
         } catch (error) {
             toast({
@@ -72,7 +74,9 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
     const fetchEventNotes = useCallback(async () => {
         try {
             setIsLoading(true);
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/notes/${reservationId}`);
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/notes/${reservationId}`,{
+                withCredentials:true
+            });
             setEventNotes(response.data);
         } catch (error) {
             toast({
@@ -102,6 +106,8 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
             await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/purchase-notes`, {
                 reservationId,
                 description: newNoteText
+            },{
+                withCredentials:true
             });
 
             setNewNoteText("");
@@ -134,6 +140,8 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
             await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/notes`, {
                 reservationId,
                 description: newNoteText
+            },{
+                withCredentials:true
             });
 
             setNewNoteText("");
@@ -161,7 +169,9 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
     const handleDeletePurchaseNote = async (id: string) => {
         try {
             setIsLoading(true);
-            await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/purchase-notes/${id}`);
+            await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/purchase-notes/${id}`,{
+                withCredentials:true
+            });
             fetchPurchaseNotes();
             toast({
                 title: "Note deleted",
@@ -185,7 +195,9 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
     const handleDeleteEventNote = async (id: string) => {
         try {
             setIsLoading(true);
-            await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/notes/${id}`);
+            await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/notes/${id}`,{
+                withCredentials:true
+            });
             fetchEventNotes();
             toast({
                 title: "Event note deleted",

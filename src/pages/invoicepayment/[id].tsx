@@ -30,20 +30,24 @@ export default function InvoicePaymentPage() {
 
   useEffect(() => {
     if (!router.isReady || !id) return;
-    
+
     const fetchData = async () => {
       try {
-        const reservationRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${id}`);
+        const reservationRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${id}`,
+            {
+              method: "GET",
+              credentials: "include",
+            });
         if (!reservationRes.ok) {
           throw new Error(`Error fetching reservation: ${reservationRes.status}`);
         }
-        
+
         const reservationData = await reservationRes.json();
         const guestQuantity = reservationData.guestQuantity || 1;
         setReservation(reservationData);
         setReservationId(reservationData.id);
         setGuestQuantity(guestQuantity);
-        
+
         if (reservationData.user) {
           setName(reservationData.user.name || "");
           setEmail(reservationData.user.email || "");
@@ -60,16 +64,22 @@ export default function InvoicePaymentPage() {
           const timeString = `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
           setSelectedTime(timeString);
         }
-        const tourRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${reservationData.tourId}`);
+        const tourRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${reservationData.tourId}`,{
+            method: "GET",
+            credentials: "include",
+        });
         if (!tourRes.ok) {
           throw new Error(`Error fetching tour: ${tourRes.status}`);
         }
-        
+
         const tourData = await tourRes.json();
         setTourData(tourData);
         setTourId(tourData.id);
         setImageUrl(tourData.imageUrl || "");
-        const tierPricingRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourData.id}`);
+        const tierPricingRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourData.id}`,{
+            method: "GET",
+            credentials: "include",
+        });
         if (!tierPricingRes.ok) {
           throw new Error(`Error fetching tier pricing: ${tierPricingRes.status}`);
         }

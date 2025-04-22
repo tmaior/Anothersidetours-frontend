@@ -14,7 +14,7 @@ interface BookingDetailsProps {
     description: string;
     originalPrice: string;
     addons: Array<{ id: string; label: string; type: string; description: string; price: number }>;
-    minGuests?:number;
+    minGuests?: number;
     name?: string;
     email?: string;
     phone?: string;
@@ -35,6 +35,7 @@ interface TierPricing {
     basePrice: number;
     tierEntries: TierEntry[];
 }
+
 export default function BookingDetails({
                                            onContinue,
                                            tourId,
@@ -48,7 +49,17 @@ export default function BookingDetails({
     const [localSelectedDate, setLocalSelectedDate] = useState<Date | null>(null);
     const [localSelectedTime, setLocalSelectedTime] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const {setSelectedDate, setSelectedTime, setTitle, name, email, phone, guestQuantity, setUserId, setPrice} = useGuest();
+    const {
+        setSelectedDate,
+        setSelectedTime,
+        setTitle,
+        name,
+        email,
+        phone,
+        guestQuantity,
+        setUserId,
+        setPrice
+    } = useGuest();
     const normalizedEmail = email?.trim().toLowerCase();
     const [tierPricing, setTierPricing] = useState<TierPricing | null>(null);
     const [calculatedPrice, setCalculatedPrice] = useState<number>(parseFloat(originalPrice));
@@ -58,7 +69,11 @@ export default function BookingDetails({
     }, [title, setTitle]);
     useEffect(() => {
         if (tourId) {
-            fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourId}`)
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourId}`,
+                {
+                    credentials: 'include',
+                }
+            )
                 .then(response => response.json())
                 .then(data => {
                     setTierPricing(data[0]);
@@ -119,6 +134,7 @@ export default function BookingDetails({
 
                 fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/incomplete`, {
                     method: "POST",
+                    credentials: 'include',
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify(payload),
                 }).catch(console.error);
@@ -175,6 +191,7 @@ export default function BookingDetails({
 
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
                     method: "POST",
+                    credentials: "include",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify(payload),
                 });
@@ -206,8 +223,8 @@ export default function BookingDetails({
     };
 
     return (
-        <Flex 
-            direction="column" 
+        <Flex
+            direction="column"
             minHeight="89vh"
             justify="space-between"
             w="full"
@@ -231,7 +248,7 @@ export default function BookingDetails({
                 />
                 <AddOns addons={addons}/>
             </Box>
-            
+
             <Box mt="auto" mb={4} marginTop="-30px" zIndex="1">
                 <FooterBar onContinue={handleValidation} continueText={"CONTINUE"}/>
             </Box>

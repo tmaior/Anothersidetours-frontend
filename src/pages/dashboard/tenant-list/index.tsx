@@ -40,7 +40,9 @@ function ListTenants() {
     useEffect(() => {
         async function fetchTenants() {
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`,{
+                    credentials: "include",
+                });
                 const data = await response.json();
                 setTenants(Array.isArray(data) ? data : []);
                 setFilteredTenants(Array.isArray(data) ? data : []);
@@ -80,6 +82,7 @@ function ListTenants() {
             try {
                 await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants/${selectedTenant}`, {
                     method: "DELETE",
+                    credentials: 'include',
                 });
                 setTenants(tenants.filter((tenant) => tenant.id !== selectedTenant));
                 setSelectedTenant(null);
@@ -118,6 +121,7 @@ function ListTenants() {
                     `${process.env.NEXT_PUBLIC_API_URL}/tenants/${selectedTenant}`,
                     {
                         method: "PUT",
+                        credentials: 'include',
                         headers: {"Content-Type": "application/json"},
                         body: JSON.stringify({name: tenantName}),
                     }

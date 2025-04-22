@@ -198,6 +198,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants`, {
                 method: 'POST',
+                credentials: 'include',
                 body: formData,
             });
 

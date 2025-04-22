@@ -44,7 +44,10 @@ export default function ButtonCodeSettings() {
     useEffect(() => {
         const fetchTours = async () => {
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/allBytenant/${tenantId}`,
+                    {
+                        credentials: "include",
+                    });
                 if (!response.ok) throw new Error('Failed to fetch tours');
                 const data = await response.json();
                 const activeTours = data.filter(tour => !tour.isDeleted);

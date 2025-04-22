@@ -77,8 +77,6 @@ const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({ isOpen, onClose
         }
       );
 
-      console.log('Password reset response:', response.data);
-
       toast({
         title: 'Success',
         description: `Password has been reset for ${user.name}`,

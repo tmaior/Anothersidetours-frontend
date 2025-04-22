@@ -27,7 +27,10 @@ export default function ReservationLoader() {
 
     useEffect(() => {
         if (router.isReady && id) {
-            fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/incomplete/byId/${id}`)
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/incomplete/byId/${id}`,{
+                method: "GET",
+                credentials: "include",
+            })
                 .then(async (res) => {
                     if (!res.ok) {
                         throw new Error(`Error: ${res.status}`);

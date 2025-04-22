@@ -48,7 +48,9 @@ export default function TimelinePage({reservationId}: { reservationId: string })
         async function fetchData() {
             try {
                 setLoading(true);
-                const eventsResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/history/byReservation/${reservationId}`);
+                const eventsResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/history/byReservation/${reservationId}`,{
+                    withCredentials: true,
+                });
 
                 const processedEvents = eventsResponse.data.map(event => {
                     if (event.metadata && typeof event.metadata === 'string') {
@@ -61,7 +63,9 @@ export default function TimelinePage({reservationId}: { reservationId: string })
                     return event;
                 });
 
-                const transactionsResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservationId}`);
+                const transactionsResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservationId}`,{
+                    withCredentials: true,
+                });
 
                 const processedTransactions = transactionsResponse.data.map(transaction => {
                     if (transaction.metadata) {

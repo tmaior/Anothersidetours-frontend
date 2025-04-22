@@ -12,7 +12,10 @@ export default function PaymentSuccessPage() {
 
   useEffect(() => {
     if (router.isReady && reservation) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservation}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservation}`,{
+        method: "GET",
+        credentials: "include",
+      })
         .then(response => {
           if (!response.ok) {
             throw new Error("Failed to load reservation details");

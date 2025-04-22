@@ -46,12 +46,47 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
     const [guestPrice, setGuestPrice] = useState(0);
     const [tourId, setTourId] = useState(null);
     const [generatedVoucher, setGeneratedVoucher] = useState(null);
+    const [isCalculatingTotal, setIsCalculatingTotal] = useState(true);
     const toast = useToast();
 
     useEffect(() => {
+        if (isOpen && !isCalculatingTotal) {
+            const total = calculateTotalPrice();
+            if (total > 0) {
+                setRefundAmount(total);
+            }
+        }
+    }, [reservationAddons, customItems, guestQuantity, tourId, isCalculatingTotal]);
+
+    useEffect(() => {
+        if (booking?.total_price && booking.total_price > 0) {
+            setRefundAmount(booking.total_price);
+        }
+    }, [booking?.total_price]);
+    
+    useEffect(() => {
         if (isOpen) {
+            setIsCalculatingTotal(true);
+            
+            if (booking?.total_price) {
+                setRefundAmount(booking.total_price);
+            }
+            
+            setReservationAddons([]);
+            setAllAddons([]);
+            setCustomItems([]);
+            
             fetchOriginalTransaction();
-            fetchReservationDetails();
+            fetchReservationDetails()
+                .then(() => {
+                    setTimeout(() => {
+                        const calculatedTotal = calculateTotalPrice();
+                        if (calculatedTotal > 0) {
+                            setRefundAmount(calculatedTotal);
+                        }
+                        setIsCalculatingTotal(false);
+                    }, 800);
+                });
         }
     }, [isOpen, booking?.id]);
 
@@ -154,11 +189,14 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 }
 
                 if (response.data.tourId || response.data.tour_id) {
-                    fetchTierPricing(response.data.tourId || response.data.tour_id);
-                    fetchAddons(response.data.tourId || response.data.tour_id);
+                    const tid = response.data.tourId || response.data.tour_id;
+                    await Promise.all([
+                        fetchTierPricing(tid),
+                        fetchAddons(tid)
+                    ]);
                 }
 
-                fetchCustomItems();
+                await fetchCustomItems();
             }
         } catch (error) {
             console.error("Failed to fetch reservation details:", error);
@@ -207,10 +245,17 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     }),
             ]);
 
-            setReservationAddons(reservationAddonsResponse.data);
-            setAllAddons(allAddonsResponse.data);
+            setReservationAddons(reservationAddonsResponse.data || []);
+            setAllAddons(allAddonsResponse.data || []);
         } catch (error) {
             console.error("Failed to fetch addons:", error);
+            toast({
+                title: "Warning",
+                description: "Could not retrieve addon information.",
+                status: "warning",
+                duration: 3000,
+                isClosable: true,
+            });
         } finally {
             setIsLoadingAddons(false);
         }
@@ -236,9 +281,16 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 quantity: Number(item.quantity)
             }));
 
-            setCustomItems(formattedItems);
+            setCustomItems(formattedItems || []);
         } catch (error) {
             console.error("Failed to fetch custom items:", error);
+            toast({
+                title: "Warning", 
+                description: "Could not retrieve custom item information.",
+                status: "warning",
+                duration: 3000,
+                isClosable: true,
+            });
         } finally {
             setIsLoadingCustomItems(false);
         }
@@ -301,11 +353,21 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
     };
 
     const calculateTotalPrice = () => {
+        if (isLoadingAddons || isLoadingCustomItems || isLoadingTierPricing) {
+            return booking?.total_price || 0;
+        }
+        
         const guestTotal = calculateGuestPrice();
         const addonTotal = calculateAddonTotal();
         const customItemsTotal = calculateCustomItemsTotal();
-
-        return guestTotal + addonTotal + customItemsTotal;
+        
+        const totalPrice = guestTotal + addonTotal + customItemsTotal;
+        
+        if (totalPrice === 0 && booking?.total_price) {
+            return booking.total_price;
+        }
+        
+        return totalPrice;
     };
 
     const formatDate = (date) => {
@@ -318,7 +380,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
     const handleSaveChanges = async () => {
         try {
-            if (refundAmount <= 0) {
+            const finalRefundAmount = refundAmount > 0 ? refundAmount : calculateTotalPrice();
+            
+            if (finalRefundAmount <= 0) {
                 toast({
                     title: "Error",
                     description: "Refund amount must be greater than zero.",
@@ -359,7 +423,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     const refundPayload = {
                         paymentIntentId: paymentIntentId,
                         paymentMethodId: originalTransaction.paymentMethodId,
-                        amount: refundAmount
+                        amount: finalRefundAmount
                     };
 
                     if (!refundPayload.paymentIntentId || refundPayload.paymentIntentId.trim() === '') {
@@ -389,18 +453,18 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                             tenant_id: tenantId,
                             reservation_id: booking.id,
-                            amount: refundAmount,
+                            amount: finalRefundAmount,
                             payment_status: 'completed',
                             payment_method: 'Credit Card',
                             transaction_type: 'CANCELLATION_REFUND',
                             transaction_direction: 'refund',
-                            description: `Refund of $${refundAmount.toFixed(2)} processed for cancelled booking`,
+                            description: `Refund of $${finalRefundAmount.toFixed(2)} processed for cancelled booking`,
                             reference_number: `RF-${Date.now().toString().slice(-6)}`,
                             stripe_payment_id: paymentIntentId,
                             paymentIntentId: paymentIntentId,
                             metadata: {
                                 originalPrice: calculateTotalPrice(),
-                                refundAmount: refundAmount,
+                                refundAmount: finalRefundAmount,
                                 comment: comment,
                                 refundDate: new Date().toISOString(),
                                 cardInfo: cardInfo,
@@ -463,16 +527,16 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                     tenant_id: tenantId,
                     reservation_id: booking.id,
-                    amount: refundAmount,
+                    amount: finalRefundAmount,
                     payment_status: 'completed',
                     payment_method: 'Cash',
                     transaction_type: 'CANCELLATION_REFUND',
                     transaction_direction: 'refund',
-                    description: `Cash refund of $${refundAmount.toFixed(2)} for cancelled booking`,
+                    description: `Cash refund of $${finalRefundAmount.toFixed(2)} for cancelled booking`,
                     reference_number: `RF-${Date.now().toString().slice(-6)}`,
                     metadata: {
                         originalPrice: calculateTotalPrice(),
-                        refundAmount: refundAmount,
+                        refundAmount: finalRefundAmount,
                         comment: comment,
                         refundDate: new Date().toISOString(),
                         notifyCustomer: notifyCustomer
@@ -526,7 +590,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     const voucherResponse = await axios.post(
                         `${process.env.NEXT_PUBLIC_API_URL}/voucher/generate`,
                         {
-                            amount: refundAmount,
+                            amount: finalRefundAmount,
                             originReservationId: booking.id,
                             tenantId: tenantId
                         },
@@ -539,22 +603,22 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         const voucherCode = voucherResponse.data.voucher.code;
                         setGeneratedVoucher({
                             code: voucherCode,
-                            amount: refundAmount
+                            amount: finalRefundAmount
                         });
 
                         await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                             tenant_id: tenantId,
                             reservation_id: booking.id,
-                            amount: refundAmount,
+                            amount: finalRefundAmount,
                             payment_status: 'completed',
                             payment_method: 'Store Credit',
                             transaction_type: 'CANCELLATION_REFUND',
                             transaction_direction: 'refund',
-                            description: `Store credit voucher of $${refundAmount.toFixed(2)} issued for cancelled booking`,
+                            description: `Store credit voucher of $${finalRefundAmount.toFixed(2)} issued for cancelled booking`,
                             reference_number: `RF-${Date.now().toString().slice(-6)}`,
                             metadata: {
                                 originalPrice: calculateTotalPrice(),
-                                refundAmount: refundAmount,
+                                refundAmount: finalRefundAmount,
                                 comment: comment,
                                 refundDate: new Date().toISOString(),
                                 notifyCustomer: notifyCustomer,
@@ -611,16 +675,16 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                         tenant_id: tenantId,
                         reservation_id: booking.id,
-                        amount: refundAmount,
+                        amount: finalRefundAmount,
                         payment_status: 'completed',
                         payment_method: 'Other',
                         transaction_type: 'CANCELLATION_REFUND',
                         transaction_direction: 'refund',
-                        description: `Refund of $${refundAmount.toFixed(2)} processed for cancelled booking (Other method)`,
+                        description: `Refund of $${finalRefundAmount.toFixed(2)} processed for cancelled booking (Other method)`,
                         reference_number: `RF-${Date.now().toString().slice(-6)}`,
                         metadata: {
                             originalPrice: calculateTotalPrice(),
-                            refundAmount: refundAmount,
+                            refundAmount: finalRefundAmount,
                             comment: comment,
                             refundDate: new Date().toISOString(),
                             notifyCustomer: notifyCustomer
@@ -722,30 +786,22 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
                                 <Box w="full">
                                     <Text mb={2}>Amount</Text>
-                                    <Input
-                                        type="number"
-                                        value={refundAmount === 0 ? '' : refundAmount}
-                                        onChange={(e) => {
-                                            const inputValue = e.target.value;
-                                            if (inputValue === '') {
-                                                setRefundAmount(0);
-                                                return;
-                                            }
-                                            const numValue = parseFloat(inputValue);
-                                            if (isNaN(numValue) || numValue < 0) {
-                                                setRefundAmount(0);
-                                            } else if (numValue > calculateTotalPrice()) {
-                                                setRefundAmount(calculateTotalPrice());
-                                            } else {
-                                                setRefundAmount(numValue);
-                                            }
-                                        }}
-                                        max={calculateTotalPrice()}
-                                        min={0}
-                                        placeholder="$ 0.00"
-                                    />
+                                    {isCalculatingTotal ? (
+                                        <Flex align="center" borderWidth="1px" borderRadius="md" p={2} bg="gray.100">
+                                            <Spinner size="sm" mr={2}/>
+                                            <Text>Calculating total refund amount...</Text>
+                                        </Flex>
+                                    ) : (
+                                        <Input
+                                            type="number"
+                                            value={refundAmount > 0 ? refundAmount.toFixed(2) : '0.00'}
+                                            isReadOnly={true}
+                                            placeholder="$ 0.00"
+                                            bg="gray.100"
+                                        />
+                                    )}
                                     <Text fontSize="sm" mt={1}>
-                                        up to ${calculateTotalPrice().toFixed(2)}
+                                        Full refund of ${calculateTotalPrice().toFixed(2)}
                                     </Text>
                                 </Box>
 
@@ -881,8 +937,11 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                 <Box w="full">
                                     <Text fontWeight="bold">Purchase Summary</Text>
                                     <VStack align="stretch" spacing={3} mt={3}>
-                                        {isLoadingTierPricing || isLoadingAddons ? (
-                                            <Text fontSize="sm" color="gray.500">Loading...</Text>
+                                        {isLoadingTierPricing || isLoadingAddons || isLoadingCustomItems ? (
+                                            <Flex justify="center" py={4}>
+                                                <Spinner size="sm" mr={2}/>
+                                                <Text fontSize="sm" color="gray.600">Loading booking details...</Text>
+                                            </Flex>
                                         ) : (
                                             <>
                                                 <HStack justifyContent="space-between">
@@ -896,6 +955,8 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
                                                 {getCombinedAddons().length > 0 && (
                                                     <>
+                                                        <Divider />
+                                                        <Text fontWeight="semibold">Add-ons:</Text>
                                                         {getCombinedAddons().map((addon) => (
                                                             <HStack key={addon.id} justify="space-between">
                                                                 <Text>{addon.label || addon.name} (${addon.price.toFixed(2)} x {addon.quantity})</Text>
@@ -912,6 +973,8 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
                                                 {customItems && customItems.length > 0 && (
                                                     <>
+                                                        <Divider />
+                                                        <Text fontWeight="semibold">Custom Items:</Text>
                                                         {customItems.map((item) => (
                                                             <HStack key={item.id} justify="space-between">
                                                                 <Text>
@@ -932,6 +995,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                     </>
                                                 )}
 
+                                                <Divider />
                                                 <HStack justifyContent="space-between" mt={2}>
                                                     <Text fontWeight="bold">Total:</Text>
                                                     <Text fontWeight="bold">${calculateTotalPrice().toFixed(2)}</Text>
@@ -939,7 +1003,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
                                                 <HStack justifyContent="space-between" color="red.500">
                                                     <Text>Cancellation:</Text>
-                                                    <Text>-${refundAmount.toFixed(2)}</Text>
+                                                    <Text>-${refundAmount > 0 ? refundAmount.toFixed(2) : calculateTotalPrice().toFixed(2)}</Text>
                                                 </HStack>
 
                                                 <Divider/>
@@ -1009,7 +1073,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                 </Text>
                                             </HStack>
                                             <Text fontWeight="bold" color="blue.500">
-                                                -${refundAmount.toFixed(2)}
+                                                -${refundAmount > 0 ? refundAmount.toFixed(2) : calculateTotalPrice().toFixed(2)}
                                             </Text>
                                         </HStack>
 

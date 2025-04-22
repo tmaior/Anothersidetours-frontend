@@ -39,7 +39,7 @@ export default function ButtonCodeSettings() {
     const [selectedTourId, setSelectedTourId] = useState<string | null>(null);
 
     const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
-    const { onCopy } = useClipboard(selectedTourId ? `${baseUrl}/bookingdetails/${selectedTourId}` : '');
+    const { onCopy } = useClipboard(selectedTourId ? `<div class="book-button" data-id="${selectedTourId}" onclick="openSimpleModal(this)">Book Now</div>` : '');
 
     useEffect(() => {
         const fetchTours = async () => {
@@ -165,7 +165,7 @@ export default function ButtonCodeSettings() {
                                             fontFamily="monospace"
                                             noOfLines={1}
                                         >
-                                            {`${baseUrl}/bookingdetails/${tour.id}`}
+                                            {`<div class="book-button" data-id="${tour.id}" onclick="openSimpleModal(this)">Book Now</div>`}
                                         </Box>
                                         <HStack>
                                             <IconButton

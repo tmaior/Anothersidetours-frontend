@@ -374,6 +374,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         `${process.env.NEXT_PUBLIC_API_URL}/refund`,
                         refundPayload,
                         {
+                            withCredentials:true,
                             headers: {
                                 'Content-Type': 'application/json'
                             }

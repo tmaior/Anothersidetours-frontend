@@ -49,6 +49,17 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
     const [isCalculatingTotal, setIsCalculatingTotal] = useState(true);
     const toast = useToast();
 
+    const ALREADY_CANCELED_TOAST_ID = 'already-canceled-toast';
+    const ALREADY_REFUNDED_TOAST_ID = 'already-refunded-toast';
+    const NO_TRANSACTION_TOAST_ID = 'no-transaction-toast';
+    const NO_PAYMENT_INTENT_TOAST_ID = 'no-payment-intent-toast';
+    const REFUND_ERROR_TOAST_ID = 'refund-error-toast';
+    const MISSING_TENANT_TOAST_ID = 'missing-tenant-toast';
+    const GENERAL_ERROR_TOAST_ID = 'general-error-toast';
+    const SUCCESS_TOAST_ID = 'success-toast';
+    const VOUCHER_TOAST_ID = 'voucher-toast';
+    const NO_ACTION_TOAST_ID = 'no-action-toast';
+
     useEffect(() => {
         if (isOpen && !isCalculatingTotal) {
             const total = calculateTotalPrice();
@@ -383,7 +394,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
             const finalRefundAmount = refundAmount > 0 ? refundAmount : calculateTotalPrice();
             
             if (finalRefundAmount <= 0) {
+                toast.close(GENERAL_ERROR_TOAST_ID);
                 toast({
+                    id: GENERAL_ERROR_TOAST_ID,
                     title: "Error",
                     description: "Refund amount must be greater than zero.",
                     status: "error",
@@ -402,7 +415,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 );
                 
                 if (reservationResponse.data && reservationResponse.data.status === "CANCELED") {
+                    toast.close(ALREADY_CANCELED_TOAST_ID);
                     toast({
+                        id: ALREADY_CANCELED_TOAST_ID,
                         title: "Already Canceled",
                         description: "This reservation has already been canceled.",
                         status: "error",
@@ -426,7 +441,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     );
                     
                     if (hasCancellationTransaction) {
+                        toast.close(ALREADY_REFUNDED_TOAST_ID);
                         toast({
+                            id: ALREADY_REFUNDED_TOAST_ID,
                             title: "Already Processed",
                             description: "A refund for this booking has already been processed.",
                             status: "error",
@@ -443,26 +460,32 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
             if (paymentMethod === 'Credit Card') {
                 if (!originalTransaction) {
+                    toast.close(NO_TRANSACTION_TOAST_ID);
                     toast({
+                        id: NO_TRANSACTION_TOAST_ID,
                         title: "Error",
                         description: "No original payment transaction found.",
                         status: "error",
                         duration: 5000,
                         isClosable: true,
                     });
+                    setIsSubmitting(false);
                     return;
                 }
                 const paymentIntentId = originalTransaction.paymentIntentId ||
                     originalTransaction.stripe_payment_id;
 
                 if (!paymentIntentId) {
+                    toast.close(NO_PAYMENT_INTENT_TOAST_ID);
                     toast({
+                        id: NO_PAYMENT_INTENT_TOAST_ID,
                         title: "Error",
                         description: "No payment intent ID found for this transaction.",
                         status: "error",
                         duration: 5000,
                         isClosable: true,
                     });
+                    setIsSubmitting(false);
                     return;
                 }
 
@@ -532,7 +555,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     );
 
                     if (bookingResponse.data) {
+                        toast.close(SUCCESS_TOAST_ID);
                         toast({
+                            id: SUCCESS_TOAST_ID,
                             title: "Success",
                             description: "Refund processed and booking canceled successfully.",
                             status: "success",
@@ -546,7 +571,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     }
                 } catch (error) {
                     console.error("Stripe refund error:", error);
+                    toast.close(REFUND_ERROR_TOAST_ID);
                     toast({
+                        id: REFUND_ERROR_TOAST_ID,
                         title: "Refund Error",
                         description: error.response?.data?.message || "Failed to process refund with Stripe.",
                         status: "error",
@@ -560,7 +587,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 const tenantId = booking.tenantId || originalTransaction?.tenant_id;
 
                 if (!tenantId) {
+                    toast.close(MISSING_TENANT_TOAST_ID);
                     toast({
+                        id: MISSING_TENANT_TOAST_ID,
                         title: "Error",
                         description: "Tenant ID is missing. Cannot create refund transaction.",
                         status: "error",
@@ -605,7 +634,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     );
 
                     if (bookingResponse.data) {
+                        toast.close(SUCCESS_TOAST_ID);
                         toast({
+                            id: SUCCESS_TOAST_ID,
                             title: "Success",
                             description: "Cash refund recorded and booking canceled successfully.",
                             status: "success",
@@ -623,7 +654,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     const tenantId = booking.tenantId || originalTransaction?.tenant_id;
 
                     if (!tenantId) {
+                        toast.close(MISSING_TENANT_TOAST_ID);
                         toast({
+                            id: MISSING_TENANT_TOAST_ID,
                             title: "Error",
                             description: "Tenant ID is missing. Cannot create store credit voucher.",
                             status: "error",
@@ -688,17 +721,19 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         );
 
                         if (bookingResponse.data) {
+                            toast.close(SUCCESS_TOAST_ID);
+                            toast({
+                                id: SUCCESS_TOAST_ID,
+                                title: "Success",
+                                description: "Refund processed and booking canceled successfully.",
+                                status: "success",
+                                duration: 5000,
+                                isClosable: true,
+                            });
                             if (onStatusChange) {
                                 onStatusChange("CANCELED");
                             }
-
-                            toast({
-                                title: "Store Credit Issued",
-                                description: `Voucher ${voucherCode} created successfully.`,
-                                status: "success",
-                                duration: 4000,
-                                isClosable: true,
-                            });
+                            onClose();
                         }
                     }
                 } catch (error) {
@@ -752,7 +787,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     );
 
                     if (bookingResponse.data) {
+                        toast.close(SUCCESS_TOAST_ID);
                         toast({
+                            id: SUCCESS_TOAST_ID,
                             title: "Success",
                             description: "Refund recorded and booking canceled successfully.",
                             status: "success",
@@ -766,7 +803,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     }
                 } catch (error) {
                     console.error("Failed to process cancellation:", error);
+                    toast.close(GENERAL_ERROR_TOAST_ID);
                     toast({
+                        id: GENERAL_ERROR_TOAST_ID,
                         title: "Error",
                         description: error.message || "Failed to process cancellation. Please try again.",
                         status: "error",
@@ -775,7 +814,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     });
                 }
             } else {
+                toast.close(NO_ACTION_TOAST_ID);
                 toast({
+                    id: NO_ACTION_TOAST_ID,
                     title: "No Action",
                     description: "Please select a payment method.",
                     status: "warning",
@@ -786,7 +827,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
             }
         } catch (error) {
             console.error("Failed to process cancellation:", error);
+            toast.close(GENERAL_ERROR_TOAST_ID);
             toast({
+                id: GENERAL_ERROR_TOAST_ID,
                 title: "Error",
                 description: error.message || "Failed to process cancellation. Please try again.",
                 status: "error",

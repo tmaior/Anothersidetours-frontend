@@ -25,6 +25,10 @@ import {
     useDisclosure,
     useToast,
     VStack,
+    Menu,
+    MenuButton,
+    MenuList,
+    MenuItem,
 } from "@chakra-ui/react";
 import axios from "axios";
 import {BsCash, BsCheck2} from "react-icons/bs";
@@ -32,6 +36,7 @@ import {FaRegCreditCard} from "react-icons/fa";
 import {BiCheck} from "react-icons/bi";
 import {format} from 'date-fns';
 import {CardElement, useElements, useStripe} from "@stripe/react-stripe-js";
+import {FiChevronDown} from "react-icons/fi";
 
 const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
     const toast = useToast();
@@ -818,34 +823,56 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                     ) : savedPaymentMethods.length > 0 && !showCardForm ? (
                                         <VStack align="stretch" spacing={3}>
                                             <Text fontWeight="medium">Saved Cards</Text>
-                                            {savedPaymentMethods.map((card) => (
-                                                <Box 
-                                                    key={card.id}
-                                                    p={2} 
-                                                    borderWidth="1px"
-                                                    borderRadius="md"
-                                                    borderColor={selectedPaymentMethodId === card.id ? "blue.500" : "gray.200"}
-                                                    bg={selectedPaymentMethodId === card.id ? "blue.50" : "white"}
-                                                    onClick={() => {
-                                                        setSelectedPaymentMethodId(card.id);
-                                                        setCardInfo(card);
-                                                    }}
-                                                    cursor="pointer"
-                                                    _hover={{ borderColor: "blue.300", bg: "blue.50" }}
-                                                >
-                                                    <Flex align="center" justify="space-between">
-                                                        <Flex align="center">
-                                                            <Icon as={FaRegCreditCard} mr={2} />
-                                                            <Text>
-                                                                {card.brand || 'Card'} •••• •••• •••• {card.last4 || 'on file'}
-                                                            </Text>
+                                            {savedPaymentMethods.length > 0 && !showCardForm && (
+                                                <Menu>
+                                                    <MenuButton
+                                                        as={Box}
+                                                        p={2}
+                                                        borderWidth="1px"
+                                                        borderRadius="md"
+                                                        borderColor="gray.200"
+                                                        bg="white"
+                                                        cursor="pointer"
+                                                        _hover={{ borderColor: "blue.300", bg: "blue.50" }}
+                                                    >
+                                                        <Flex align="center" justify="space-between">
+                                                            <Flex align="center">
+                                                                <Icon as={FaRegCreditCard} mr={2} />
+                                                                <Text>
+                                                                    {selectedPaymentMethodId
+                                                                        ? `${cardInfo.brand || "Card"} •••• ${cardInfo.last4}`
+                                                                        : "Select a card"}
+                                                                </Text>
+                                                            </Flex>
+                                                            <Icon as={FiChevronDown} ml={2} />
                                                         </Flex>
-                                                        {selectedPaymentMethodId === card.id && (
-                                                            <Icon as={BsCheck2} color="green.500" boxSize={5} />
-                                                        )}
-                                                    </Flex>
-                                                </Box>
-                                            ))}
+                                                    </MenuButton>
+                                                    <MenuList>
+                                                        {savedPaymentMethods.map((card) => (
+                                                            <MenuItem
+                                                                key={card.id}
+                                                                onClick={() => {
+                                                                    setSelectedPaymentMethodId(card.id);
+                                                                    setCardInfo(card);
+                                                                }}
+                                                                _hover={{ bg: "blue.50" }}
+                                                            >
+                                                                <Flex align="center" justify="space-between" w="100%">
+                                                                    <Flex align="center">
+                                                                        <Icon as={FaRegCreditCard} mr={2} />
+                                                                        <Text>
+                                                                            {card.brand || "Card"} •••• {card.last4}
+                                                                        </Text>
+                                                                    </Flex>
+                                                                    {selectedPaymentMethodId === card.id && (
+                                                                        <Icon as={BsCheck2} color="green.500" boxSize={5} />
+                                                                    )}
+                                                                </Flex>
+                                                            </MenuItem>
+                                                        ))}
+                                                    </MenuList>
+                                                </Menu>
+                                            )}
                                             <Button size="sm" onClick={() => setShowCardForm(true)} leftIcon={<FaRegCreditCard />}>
                                                 Use a different card
                                             </Button>

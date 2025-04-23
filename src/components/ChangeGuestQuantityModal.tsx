@@ -54,6 +54,8 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
     const [showCardForm, setShowCardForm] = useState(false);
     const [errorMessage, setErrorMessage] = useState(null);
     const [, setPendingTransaction] = useState(null);
+    const [savedPaymentMethods, setSavedPaymentMethods] = useState([]);
+    const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState(null);
     const stripe = useStripe();
     const elements = useElements();
 
@@ -163,50 +165,197 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
             );
 
             if (response.data && response.data.length > 0) {
-                const createTransaction = response.data.find(t =>
-                    t.transaction_type === 'CREATE' &&
-                    (t.payment_method?.toLowerCase() === 'credit card' ||
-                        t.payment_method?.toLowerCase() === 'card')
-                );
-                if (createTransaction) {
-                    setOriginalTransaction(createTransaction);
+                const cardTransactions = response.data.filter(t => {
+                    const isCardPayment = 
+                        t.payment_method?.toLowerCase() === 'credit card' || 
+                        t.payment_method?.toLowerCase() === 'card' ||
+                        t.payment_method?.toLowerCase() === 'credit_card';
+                    const hasPaymentId = t.paymentMethodId || t.payment_method_id || t.stripe_payment_id;
+
+                    let hasCardInfoInMetadata = false;
+                    if (t.metadata) {
+                        try {
+                            const meta = typeof t.metadata === 'string' ? JSON.parse(t.metadata) : t.metadata;
+                            hasCardInfoInMetadata = meta.cardInfo || meta.paymentMethodId || 
+                                                  (meta.stripe_payment_method_id) || 
+                                                  (meta.payment_details?.stripe_payment_method_id);
+                        } catch (e) {
+                            console.error("Error parsing metadata:", e);
+                        }
+                    }
+                    let hasCardInfoInPaymentDetails = false;
+                    if (t.payment_details) {
+                        try {
+                            const details = typeof t.payment_details === 'string' 
+                                ? JSON.parse(t.payment_details) 
+                                : t.payment_details;
+                            hasCardInfoInPaymentDetails = details.card_number || 
+                                                        details.stripe_payment_method_id || 
+                                                        details.payment_type === 'credit_card';
+                        } catch (e) {
+                            console.error("Error parsing payment details:", e);
+                        }
+                    }
+                    
+                    return (isCardPayment || hasPaymentId || hasCardInfoInMetadata || hasCardInfoInPaymentDetails);
+                });
+                
+                if (cardTransactions.length > 0) {
                     setHasOriginalCardPayment(true);
                     setPaymentMethod('Credit Card');
-                    const paymentMethodId = booking.paymentMethodId ||
-                        createTransaction.payment_method_id ||
-                        createTransaction.paymentMethodId;
+                    const uniquePaymentMethodIds = new Set();
+                    
+                    cardTransactions.forEach(t => {
+                        if (t.paymentMethodId) uniquePaymentMethodIds.add(t.paymentMethodId);
+                        if (t.payment_method_id) uniquePaymentMethodIds.add(t.payment_method_id);
+                        if (t.stripe_payment_id && t.stripe_payment_id.startsWith('pm_')) {
+                            uniquePaymentMethodIds.add(t.stripe_payment_id);
+                        }
+                        if (t.metadata) {
+                            try {
+                                const meta = typeof t.metadata === 'string' ? JSON.parse(t.metadata) : t.metadata;
+                                if (meta.paymentMethodId) uniquePaymentMethodIds.add(meta.paymentMethodId);
+                                if (meta.stripe_payment_method_id) uniquePaymentMethodIds.add(meta.stripe_payment_method_id);
+                            } catch (e) {
+                                console.error("Error parsing metadata for payment method ID:", e);
+                            }
+                        }
+                        if (t.payment_details) {
+                            try {
+                                const details = typeof t.payment_details === 'string' 
+                                    ? JSON.parse(t.payment_details) 
+                                    : t.payment_details;
+                                if (details.stripe_payment_method_id) uniquePaymentMethodIds.add(details.stripe_payment_method_id);
+                            } catch (e) {
+                                console.error("Error parsing payment details for payment method ID:", e);
+                            }
+                        }
+                    });
 
-                    if (paymentMethodId) {
-                        try {
-                            const cardResponse = await axios.get(
-                                `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`,
-                                {
-                                    withCredentials: true
+                    if (booking.paymentMethodId) {
+                        uniquePaymentMethodIds.add(booking.paymentMethodId);
+                    }
+                    const createTransaction = cardTransactions.find(t => t.transaction_type === 'CREATE');
+                    if (createTransaction) {
+                        setOriginalTransaction(createTransaction);
+                    } else {
+                        setOriginalTransaction(cardTransactions[0]);
+                    }
+                    if (uniquePaymentMethodIds.size > 0) {
+                        const paymentMethods = [];
+                        
+                        for (const paymentMethodId of uniquePaymentMethodIds) {
+                            try {
+                                const cardResponse = await axios.get(
+                                    `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`,
+                                    {
+                                        withCredentials: true
+                                    }
+                                );
+                                
+                                if (cardResponse.data) {
+                                    paymentMethods.push({
+                                        id: paymentMethodId,
+                                        brand: cardResponse.data.brand,
+                                        last4: cardResponse.data.last4
+                                    });
                                 }
-                            );
+                            } catch (cardError) {
+                                console.error(`Error fetching card details for ${paymentMethodId}:`, cardError);
 
-                            if (cardResponse.data) {
-                                setCardInfo({
-                                    brand: cardResponse.data.brand,
-                                    last4: cardResponse.data.last4
-                                });
+                                let cardInfo = null;
+                                for (const t of cardTransactions) {
+                                    if ((t.paymentMethodId === paymentMethodId || t.payment_method_id === paymentMethodId) &&
+                                        t.metadata) {
+                                        try {
+                                            const meta = typeof t.metadata === 'string' ? JSON.parse(t.metadata) : t.metadata;
+                                            if (meta.cardInfo) {
+                                                cardInfo = meta.cardInfo;
+                                                break;
+                                            }
+                                        } catch (e) {
+                                            console.error("Error parsing metadata for card info:", e);
+                                        }
+                                    }
+                                }
+                                if (!cardInfo) {
+                                    for (const t of cardTransactions) {
+                                        if (t.payment_details) {
+                                            try {
+                                                const details = typeof t.payment_details === 'string' 
+                                                    ? JSON.parse(t.payment_details) 
+                                                    : t.payment_details;
+                                                
+                                                if (details.card_number || details.cardholder_name) {
+                                                    cardInfo = {
+                                                        brand: 'Card',
+                                                        last4: details.card_number ? details.card_number.replace(/\*/g, '') : 'on file'
+                                                    };
+                                                    break;
+                                                }
+                                            } catch (e) {
+                                                console.error("Error parsing payment details for card info:", e);
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                if (cardInfo) {
+                                    paymentMethods.push({
+                                        id: paymentMethodId,
+                                        brand: cardInfo.brand || 'Card',
+                                        last4: cardInfo.last4 || 'on file'
+                                    });
+                                } else {
+                                    paymentMethods.push({
+                                        id: paymentMethodId,
+                                        brand: 'Card',
+                                        last4: 'on file'
+                                    });
+                                }
                             }
-                        } catch (cardError) {
-                            console.error("Error fetching card details:", cardError);
-                            if (createTransaction.metadata && createTransaction.metadata.cardInfo) {
-                                setCardInfo(createTransaction.metadata.cardInfo);
-                            } else {
-                                setCardInfo({
-                                    brand: 'Card',
-                                    last4: 'on file'
-                                });
+                        }
+
+                        for (const t of cardTransactions) {
+                            if (t.metadata) {
+                                try {
+                                    const meta = typeof t.metadata === 'string' ? JSON.parse(t.metadata) : t.metadata;
+                                    if (meta.cardInfo && meta.cardInfo.last4) {
+                                        const existingCard = paymentMethods.find(
+                                            card => card.last4 === meta.cardInfo.last4 && 
+                                                  card.brand === (meta.cardInfo.brand || 'Card')
+                                        );
+                                        
+                                        if (!existingCard) {
+                                            const methodId = meta.paymentMethodId || 
+                                                           `card_${Math.random().toString(36).substring(2, 15)}`;
+                                            
+                                            paymentMethods.push({
+                                                id: methodId,
+                                                brand: meta.cardInfo.brand || 'Card',
+                                                last4: meta.cardInfo.last4
+                                            });
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error("Error parsing metadata for additional card info:", e);
+                                }
                             }
+                        }
+                        setSavedPaymentMethods(paymentMethods);
+
+                        if (paymentMethods.length > 0) {
+                            setSelectedPaymentMethodId(paymentMethods[0].id);
+                            setCardInfo(paymentMethods[0]);
                         }
                     }
                 } else {
                     setHasOriginalCardPayment(false);
                     setPaymentMethod('Cash');
                 }
+            } else {
+                setHasOriginalCardPayment(false);
+                setPaymentMethod('Cash');
             }
         } catch (error) {
             console.error("Failed to fetch original transaction:", error);
@@ -267,8 +416,8 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                 const pendingTransactionsResponse = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
                     {
-                        withCredentials: true
-                        , params: {payment_status: 'pending'}
+                        withCredentials: true,
+                        params: {payment_status: 'pending'}
                     }
                 );
 
@@ -290,11 +439,25 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                 }
 
                 setPendingTransaction(currentPendingTransaction);
+                const transactionMetadata = {
+                    ...currentPendingTransaction.metadata,
+                    originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
+                    newGuestQuantity: finalBookingChanges.newGuestQuantity,
+                    originalPrice: finalBookingChanges.originalPrice,
+                    newPrice: finalBookingChanges.newPrice,
+                    totalBalanceDue: finalBookingChanges.totalBalanceDue,
+                    isRefund: isRefund,
+                    tag: tag || null,
+                    notifyCustomer: notifyCustomer,
+                    processedAt: new Date().toISOString()
+                };
                 const setupIntentResponse = await axios.post(
                     `${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent-for-transaction`,
                     {
+                        transactionId: currentPendingTransaction.id
+                    },
+                    {
                         withCredentials: true
-                        , transactionId: currentPendingTransaction.id
                     }
                 );
 
@@ -303,82 +466,40 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                 }
 
                 const {clientSecret} = setupIntentResponse.data;
-                if (originalTransaction && !showCardForm) {
-                    let paymentMethodId = originalTransaction.paymentMethodId || originalTransaction.payment_method_id;
+                let paymentMethodId = null;
 
-                    if (!paymentMethodId && booking.paymentMethodId) {
-                        paymentMethodId = booking.paymentMethodId;
-                    }
+                if (!showCardForm && selectedPaymentMethodId) {
+                    paymentMethodId = selectedPaymentMethodId;
 
-                    if (!paymentMethodId) {
-                        throw new Error("Unable to find original payment method");
-                    }
-
-                    const updateResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`, {
+                    await axios.put(
+                        `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`,
+                        {
                             paymentMethodId: paymentMethodId,
                             payment_method: 'Credit Card',
                             amount: amountToCharge,
-                            metadata: {
-                                ...currentPendingTransaction.metadata,
-                                originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
-                                newGuestQuantity: finalBookingChanges.newGuestQuantity,
-                                originalPrice: finalBookingChanges.originalPrice,
-                                newPrice: finalBookingChanges.newPrice,
-                                totalBalanceDue: finalBookingChanges.totalBalanceDue,
-                                isRefund: isRefund,
-                                tag: tag || null,
-                                notifyCustomer: notifyCustomer
-                            }
-                        },
-                        {
-                            withCredentials: true
-                        });
-
-                    if (!updateResponse.data) {
-                        throw new Error("Failed to update transaction with payment method");
-                    }
-
-                    const processPaymentResponse = await axios.post(
-                        `${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`,
-                        {
-                            transactionId: currentPendingTransaction.id
+                            metadata: transactionMetadata
                         },
                         {
                             withCredentials: true
                         }
                     );
-
-                    if (!processPaymentResponse.data || processPaymentResponse.data.error) {
-                        throw new Error(processPaymentResponse.data?.error || "Failed to process payment");
-                    }
-
-                    await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`, {
-                            payment_status: 'completed',
-                            payment_method: 'Credit Card',
-                            paymentMethodId: paymentMethodId,
-                            paymentIntentId: processPaymentResponse.data.paymentIntentId,
-                            setupIntentId: processPaymentResponse.data.setupIntentId,
-                            metadata: {
-                                ...currentPendingTransaction.metadata,
-                                paymentProcessedAt: new Date().toISOString(),
-                                processed: true
-                            }
-                        },
-                        {
-                            withCredentials: true
-                        });
                 } else {
-                    const cardElement = elements.getElement(CardElement);
-
-                    if (!cardElement) {
-                        setErrorMessage("Card element is not available.");
+                    if (!stripe || !elements) {
+                        setErrorMessage("Stripe is not initialized properly");
                         setIsLoading(false);
                         return;
                     }
 
-                    const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
+                    const cardElement = elements.getElement(CardElement);
+                    if (!cardElement) {
+                        setErrorMessage("Card element is not available");
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    const paymentMethodResult = await stripe.confirmCardSetup(clientSecret, {
                         payment_method: {
-                            card: elements.getElement(CardElement),
+                            card: cardElement,
                             billing_details: {
                                 name: booking.user?.name || booking.username || 'Customer',
                                 email: booking.user?.email || booking.email || '',
@@ -386,77 +507,72 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                         },
                     });
 
-                    if (paymentMethodResponse.error) {
-                        setErrorMessage(`Payment failed: ${paymentMethodResponse.error.message}`);
+                    if (paymentMethodResult.error) {
+                        setErrorMessage(`Payment failed: ${paymentMethodResult.error.message}`);
                         setIsLoading(false);
                         return;
                     }
 
-                    const paymentMethodId = paymentMethodResponse.setupIntent.payment_method;
-                    const setupIntentId = paymentMethodResponse.setupIntent.id;
+                    paymentMethodId = paymentMethodResult.setupIntent.payment_method;
 
-                    const responseUpdate = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`, {
+                    await axios.put(
+                        `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`,
+                        {
                             paymentMethodId: paymentMethodId,
                             payment_method: 'Credit Card',
                             amount: amountToCharge,
-                            metadata: {
-                                ...currentPendingTransaction.metadata,
-                                originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
-                                newGuestQuantity: finalBookingChanges.newGuestQuantity,
-                                originalPrice: finalBookingChanges.originalPrice,
-                                newPrice: finalBookingChanges.newPrice,
-                                totalBalanceDue: finalBookingChanges.totalBalanceDue,
-                                isRefund: isRefund,
-                                tag: tag || null,
-                                notifyCustomer: notifyCustomer
-                            }
-                        },
-                        {
-                            withCredentials: true
-                        });
-
-                    if (!responseUpdate.data) {
-                        throw new Error("Failed to update transaction with payment method");
-                    }
-
-                    const processPaymentResponse = await axios.post(
-                        `${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`,
-                        {
-                            transactionId: currentPendingTransaction.id
+                            metadata: transactionMetadata
                         },
                         {
                             withCredentials: true
                         }
                     );
-
-                    if (!processPaymentResponse.data || processPaymentResponse.data.error) {
-                        throw new Error(processPaymentResponse.data?.error || "Failed to process payment");
-                    }
-
-                    await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`, {
-                            payment_status: 'completed',
-                            payment_method: 'Credit Card',
-                            paymentMethodId: paymentMethodId,
-                            paymentIntentId: processPaymentResponse.data.paymentIntentId,
-                            setupIntentId: setupIntentId,
-                            metadata: {
-                                ...currentPendingTransaction.metadata,
-                                paymentProcessedAt: new Date().toISOString(),
-                                processed: true
-                            }
-                        },
-                        {
-                            withCredentials: true
-                        });
                 }
 
-                const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
-                    guestQuantity: finalBookingChanges.newGuestQuantity,
-                    total_price: finalBookingChanges.newPrice,
-                    status: booking.status
-                }, {
-                    withCredentials: true
-                });
+                const processPaymentResponse = await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`,
+                    {
+                        transactionId: currentPendingTransaction.id
+                    },
+                    {
+                        withCredentials: true
+                    }
+                );
+
+                if (!processPaymentResponse.data || processPaymentResponse.data.error) {
+                    throw new Error(processPaymentResponse.data?.error || "Failed to process payment");
+                }
+
+                await axios.put(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/${currentPendingTransaction.id}`,
+                    {
+                        payment_status: 'completed',
+                        payment_method: 'Credit Card',
+                        paymentMethodId: paymentMethodId,
+                        paymentIntentId: processPaymentResponse.data.paymentIntentId,
+                        setupIntentId: processPaymentResponse.data.setupIntentId,
+                        metadata: {
+                            ...transactionMetadata,
+                            paymentProcessedAt: new Date().toISOString(),
+                            processed: true
+                        }
+                    },
+                    {
+                        withCredentials: true
+                    }
+                );
+
+                const bookingResponse = await axios.put(
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`,
+                    {
+                        guestQuantity: finalBookingChanges.newGuestQuantity,
+                        total_price: finalBookingChanges.newPrice,
+                        status: booking.status
+                    },
+                    {
+                        withCredentials: true
+                    }
+                );
 
                 if (bookingResponse.data) {
                     toast({
@@ -489,7 +605,31 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                         {
                             payment_method: paymentMethod,
                             payment_status: 'completed',
-                            transaction_direction: isRefund ? 'refund' : 'charge'
+                            transaction_direction: isRefund ? 'refund' : 'charge',
+                            metadata: {
+                                ...pendingTransaction.metadata,
+                                originalGuestQuantity: finalBookingChanges.originalGuestQuantity,
+                                newGuestQuantity: finalBookingChanges.newGuestQuantity,
+                                originalPrice: finalBookingChanges.originalPrice,
+                                newPrice: finalBookingChanges.newPrice,
+                                totalBalanceDue: finalBookingChanges.totalBalanceDue,
+                                isRefund: isRefund,
+                                tag: tag || null,
+                                notifyCustomer: notifyCustomer,
+                                processedAt: new Date().toISOString()
+                            }
+                        },
+                        {
+                            withCredentials: true
+                        }
+                    );
+
+                    await axios.put(
+                        `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`,
+                        {
+                            guestQuantity: finalBookingChanges.newGuestQuantity,
+                            total_price: finalBookingChanges.newPrice,
+                            status: booking.status
                         },
                         {
                             withCredentials: true
@@ -515,7 +655,9 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                     });
                 }
             } else {
-                const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
+                const transactionResponse = await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`,
+                    {
                         bookingId: booking.id,
                         amount: finalBookingChanges.finalAmount,
                         payment_method: paymentMethod,
@@ -534,15 +676,20 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                     },
                     {
                         withCredentials: true
-                    });
+                    }
+                );
 
-                const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
-                    guestQuantity: finalBookingChanges.newGuestQuantity,
-                    total_price: finalBookingChanges.newPrice,
-                    status: booking.status
-                }, {
-                    withCredentials: true
-                });
+                const bookingResponse = await axios.put(
+                    `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`,
+                    {
+                        guestQuantity: finalBookingChanges.newGuestQuantity,
+                        total_price: finalBookingChanges.newPrice,
+                        status: booking.status
+                    },
+                    {
+                        withCredentials: true
+                    }
+                );
 
                 if (transactionResponse.data && bookingResponse.data) {
                     toast({
@@ -627,16 +774,14 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
 
                             <Text mb={2}>Payment Method</Text>
                             <HStack spacing={2} mb={4}>
-                                {hasOriginalCardPayment && (
-                                    <Button
-                                        size="sm"
-                                        variant={paymentMethod === 'Credit Card' ? 'solid' : 'outline'}
-                                        onClick={() => setPaymentMethod('Credit Card')}
-                                        leftIcon={<FaRegCreditCard/>}
-                                    >
-                                        Credit Card
-                                    </Button>
-                                )}
+                                <Button
+                                    size="sm"
+                                    variant={paymentMethod === 'Credit Card' ? 'solid' : 'outline'}
+                                    onClick={() => setPaymentMethod('Credit Card')}
+                                    leftIcon={<FaRegCreditCard/>}
+                                >
+                                    Credit Card
+                                </Button>
                                 <Button
                                     size="sm"
                                     variant={paymentMethod === 'Cash' ? 'solid' : 'outline'}
@@ -670,16 +815,38 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                             <Spinner size="sm" mr={2}/>
                                             <Text>Loading card information...</Text>
                                         </Flex>
-                                    ) : cardInfo && !showCardForm ? (
-                                        <VStack align="stretch" spacing={2}>
-                                            <Flex align="center">
-                                                <Icon as={FaRegCreditCard} mr={2}/>
-                                                <Text>
-                                                    {cardInfo.brand || 'Card'} •••• ••••
-                                                    •••• {cardInfo.last4 || 'on file'}
-                                                </Text>
-                                            </Flex>
-                                            <Button size="sm" onClick={() => setShowCardForm(true)}>
+                                    ) : savedPaymentMethods.length > 0 && !showCardForm ? (
+                                        <VStack align="stretch" spacing={3}>
+                                            <Text fontWeight="medium">Saved Cards</Text>
+                                            {savedPaymentMethods.map((card) => (
+                                                <Box 
+                                                    key={card.id}
+                                                    p={2} 
+                                                    borderWidth="1px"
+                                                    borderRadius="md"
+                                                    borderColor={selectedPaymentMethodId === card.id ? "blue.500" : "gray.200"}
+                                                    bg={selectedPaymentMethodId === card.id ? "blue.50" : "white"}
+                                                    onClick={() => {
+                                                        setSelectedPaymentMethodId(card.id);
+                                                        setCardInfo(card);
+                                                    }}
+                                                    cursor="pointer"
+                                                    _hover={{ borderColor: "blue.300", bg: "blue.50" }}
+                                                >
+                                                    <Flex align="center" justify="space-between">
+                                                        <Flex align="center">
+                                                            <Icon as={FaRegCreditCard} mr={2} />
+                                                            <Text>
+                                                                {card.brand || 'Card'} •••• •••• •••• {card.last4 || 'on file'}
+                                                            </Text>
+                                                        </Flex>
+                                                        {selectedPaymentMethodId === card.id && (
+                                                            <Icon as={BsCheck2} color="green.500" boxSize={5} />
+                                                        )}
+                                                    </Flex>
+                                                </Box>
+                                            ))}
+                                            <Button size="sm" onClick={() => setShowCardForm(true)} leftIcon={<FaRegCreditCard />}>
                                                 Use a different card
                                             </Button>
                                         </VStack>
@@ -715,7 +882,7 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                                     }}
                                                 />
                                             </Box>
-                                            {cardInfo && (
+                                            {savedPaymentMethods.length > 0 && (
                                                 <Button size="sm" onClick={() => setShowCardForm(false)}>
                                                     Use saved card
                                                 </Button>
@@ -863,7 +1030,8 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                 onClick={handleCollect}
                                 isLoading={isLoading}
                                 loadingText="Processing"
-                                isDisabled={(paymentMethod === 'Credit Card' && !originalTransaction && !showCardForm) || (paymentMethod === 'Credit Card' && showCardForm && !stripe)}
+                                isDisabled={(paymentMethod === 'Credit Card' && savedPaymentMethods.length === 0 && !showCardForm) || 
+                                           (paymentMethod === 'Credit Card' && showCardForm && !stripe)}
                             >
                                 {finalBalance < 0 ? "Refund" : "Collect"}
                             </Button>

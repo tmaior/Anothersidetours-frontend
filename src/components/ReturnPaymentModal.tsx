@@ -20,6 +20,9 @@ import {
     CloseButton,
     Flex,
     useToast,
+    Radio,
+    Divider,
+    Badge,
 } from '@chakra-ui/react';
 import { FaRegCreditCard } from 'react-icons/fa';
 import { BsCash, BsCheck2 } from 'react-icons/bs';
@@ -30,6 +33,28 @@ interface CardDetails {
     brand: string;
     last4: string;
     paymentDate: string;
+    transactionId?: string;
+    amount?: number;
+    refundableAmount?: number;
+}
+
+interface PaymentTransactionData {
+    id: string;
+    amount: number;
+    payment_method?: string;
+    payment_status: string;
+    stripe_payment_id?: string;
+    paymentMethodId?: string;
+    paymentIntentId?: string;
+    transaction_direction?: string;
+    transaction_type?: string;
+    created_at: string;
+    metadata?: any;
+    payment_details?: any;
+    refundableAmount?: number;
+    cardDetails?: CardDetails;
+    parent_transaction_id?: string;
+    child_transactions?: PaymentTransactionData[];
 }
 
 interface ReturnPaymentModalProps {
@@ -64,6 +89,60 @@ interface ReturnPaymentModalProps {
     customLineItems?: LineItem[];
 }
 
+const RefundHistorySection: React.FC<{
+    refundHistory: PaymentTransactionData[];
+    isLoading: boolean;
+}> = ({ refundHistory, isLoading }) => {
+    if (isLoading) {
+        return <Text fontSize="sm">Loading refund history...</Text>;
+    }
+    
+    if (refundHistory.length === 0) {
+        return null;
+    }
+    
+    return (
+        <Box mt={4} p={3} borderWidth="1px" borderRadius="md" borderColor="gray.200">
+            <Text fontWeight="bold" mb={2}>Refund History</Text>
+            <VStack spacing={1} align="stretch">
+                {refundHistory.map((refund, idx) => (
+                    <HStack key={idx} justify="space-between">
+                        <VStack align="start" spacing={0}>
+                            <Text fontSize="sm">
+                                {refund.payment_method === 'credit_card' ? 'Credit Card' : 
+                                 refund.payment_method === 'store_credit' ? 'Store Credit' : 
+                                 refund.payment_method?.charAt(0).toUpperCase() + refund.payment_method?.slice(1) || 'Unknown'}
+                            </Text>
+                            <Text fontSize="xs" color="gray.500">
+                                {new Date(refund.created_at).toLocaleDateString('en-US', {
+                                    month: 'numeric',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                })}
+                            </Text>
+                        </VStack>
+                        <HStack>
+                            {refund.metadata?.isPartial && (
+                                <Badge colorScheme="blue" variant="subtle">Partial</Badge>
+                            )}
+                            <Text fontWeight="semibold" color="red.500">
+                                -${refund.amount.toFixed(2)}
+                            </Text>
+                        </HStack>
+                    </HStack>
+                ))}
+                <Divider my={1} />
+                <HStack justify="space-between">
+                    <Text fontWeight="semibold">Total Refunded</Text>
+                    <Text fontWeight="semibold" color="red.500">
+                        ${refundHistory.reduce((total, r) => total + r.amount, 0).toFixed(2)}
+                    </Text>
+                </HStack>
+            </VStack>
+        </Box>
+    );
+};
+
 const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     isOpen,
     onClose,
@@ -96,6 +175,16 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     const [pendingTransactions, setPendingTransactions] = useState([]);
     const [generatedVoucher, setGeneratedVoucher] = useState<{code: string, amount: number} | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+
+    const [paymentTransactions, setPaymentTransactions] = useState<PaymentTransactionData[]>([]);
+    const [cardTransactions, setCardTransactions] = useState<PaymentTransactionData[]>([]);
+    const [isRefundPartial, setIsRefundPartial] = useState<boolean>(false);
+    const [maxRefundableAmount, setMaxRefundableAmount] = useState<number>(0);
+    const [balanceDue, setBalanceDue] = useState<number>(0);
+    const [isLoadingTransactions, setIsLoadingTransactions] = useState<boolean>(true);
+    const [selectedTransaction, setSelectedTransaction] = useState<PaymentTransactionData | null>(null);
+    const [refundHistory, setRefundHistory] = useState<PaymentTransactionData[]>([]);
+    const [selectedCard, setSelectedCard] = useState<CardDetails | null>(null);
 
     useEffect(() => {
         if (refundAmount) {
@@ -377,6 +466,155 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         }
     }, [isOpen, tierPricing, reservationAddons, fetchedCustomItems, guestQuantity]);
 
+    useEffect(() => {
+        const fetchAllPaymentTransactions = async () => {
+            if (!booking?.id || !isOpen) return;
+            
+            setIsLoadingTransactions(true);
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
+                    { withCredentials: true }
+                );
+                
+                if (!response.data || response.data.length === 0) {
+                    setIsLoadingTransactions(false);
+                    return;
+                }
+                
+                const transactions = response.data;
+
+                const chargeTransactions = transactions.filter(
+                    (t: any) => t.transaction_direction === 'charge' && 
+                    t.payment_status === 'completed' &&
+                    (t.payment_method?.toLowerCase() === 'credit card' || 
+                     t.payment_method?.toLowerCase() === 'card')
+                );
+                
+                const refundTransactions = transactions.filter(
+                    (t: any) => t.transaction_direction === 'refund' && 
+                    t.payment_status === 'completed'
+                );
+                
+                setRefundHistory(refundTransactions);
+
+                const transactionsWithCardDetails = await Promise.all(chargeTransactions.map(async (transaction: any) => {
+                    let cardDetails = null;
+                    const paymentMethodId = transaction.paymentMethodId;
+                    
+                    if (paymentMethodId) {
+                        try {
+                            const cardResponse = await axios.get(
+                                `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`,
+                                { withCredentials: true }
+                            );
+                            
+                            if (cardResponse.data) {
+                                cardDetails = {
+                                    id: paymentMethodId,
+                                    brand: cardResponse.data.brand,
+                                    last4: cardResponse.data.last4,
+                                    paymentDate: transaction.created_at,
+                                    transactionId: transaction.id,
+                                    amount: transaction.amount
+                                };
+                            }
+                        } catch (err) {
+                            console.error('Error fetching card details:', err);
+                        }
+                    }
+
+                    const relatedRefunds = refundTransactions.filter(
+                        (r: any) => r.metadata?.originalTransactionId === transaction.id ||
+                        r.parent_transaction_id === transaction.id
+                    );
+                    
+                    const refundedAmount = relatedRefunds.reduce(
+                        (sum: number, refund: any) => sum + refund.amount, 0
+                    );
+                    
+                    const refundableAmount = Math.max(0, transaction.amount - refundedAmount);
+                    
+                    return {
+                        ...transaction,
+                        cardDetails,
+                        refundableAmount,
+                        hasBeenRefunded: refundedAmount > 0,
+                        fullyRefunded: refundableAmount === 0,
+                        partiallyRefunded: refundedAmount > 0 && refundableAmount > 0
+                    };
+                }));
+
+                setCardTransactions(transactionsWithCardDetails);
+
+                const uniqueCardIds = new Set();
+                const uniqueCards = [];
+                
+                for (const tx of transactionsWithCardDetails) {
+                    if (tx.cardDetails && !uniqueCardIds.has(tx.cardDetails.id)) {
+                        uniqueCardIds.add(tx.cardDetails.id);
+
+                        const cardTransactions = transactionsWithCardDetails.filter(
+                            t => t.cardDetails?.id === tx.cardDetails.id
+                        );
+                        
+                        const totalAmount = cardTransactions.reduce(
+                            (sum, t) => sum + t.amount, 0
+                        );
+                        
+                        const totalRefundable = cardTransactions.reduce(
+                            (sum, t) => sum + (t.refundableAmount || 0), 0
+                        );
+                        
+                        uniqueCards.push({
+                            ...tx.cardDetails,
+                            amount: totalAmount,
+                            refundableAmount: totalRefundable
+                        });
+                    }
+                }
+                
+                if (uniqueCards.length > 0) {
+                    setCardList(uniqueCards);
+                    setSelectedCardId(uniqueCards[0].id);
+                    setHasOriginalCardPayment(true);
+                    setPaymentMethod('credit_card');
+
+                    const totalRefundable = transactionsWithCardDetails.reduce(
+                        (sum, t) => sum + (t.refundableAmount || 0), 0
+                    );
+                    setMaxRefundableAmount(totalRefundable);
+
+                    const firstCardTransactions = transactionsWithCardDetails.filter(
+                        t => t.cardDetails?.id === uniqueCards[0].id
+                    );
+                    if (firstCardTransactions.length > 0) {
+                        setSelectedTransaction(firstCardTransactions[0]);
+                    }
+                }
+                
+                setPaymentTransactions(transactions);
+            } catch (error) {
+                console.error('Error fetching payment transactions:', error);
+            } finally {
+                setIsLoadingTransactions(false);
+            }
+        };
+        
+        if (isOpen) {
+            fetchAllPaymentTransactions();
+        }
+    }, [booking?.id, isOpen]);
+
+    useEffect(() => {
+        if (selectedTransaction) {
+            const maxForTransaction = selectedTransaction.refundableAmount || 0;
+            if (amount > maxForTransaction) {
+                setAmount(maxForTransaction);
+            }
+        }
+    }, [selectedTransaction]);
+
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value;
         if (inputValue === '') {
@@ -393,19 +631,31 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             setAmount(0);
             return;
         }
-        const maxValue = calculateTotalPrice();
+
+        let maxValue = calculateTotalPrice();
+        
+        if (paymentMethod === 'credit_card' && selectedTransaction) {
+            maxValue = Math.min(maxValue, selectedTransaction.refundableAmount || 0);
+        } else if (paymentMethod === 'credit_card') {
+            maxValue = Math.min(maxValue, maxRefundableAmount);
+        }
+        
         if (numValue > maxValue) {
+            setAmount(maxValue);
             return;
         }
+        
         setAmount(numValue);
+
+        setIsRefundPartial(numValue < maxValue);
     };
 
     const handleSaveChanges = async () => {
-        if (paymentMethod === 'credit_card' && !selectedCardId) {
+        if (paymentMethod === 'credit_card' && !selectedCardId && cardList.length > 0) {
             toast({
-                title: 'Error',
-                description: 'Please select a card for refund',
-                status: 'error',
+                title: 'Attention',
+                description: 'Select a card for refund or change payment method.',
+                status: 'warning',
                 duration: 5000,
                 isClosable: true,
             });
@@ -414,8 +664,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
         if (paymentMethod === 'credit_card' && !hasOriginalCardPayment) {
             toast({
-                title: 'Error',
-                description: 'Cannot refund to credit card as the original payment was not made by card.',
+                title: 'Erro',
+                description: 'Refunds cannot be made to a credit card as the original payment was not made by card.',
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
@@ -425,8 +675,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         
         if (amount <= 0) {
             toast({
-                title: 'Error',
-                description: 'Refund amount must be greater than zero.',
+                title: 'Erro',
+                description: 'The refund amount must be greater than zero.',
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
@@ -434,48 +684,141 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             return;
         }
         
-        const maxRefundAmount = calculateTotalPrice();
-        if (amount > maxRefundAmount) {
+
+        const selectedCard = cardList.find(c => c.id === selectedCardId);
+        if (paymentMethod === 'credit_card' && selectedCard && amount > selectedCard.refundableAmount) {
             toast({
-                title: 'Error',
-                description: `Invalid refund amount. Please enter a value between 0 and the total price of $${maxRefundAmount.toFixed(2)}.`,
+                title: 'Erro',
+                description: `The amount exceeds the maximum available for reimbursement $${selectedCard.refundableAmount.toFixed(2)}.`,
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
             });
             return;
         }
+        
         setIsProcessing(true);
         try {
             if (paymentMethod === 'credit_card') {
-                const paymentIntentId = booking.PaymentTransaction?.[0]?.paymentIntentId || 
-                                    booking.PaymentTransaction?.[0]?.stripe_payment_id || 
-                                    booking.paymentIntentId;
-                const paymentMethodId = booking.PaymentTransaction?.[0]?.paymentMethodId || 
-                                    booking.paymentMethodId;
-
-                const refundPayload = {
-                    paymentIntentId: paymentIntentId,
-                    paymentMethodId: selectedCardId || paymentMethodId,
-                    amount: Math.round(amount * 100)
-                };
-
-                if (!refundPayload.paymentIntentId || refundPayload.paymentIntentId.trim() === '') {
-                    throw new Error('Payment Intent ID cannot be empty');
+                const cardTxs = cardTransactions
+                    .filter(t => 
+                        (!selectedCardId || t.cardDetails?.id === selectedCardId) &&
+                        t.transaction_direction === 'charge' &&
+                        t.payment_status === 'completed' &&
+                        (t.refundableAmount || 0) > 0
+                    )
+                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                
+                if (cardTxs.length === 0) {
+                    throw new Error('No transactions available for refund were found.' +
+                        (selectedCardId ? 'on this card.' : '.'));
                 }
 
-                if (refundPayload.paymentIntentId.startsWith('seti_')) {
-                    throw new Error('Invalid Payment Intent ID. A setup intent cannot be used for refunds.');
-                }
-                await axios.post(
-                    `${process.env.NEXT_PUBLIC_API_URL}/refund`,
-                    refundPayload,
-                    { withCredentials:true,
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
+                let remainingToRefund = amount;
+                let successfulRefunds = 0;
+
+                for (const tx of cardTxs) {
+                    if (remainingToRefund <= 0) break;
+
+                    const refundFromTx = Math.min(remainingToRefund, tx.refundableAmount || 0);
+                    
+                    if (refundFromTx <= 0) continue;
+                    const paymentIntentId = tx.paymentIntentId || tx.stripe_payment_id;
+                    const paymentMethodId = selectedCardId;
+                    
+                    const refundPayload = {
+                        paymentIntentId: paymentIntentId,
+                        paymentMethodId: paymentMethodId,
+                        amount: Math.round(refundFromTx * 100),
+                        originalTransactionId: tx.id
+                    };
+                    
+                    if (!refundPayload.paymentIntentId || refundPayload.paymentIntentId.trim() === '') {
+                        console.error(`Skipping transaction ${tx.id} - Empty Payment ID`);
+                        continue;
                     }
-                );
+                    
+                    if (refundPayload.paymentIntentId.startsWith('seti_')) {
+                        console.error(`Skipping transaction ${tx.id} - Invalid Payment ID (setup intent)`);
+                        continue;
+                    }
+                    
+                    try {
+                        const refundResponse = await axios.post(
+                            `${process.env.NEXT_PUBLIC_API_URL}/refund`,
+                            refundPayload,
+                            { 
+                                withCredentials: true,
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            }
+                        );
+
+                        if (refundResponse.data && refundResponse.data.success) {
+                            const tenantId = booking.id.split('-')[1] || '';
+                            const isFullRefund = Math.abs(tx.refundableAmount - refundFromTx) < 0.01;
+                            const transactionData = {
+                                tenant_id: tenantId,
+                                reservation_id: booking.id,
+                                amount: refundFromTx,
+                                payment_status: 'completed',
+                                payment_method: 'credit_card',
+                                transaction_type: 'REFUND',
+                                transaction_direction: 'refund',
+                                description: `Refund to credit card ${isFullRefund ? '' : ' (partial)'}`,
+                                reference_number: refundResponse.data.id || `RF-${Date.now().toString().slice(-6)}`,
+                                paymentIntentId: refundResponse.data.id,
+                                paymentMethodId: paymentMethodId,
+                                parent_transaction_id: tx.id,
+                                is_price_adjustment: false,
+                                metadata: {
+                                    comment: comment,
+                                    notifyCustomer: notifyCustomer,
+                                    refundDate: new Date().toISOString(),
+                                    paymentMethod: 'credit_card',
+                                    refundReason: 'return_payment',
+                                    isPartial: !isFullRefund,
+                                    isFullRefund: isFullRefund,
+                                    isSplitRefund: amount > refundFromTx,
+                                    originalTransactionId: tx.id,
+                                    cardId: paymentMethodId,
+                                    originalAmount: tx.amount,
+                                    refundTotal: amount,
+                                    refundPortion: refundFromTx,
+                                    remaining: (tx.refundableAmount || 0) - refundFromTx
+                                }
+                            };
+                            
+                            await axios.post(
+                                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
+                                transactionData,
+                                {
+                                    withCredentials: true
+                                }
+                            );
+                            
+                            successfulRefunds++;
+                            remainingToRefund -= refundFromTx;
+                        }
+                    } catch (err) {
+                        console.error(`Error processing refund for transaction ${tx.id}:`, err);
+                    }
+                }
+                
+                if (successfulRefunds === 0) {
+                    throw new Error('Failed to process any refund. Please check payment IDs.');
+                }
+                
+                if (remainingToRefund > 0) {
+                    toast({
+                        title: 'Partial refund processed',
+                        description: `Just $${(amount - remainingToRefund).toFixed(2)} of the $${amount.toFixed(2)} requested could be refunded.`,
+                        status: 'warning',
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                }
             } else {
                 const pendingRefundTx = pendingTransactions.find(tx => 
                     tx.transaction_direction === 'refund' && Math.abs(tx.amount - amount) < 0.01
@@ -493,11 +836,12 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 comment: comment,
                                 notifyCustomer: notifyCustomer,
                                 refundDate: new Date().toISOString(),
-                                paymentMethod: paymentMethod
+                                paymentMethod: paymentMethod,
+                                isPartial: isRefundPartial
                             }
                         },
                         {
-                            withCredentials:true,
+                            withCredentials: true
                         }
                     );
                 } else {
@@ -511,7 +855,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                     updated_at: new Date().toISOString()
                                 },
                                 {
-                                    withCredentials:true,
+                                    withCredentials: true
                                 }
                             );
                         }
@@ -526,12 +870,15 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                         transaction_direction: 'refund',
                         description: `Refund via ${paymentMethod}`,
                         reference_number: `RF-${Date.now().toString().slice(-6)}`,
+                        parent_transaction_id: selectedTransaction?.id,
                         metadata: {
                             comment: comment,
                             notifyCustomer: notifyCustomer,
                             refundDate: new Date().toISOString(),
                             paymentMethod: paymentMethod,
-                            refundReason: 'return_payment'
+                            refundReason: 'return_payment',
+                            isPartial: isRefundPartial,
+                            originalTransactionId: selectedTransaction?.id
                         }
                     };
                     
@@ -539,7 +886,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                         `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
                         transactionData,
                         {
-                            withCredentials:true,
+                            withCredentials: true
                         }
                     );
                 }
@@ -552,7 +899,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 originReservationId: booking.id
                             },
                             {
-                                withCredentials:true,
+                                withCredentials: true
                             }
                         );
                         
@@ -600,7 +947,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                 statusText: error.response?.statusText,
                 data: error.response?.data,
                 url: error.config?.url,
-                paymentIntentId: booking?.paymentIntentId,
+                paymentIntentId: selectedTransaction?.paymentIntentId || booking?.paymentIntentId,
                 setupIntentId: booking?.setupIntentId,
                 PaymentTransaction: booking?.PaymentTransaction,
                 refundAmount: amount
@@ -608,7 +955,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
             const errorMessage = error.response?.data?.message || 'Failed to process refund';
             toast({
-                title: 'Error',
+                title: 'Erro',
                 description: errorMessage,
                 status: 'error',
                 duration: 5000,
@@ -695,6 +1042,47 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         return guestTotal + addonTotal + customItemsTotal;
     };
 
+    const handleCardSelection = (card: CardDetails) => {
+        if (selectedCardId === card.id) {
+            clearCardSelection();
+            return;
+        }
+
+        setSelectedCardId(card.id);
+        setSelectedCard(card);
+
+        const availableTransactions = cardTransactions
+            .filter(t => 
+                t.cardDetails?.id === card.id && 
+                (t.refundableAmount || 0) > 0
+            )
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            
+        if (availableTransactions.length > 0) {
+            setSelectedTransaction(availableTransactions[0]);
+            if (amount > card.refundableAmount) {
+                setAmount(card.refundableAmount);
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (selectedCardId && cardList.length > 0) {
+            const card = cardList.find(c => c.id === selectedCardId);
+            if (card) {
+                setSelectedCard(card);
+            }
+        }
+    }, [selectedCardId, cardList]);
+
+
+    const clearCardSelection = () => {
+        setSelectedCardId(null);
+        setSelectedCard(null);
+        setSelectedTransaction(null);
+        setAmount(refundAmount || booking?.total_price || 0);
+    };
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="6xl">
             <ModalOverlay />
@@ -732,18 +1120,30 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
                             <VStack spacing={4} align="stretch">
                                 <Box>
-                                    <Text mb={2}>Amount</Text>
+                                    <HStack mb={2} justify="space-between">
+                                        <Text>Valor</Text>
+                                        {selectedCard && (
+                                            <Text fontSize="sm" color="blue.600">
+                                                Maximum available: ${selectedCard.refundableAmount?.toFixed(2)}
+                                            </Text>
+                                        )}
+                                    </HStack>
                                     <Input
                                         value={amount === 0 ? '' : amount}
                                         onChange={handleAmountChange}
                                         type="number"
                                         step="0.01"
                                         min="0"
-                                        max={calculateTotalPrice()}
+                                        max={selectedCard?.refundableAmount || maxRefundableAmount}
                                         placeholder="$ 0.00"
                                     />
                                     <Text fontSize="sm" color="gray.600" mt={1}>
-                                        up to ${calculateTotalPrice().toFixed(2)}
+                                        {paymentMethod === 'credit_card' && selectedCard 
+                                            ? `until $${selectedCard.refundableAmount?.toFixed(2)}`
+                                            : paymentMethod === 'credit_card' && cardTransactions.length > 0
+                                                ? `until $${maxRefundableAmount.toFixed(2)} total on all cards`
+                                                : `until $${calculateTotalPrice().toFixed(2)}`
+                                        }
                                     </Text>
                                 </Box>
 
@@ -809,20 +1209,106 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
                                 {paymentMethod === 'credit_card' && hasOriginalCardPayment && (
                                     <Box>
-                                        <Text mb={2}>Credit Card</Text>
-                                        {isLoading ? (
+                                        {/*<HStack mb={2} justify="space-between">*/}
+                                        {/*    <Text mb={0}>Cartão de Crédito</Text>*/}
+                                        {/*    {selectedCardId && (*/}
+                                        {/*        <Button */}
+                                        {/*            size="xs" */}
+                                        {/*            colorScheme="gray" */}
+                                        {/*            variant="outline" */}
+                                        {/*            onClick={clearCardSelection}*/}
+                                        {/*        >*/}
+                                        {/*            Limpar seleção*/}
+                                        {/*        </Button>*/}
+                                        {/*    )}*/}
+                                        {/*</HStack>*/}
+                                        
+                                        {!selectedCardId && cardList.length > 0 && (
+                                            <Box p={3} mb={3} borderWidth="1px" borderRadius="md" borderColor="blue.200" bg="blue.50">
+                                                <Text fontSize="sm">
+                                                    Select a card to process the refund or choose another payment method.
+                                                </Text>
+                                            </Box>
+                                        )}
+                                        
+                                        {isLoadingTransactions ? (
                                             <HStack spacing={2} py={2}>
                                                 <Text>Loading card information...</Text>
                                             </HStack>
                                         ) : cardList.length > 0 ? (
-                                            <Box p={3} borderWidth="1px" borderRadius="md">
-                                                <HStack>
-                                                    <FaRegCreditCard />
-                                                    <Text>
-                                                        {cardList[0].brand.charAt(0).toUpperCase() + cardList[0].brand.slice(1)} •••• •••• •••• {cardList[0].last4}
-                                                    </Text>
-                                                </HStack>
-                                            </Box>
+                                            <VStack spacing={2} align="stretch">
+                                                {cardList.map((card) => (
+                                                    <Box 
+                                                        key={card.id} 
+                                                        p={3} 
+                                                        borderWidth="1px" 
+                                                        borderRadius="md"
+                                                        borderColor={selectedCardId === card.id ? "blue.500" : "gray.200"}
+                                                        bg={selectedCardId === card.id ? "blue.50" : "white"}
+                                                        cursor="pointer"
+                                                        onClick={() => handleCardSelection(card)}
+                                                        position="relative"
+                                                        _hover={{
+                                                            borderColor: "blue.300",
+                                                            boxShadow: "sm"
+                                                        }}
+                                                    >
+                                                        <HStack justify="space-between" mb={2} mt={selectedCardId === card.id ? 4 : 0}>
+                                                            <Radio value={card.id} colorScheme="blue" isChecked={selectedCardId === card.id}>
+                                                                <HStack>
+                                                                    <FaRegCreditCard />
+                                                                    <Text>
+                                                                        {card.brand.charAt(0).toUpperCase() + card.brand.slice(1)} •••• {card.last4}
+                                                                    </Text>
+                                                                </HStack>
+                                                            </Radio>
+                                                            <Text fontSize="sm" color="gray.500">
+                                                                {formatDate(card.paymentDate)}
+                                                            </Text>
+                                                        </HStack>
+
+                                                        <HStack justify="space-between" mt={2} p={2} bg="gray.50" borderRadius="md">
+                                                            <VStack align="start" spacing={0}>
+                                                                {/*<Text fontSize="sm" fontWeight="medium">Total paid:</Text>*/}
+                                                                <Text fontSize="sm" fontWeight="medium" color="gray.600">Available:</Text>
+                                                            </VStack>
+                                                            <VStack align="end" spacing={0}>
+                                                                {/*<Text fontSize="sm" fontWeight="semibold">${card.amount?.toFixed(2)}</Text>*/}
+                                                                <Text 
+                                                                    fontSize="sm" 
+                                                                    fontWeight="semibold" 
+                                                                    color={card.refundableAmount > 0 ? "green.500" : "red.500"}
+                                                                >
+                                                                    ${card.refundableAmount?.toFixed(2)}
+                                                                </Text>
+                                                            </VStack>
+                                                        </HStack>
+
+                                                        {selectedCardId === card.id && refundHistory.some(
+                                                            r => r.metadata?.paymentMethodId === selectedCardId || 
+                                                                r.metadata?.cardId === selectedCardId
+                                                        ) && (
+                                                            <Box mt={2} p={2} bg="gray.50" borderRadius="md">
+                                                                <Text fontWeight="semibold" fontSize="sm" mb={1}>Previous refunds</Text>
+                                                                {refundHistory
+                                                                    .filter(r => r.metadata?.paymentMethodId === selectedCardId || 
+                                                                        r.metadata?.cardId === selectedCardId)
+                                                                    .map((refund, idx) => (
+                                                                        <HStack key={idx} justify="space-between">
+                                                                            <Text fontSize="sm">
+                                                                                {formatDate(refund.created_at)}
+                                                                            </Text>
+                                                                            <Text fontSize="sm" color="red.500">
+                                                                                -${refund.amount.toFixed(2)}
+                                                                            </Text>
+                                                                        </HStack>
+                                                                    ))
+                                                                }
+                                                            </Box>
+                                                        )}
+                                                    </Box>
+                                                ))}
+                                            </VStack>
                                         ) : (
                                             <Text color="red.500">No card information found</Text>
                                         )}
@@ -846,6 +1332,13 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                         placeholder="Add a comment..."
                                     />
                                 </Box>
+
+                                {refundHistory.length > 0 && (
+                                    <RefundHistorySection 
+                                        refundHistory={refundHistory} 
+                                        isLoading={isLoadingTransactions} 
+                                    />
+                                )}
                             </VStack>
                         </Box>
 
@@ -922,7 +1415,33 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 <Box>
                                     <Text fontWeight="bold" mb={3}>Payment Summary</Text>
                                     <VStack align="stretch" spacing={2}>
-                                        {cardList.length > 0 && (
+                                        {cardTransactions.length > 0 ? (
+                                            <>
+                                                {cardTransactions.map((transaction, index) => (
+                                                    <React.Fragment key={transaction.id}>
+                                                        <HStack justify="space-between">
+                                                            <Text>
+                                                                Payment {transaction.cardDetails?.last4 ? `*${transaction.cardDetails.last4}` : ''} {formatDate(transaction.created_at)}
+                                                            </Text>
+                                                            <Text>${transaction.amount.toFixed(2)}</Text>
+                                                        </HStack>
+                                                        
+                                                        {refundHistory
+                                                            .filter(r => r.parent_transaction_id === transaction.id || 
+                                                                r.metadata?.originalTransactionId === transaction.id)
+                                                            .map((refund, idx) => (
+                                                                <HStack key={`refund-${idx}`} justify="space-between" color="red.500" pl={4}>
+                                                                    <Text fontSize="sm">
+                                                                        Refund {formatDate(refund.created_at)}
+                                                                    </Text>
+                                                                    <Text fontSize="sm">-${refund.amount.toFixed(2)}</Text>
+                                                                </HStack>
+                                                            ))
+                                                        }
+                                                    </React.Fragment>
+                                                ))}
+                                            </>
+                                        ) : cardList.length > 0 && (
                                             <>
                                                 <HStack justify="space-between">
                                                     <Text>
@@ -932,34 +1451,47 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                 </HStack>
                                             </>
                                         )}
-                                    </VStack>
-                                    
-                                    {(refundAmount !== undefined && amount < refundAmount) ? (
-                                        <>
+
+                                        {amount > 0 && (
                                             <HStack justify="space-between" color="blue.500">
-                                                <Text>
-                                                    Return Payment {formatDate(new Date().toISOString())} *{cardList[0]?.last4}
+                                                <Text fontSize="sm">
+                                                    {paymentMethod === 'credit_card' && selectedCardId && cardList.find(c => c.id === selectedCardId) ? 
+                                                        `Return Payment ${formatDate(new Date().toISOString())} *${cardList.find(c => c.id === selectedCardId)?.last4}` :
+                                                        `Return Payment ${formatDate(new Date().toISOString())} (${paymentMethod})`
+                                                    }
+                                                    {isRefundPartial && " (Partial)"}
                                                 </Text>
-                                                <Text>-${amount.toFixed(2)}</Text>
+                                                <Text fontSize="sm">-${amount.toFixed(2)}</Text>
                                             </HStack>
-                                            <HStack justify="space-between" mt={4} color="green.500">
-                                                <Text fontWeight="bold" fontSize="lg">Refund</Text>
-                                                <Text fontWeight="bold" fontSize="lg">${(refundAmount - amount).toFixed(2)}</Text>
-                                            </HStack>
-                                        </>
-                                    ) : (
-                                        <HStack justify="space-between" mt={2} color="blue.500">
-                                            <Text fontSize="sm">
-                                                Return Payment {formatDate(new Date().toISOString())}
-                                            </Text>
-                                            <Text fontSize="sm">-${amount.toFixed(2)}</Text>
+                                        )}
+
+                                        {paymentMethod === 'credit_card' && selectedTransaction && (
+                                            <>
+                                                <Divider my={1} />
+                                                <HStack justify="space-between" color={selectedTransaction.refundableAmount > 0 ? "green.500" : "red.500"}>
+                                                    <Text fontWeight="semibold">
+                                                        {selectedTransaction.refundableAmount > 0 ? "Refundable Balance" : "Not Refundable"}
+                                                    </Text>
+                                                    <Text fontWeight="semibold">
+                                                        ${selectedTransaction.refundableAmount?.toFixed(2)}
+                                                    </Text>
+                                                </HStack>
+                                            </>
+                                        )}
+                                        
+                                        <Divider my={1} />
+                                        <HStack justify="space-between" mt={4}>
+                                            <Text fontWeight="bold">Paid</Text>
+                                            <Text fontWeight="bold">${calculateTotalPrice().toFixed(2)}</Text>
                                         </HStack>
-                                    )}
-                                    
-                                    <HStack justify="space-between" mt={4}>
-                                        <Text fontWeight="bold">Paid</Text>
-                                        <Text fontWeight="bold">${calculateTotalPrice().toFixed(2)}</Text>
-                                    </HStack>
+
+                                        {/*{amount > 0 && (*/}
+                                        {/*    <HStack justify="space-between" color="blue.500">*/}
+                                        {/*        <Text fontWeight="semibold">After This Refund</Text>*/}
+                                        {/*        <Text fontWeight="semibold">${(calculateTotalPrice() - amount).toFixed(2)}</Text>*/}
+                                        {/*    </HStack>*/}
+                                        {/*)}*/}
+                                    </VStack>
                                 </Box>
                             </VStack>
                         </Box>

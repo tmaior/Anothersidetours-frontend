@@ -486,19 +486,24 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
                 const chargeTransactions = transactions.filter(
                     (t: any) => t.transaction_direction === 'charge' && 
-                    t.payment_status === 'completed' &&
-                    (t.payment_method?.toLowerCase() === 'credit card' || 
-                     t.payment_method?.toLowerCase() === 'card')
+                    t.payment_status === 'completed' || t.payment_status === 'paid'
                 );
                 
                 const refundTransactions = transactions.filter(
                     (t: any) => t.transaction_direction === 'refund' && 
                     t.payment_status === 'completed'
                 );
-                
+
                 setRefundHistory(refundTransactions);
 
-                const transactionsWithCardDetails = await Promise.all(chargeTransactions.map(async (transaction: any) => {
+                const creditCardTransactions = chargeTransactions.filter(
+                    (t: any) => (t.payment_method?.toLowerCase() === 'credit card' || 
+                                 t.payment_method?.toLowerCase() === 'card' ||
+                                 t.payment_method?.toLowerCase() === 'credit_card') &&
+                                (t.paymentMethodId || t.paymentIntentId || t.setupIntentId)
+                );
+
+                const transactionsWithCardDetails = await Promise.all(creditCardTransactions.map(async (transaction: any) => {
                     let cardDetails = null;
                     const paymentMethodId = transaction.paymentMethodId;
                     
@@ -512,8 +517,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                             if (cardResponse.data) {
                                 cardDetails = {
                                     id: paymentMethodId,
-                                    brand: cardResponse.data.brand,
-                                    last4: cardResponse.data.last4,
+                                    brand: cardResponse.data.brand || 'Card',
+                                    last4: cardResponse.data.last4 || '****',
                                     paymentDate: transaction.created_at,
                                     transactionId: transaction.id,
                                     amount: transaction.amount
@@ -647,7 +652,69 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         
         setAmount(numValue);
 
-        setIsRefundPartial(numValue < maxValue);
+        const isPartial = numValue < maxValue;
+        setIsRefundPartial(isPartial);
+        
+        if (isPartial && !isRefundPartial && selectedTransaction) {
+            const balanceAmount = selectedTransaction.amount - numValue;
+            toast({
+                title: 'Partial Refund Selected',
+                description: `A balance due of $${balanceAmount.toFixed(2)} will be created after processing.`,
+                status: 'info',
+                duration: 4000,
+                isClosable: true,
+            });
+        }
+    };
+
+    const createBalanceDueTransaction = async (originalTransaction, refundTransaction, refundAmount) => {
+        try {
+            const tenantId = booking.id.split('-')[1] || '';
+            const balanceDue = originalTransaction.amount - refundAmount;
+            
+            if (balanceDue <= 0) return null;
+            
+            const pendingChargeData = {
+                tenant_id: tenantId,
+                reservation_id: booking.id,
+                amount: balanceDue,
+                payment_status: 'pending',
+                payment_method: originalTransaction.payment_method,
+                transaction_type: 'CHARGE',
+                transaction_direction: 'charge',
+                description: 'Balance due after partial refund',
+                reference_number: `BD-${Date.now().toString().slice(-6)}`,
+                parent_transaction_id: refundTransaction.id,
+                is_price_adjustment: true,
+                metadata: {
+                    notifyCustomer: notifyCustomer,
+                    createdDate: new Date().toISOString(),
+                    partialRefundId: refundTransaction.id,
+                    originalTransactionId: originalTransaction.id,
+                    originalAmount: originalTransaction.amount,
+                    refundAmount: refundAmount,
+                    balanceDue: balanceDue,
+                    comment: comment || 'Partial refund balance due'
+                }
+            };
+            
+            const response = await axios.post(
+                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
+                pendingChargeData,
+                {
+                    withCredentials: true
+                }
+            );
+            
+            if (response.data) {
+                setBalanceDue(balanceDue);
+                return response.data;
+            }
+            return null;
+        } catch (error) {
+            console.error('Error creating balance due transaction:', error);
+            return null;
+        }
     };
 
     const handleSaveChanges = async () => {
@@ -704,7 +771,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                     .filter(t => 
                         (!selectedCardId || t.cardDetails?.id === selectedCardId) &&
                         t.transaction_direction === 'charge' &&
-                        t.payment_status === 'completed' &&
+                        (t.payment_status === 'completed' || t.payment_status === 'paid') &&
                         (t.refundableAmount || 0) > 0
                     )
                     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -716,6 +783,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
                 let remainingToRefund = amount;
                 let successfulRefunds = 0;
+                let balanceDueTransaction = null;
 
                 for (const tx of cardTxs) {
                     if (remainingToRefund <= 0) break;
@@ -790,13 +858,21 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 }
                             };
                             
-                            await axios.post(
+                            const refundTxResponse = await axios.post(
                                 `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
                                 transactionData,
                                 {
                                     withCredentials: true
                                 }
                             );
+                            
+                            if (!isFullRefund && isRefundPartial) {
+                                balanceDueTransaction = await createBalanceDueTransaction(
+                                    tx, 
+                                    refundTxResponse.data, 
+                                    refundFromTx
+                                );
+                            }
                             
                             successfulRefunds++;
                             remainingToRefund -= refundFromTx;
@@ -815,6 +891,24 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                         title: 'Partial refund processed',
                         description: `Just $${(amount - remainingToRefund).toFixed(2)} of the $${amount.toFixed(2)} requested could be refunded.`,
                         status: 'warning',
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                }
+
+                if (balanceDueTransaction) {
+                    toast({
+                        title: 'Partial Refund Processed',
+                        description: `Refund of $${amount.toFixed(2)} processed successfully. A balance due of $${balanceDueTransaction.amount.toFixed(2)} has been created.`,
+                        status: 'success',
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                } else {
+                    toast({
+                        title: 'Success',
+                        description: `Refund of $${amount.toFixed(2)} processed successfully!`,
+                        status: 'success',
                         duration: 5000,
                         isClosable: true,
                     });
@@ -930,13 +1024,6 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                 }
             }
 
-            toast({
-                title: 'Success',
-                description: `Refund of $${amount.toFixed(2)} processed successfully!`,
-                status: 'success',
-                duration: 5000,
-                isClosable: true,
-            });
             if (paymentMethod !== 'store_credit' || !generatedVoucher) {
                 onClose();
             }
@@ -1128,15 +1215,17 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                             </Text>
                                         )}
                                     </HStack>
-                                    <Input
-                                        value={amount === 0 ? '' : amount}
-                                        onChange={handleAmountChange}
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        max={selectedCard?.refundableAmount || maxRefundableAmount}
-                                        placeholder="$ 0.00"
-                                    />
+                                    <Flex>
+                                        <Input
+                                            value={amount === 0 ? '' : amount}
+                                            onChange={handleAmountChange}
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max={selectedCard?.refundableAmount || maxRefundableAmount}
+                                            placeholder="$ 0.00"
+                                        />
+                                    </Flex>
                                     <Text fontSize="sm" color="gray.600" mt={1}>
                                         {paymentMethod === 'credit_card' && selectedCard 
                                             ? `until $${selectedCard.refundableAmount?.toFixed(2)}`
@@ -1209,20 +1298,6 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
                                 {paymentMethod === 'credit_card' && hasOriginalCardPayment && (
                                     <Box>
-                                        {/*<HStack mb={2} justify="space-between">*/}
-                                        {/*    <Text mb={0}>Cartão de Crédito</Text>*/}
-                                        {/*    {selectedCardId && (*/}
-                                        {/*        <Button */}
-                                        {/*            size="xs" */}
-                                        {/*            colorScheme="gray" */}
-                                        {/*            variant="outline" */}
-                                        {/*            onClick={clearCardSelection}*/}
-                                        {/*        >*/}
-                                        {/*            Limpar seleção*/}
-                                        {/*        </Button>*/}
-                                        {/*    )}*/}
-                                        {/*</HStack>*/}
-                                        
                                         {!selectedCardId && cardList.length > 0 && (
                                             <Box p={3} mb={3} borderWidth="1px" borderRadius="md" borderColor="blue.200" bg="blue.50">
                                                 <Text fontSize="sm">
@@ -1269,11 +1344,9 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
                                                         <HStack justify="space-between" mt={2} p={2} bg="gray.50" borderRadius="md">
                                                             <VStack align="start" spacing={0}>
-                                                                {/*<Text fontSize="sm" fontWeight="medium">Total paid:</Text>*/}
                                                                 <Text fontSize="sm" fontWeight="medium" color="gray.600">Available:</Text>
                                                             </VStack>
                                                             <VStack align="end" spacing={0}>
-                                                                {/*<Text fontSize="sm" fontWeight="semibold">${card.amount?.toFixed(2)}</Text>*/}
                                                                 <Text 
                                                                     fontSize="sm" 
                                                                     fontWeight="semibold" 
@@ -1365,10 +1438,6 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                             <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
                                                         </HStack>
                                                     ))}
-                                                    {/*<HStack justify="space-between" mt={1}>*/}
-                                                    {/*    <Text fontWeight="semibold">Add-ons Subtotal</Text>*/}
-                                                    {/*    <Text fontWeight="semibold">${calculateAddonTotal().toFixed(2)}</Text>*/}
-                                                    {/*</HStack>*/}
                                                 </>
                                             )}
 
@@ -1484,13 +1553,6 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                             <Text fontWeight="bold">Paid</Text>
                                             <Text fontWeight="bold">${calculateTotalPrice().toFixed(2)}</Text>
                                         </HStack>
-
-                                        {/*{amount > 0 && (*/}
-                                        {/*    <HStack justify="space-between" color="blue.500">*/}
-                                        {/*        <Text fontWeight="semibold">After This Refund</Text>*/}
-                                        {/*        <Text fontWeight="semibold">${(calculateTotalPrice() - amount).toFixed(2)}</Text>*/}
-                                        {/*    </HStack>*/}
-                                        {/*)}*/}
                                     </VStack>
                                 </Box>
                             </VStack>

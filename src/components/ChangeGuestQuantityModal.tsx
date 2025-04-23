@@ -1094,57 +1094,7 @@ const CollectBalanceModal = ({isOpen, onClose, bookingChanges, booking}) => {
     };
 
     const handleCollectLater = async () => {
-        try {
-            const isRefund = bookingChanges?.isRefund || false;
-            const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payments/transaction`, {
-                    bookingId: booking.id,
-                    amount: bookingChanges.finalAmount,
-                    payment_method: 'LATER',
-                    type: isRefund ? 'GUEST_QUANTITY_REFUND' : 'GUEST_QUANTITY_CHANGE',
-                    transaction_direction: isRefund ? 'refund' : 'charge',
-                    notifyCustomer: false,
-                    metadata: {
-                        originalGuestQuantity: bookingChanges.originalGuestQuantity,
-                        newGuestQuantity: bookingChanges.newGuestQuantity,
-                        originalPrice: bookingChanges.originalPrice,
-                        newPrice: bookingChanges.newPrice,
-                        totalBalanceDue: bookingChanges.totalBalanceDue,
-                        isRefund: isRefund
-                    }
-                },
-                {
-                    withCredentials: true,
-                });
-            const bookingResponse = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`, {
-                    guestQuantity: bookingChanges.newGuestQuantity,
-                    total_price: bookingChanges.newPrice,
-                    status: booking.status
-                },
-                {
-                    withCredentials: true,
-                });
-
-            if (transactionResponse.data && bookingResponse.data) {
-                toast({
-                    title: "Success",
-                    description: "Booking updated. Balance will be collected later.",
-                    status: "success",
-                    duration: 5000,
-                    isClosable: true,
-                });
-                window.location.reload();
-                onClose();
-            }
-        } catch (error) {
-            console.error("Failed to update booking:", error);
-            toast({
-                title: "Error",
-                description: "Failed to update booking. Please try again.",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
-        }
+        onClose();
     };
 
     return (

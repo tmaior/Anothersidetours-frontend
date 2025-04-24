@@ -1,32 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 import {
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
-    Button,
+    Badge,
     Box,
-    Text,
-    Input,
-    VStack,
+    Button,
+    Checkbox,
+    CloseButton,
+    Divider,
+    Flex,
     HStack,
     Image,
-    Checkbox,
-    Select,
-    Textarea,
-    CloseButton,
-    Flex,
-    useToast,
+    Input,
+    Modal,
+    ModalBody,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
     Radio,
-    Divider,
-    Badge,
+    Select,
+    Text,
+    Textarea,
+    useToast,
+    VStack,
 } from '@chakra-ui/react';
-import { FaRegCreditCard } from 'react-icons/fa';
-import { BsCash, BsCheck2 } from 'react-icons/bs';
-import { LineItem } from './CustomLineItemsModal';
+import {FaRegCreditCard} from 'react-icons/fa';
+import {BsCash, BsCheck2} from 'react-icons/bs';
+import {LineItem} from './CustomLineItemsModal';
 
 interface CardDetails {
     id: string;
@@ -96,7 +96,7 @@ interface ReturnPaymentModalProps {
 const RefundHistorySection: React.FC<{
     refundHistory: PaymentTransactionData[];
     isLoading: boolean;
-}> = ({ refundHistory, isLoading }) => {
+}> = ({refundHistory, isLoading}) => {
     if (isLoading) {
         return <Text fontSize="sm">Loading refund history...</Text>;
     }
@@ -113,9 +113,9 @@ const RefundHistorySection: React.FC<{
                     <HStack key={idx} justify="space-between">
                         <VStack align="start" spacing={0}>
                             <Text fontSize="sm">
-                                {refund.payment_method === 'credit_card' ? 'Credit Card' : 
-                                 refund.payment_method === 'store_credit' ? 'Store Credit' : 
-                                 refund.payment_method?.charAt(0).toUpperCase() + refund.payment_method?.slice(1) || 'Unknown'}
+                                {refund.payment_method === 'credit_card' ? 'Credit Card' :
+                                    refund.payment_method === 'store_credit' ? 'Store Credit' :
+                                        refund.payment_method?.charAt(0).toUpperCase() + refund.payment_method?.slice(1) || 'Unknown'}
                             </Text>
                             <Text fontSize="xs" color="gray.500">
                                 {new Date(refund.created_at).toLocaleDateString('en-US', {
@@ -135,7 +135,7 @@ const RefundHistorySection: React.FC<{
                         </HStack>
                     </HStack>
                 ))}
-                <Divider my={1} />
+                <Divider my={1}/>
                 <HStack justify="space-between">
                     <Text fontWeight="semibold">Total Refunded</Text>
                     <Text fontWeight="semibold" color="red.500">
@@ -148,12 +148,12 @@ const RefundHistorySection: React.FC<{
 };
 
 const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
-    isOpen,
-    onClose,
-    booking,
-    refundAmount,
-    customLineItems = []
-}) => {
+                                                                   isOpen,
+                                                                   onClose,
+                                                                   booking,
+                                                                   refundAmount,
+                                                                   customLineItems = []
+                                                               }) => {
     const toast = useToast();
     const [amount, setAmount] = useState(refundAmount || booking?.total_price || 0);
     const [paymentMethod, setPaymentMethod] = useState('credit_card');
@@ -177,7 +177,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     const [guestQuantity, setGuestQuantity] = useState<number>(0);
     const [guestPrice, setGuestPrice] = useState<number>(0);
     const [pendingTransactions, setPendingTransactions] = useState([]);
-    const [generatedVoucher, setGeneratedVoucher] = useState<{code: string, amount: number} | null>(null);
+    const [generatedVoucher, setGeneratedVoucher] = useState<{ code: string, amount: number } | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
     const [paymentTransactions, setPaymentTransactions] = useState<PaymentTransactionData[]>([]);
@@ -256,17 +256,17 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                         }
                     );
                     const createTransaction = transactionsResponse.data?.find(
-                        (t: any) => t.transaction_type === 'CREATE' && 
-                        (t.payment_method?.toLowerCase() === 'credit card' || 
-                         t.payment_method?.toLowerCase() === 'card')
+                        (t: any) => t.transaction_type === 'CREATE' &&
+                            (t.payment_method?.toLowerCase() === 'credit card' ||
+                                t.payment_method?.toLowerCase() === 'card')
                     );
                     
                     if (createTransaction) {
                         setHasOriginalCardPayment(true);
                         setPaymentMethod('credit_card');
-                        const paymentMethodId = booking.paymentMethodId || 
-                                               createTransaction.payment_method_id ||
-                                               createTransaction.paymentMethodId;
+                        const paymentMethodId = booking.paymentMethodId ||
+                            createTransaction.payment_method_id ||
+                            createTransaction.paymentMethodId;
                         if (paymentMethodId) {
                             const response = await axios.get(
                                 `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`,
@@ -311,8 +311,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
-                    { withCredentials:true
-                        ,params: { payment_status: 'pending' } }
+                    {
+                        withCredentials: true
+                        , params: {payment_status: 'pending'}
+                    }
                 );
                 
                 if (response.data && response.data.length > 0) {
@@ -355,9 +357,9 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`,
-                {
-                    withCredentials:true
-                }
+                    {
+                        withCredentials: true
+                    }
                 );
 
                 if (response.data) {
@@ -394,11 +396,11 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
             try {
                 const [reservationAddonsResponse, allAddonsResponse] = await Promise.all([
-                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`,{
-                        withCredentials:true
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/reservation-addons/reservation-by/${booking.id}`, {
+                        withCredentials: true
                     }),
-                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`,{
-                        withCredentials:true
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/addons/byTourId/${tourId}`, {
+                        withCredentials: true
                     })
                 ]);
 
@@ -426,9 +428,9 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${tourId}`,
-                {
-                    withCredentials:true
-                }
+                    {
+                        withCredentials: true
+                    }
                 );
                 
                 if (response.data && response.data.length > 0) {
@@ -478,7 +480,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
-                    { withCredentials: true }
+                    {withCredentials: true}
                 );
                 
                 if (!response.data || response.data.length === 0) {
@@ -489,21 +491,21 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                 const transactions = response.data;
 
                 const chargeTransactions = transactions.filter(
-                    (t: any) => t.transaction_direction === 'charge' && 
-                    (t.payment_status === 'completed' || t.payment_status === 'paid')
+                    (t: any) => t.transaction_direction === 'charge' &&
+                        (t.payment_status === 'completed' || t.payment_status === 'paid')
                 );
-                
+
                 const refundTransactions = transactions.filter(
-                    (t: any) => t.transaction_direction === 'refund' && 
-                    t.payment_status === 'completed'
+                    (t: any) => t.transaction_direction === 'refund' &&
+                        t.payment_status === 'completed'
                 );
 
                 setRefundHistory(refundTransactions);
 
                 const creditCardTransactions = chargeTransactions.filter(
-                    (t: any) => (t.payment_method?.toLowerCase().includes('card') || 
-                                t.payment_method?.toLowerCase() === 'credit_card') &&
-                                (t.paymentMethodId || t.paymentIntentId || t.setupIntentId)
+                    (t: any) => (t.payment_method?.toLowerCase().includes('card') ||
+                            t.payment_method?.toLowerCase() === 'credit_card') &&
+                        (t.paymentMethodId || t.paymentIntentId || t.setupIntentId)
                 );
 
                 const transactionsWithCardDetails = await Promise.all(creditCardTransactions.map(async (transaction: any) => {
@@ -514,7 +516,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                         try {
                             const cardResponse = await axios.get(
                                 `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`,
-                                { withCredentials: true }
+                                {withCredentials: true}
                             );
                             
                             if (cardResponse.data) {
@@ -534,10 +536,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
                     const relatedRefunds = refundTransactions.filter(
                         (r: any) => r.metadata?.originalTransactionId === transaction.id ||
-                        r.parent_transaction_id === transaction.id
+                            r.parent_transaction_id === transaction.id
                     );
-                    
-                    const refundedAmount = transaction.refunded_amount || 
+
+                    const refundedAmount = transaction.refunded_amount ||
                         relatedRefunds.reduce((sum: number, refund: any) => sum + refund.amount, 0);
                     
                     let refundableAmount;
@@ -784,7 +786,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         try {
             if (paymentMethod === 'credit_card') {
                 const cardTxs = cardTransactions
-                    .filter(t => 
+                    .filter(t =>
                         (!selectedCardId || t.cardDetails?.id === selectedCardId) &&
                         t.transaction_direction === 'charge' &&
                         (t.payment_status === 'completed' || t.payment_status === 'paid') &&
@@ -831,7 +833,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                         const refundResponse = await axios.post(
                             `${process.env.NEXT_PUBLIC_API_URL}/refund`,
                             refundPayload,
-                            { 
+                            {
                                 withCredentials: true,
                                 headers: {
                                     'Content-Type': 'application/json'
@@ -884,8 +886,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                             
                             if (!isFullRefund && isRefundPartial) {
                                 balanceDueTransaction = await createBalanceDueTransaction(
-                                    tx, 
-                                    refundTxResponse.data, 
+                                    tx,
+                                    refundTxResponse.data,
                                     refundFromTx
                                 );
                             }
@@ -930,7 +932,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                     });
                 }
             } else {
-                const pendingRefundTx = pendingTransactions.find(tx => 
+                const pendingRefundTx = pendingTransactions.find(tx =>
                     tx.transaction_direction === 'refund' && Math.abs(tx.amount - amount) < 0.01
                 );
                 const tenantId = booking.id.split('-')[1] || '';
@@ -1155,8 +1157,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         setSelectedCard(card);
 
         const availableTransactions = cardTransactions
-            .filter(t => 
-                t.cardDetails?.id === card.id && 
+            .filter(t =>
+                t.cardDetails?.id === card.id &&
                 (t.refundableAmount || 0) > 0
             )
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -1188,7 +1190,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="6xl">
-            <ModalOverlay />
+            <ModalOverlay/>
             <ModalContent maxW="1000px">
                 <ModalHeader>
                     Return Payment Only
@@ -1243,7 +1245,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                         />
                                     </Flex>
                                     <Text fontSize="sm" color="gray.600" mt={1}>
-                                        {paymentMethod === 'credit_card' && selectedCard 
+                                        {paymentMethod === 'credit_card' && selectedCard
                                             ? `until $${selectedCard.refundableAmount?.toFixed(2)}`
                                             : paymentMethod === 'credit_card' && cardTransactions.length > 0
                                                 ? `until $${maxRefundableAmount.toFixed(2)} total on all cards`
@@ -1257,46 +1259,46 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                     <HStack spacing={2}>
                                         {hasOriginalCardPayment && (
                                             <Button
-                                                leftIcon={<FaRegCreditCard />}
+                                                leftIcon={<FaRegCreditCard/>}
                                                 variant={paymentMethod === 'credit_card' ? 'solid' : 'outline'}
                                                 borderColor={paymentMethod === 'credit_card' ? 'blue.500' : 'gray.200'}
                                                 bg={paymentMethod === 'credit_card' ? 'blue.50' : 'white'}
                                                 color={paymentMethod === 'credit_card' ? 'blue.700' : 'gray.700'}
-                                                _hover={{ bg: paymentMethod === 'credit_card' ? 'blue.100' : 'gray.100' }}
+                                                _hover={{bg: paymentMethod === 'credit_card' ? 'blue.100' : 'gray.100'}}
                                                 onClick={() => setPaymentMethod('credit_card')}
                                             >
                                                 Credit Card
                                             </Button>
                                         )}
                                         <Button
-                                            leftIcon={<BsCash />}
+                                            leftIcon={<BsCash/>}
                                             variant={paymentMethod === 'cash' ? 'solid' : 'outline'}
                                             borderColor={paymentMethod === 'cash' ? 'blue.500' : 'gray.200'}
                                             bg={paymentMethod === 'cash' ? 'blue.50' : 'white'}
                                             color={paymentMethod === 'cash' ? 'blue.700' : 'gray.700'}
-                                            _hover={{ bg: paymentMethod === 'cash' ? 'blue.100' : 'gray.100' }}
+                                            _hover={{bg: paymentMethod === 'cash' ? 'blue.100' : 'gray.100'}}
                                             onClick={() => setPaymentMethod('cash')}
                                         >
                                             Cash
                                         </Button>
                                         <Button
-                                            leftIcon={<BsCheck2 />}
+                                            leftIcon={<BsCheck2/>}
                                             variant={paymentMethod === 'store_credit' ? 'solid' : 'outline'}
                                             borderColor={paymentMethod === 'store_credit' ? 'blue.500' : 'gray.200'}
                                             bg={paymentMethod === 'store_credit' ? 'blue.50' : 'white'}
                                             color={paymentMethod === 'store_credit' ? 'blue.700' : 'gray.700'}
-                                            _hover={{ bg: paymentMethod === 'store_credit' ? 'blue.100' : 'gray.100' }}
+                                            _hover={{bg: paymentMethod === 'store_credit' ? 'blue.100' : 'gray.100'}}
                                             onClick={() => setPaymentMethod('store_credit')}
                                         >
                                             Store Credit
                                         </Button>
                                         <Button
-                                            leftIcon={<BsCheck2 />}
+                                            leftIcon={<BsCheck2/>}
                                             variant={paymentMethod === 'other' ? 'solid' : 'outline'}
                                             borderColor={paymentMethod === 'other' ? 'blue.500' : 'gray.200'}
                                             bg={paymentMethod === 'other' ? 'blue.50' : 'white'}
                                             color={paymentMethod === 'other' ? 'blue.700' : 'gray.700'}
-                                            _hover={{ bg: paymentMethod === 'other' ? 'blue.100' : 'gray.100' }}
+                                            _hover={{bg: paymentMethod === 'other' ? 'blue.100' : 'gray.100'}}
                                             onClick={() => setPaymentMethod('other')}
                                         >
                                             Other
@@ -1304,9 +1306,11 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                     </HStack>
                                     
                                     {paymentMethod === 'store_credit' && (
-                                        <Box mt={2} p={3} bg="green.50" borderRadius="md" borderColor="green.200" borderWidth="1px">
+                                        <Box mt={2} p={3} bg="green.50" borderRadius="md" borderColor="green.200"
+                                             borderWidth="1px">
                                             <Text fontSize="sm" color="green.700">
-                                                A voucher code will be generated for the refund amount. The customer can use this voucher for future bookings.
+                                                A voucher code will be generated for the refund amount. The customer can
+                                                use this voucher for future bookings.
                                             </Text>
                                         </Box>
                                     )}
@@ -1315,9 +1319,11 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 {paymentMethod === 'credit_card' && hasOriginalCardPayment && (
                                     <Box>
                                         {!selectedCardId && cardList.length > 0 && (
-                                            <Box p={3} mb={3} borderWidth="1px" borderRadius="md" borderColor="blue.200" bg="blue.50">
+                                            <Box p={3} mb={3} borderWidth="1px" borderRadius="md" borderColor="blue.200"
+                                                 bg="blue.50">
                                                 <Text fontSize="sm">
-                                                    Select a card to process the refund or choose another payment method.
+                                                    Select a card to process the refund or choose another payment
+                                                    method.
                                                 </Text>
                                             </Box>
                                         )}
@@ -1329,10 +1335,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                         ) : cardList.length > 0 ? (
                                             <VStack spacing={2} align="stretch">
                                                 {cardList.map((card) => (
-                                                    <Box 
-                                                        key={card.id} 
-                                                        p={3} 
-                                                        borderWidth="1px" 
+                                                    <Box
+                                                        key={card.id}
+                                                        p={3}
+                                                        borderWidth="1px"
                                                         borderRadius="md"
                                                         borderColor={selectedCardId === card.id ? "blue.500" : "gray.200"}
                                                         bg={selectedCardId === card.id ? "blue.50" : "white"}
@@ -1344,10 +1350,12 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                             boxShadow: "sm"
                                                         }}
                                                     >
-                                                        <HStack justify="space-between" mb={2} mt={selectedCardId === card.id ? 4 : 0}>
-                                                            <Radio value={card.id} colorScheme="blue" isChecked={selectedCardId === card.id}>
+                                                        <HStack justify="space-between" mb={2}
+                                                                mt={selectedCardId === card.id ? 4 : 0}>
+                                                            <Radio value={card.id} colorScheme="blue"
+                                                                   isChecked={selectedCardId === card.id}>
                                                                 <HStack>
-                                                                    <FaRegCreditCard />
+                                                                    <FaRegCreditCard/>
                                                                     <Text>
                                                                         {card.brand.charAt(0).toUpperCase() + card.brand.slice(1)} •••• {card.last4}
                                                                     </Text>
@@ -1358,14 +1366,16 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                             </Text>
                                                         </HStack>
 
-                                                        <HStack justify="space-between" mt={2} p={2} bg="gray.50" borderRadius="md">
+                                                        <HStack justify="space-between" mt={2} p={2} bg="gray.50"
+                                                                borderRadius="md">
                                                             <VStack align="start" spacing={0}>
-                                                                <Text fontSize="sm" fontWeight="medium" color="gray.600">Available:</Text>
+                                                                <Text fontSize="sm" fontWeight="medium"
+                                                                      color="gray.600">Available:</Text>
                                                             </VStack>
                                                             <VStack align="end" spacing={0}>
-                                                                <Text 
-                                                                    fontSize="sm" 
-                                                                    fontWeight="semibold" 
+                                                                <Text
+                                                                    fontSize="sm"
+                                                                    fontWeight="semibold"
                                                                     color={(card.refundableAmount > 0 || (card.refundedAmount === 0 && card.amount > 0)) ? "green.500" : "red.500"}
                                                                 >
                                                                     ${card.refundableAmount?.toFixed(2)}
@@ -1374,13 +1384,14 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                         </HStack>
 
                                                         {selectedCardId === card.id && refundHistory.some(
-                                                            r => r.metadata?.paymentMethodId === selectedCardId || 
+                                                            r => r.metadata?.paymentMethodId === selectedCardId ||
                                                                 r.metadata?.cardId === selectedCardId
                                                         ) && (
                                                             <Box mt={2} p={2} bg="gray.50" borderRadius="md">
-                                                                <Text fontWeight="semibold" fontSize="sm" mb={1}>Previous refunds</Text>
+                                                                <Text fontWeight="semibold" fontSize="sm" mb={1}>Previous
+                                                                    refunds</Text>
                                                                 {refundHistory
-                                                                    .filter(r => r.metadata?.paymentMethodId === selectedCardId || 
+                                                                    .filter(r => r.metadata?.paymentMethodId === selectedCardId ||
                                                                         r.metadata?.cardId === selectedCardId)
                                                                     .map((refund, idx) => (
                                                                         <HStack key={idx} justify="space-between">
@@ -1423,9 +1434,9 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 </Box>
 
                                 {refundHistory.length > 0 && (
-                                    <RefundHistorySection 
-                                        refundHistory={refundHistory} 
-                                        isLoading={isLoadingTransactions} 
+                                    <RefundHistorySection
+                                        refundHistory={refundHistory}
+                                        isLoading={isLoadingTransactions}
                                     />
                                 )}
                             </VStack>
@@ -1473,7 +1484,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                     ))}
                                                     <HStack justify="space-between" mt={1}>
                                                         <Text fontWeight="semibold">Custom Items Subtotal</Text>
-                                                        <Text fontWeight="semibold">${calculateCustomItemsTotal().toFixed(2)}</Text>
+                                                        <Text
+                                                            fontWeight="semibold">${calculateCustomItemsTotal().toFixed(2)}</Text>
                                                     </HStack>
                                                 </>
                                             )}
@@ -1484,7 +1496,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                             </HStack>
 
                                             {!isLoadingPendingBalance && pendingBalance !== 0 && (
-                                                <HStack justify="space-between" mt={2} color={pendingBalance > 0 ? "red.500" : "green.500"}>
+                                                <HStack justify="space-between" mt={2}
+                                                        color={pendingBalance > 0 ? "red.500" : "green.500"}>
                                                     <Text fontWeight="semibold">
                                                         {pendingBalance < 0 ? "Refund Due" : "Balance Due"}
                                                     </Text>
@@ -1502,94 +1515,75 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                     <VStack align="stretch" spacing={2}>
                                         {!isLoadingTransactions ? (
                                             <>
-                                                {cardList.map((card) => {
-                                                    const cardTxs = cardTransactions.filter(tx =>
-                                                        tx.cardDetails?.id === card.id
-                                                    );
-
-                                                    return (
-                                                        <Box
-                                                            key={card.id}
-                                                            borderWidth="1px"
-                                                            borderRadius="md"
-                                                            p={3}
-                                                            mb={2}
-                                                            borderColor="gray.200"
-                                                        >
-                                                            <HStack justify="space-between" mb={2}>
+                                                {cardTransactions
+                                                    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                                                    .map((transaction) => (
+                                                        <React.Fragment key={transaction.id}>
+                                                            <HStack justify="space-between">
                                                                 <HStack>
-                                                                    <FaRegCreditCard />
-                                                                    <Text fontWeight="medium">
-                                                                        {card.brand.charAt(0).toUpperCase() + card.brand.slice(1)} •••• {card.last4}
+                                                                    <FaRegCreditCard/>
+                                                                    <Text>
+                                                                        {transaction.payment_method?.charAt(0).toUpperCase() + transaction.payment_method?.slice(1)}
+                                                                        {transaction.cardDetails?.last4 ? ` •••• ${transaction.cardDetails.last4}` : ''}
                                                                     </Text>
                                                                 </HStack>
-                                                                <Text fontWeight="medium">${card.amount.toFixed(2)}</Text>
+                                                                <Text>${transaction.amount.toFixed(2)}</Text>
+                                                            </HStack>
+                                                            <HStack justify="space-between" pl={4}>
+                                                                <Text fontSize="sm" color="gray.600">
+                                                                    Payment {formatDate(transaction.created_at)}
+                                                                </Text>
+                                                                {/*<Text fontSize="sm">${transaction.amount.toFixed(2)}</Text>*/}
                                                             </HStack>
 
-                                                            {cardTxs.map((transaction, index) => (
-                                                                <React.Fragment key={transaction.id}>
-                                                                    <HStack justify="space-between" pl={4}>
+                                                            {transaction.relatedRefunds && transaction.relatedRefunds.length > 0 &&
+                                                                transaction.relatedRefunds.map((refund, idx) => (
+                                                                    <HStack key={`refund-${idx}`}
+                                                                            justify="space-between" color="red.500"
+                                                                            pl={4}>
                                                                         <Text fontSize="sm">
-                                                                            Payment {formatDate(transaction.created_at)}
+                                                                            Refund {formatDate(refund.created_at)}
+                                                                            {refund.payment_method && ` (${refund.payment_method})`}
                                                                         </Text>
-                                                                        <Text fontSize="sm">${transaction.amount.toFixed(2)}</Text>
+                                                                        <Text
+                                                                            fontSize="sm">-${refund.amount.toFixed(2)}</Text>
                                                                     </HStack>
+                                                                ))
+                                                            }
 
-                                                                    {transaction.relatedRefunds && transaction.relatedRefunds.length > 0 &&
-                                                                        transaction.relatedRefunds.map((refund, idx) => (
-                                                                            <HStack key={`refund-${idx}`} justify="space-between" color="red.500" pl={8}>
-                                                                                <Text fontSize="sm">
-                                                                                    Refund {formatDate(refund.created_at)}
-                                                                                    {refund.payment_method && ` (${refund.payment_method})`}
-                                                                                </Text>
-                                                                                <Text fontSize="sm">-${refund.amount.toFixed(2)}</Text>
-                                                                            </HStack>
-                                                                        ))
-                                                                    }
-                                                                </React.Fragment>
-                                                            ))}
-
-                                                            {card.refundedAmount > 0 && (
-                                                                <HStack justify="space-between" mt={2} pt={1} borderTopWidth="1px" borderColor="gray.200">
-                                                                    <Text fontSize="sm" fontWeight="medium">Refunded:</Text>
-                                                                    <Text fontSize="sm" fontWeight="medium" color="red.500">-${card.refundedAmount.toFixed(2)}</Text>
+                                                            {transaction.refundedAmount > 0 && (
+                                                                <HStack justify="space-between" pl={4} mt={1} mb={2}
+                                                                        color="red.500">
+                                                                    <Text fontSize="sm">Total refunded:</Text>
+                                                                    <Text
+                                                                        fontSize="sm">-${transaction.refundedAmount.toFixed(2)}</Text>
                                                                 </HStack>
                                                             )}
 
-                                                            <HStack justify="space-between" mt={card.refundedAmount > 0 ? 1 : 2} pt={card.refundedAmount > 0 ? 0 : 1} borderTopWidth={card.refundedAmount > 0 ? 0 : "1px"} borderColor="gray.200">
-                                                                <Text fontSize="sm" fontWeight="medium">Available for refund:</Text>
-                                                                <Text
-                                                                    fontSize="sm"
-                                                                    fontWeight="medium"
-                                                                    color={(card.refundableAmount > 0 || (card.refundedAmount === 0 && card.amount > 0)) ? "green.500" : "red.500"}
-                                                                >
-                                                                    ${card.refundableAmount.toFixed(2)}
-                                                                </Text>
-                                                            </HStack>
-                                                        </Box>
-                                                    );
-                                                })}
+                                                            <Divider my={2}/>
+                                                        </React.Fragment>
+                                                    ))}
 
-                                                {amount > 0 && (
-                                                    <HStack justify="space-between" color="blue.500" mt={2}>
-                                                        <Text fontSize="sm" fontWeight="medium">
-                                                            {paymentMethod === 'credit_card' && selectedCardId && cardList.find(c => c.id === selectedCardId) ?
-                                                                `Return Payment ${formatDate(new Date().toISOString())} *${cardList.find(c => c.id === selectedCardId)?.last4}` :
-                                                                `Return Payment ${formatDate(new Date().toISOString())} (${paymentMethod})`
-                                                            }
-                                                            {isRefundPartial && " (Partial)"}
-                                                        </Text>
-                                                        <Text fontSize="sm" fontWeight="medium">-${amount.toFixed(2)}</Text>
-                                                    </HStack>
-                                                )}
+                                                {/*{amount > 0 && (*/}
+                                                {/*    <HStack justify="space-between" color="blue.500" mt={2}>*/}
+                                                {/*        <Text fontSize="sm" fontWeight="medium">*/}
+                                                {/*            {paymentMethod === 'credit_card' && selectedCardId && cardList.find(c => c.id === selectedCardId) ? */}
+                                                {/*                `Return Payment ${formatDate(new Date().toISOString())} *${cardList.find(c => c.id === selectedCardId)?.last4}` :*/}
+                                                {/*                `Return Payment ${formatDate(new Date().toISOString())} (${paymentMethod})`*/}
+                                                {/*            }*/}
+                                                {/*            {isRefundPartial && " (Partial)"}*/}
+                                                {/*        </Text>*/}
+                                                {/*        <Text fontSize="sm" fontWeight="medium">-${amount.toFixed(2)}</Text>*/}
+                                                {/*    </HStack>*/}
+                                                {/*)}*/}
 
-                                                <Divider my={2} />
+                                                <Divider my={2}/>
 
-                                                {cardList.reduce((sum, card) => sum + (card.refundedAmount || 0), 0) > 0 && (
+                                                {refundHistory.length > 0 && (
                                                     <HStack justify="space-between" color="red.500">
                                                         <Text fontWeight="bold">Total Refunded</Text>
                                                         <Text fontWeight="bold">
-                                                            -${cardList.reduce((sum, card) => sum + (card.refundedAmount || 0), 0).toFixed(2)}
+                                                            -${refundHistory.reduce((sum, r) => sum + r.amount, 0).toFixed(2)}
                                                         </Text>
                                                     </HStack>
                                                 )}
@@ -1623,11 +1617,11 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                     </HStack>
                                     <HStack justify="space-between">
                                         <Text>Voucher Code:</Text>
-                                        <Box 
-                                            bg="white" 
-                                            p={2} 
-                                            borderRadius="md" 
-                                            fontFamily="monospace" 
+                                        <Box
+                                            bg="white"
+                                            p={2}
+                                            borderRadius="md"
+                                            fontFamily="monospace"
                                             fontWeight="bold"
                                             fontSize="lg"
                                             boxShadow="sm"
@@ -1655,8 +1649,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 Notify Customer
                             </Checkbox>
                             <Button variant="ghost" onClick={onClose}>Skip</Button>
-                            <Button 
-                                colorScheme="blue" 
+                            <Button
+                                colorScheme="blue"
                                 onClick={handleSaveChanges}
                                 isLoading={isProcessing}
                             >

@@ -182,6 +182,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
     const [paymentTransactions, setPaymentTransactions] = useState<PaymentTransactionData[]>([]);
     const [cardTransactions, setCardTransactions] = useState<PaymentTransactionData[]>([]);
+    const [cardToTransactionMap, setCardToTransactionMap] = useState<Record<string, any[]>>({});
     const [isRefundPartial, setIsRefundPartial] = useState<boolean>(false);
     const [maxRefundableAmount, setMaxRefundableAmount] = useState<number>(0);
     const [balanceDue, setBalanceDue] = useState<number>(0);
@@ -565,6 +566,24 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
                 setCardTransactions(transactionsWithCardDetails);
 
+                const cardToTransactionMap = {};
+                transactionsWithCardDetails.forEach(tx => {
+                    if (tx.cardDetails && tx.cardDetails.id) {
+                        if (!cardToTransactionMap[tx.cardDetails.id]) {
+                            cardToTransactionMap[tx.cardDetails.id] = [];
+                        }
+                        cardToTransactionMap[tx.cardDetails.id].push({
+                            transactionId: tx.id,
+                            paymentIntentId: tx.paymentIntentId || tx.stripe_payment_id,
+                            amount: tx.amount,
+                            refundableAmount: tx.refundableAmount || 0,
+                            refundedAmount: tx.refundedAmount || 0
+                        });
+                    }
+                });
+
+                setCardToTransactionMap(cardToTransactionMap);
+
                 const uniqueCardIds = new Set();
                 const uniqueCards = [];
                 
@@ -685,56 +704,6 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         }
     };
 
-    const createBalanceDueTransaction = async (originalTransaction, refundTransaction, refundAmount) => {
-        try {
-            const tenantId = booking.id.split('-')[1] || '';
-            const balanceDue = originalTransaction.amount - refundAmount;
-            
-            if (balanceDue <= 0) return null;
-            
-            const pendingChargeData = {
-                tenant_id: tenantId,
-                reservation_id: booking.id,
-                amount: balanceDue,
-                payment_status: 'pending',
-                payment_method: originalTransaction.payment_method,
-                transaction_type: 'CHARGE',
-                transaction_direction: 'charge',
-                description: 'Balance due after partial refund',
-                reference_number: `BD-${Date.now().toString().slice(-6)}`,
-                parent_transaction_id: refundTransaction.id,
-                is_price_adjustment: true,
-                metadata: {
-                    notifyCustomer: notifyCustomer,
-                    createdDate: new Date().toISOString(),
-                    partialRefundId: refundTransaction.id,
-                    originalTransactionId: originalTransaction.id,
-                    originalAmount: originalTransaction.amount,
-                    refundAmount: refundAmount,
-                    balanceDue: balanceDue,
-                    comment: comment || 'Partial refund balance due'
-                }
-            };
-            
-            const response = await axios.post(
-                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
-                pendingChargeData,
-                {
-                    withCredentials: true
-                }
-            );
-            
-            if (response.data) {
-                setBalanceDue(balanceDue);
-                return response.data;
-            }
-            return null;
-        } catch (error) {
-            console.error('Error creating balance due transaction:', error);
-            return null;
-        }
-    };
-
     const handleSaveChanges = async () => {
         if (paymentMethod === 'credit_card' && !selectedCardId && cardList.length > 0) {
             toast({
@@ -781,6 +750,40 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             });
             return;
         }
+
+        let tenantId = '';
+        try {
+            const reservationResponse = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/reservations/${booking.id}`,
+                { withCredentials: true }
+            );
+            
+            if (reservationResponse.data && reservationResponse.data.tenantId) {
+                tenantId = reservationResponse.data.tenantId;
+            } else if (reservationResponse.data && reservationResponse.data.tenant_id) {
+                tenantId = reservationResponse.data.tenant_id;
+            }
+        } catch (err) {
+            console.error('Error fetching reservation details:', err);
+        }
+
+        if (!tenantId) {
+            const parts = booking.id.split('-');
+            if (parts.length > 1) {
+                tenantId = parts[1];
+            }
+        }
+        
+        if (!tenantId) {
+            toast({
+                title: 'Error',
+                description: 'Could not determine tenant ID for this booking',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
         
         setIsProcessing(true);
         try {
@@ -815,7 +818,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                     const refundPayload = {
                         paymentIntentId: paymentIntentId,
                         paymentMethodId: paymentMethodId,
-                        amount: Math.round(refundFromTx * 100),
+                        amount: refundFromTx,
                         originalTransactionId: tx.id
                     };
                     
@@ -828,7 +831,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                         console.error(`Skipping transaction ${tx.id} - Invalid Payment ID (setup intent)`);
                         continue;
                     }
-                    
+
                     try {
                         const refundResponse = await axios.post(
                             `${process.env.NEXT_PUBLIC_API_URL}/refund`,
@@ -842,7 +845,6 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                         );
 
                         if (refundResponse.data && refundResponse.data.success) {
-                            const tenantId = booking.id.split('-')[1] || '';
                             const isFullRefund = Math.abs(tx.refundableAmount - refundFromTx) < 0.01;
                             const transactionData = {
                                 tenant_id: tenantId,
@@ -852,7 +854,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 payment_method: 'credit_card',
                                 transaction_type: 'REFUND',
                                 transaction_direction: 'refund',
-                                description: `Refund to credit card ${isFullRefund ? '' : ' (partial)'}`,
+                                description: `Refund to credit card`,
                                 reference_number: refundResponse.data.id || `RF-${Date.now().toString().slice(-6)}`,
                                 paymentIntentId: refundResponse.data.id,
                                 paymentMethodId: paymentMethodId,
@@ -872,7 +874,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                     originalAmount: tx.amount,
                                     refundTotal: amount,
                                     refundPortion: refundFromTx,
-                                    remaining: (tx.refundableAmount || 0) - refundFromTx
+                                    remaining: (tx.refundableAmount || 0) - refundFromTx,
+                                    tenantId: tenantId
                                 }
                             };
                             
@@ -883,20 +886,38 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                     withCredentials: true
                                 }
                             );
-                            
-                            if (!isFullRefund && isRefundPartial) {
-                                balanceDueTransaction = await createBalanceDueTransaction(
-                                    tx,
-                                    refundTxResponse.data,
-                                    refundFromTx
-                                );
-                            }
+
+                            balanceDueTransaction = await createBalanceDueTransaction(
+                                tx,
+                                refundTxResponse.data,
+                                refundFromTx
+                            );
                             
                             successfulRefunds++;
                             remainingToRefund -= refundFromTx;
                         }
                     } catch (err) {
                         console.error(`Error processing refund for transaction ${tx.id}:`, err);
+                        console.error('Error details:', {
+                            message: err.message,
+                            response: err.response?.data,
+                            status: err.response?.status,
+                            transaction: {
+                                id: tx.id,
+                                paymentIntentId: paymentIntentId,
+                                paymentMethodId: paymentMethodId,
+                                amount: refundFromTx,
+                                refundableAmount: tx.refundableAmount
+                            }
+                        });
+
+                        toast({
+                            title: 'Refund Error',
+                            description: `Failed to process refund for transaction ${tx.id.slice(0, 8)}...: ${err.response?.data?.message || err.message}`,
+                            status: 'error',
+                            duration: 7000,
+                            isClosable: true,
+                        });
                     }
                 }
                 
@@ -916,7 +937,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
                 if (balanceDueTransaction) {
                     toast({
-                        title: 'Partial Refund Processed',
+                        title: 'Refund Processed',
                         description: `Refund of $${amount.toFixed(2)} processed successfully. A balance due of $${balanceDueTransaction.amount.toFixed(2)} has been created.`,
                         status: 'success',
                         duration: 5000,
@@ -1052,22 +1073,136 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                 statusText: error.response?.statusText,
                 data: error.response?.data,
                 url: error.config?.url,
+                method: error.config?.method,
+                params: error.config?.params,
+                headers: error.config?.headers,
+                requestData: error.config?.data,
                 paymentIntentId: selectedTransaction?.paymentIntentId || booking?.paymentIntentId,
                 setupIntentId: booking?.setupIntentId,
-                PaymentTransaction: booking?.PaymentTransaction,
-                refundAmount: amount
+                selectedCardId: selectedCardId,
+                amount: amount
             });
 
-            const errorMessage = error.response?.data?.message || 'Failed to process refund';
+            let errorMessage = 'Failed to process refund';
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            if (!errorMessage.includes('refund') && !errorMessage.includes('Refund')) {
+                errorMessage = `Failed to process refund: ${errorMessage}`;
+            }
+
             toast({
-                title: 'Erro',
+                title: 'Error',
                 description: errorMessage,
                 status: 'error',
-                duration: 5000,
+                duration: 7000,
                 isClosable: true,
             });
         } finally {
             setIsProcessing(false);
+        }
+    };
+
+    const createBalanceDueTransaction = async (originalTransaction, refundTransaction, refundAmount) => {
+        try {
+            if (!originalTransaction || !refundTransaction) {
+                console.error('Missing transaction data for balance due creation');
+                return null;
+            }
+
+            let tenantId = '';
+
+            if (originalTransaction.tenant_id) {
+                tenantId = originalTransaction.tenant_id;
+            } 
+            else if (refundTransaction.tenant_id) {
+                tenantId = refundTransaction.tenant_id;
+            }
+            else if (booking.id) {
+                const parts = booking.id.split('-');
+                if (parts.length > 1) {
+                    tenantId = parts[1];
+                }
+            }
+            
+            if (!tenantId) {
+                console.error('Could not determine valid tenant_id for balance due transaction');
+                toast({
+                    title: 'Error',
+                    description: 'Failed to create balance due: Missing tenant information',
+                    status: 'error',
+                    duration: 5000,
+                    isClosable: true,
+                });
+                return null;
+            }
+
+            const balanceDue = refundAmount;
+            
+            if (balanceDue <= 0) {
+                console.error('Cannot create balance due with zero or negative amount');
+                return null;
+            }
+            
+            const pendingChargeData = {
+                tenant_id: tenantId,
+                reservation_id: booking.id,
+                amount: balanceDue,
+                payment_status: 'pending',
+                payment_method: originalTransaction.payment_method,
+                transaction_type: 'CHARGE',
+                transaction_direction: 'charge',
+                description: 'Balance due equal to refund amount',
+                reference_number: `BD-${Date.now().toString().slice(-6)}`,
+                parent_transaction_id: refundTransaction.id,
+                is_price_adjustment: true,
+                metadata: {
+                    notifyCustomer: notifyCustomer,
+                    createdDate: new Date().toISOString(),
+                    partialRefundId: refundTransaction.id,
+                    originalTransactionId: originalTransaction.id,
+                    originalAmount: originalTransaction.amount,
+                    refundAmount: refundAmount,
+                    balanceDue: balanceDue,
+                    comment: comment || 'Balance due for refund'
+                }
+            };
+
+            const response = await axios.post(
+                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`,
+                pendingChargeData,
+                {
+                    withCredentials: true
+                }
+            );
+            
+            if (response.data) {
+                setBalanceDue(balanceDue);
+                return response.data;
+            } else {
+                console.error('No data returned from balance due transaction creation');
+                return null;
+            }
+        } catch (error) {
+            console.error('Error creating balance due transaction:', error);
+            console.error('Error details:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+            
+            toast({
+                title: 'Error',
+                description: `Failed to create balance due: ${error.response?.data?.message || error.message}`,
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+            
+            return null;
         }
     };
 
@@ -1156,15 +1291,17 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         setSelectedCardId(card.id);
         setSelectedCard(card);
 
-        const availableTransactions = cardTransactions
-            .filter(t =>
+        const mappedTransactions = cardToTransactionMap[card.id] || [];
+
+        const cardTxs = cardTransactions
+            .filter(t => 
                 t.cardDetails?.id === card.id &&
                 (t.refundableAmount || 0) > 0
             )
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
             
-        if (availableTransactions.length > 0) {
-            setSelectedTransaction(availableTransactions[0]);
+        if (cardTxs.length > 0) {
+            setSelectedTransaction(cardTxs[0]);
             if (amount > card.refundableAmount) {
                 setAmount(card.refundableAmount);
             }

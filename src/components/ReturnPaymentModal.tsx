@@ -676,14 +676,24 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
         let maxValue = calculateTotalPrice();
         
-        if (paymentMethod === 'credit_card' && selectedTransaction) {
-            maxValue = Math.min(maxValue, selectedTransaction.refundableAmount || 0);
-        } else if (paymentMethod === 'credit_card') {
-            maxValue = Math.min(maxValue, maxRefundableAmount);
+        if (paymentMethod === 'credit_card') {
+            if (selectedCardId) {
+                const selectedCard = cardList.find(c => c.id === selectedCardId);
+                maxValue = Math.min(maxValue, selectedCard?.refundableAmount || 0);
+            } else {
+                maxValue = Math.min(maxValue, maxRefundableAmount);
+            }
         }
         
         if (numValue > maxValue) {
             setAmount(maxValue);
+            toast({
+                title: 'Maximum Value Exceeded',
+                description: `The maximum refundable amount is $${maxValue.toFixed(2)}`,
+                status: 'warning',
+                duration: 3000,
+                isClosable: true,
+            });
             return;
         }
         
@@ -694,13 +704,15 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         
         if (isPartial && !isRefundPartial && selectedTransaction) {
             const balanceAmount = selectedTransaction.amount - numValue;
-            toast({
-                title: 'Partial Refund Selected',
-                description: `A balance due of $${balanceAmount.toFixed(2)} will be created after processing.`,
-                status: 'info',
-                duration: 4000,
-                isClosable: true,
-            });
+            if (balanceAmount > 0) {
+                toast({
+                    title: 'Partial Refund Selected',
+                    description: `A balance due of $${balanceAmount.toFixed(2)} will be created after processing.`,
+                    status: 'info',
+                    duration: 4000,
+                    isClosable: true,
+                });
+            }
         }
     };
 
@@ -738,7 +750,6 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
             return;
         }
         
-
         const selectedCard = cardList.find(c => c.id === selectedCardId);
         if (paymentMethod === 'credit_card' && selectedCard && amount > selectedCard.refundableAmount) {
             toast({
@@ -788,33 +799,63 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
         setIsProcessing(true);
         try {
             if (paymentMethod === 'credit_card') {
-                const cardTxs = cardTransactions
+                let relevantTransactions = cardTransactions
                     .filter(t =>
                         (!selectedCardId || t.cardDetails?.id === selectedCardId) &&
                         t.transaction_direction === 'charge' &&
                         (t.payment_status === 'completed' || t.payment_status === 'paid') &&
                         (t.refundableAmount || 0) > 0
-                    )
-                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                    );
                 
-                if (cardTxs.length === 0) {
+                if (relevantTransactions.length === 0) {
                     throw new Error('No transactions available for refund were found.' +
-                        (selectedCardId ? 'on this card.' : '.'));
+                        (selectedCardId ? ' on this card.' : '.'));
                 }
+
+                relevantTransactions.sort((a, b) => a.refundableAmount - b.refundableAmount);
+                
+                if (relevantTransactions.some(t => Math.abs(t.refundableAmount - amount) < 0.01)) {
+                    const exactMatchTx = relevantTransactions.find(t => 
+                        Math.abs(t.refundableAmount - amount) < 0.01
+                    );
+                    
+                    if (exactMatchTx) {
+                        relevantTransactions = [exactMatchTx];
+                    }
+                }
+
+                console.log('Refund strategy - using transactions in this order:', 
+                    relevantTransactions.map(t => ({
+                        id: t.id,
+                        amount: t.amount,
+                        refundableAmount: t.refundableAmount
+                    }))
+                );
 
                 let remainingToRefund = amount;
                 let successfulRefunds = 0;
                 let balanceDueTransaction = null;
+                let refundTransactions: Array<{id: string, amount: number, originalId: string}> = [];
 
-                for (const tx of cardTxs) {
+                for (const tx of relevantTransactions) {
                     if (remainingToRefund <= 0) break;
 
                     const refundFromTx = Math.min(remainingToRefund, tx.refundableAmount || 0);
                     
                     if (refundFromTx <= 0) continue;
                     const paymentIntentId = tx.paymentIntentId || tx.stripe_payment_id;
-                    const paymentMethodId = selectedCardId;
+                    const paymentMethodId = selectedCardId || tx.cardDetails?.id;
                     
+                    if (!paymentIntentId || paymentIntentId.trim() === '') {
+                        console.error(`Skipping transaction ${tx.id} - Empty Payment ID`);
+                        continue;
+                    }
+                    
+                    if (paymentIntentId.startsWith('seti_')) {
+                        console.error(`Skipping transaction ${tx.id} - Invalid Payment ID (setup intent)`);
+                        continue;
+                    }
+
                     const refundPayload = {
                         paymentIntentId: paymentIntentId,
                         paymentMethodId: paymentMethodId,
@@ -822,16 +863,6 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                         originalTransactionId: tx.id
                     };
                     
-                    if (!refundPayload.paymentIntentId || refundPayload.paymentIntentId.trim() === '') {
-                        console.error(`Skipping transaction ${tx.id} - Empty Payment ID`);
-                        continue;
-                    }
-                    
-                    if (refundPayload.paymentIntentId.startsWith('seti_')) {
-                        console.error(`Skipping transaction ${tx.id} - Invalid Payment ID (setup intent)`);
-                        continue;
-                    }
-
                     try {
                         const refundResponse = await axios.post(
                             `${process.env.NEXT_PUBLIC_API_URL}/refund`,
@@ -887,21 +918,31 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 }
                             );
 
-                            balanceDueTransaction = await createBalanceDueTransaction(
+                            const newBalanceDueTransaction = await createBalanceDueTransaction(
                                 tx,
                                 refundTxResponse.data,
                                 refundFromTx
                             );
                             
+                            if (newBalanceDueTransaction) {
+                                balanceDueTransaction = newBalanceDueTransaction;
+                            }
+                            
+                            refundTransactions.push({
+                                id: refundTxResponse.data.id,
+                                amount: refundFromTx,
+                                originalId: tx.id
+                            });
+                            
                             successfulRefunds++;
                             remainingToRefund -= refundFromTx;
                         }
-                    } catch (err) {
-                        console.error(`Error processing refund for transaction ${tx.id}:`, err);
+                    } catch (error) {
+                        console.error(`Error processing refund for transaction ${tx.id}:`, error);
                         console.error('Error details:', {
-                            message: err.message,
-                            response: err.response?.data,
-                            status: err.response?.status,
+                            message: error.message,
+                            response: error.response?.data,
+                            status: error.response?.status,
                             transaction: {
                                 id: tx.id,
                                 paymentIntentId: paymentIntentId,
@@ -913,7 +954,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
 
                         toast({
                             title: 'Refund Error',
-                            description: `Failed to process refund for transaction ${tx.id.slice(0, 8)}...: ${err.response?.data?.message || err.message}`,
+                            description: `Failed to process refund for transaction ${tx.id.slice(0, 8)}...: ${error.response?.data?.message || error.message}`,
                             status: 'error',
                             duration: 7000,
                             isClosable: true,
@@ -1363,7 +1404,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                             <VStack spacing={4} align="stretch">
                                 <Box>
                                     <HStack mb={2} justify="space-between">
-                                        <Text>Valor</Text>
+                                        <Text>Amount</Text>
                                         {selectedCard && (
                                             <Text fontSize="sm" color="blue.600">
                                                 Maximum available: ${selectedCard.refundableAmount?.toFixed(2)}

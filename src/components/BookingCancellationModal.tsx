@@ -1162,9 +1162,12 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                     ) : (
                                         <Flex>
                                             <Input
-                                                type="number"
-                                                value={refundAmount > 0 ? refundAmount.toFixed(2) : '0.00'}
+                                                value={refundAmount === 0 ? '' : refundAmount}
                                                 onChange={handleAmountChange}
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                max={selectedCard?.refundableAmount || maxRefundableAmount || calculateTotalPrice()}
                                                 placeholder="$ 0.00"
                                                 bg="white"
                                             />

@@ -49,6 +49,17 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
     const [isCalculatingTotal, setIsCalculatingTotal] = useState(true);
     const toast = useToast();
 
+    const [cardList, setCardList] = useState([]);
+    const [selectedCardId, setSelectedCardId] = useState(null);
+    const [selectedCard, setSelectedCard] = useState(null);
+    const [cardTransactions, setCardTransactions] = useState([]);
+    const [cardToTransactionMap, setCardToTransactionMap] = useState({});
+    const [paymentTransactions, setPaymentTransactions] = useState([]);
+    const [selectedTransaction, setSelectedTransaction] = useState(null);
+    const [maxRefundableAmount, setMaxRefundableAmount] = useState(0);
+    const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
+    const [refundHistory, setRefundHistory] = useState([]);
+
     const ALREADY_CANCELED_TOAST_ID = 'already-canceled-toast';
     const ALREADY_REFUNDED_TOAST_ID = 'already-refunded-toast';
     const NO_TRANSACTION_TOAST_ID = 'no-transaction-toast';
@@ -87,7 +98,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
             setAllAddons([]);
             setCustomItems([]);
             
-            fetchOriginalTransaction();
+            fetchAllPaymentTransactions();
             fetchReservationDetails()
                 .then(() => {
                     setTimeout(() => {
@@ -100,6 +111,15 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 });
         }
     }, [isOpen, booking?.id]);
+
+    useEffect(() => {
+        if (selectedCardId && cardList.length > 0) {
+            const card = cardList.find(c => c.id === selectedCardId);
+            if (card) {
+                setSelectedCard(card);
+            }
+        }
+    }, [selectedCardId, cardList]);
 
     const fetchOriginalTransaction = async () => {
         try {
@@ -174,6 +194,192 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 isClosable: true,
             });
         } finally {
+            setLoadingCardInfo(false);
+        }
+    };
+
+    const fetchAllPaymentTransactions = async () => {
+        if (!booking?.id || !isOpen) return;
+        
+        setIsLoadingTransactions(true);
+        try {
+            const response = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${booking.id}`,
+                {withCredentials: true}
+            );
+            
+            if (!response.data || response.data.length === 0) {
+                setIsLoadingTransactions(false);
+                return;
+            }
+            
+            const transactions = response.data;
+
+            const chargeTransactions = transactions.filter(
+                (t) => t.transaction_direction === 'charge' &&
+                    (t.payment_status === 'completed' || t.payment_status === 'paid')
+            );
+
+            const refundTransactions = transactions.filter(
+                (t) => t.transaction_direction === 'refund' &&
+                    t.payment_status === 'completed'
+            );
+
+            setRefundHistory(refundTransactions);
+
+            const creditCardTransactions = chargeTransactions.filter(
+                (t) => (t.payment_method?.toLowerCase().includes('card') ||
+                        t.payment_method?.toLowerCase() === 'credit_card') &&
+                    (t.paymentMethodId || t.paymentIntentId || t.setupIntentId)
+            );
+
+            const transactionsWithCardDetails = await Promise.all(creditCardTransactions.map(async (transaction) => {
+                let cardDetails = null;
+                const paymentMethodId = transaction.paymentMethodId;
+                
+                if (paymentMethodId) {
+                    try {
+                        const cardResponse = await axios.get(
+                            `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`,
+                            {withCredentials: true}
+                        );
+                        
+                        if (cardResponse.data) {
+                            cardDetails = {
+                                id: paymentMethodId,
+                                brand: cardResponse.data.brand || 'Card',
+                                last4: cardResponse.data.last4 || '****',
+                                paymentDate: transaction.created_at,
+                                transactionId: transaction.id,
+                                amount: transaction.amount
+                            };
+                        }
+                    } catch (err) {
+                        console.error('Error fetching card details:', err);
+                    }
+                }
+
+                if (!cardDetails && transaction.metadata && transaction.metadata.cardInfo) {
+                    const metaCardInfo = typeof transaction.metadata === 'string' 
+                        ? JSON.parse(transaction.metadata).cardInfo 
+                        : transaction.metadata.cardInfo;
+                    
+                    if (metaCardInfo) {
+                        cardDetails = {
+                            id: metaCardInfo.id || transaction.paymentMethodId || `card_${Math.random().toString(36).substring(2, 15)}`,
+                            brand: metaCardInfo.brand || 'Card',
+                            last4: metaCardInfo.last4 || '****',
+                            paymentDate: transaction.created_at,
+                            transactionId: transaction.id,
+                            amount: transaction.amount
+                        };
+                    }
+                }
+
+                const relatedRefunds = refundTransactions.filter(
+                    (r) => r.metadata?.originalTransactionId === transaction.id ||
+                        r.parent_transaction_id === transaction.id
+                );
+
+                const refundedAmount = transaction.refunded_amount ||
+                    relatedRefunds.reduce((sum, refund) => sum + refund.amount, 0);
+                
+                let refundableAmount;
+                if (transaction.available_refund_amount !== undefined) {
+                    refundableAmount = transaction.available_refund_amount;
+                } else if (refundedAmount === 0 && transaction.amount > 0) {
+                    refundableAmount = transaction.amount;
+                } else {
+                    refundableAmount = Math.max(0, transaction.amount - refundedAmount);
+                }
+                
+                return {
+                    ...transaction,
+                    cardDetails,
+                    refundableAmount,
+                    refundedAmount,
+                    hasBeenRefunded: refundedAmount > 0,
+                    fullyRefunded: refundableAmount === 0,
+                    partiallyRefunded: refundedAmount > 0 && refundableAmount > 0,
+                    relatedRefunds
+                };
+            }));
+
+            setCardTransactions(transactionsWithCardDetails);
+
+            const cardToTransactionMap = {};
+            transactionsWithCardDetails.forEach(tx => {
+                if (tx.cardDetails && tx.cardDetails.id) {
+                    if (!cardToTransactionMap[tx.cardDetails.id]) {
+                        cardToTransactionMap[tx.cardDetails.id] = [];
+                    }
+                    cardToTransactionMap[tx.cardDetails.id].push({
+                        transactionId: tx.id,
+                        paymentIntentId: tx.paymentIntentId || tx.stripe_payment_id,
+                        amount: tx.amount,
+                        refundableAmount: tx.refundableAmount || 0,
+                        refundedAmount: tx.refundedAmount || 0
+                    });
+                }
+            });
+
+            setCardToTransactionMap(cardToTransactionMap);
+
+            const uniqueCardIds = new Set();
+            const uniqueCards = [];
+            
+            for (const tx of transactionsWithCardDetails) {
+                if (tx.cardDetails && !uniqueCardIds.has(tx.cardDetails.id)) {
+                    uniqueCardIds.add(tx.cardDetails.id);
+
+                    const cardTransactions = transactionsWithCardDetails.filter(
+                        t => t.cardDetails?.id === tx.cardDetails.id
+                    );
+                    
+                    const totalAmount = cardTransactions.reduce(
+                        (sum, t) => sum + t.amount, 0
+                    );
+                    
+                    const totalRefundable = cardTransactions.reduce(
+                        (sum, t) => sum + (t.refundableAmount || 0), 0
+                    );
+
+                    const totalRefunded = cardTransactions.reduce(
+                        (sum, t) => sum + (t.refundedAmount || 0), 0
+                    );
+                    
+                    uniqueCards.push({
+                        ...tx.cardDetails,
+                        amount: totalAmount,
+                        refundableAmount: totalRefundable > 0 ? totalRefundable : totalAmount,
+                        refundedAmount: totalRefunded
+                    });
+                }
+            }
+            
+            if (uniqueCards.length > 0) {
+                setCardList(uniqueCards);
+                setSelectedCardId(uniqueCards[0].id);
+                setPaymentMethod("Credit Card");
+
+                const totalRefundable = transactionsWithCardDetails.reduce(
+                    (sum, t) => sum + (t.refundableAmount || 0), 0
+                );
+                setMaxRefundableAmount(totalRefundable > 0 ? totalRefundable : transactionsWithCardDetails.reduce((sum, t) => sum + t.amount, 0));
+
+                const firstCardTransactions = transactionsWithCardDetails.filter(
+                    t => t.cardDetails?.id === uniqueCards[0].id
+                );
+                if (firstCardTransactions.length > 0) {
+                    setSelectedTransaction(firstCardTransactions[0]);
+                }
+            }
+            
+            setPaymentTransactions(transactions);
+        } catch (error) {
+            console.error('Error fetching payment transactions:', error);
+        } finally {
+            setIsLoadingTransactions(false);
             setLoadingCardInfo(false);
         }
     };
@@ -389,6 +595,72 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
         });
     };
 
+    const handleCardSelection = (card) => {
+        if (selectedCardId === card.id) {
+            clearCardSelection();
+            return;
+        }
+
+        setSelectedCardId(card.id);
+        setSelectedCard(card);
+
+        const cardTxs = cardTransactions
+            .filter(t => 
+                t.cardDetails?.id === card.id &&
+                (t.refundableAmount || 0) > 0
+            )
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            
+        if (cardTxs.length > 0) {
+            setSelectedTransaction(cardTxs[0]);
+            
+            const totalRefundable = card.refundableAmount || 0;
+            
+            if (refundAmount > totalRefundable && totalRefundable > 0) {
+                setRefundAmount(totalRefundable);
+            }
+        }
+    };
+
+    const clearCardSelection = () => {
+        setSelectedCardId(null);
+        setSelectedCard(null);
+        setSelectedTransaction(null);
+        setRefundAmount(calculateTotalPrice());
+    };
+
+    const handleAmountChange = (e) => {
+        const inputValue = e.target.value;
+        if (inputValue === '') {
+            setRefundAmount(0);
+            return;
+        }
+        const cleanValue = inputValue.replace(/[^\d.]/g, '');
+        const parts = cleanValue.split('.');
+        if (parts.length > 2) {
+            return;
+        }
+        const numValue = parseFloat(cleanValue);
+        if (isNaN(numValue)) {
+            setRefundAmount(0);
+            return;
+        }
+
+        let maxValue = calculateTotalPrice();
+        
+        if (paymentMethod === 'Credit Card' && selectedCard) {
+            maxValue = Math.min(maxValue, selectedCard.refundableAmount || 0);
+        } else if (paymentMethod === 'Credit Card') {
+            maxValue = Math.min(maxValue, maxRefundableAmount);
+        }
+        
+        if (numValue > maxValue) {
+            setRefundAmount(maxValue);
+        } else {
+            setRefundAmount(numValue);
+        }
+    };
+
     const handleSaveChanges = async () => {
         try {
             const finalRefundAmount = refundAmount > 0 ? refundAmount : calculateTotalPrice();
@@ -459,7 +731,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
             }
 
             if (paymentMethod === 'Credit Card') {
-                if (!originalTransaction) {
+                if (!originalTransaction && !selectedTransaction) {
                     toast.close(NO_TRANSACTION_TOAST_ID);
                     toast({
                         id: NO_TRANSACTION_TOAST_ID,
@@ -472,8 +744,10 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     setIsSubmitting(false);
                     return;
                 }
-                const paymentIntentId = originalTransaction.paymentIntentId ||
-                    originalTransaction.stripe_payment_id;
+
+                const transaction = selectedTransaction || originalTransaction;
+                const paymentIntentId = transaction.paymentIntentId ||
+                    transaction.stripe_payment_id;
 
                 if (!paymentIntentId) {
                     toast.close(NO_PAYMENT_INTENT_TOAST_ID);
@@ -492,7 +766,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 try {
                     const refundPayload = {
                         paymentIntentId: paymentIntentId,
-                        paymentMethodId: originalTransaction.paymentMethodId,
+                        paymentMethodId: transaction.paymentMethodId,
                         amount: finalRefundAmount
                     };
 
@@ -514,11 +788,13 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                             }
                         }
                     );
-                    const tenantId = booking.tenantId || originalTransaction.tenant_id;
+                    const tenantId = booking.tenantId || transaction.tenant_id;
 
                     if (!tenantId) {
                         throw new Error('Tenant ID is missing. Cannot create refund transaction.');
                     }
+
+                    const cardInfoToUse = selectedCard || cardInfo;
 
                     await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
                             tenant_id: tenantId,
@@ -532,15 +808,16 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                             reference_number: `RF-${Date.now().toString().slice(-6)}`,
                             stripe_payment_id: paymentIntentId,
                             paymentIntentId: paymentIntentId,
+                            parent_transaction_id: transaction.id,
                             metadata: {
                                 originalPrice: calculateTotalPrice(),
                                 refundAmount: finalRefundAmount,
                                 comment: comment,
                                 refundDate: new Date().toISOString(),
-                                cardInfo: cardInfo,
-                                originalTransactionId: originalTransaction.id,
+                                cardInfo: cardInfoToUse,
+                                originalTransactionId: transaction.id,
                                 notifyCustomer: notifyCustomer,
-                                paymentMethodId: originalTransaction.paymentMethodId
+                                paymentMethodId: transaction.paymentMethodId
                             }
                         },
                         {
@@ -883,23 +1160,30 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                             <Text>Calculating total refund amount...</Text>
                                         </Flex>
                                     ) : (
-                                        <Input
-                                            type="number"
-                                            value={refundAmount > 0 ? refundAmount.toFixed(2) : '0.00'}
-                                            isReadOnly={true}
-                                            placeholder="$ 0.00"
-                                            bg="gray.100"
-                                        />
+                                        <Flex>
+                                            <Input
+                                                type="number"
+                                                value={refundAmount > 0 ? refundAmount.toFixed(2) : '0.00'}
+                                                onChange={handleAmountChange}
+                                                placeholder="$ 0.00"
+                                                bg="white"
+                                            />
+                                        </Flex>
                                     )}
                                     <Text fontSize="sm" mt={1}>
-                                        Full refund of ${calculateTotalPrice().toFixed(2)}
+                                        {paymentMethod === 'Credit Card' && selectedCard
+                                            ? `Maximum refund available: $${selectedCard.refundableAmount?.toFixed(2)}`
+                                            : paymentMethod === 'Credit Card' && cardTransactions.length > 0
+                                                ? `Maximum refund available: $${maxRefundableAmount.toFixed(2)}`
+                                                : `Full refund of $${calculateTotalPrice().toFixed(2)}`
+                                        }
                                     </Text>
                                 </Box>
 
                                 <Box w="full">
                                     <Text mb={2}>Payment Method</Text>
                                     <HStack spacing={3}>
-                                        {originalTransaction ? (
+                                        {cardList.length > 0 ? (
                                             <Button
                                                 variant={paymentMethod === "Credit Card" ? "solid" : "outline"}
                                                 onClick={() => setPaymentMethod("Credit Card")}
@@ -961,11 +1245,56 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
                                 {paymentMethod === 'Credit Card' && (
                                     <Box w="full" mt={2} mb={4}>
-                                        {loadingCardInfo ? (
+                                        {isLoadingTransactions || loadingCardInfo ? (
                                             <Flex justify="center" py={2} borderWidth="1px" borderRadius="md" p={3}>
                                                 <Spinner size="sm" mr={2}/>
                                                 <Text>Loading card information...</Text>
                                             </Flex>
+                                        ) : cardList && cardList.length > 0 ? (
+                                            <VStack spacing={3} align="stretch">
+                                                <Text fontWeight="medium">Select a card for refund:</Text>
+                                                {cardList.map(card => (
+                                                    <Box
+                                                        key={card.id}
+                                                        borderWidth="1px"
+                                                        borderRadius="md"
+                                                        p={3}
+                                                        bg={selectedCardId === card.id ? "blue.50" : "white"}
+                                                        borderColor={selectedCardId === card.id ? "blue.500" : "gray.200"}
+                                                        _hover={{ borderColor: "blue.300", cursor: "pointer" }}
+                                                        onClick={() => handleCardSelection(card)}
+                                                    >
+                                                        <Flex align="center" justify="space-between">
+                                                            <Flex align="center">
+                                                                {card.brand?.toLowerCase() === 'visa' ? (
+                                                                    <Icon as={FaCcVisa} boxSize="24px" color="blue.600" mr={2}/>
+                                                                ) : card.brand?.toLowerCase() === 'mastercard' ? (
+                                                                    <Icon as={FaCcMastercard} boxSize="24px" color="red.500" mr={2}/>
+                                                                ) : card.brand?.toLowerCase() === 'amex' ? (
+                                                                    <Icon as={FaCcAmex} boxSize="24px" color="blue.500" mr={2}/>
+                                                                ) : card.brand?.toLowerCase() === 'discover' ? (
+                                                                    <Icon as={FaCcDiscover} boxSize="24px" color="orange.500" mr={2}/>
+                                                                ) : (
+                                                                    <Icon as={FaRegCreditCard} boxSize="20px" mr={2}/>
+                                                                )}
+                                                                <Text fontWeight="medium">
+                                                                    {card.brand || 'Card'} •••• {card.last4}
+                                                                </Text>
+                                                            </Flex>
+                                                            <VStack align="flex-end" spacing={0}>
+                                                                <Text fontSize="sm" fontWeight="bold">
+                                                                    ${card.refundableAmount?.toFixed(2)} available
+                                                                </Text>
+                                                                {card.refundedAmount > 0 && (
+                                                                    <Text fontSize="xs" color="gray.500">
+                                                                        ${card.refundedAmount.toFixed(2)} already refunded
+                                                                    </Text>
+                                                                )}
+                                                            </VStack>
+                                                        </Flex>
+                                                    </Box>
+                                                ))}
+                                            </VStack>
                                         ) : cardInfo ? (
                                             <Box
                                                 borderWidth="1px"

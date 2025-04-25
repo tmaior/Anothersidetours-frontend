@@ -102,60 +102,6 @@ interface ReturnPaymentModalProps {
     customLineItems?: LineItem[];
 }
 
-const RefundHistorySection: React.FC<{
-    refundHistory: PaymentTransactionData[];
-    isLoading: boolean;
-}> = ({refundHistory, isLoading}) => {
-    if (isLoading) {
-        return <Text fontSize="sm">Loading refund history...</Text>;
-    }
-    
-    if (refundHistory.length === 0) {
-        return null;
-    }
-    
-    return (
-        <Box mt={4} p={3} borderWidth="1px" borderRadius="md" borderColor="gray.200">
-            <Text fontWeight="bold" mb={2}>Refund History</Text>
-            <VStack spacing={1} align="stretch">
-                {refundHistory.map((refund, idx) => (
-                    <HStack key={idx} justify="space-between">
-                        <VStack align="start" spacing={0}>
-                            <Text fontSize="sm">
-                                {refund.payment_method === 'credit_card' ? 'Credit Card' :
-                                    refund.payment_method === 'store_credit' ? 'Store Credit' :
-                                        refund.payment_method?.charAt(0).toUpperCase() + refund.payment_method?.slice(1) || 'Unknown'}
-                            </Text>
-                            <Text fontSize="xs" color="gray.500">
-                                {new Date(refund.created_at).toLocaleDateString('en-US', {
-                                    month: 'numeric',
-                                    day: 'numeric',
-                                    year: 'numeric'
-                                })}
-                            </Text>
-                        </VStack>
-                        <HStack>
-                            {refund.metadata?.isPartial && (
-                                <Badge colorScheme="blue" variant="subtle">Partial</Badge>
-                            )}
-                            <Text fontWeight="semibold" color="red.500">
-                                -${refund.amount.toFixed(2)}
-                            </Text>
-                        </HStack>
-                    </HStack>
-                ))}
-                <Divider my={1}/>
-                <HStack justify="space-between">
-                    <Text fontWeight="semibold">Total Refunded</Text>
-                    <Text fontWeight="semibold" color="red.500">
-                        ${refundHistory.reduce((total, r) => total + r.amount, 0).toFixed(2)}
-                    </Text>
-                </HStack>
-            </VStack>
-        </Box>
-    );
-};
-
 const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                                    isOpen,
                                                                    onClose,
@@ -1625,13 +1571,6 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                         placeholder="Add a comment..."
                                     />
                                 </Box>
-
-                                {refundHistory.length > 0 && (
-                                    <RefundHistorySection
-                                        refundHistory={refundHistory}
-                                        isLoading={isLoadingTransactions}
-                                    />
-                                )}
                             </VStack>
                         </Box>
 
@@ -1708,83 +1647,42 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                     <VStack align="stretch" spacing={2}>
                                         {!isLoadingTransactions ? (
                                             <>
-                                                {cardTransactions
-                                                    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                                                {paymentTransactions
+                                                    .filter(tx => 
+                                                        (tx.transaction_direction === 'charge' || tx.transaction_direction === 'refund') && 
+                                                        (tx.payment_status === 'completed' || tx.payment_status === 'paid')
+                                                    )
+                                                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                                                     .map((transaction) => (
-                                                        <React.Fragment key={transaction.id}>
-                                                            <HStack justify="space-between">
-                                                                <HStack>
-                                                                    <FaRegCreditCard/>
-                                                                    <Text>
-                                                                        {transaction.payment_method?.charAt(0).toUpperCase() + transaction.payment_method?.slice(1)}
-                                                                        {transaction.cardDetails?.last4 ? ` •••• ${transaction.cardDetails.last4}` : ''}
-                                                                    </Text>
-                                                                </HStack>
-                                                                <Text>${transaction.amount.toFixed(2)}</Text>
-                                                            </HStack>
-                                                            <HStack justify="space-between" pl={4}>
-                                                                <Text fontSize="sm" color="gray.600">
-                                                                    Payment {formatDate(transaction.created_at)}
+                                                        <HStack key={transaction.id} justify="space-between">
+                                                            <HStack>
+                                                                <Text>
+                                                                    {transaction.transaction_direction === 'refund' ? 'Refund' : 'Payment'}
+                                                                    {transaction.payment_method?.toLowerCase().includes('card') ? 
+                                                                        ` *${transaction.cardDetails?.last4 || '4242'}` :
+                                                                        ` ${transaction.payment_method?.charAt(0).toUpperCase() + transaction.payment_method?.slice(1) || ''}`
+                                                                    } 
+                                                                    {formatDate(transaction.created_at)}
                                                                 </Text>
-                                                                {/*<Text fontSize="sm">${transaction.amount.toFixed(2)}</Text>*/}
                                                             </HStack>
-
-                                                            {transaction.relatedRefunds && transaction.relatedRefunds.length > 0 &&
-                                                                transaction.relatedRefunds.map((refund, idx) => (
-                                                                    <HStack key={`refund-${idx}`}
-                                                                            justify="space-between" color="red.500"
-                                                                            pl={4}>
-                                                                        <Text fontSize="sm">
-                                                                            Refund {formatDate(refund.created_at)}
-                                                                            {refund.payment_method && ` (${refund.payment_method})`}
-                                                                        </Text>
-                                                                        <Text
-                                                                            fontSize="sm">-${refund.amount.toFixed(2)}</Text>
-                                                                    </HStack>
-                                                                ))
-                                                            }
-
-                                                            {transaction.refundedAmount > 0 && (
-                                                                <HStack justify="space-between" pl={4} mt={1} mb={2}
-                                                                        color="red.500">
-                                                                    <Text fontSize="sm">Total refunded:</Text>
-                                                                    <Text
-                                                                        fontSize="sm">-${transaction.refundedAmount.toFixed(2)}</Text>
-                                                                </HStack>
-                                                            )}
-
-                                                            <Divider my={2}/>
-                                                        </React.Fragment>
+                                                            <Text color={transaction.transaction_direction === 'refund' ? "red.500" : "inherit"}>
+                                                                {transaction.transaction_direction === 'refund' ? '-' : ''}${transaction.amount.toFixed(2)}
+                                                            </Text>
+                                                        </HStack>
                                                     ))}
 
                                                 {/*{amount > 0 && (*/}
-                                                {/*    <HStack justify="space-between" color="blue.500" mt={2}>*/}
-                                                {/*        <Text fontSize="sm" fontWeight="medium">*/}
-                                                {/*            {paymentMethod === 'credit_card' && selectedCardId && cardList.find(c => c.id === selectedCardId) ? */}
-                                                {/*                `Return Payment ${formatDate(new Date().toISOString())} *${cardList.find(c => c.id === selectedCardId)?.last4}` :*/}
-                                                {/*                `Return Payment ${formatDate(new Date().toISOString())} (${paymentMethod})`*/}
-                                                {/*            }*/}
-                                                {/*            {isRefundPartial && " (Partial)"}*/}
-                                                {/*        </Text>*/}
-                                                {/*        <Text fontSize="sm" fontWeight="medium">-${amount.toFixed(2)}</Text>*/}
+                                                {/*    <HStack justify="space-between" color={paymentMethod === 'credit_card' ? "red.500" : "blue.500"} mt={2}>*/}
+                                                {/*        /!*<Text fontSize="sm" fontWeight="medium">*!/*/}
+                                                {/*        /!*    Refund {paymentMethod === 'credit_card' && selectedCardId && cardList.find(c => c.id === selectedCardId) ? *!/*/}
+                                                {/*        /!*        `*${cardList.find(c => c.id === selectedCardId)?.last4}` :*!/*/}
+                                                {/*        /!*        `${paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}`*!/*/}
+                                                {/*        /!*    }*!/*/}
+                                                {/*        /!*    /!*{formatDate(new Date().toISOString())}*!/*!/*/}
+                                                {/*        /!*</Text>*!/*/}
+                                                {/*        /!*<Text fontSize="sm" fontWeight="medium">-${amount.toFixed(2)}</Text>*!/*/}
                                                 {/*    </HStack>*/}
                                                 {/*)}*/}
-
-                                                <Divider my={2}/>
-
-                                                {refundHistory.length > 0 && (
-                                                    <HStack justify="space-between" color="red.500">
-                                                        <Text fontWeight="bold">Total Refunded</Text>
-                                                        <Text fontWeight="bold">
-                                                            -${refundHistory.reduce((sum, r) => sum + r.amount, 0).toFixed(2)}
-                                                        </Text>
-                                                    </HStack>
-                                                )}
-
-                                                <HStack justify="space-between" mt={1}>
-                                                    <Text fontWeight="bold">Paid</Text>
-                                                    <Text fontWeight="bold">${calculateTotalPrice().toFixed(2)}</Text>
-                                                </HStack>
                                             </>
                                         ) : (
                                             <Text fontSize="sm" color="gray.500">Loading payment information...</Text>

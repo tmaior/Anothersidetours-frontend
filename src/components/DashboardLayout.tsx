@@ -23,7 +23,14 @@ import {
     Textarea,
     useDisclosure,
     useToast,
-    VStack
+    VStack,
+    IconButton,
+    Drawer,
+    DrawerBody,
+    DrawerCloseButton,
+    DrawerContent,
+    DrawerOverlay,
+    useBreakpointValue
 } from "@chakra-ui/react";
 import {useRouter} from "next/router";
 import React, {useEffect, useRef, useState} from "react";
@@ -37,7 +44,7 @@ import {FaHandshake} from "react-icons/fa";
 import {GiSettingsKnobs} from "react-icons/gi";
 import {VscGraph} from "react-icons/vsc";
 import {AiOutlineDashboard, AiOutlinePlus} from "react-icons/ai";
-import {IoMdAppstore} from "react-icons/io";
+import {IoMdAppstore, IoMdMenu} from "react-icons/io";
 import {useGuest} from "../contexts/GuestContext";
 import {CartProvider} from "../contexts/CartContext";
 import LogoutButton from "./LogoutButton";
@@ -56,6 +63,14 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     const [user, setUser] = useState(null);
     const [userPermissions, setUserPermissions] = useState([]);
     const currentToastIdRef = useRef(null);
+
+    const {
+        isOpen: isSidebarOpen,
+        onOpen: onSidebarOpen,
+        onClose: onSidebarClose
+    } = useDisclosure();
+
+    const isMobile = useBreakpointValue({ base: true, md: false });
 
     useEffect(() => {
         const handleRouteChange = (url) => {
@@ -172,6 +187,10 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     const handleNavigate = (path, requiredPermission) => {
         if (!requiredPermission || hasPermission(requiredPermission)) {
             window.location.href = path;
+
+            if (isMobile) {
+                onSidebarClose();
+            }
         } else {
             if (currentToastIdRef.current) {
                 toast.close(currentToastIdRef.current);
@@ -243,582 +262,1118 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     return (
         <CartProvider>
             <Box display="flex" minH="100vh" position="relative">
-                <Box
-                    as="nav"
-                    width="250px"
-                    position="fixed"
-                    height="100vh"
-                    bg="#222324"
-                    p={4}
-                    borderRight="1px solid #333"
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="stretch"
-                    zIndex={10}
-                >
-                    <VStack spacing={4} align="stretch" marginTop={"-50px"}>
-                        <Box
-                            as="button"
-                            onClick={() => window.location.href = "/dashboard/reservation"}
-                            display="flex"
-                            justifyContent="center"
-                            alignItems="center"
-                        >
-                            <Image
-                                src="/assets/logo2.png"
-                                alt="Home Logo"
-                                boxSize="200px"
-                                objectFit="contain"
-                            />
-                        </Box>
-                        <Text
-                            fontSize="xl"
-                            fontWeight="bold"
-                            color="white"
-                            _hover={{cursor: "pointer"}}
-                        >
-                        </Text>
+                {isMobile && (
+                    <IconButton
+                        aria-label="Open menu"
+                        icon={<IoMdMenu />}
+                        position="fixed"
+                        top="10px"
+                        left="10px"
+                        zIndex={20}
+                        colorScheme="blue"
+                        onClick={onSidebarOpen}
+                    />
+                )}
 
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/reservation", "DASHBOARD_ACCESS")}
-                        >
-                            <Button
-                                marginTop={"-130px"}
-                                marginLeft={"-5"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/Dashboard" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <AiOutlineDashboard name="Dashboard"/>
-                                    <Text>Dashboard</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/purchases", "RESERVATION_MANAGE")}
-                        >
-                            <Button
-                                marginLeft={"-5"}
-                                marginTop={"-130px"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/Purchases" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <LuPiggyBank name="Purchases"/>
-                                    <Text>Purchases</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/under-construction", "EMPLOYEE_READ")}
-                        >
-                            <Button
-                                marginLeft={"-5"}
-                                marginTop={"-130px"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/Customer" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <GoPeople name="Customer"/>
-                                    <Text>Customer</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/list-tours", "TOUR_READ")}
-                        >
-                            <Button
-                                marginLeft={"-5"}
-                                marginTop={"-130px"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/list-tours" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <FaBoxArchive name="Products"/>
-                                    <Text>Products</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/under-construction", "REPORT_ACCESS")}
-                        >
-                            <Button
-                                marginLeft={"-5"}
-                                marginTop={"-130px"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/Resources" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <IoClipboardOutline name="Resources"/>
-                                    <Text>Resources</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/reports", "REPORT_ACCESS")}
-                        >
-                            <Button
-                                marginLeft={"-5"}
-                                marginTop={"-130px"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/reports" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <VscGraph name="Reports"/>
-                                    <Text>Reports</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/under-construction", "ROLE_READ")}
-                        >
-                            <Button
-                                marginLeft={"-5"}
-                                marginTop={"-130px"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/Marketing" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <LuMegaphone name="Marketing"/>
-                                    <Text>Marketing</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/under-construction", "ROLE_READ")}
-                        >
-                            <Button
-                                marginLeft={"-5"}
-                                marginTop={"-130px"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/Distribution" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <FaHandshake name="Distribution"/>
-                                    <Text>Distribution</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/under-construction", "ROLE_READ")}
-                        >
-                            <Button
-                                marginLeft={"-5"}
-                                marginTop={"-130px"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/under-construction" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <IoMdAppstore name="Distribution"/>
-                                    <Text>App Store</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/settings", "ROLE_READ")}
-                        >
-                            <Button
-                                marginLeft={"-5"}
-                                marginTop={"-130px"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/settings" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <GiSettingsKnobs name="Settings"/>
-                                    <Text>Settings</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/guides", "EMPLOYEE_READ")}
-                        >
-                            <Button
-                                marginLeft={"-5"}
-                                marginTop={"-130px"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/guides" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <FaUsersGear/>
-                                    <Text>Guides</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/list-addons", "TOUR_READ")}
-                        >
-                            <Button
-                                marginLeft={"-5"}
-                                marginTop={"-130px"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/list-addons" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <MdAddchart name="Add-ons"/>
-                                    <Text>Add-ons</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/categories", "TOUR_READ")}
-                        >
-                            <Button
-                                marginLeft={"-5"}
-                                marginTop={"-130px"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/categories" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <MdOutlineCategory name="Categories"/>
-                                    <Text>Categories</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                        <Text
-                            fontSize="md"
-                            color="gray.400"
-                            pl={4}
-                            onClick={() => handleNavigate("/dashboard/blackouts", "TOUR_READ")}
-                        >
-                            <Button
-                                marginLeft={"-5"}
-                                marginTop={"-130px"}
-                                justifyContent="flex-start"
-                                color="white"
-                                variant="ghost"
-                                w="230px"
-                                background={router.pathname === "/dashboard/blackouts" ? "blue.500" : "transparent"}
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
-                            >
-                                <HStack spacing={3}>
-                                    <SlCalender name="Blackouts"/>
-                                    <Text>Blackouts</Text>
-                                </HStack>
-                            </Button>
-                        </Text>
-                    </VStack>
-
-                    <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"} marginTop={"-60px"} position="relative"
-                         zIndex={100}>
-                        <Menu
-                            placement="right-start"
-                            offset={[0, 0]}
-                            closeOnSelect={false}
-                            isLazy
-                            lazyBehavior="keepMounted"
-                            gutter={0}
-                            strategy="fixed"
-                        >
-                            <MenuButton
-                                color="white"
-                                variant="ghost"
-                                as={Button}
-                                borderRadius="md"
-                                w="100%"
-                                h="50px"
+                {!isMobile && (
+                    <Box
+                        as="nav"
+                        width="250px"
+                        position="fixed"
+                        height="100vh"
+                        bg="#222324"
+                        p={4}
+                        borderRight="1px solid #333"
+                        display="flex"
+                        flexDirection="column"
+                        alignItems="stretch"
+                        zIndex={10}
+                    >
+                        <VStack spacing={4} align="stretch" marginTop={"-50px"}>
+                            <Box
+                                as="button"
+                                onClick={() => window.location.href = "/dashboard/reservation"}
                                 display="flex"
+                                justifyContent="center"
                                 alignItems="center"
-                                justifyContent="flex-start"
-                                _hover={{
-                                    background: "rgba(255, 255, 255, 0.1)",
-                                    transition: "background 0.2s ease-in-out",
-                                }}
-                                _active={{
-                                    background: "blue.500",
-                                    color: "white",
-                                }}
                             >
-                                <HStack spacing={3} alignItems="center">
-                                    <Avatar size="sm" src={selectedTenant?.imageUrl || "https://bit.ly/broken-link"}/>
-                                    <Box overflow="hidden">
-                                        <Text
-                                            fontSize="sm"
-                                            fontWeight="bold"
-                                            isTruncated
-                                            maxWidth="200px"
-                                        >
-                                            {selectedTenant?.name || "No City Selected"}
-                                        </Text>
-                                        <Text
-                                            fontSize="xs"
-                                            color="gray.400"
-                                            isTruncated
-                                            maxWidth="200px"
-                                        >
-                                            {selectedTenant?.description || "No location provided"}
-                                        </Text>
-                                    </Box>
-                                </HStack>
-                            </MenuButton>
-                            <Portal>
-                                <MenuList
-                                    minW="300px"
-                                    bg="#222324"
-                                    maxH="calc(100vh - 120px)"
-                                    overflowY="auto"
-                                    zIndex={9999}
-                                    position="relative"
-                                    boxShadow="0px 0px 15px rgba(0, 0, 0, 0.5)"
+                                <Image
+                                    src="/assets/logo2.png"
+                                    alt="Home Logo"
+                                    boxSize="200px"
+                                    objectFit="contain"
+                                />
+                            </Box>
+                            <Text
+                                fontSize="xl"
+                                fontWeight="bold"
+                                color="white"
+                                _hover={{cursor: "pointer"}}
+                            >
+                            </Text>
+
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/reservation", "DASHBOARD_ACCESS")}
+                            >
+                                <Button
+                                    marginTop={"-130px"}
+                                    marginLeft={"-5"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/Dashboard" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
                                 >
-                                    {tenants.map((tenant) => (
-                                        <MenuItem
-                                            key={tenant.id}
+                                    <HStack spacing={3}>
+                                        <AiOutlineDashboard name="Dashboard"/>
+                                        <Text>Dashboard</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/purchases", "RESERVATION_MANAGE")}
+                            >
+                                <Button
+                                    marginLeft={"-5"}
+                                    marginTop={"-130px"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/Purchases" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3}>
+                                        <LuPiggyBank name="Purchases"/>
+                                        <Text>Purchases</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/under-construction", "EMPLOYEE_READ")}
+                            >
+                                <Button
+                                    marginLeft={"-5"}
+                                    marginTop={"-130px"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/Customer" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3}>
+                                        <GoPeople name="Customer"/>
+                                        <Text>Customer</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/list-tours", "TOUR_READ")}
+                            >
+                                <Button
+                                    marginLeft={"-5"}
+                                    marginTop={"-130px"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/list-tours" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3}>
+                                        <FaBoxArchive name="Products"/>
+                                        <Text>Products</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/under-construction", "REPORT_ACCESS")}
+                            >
+                                <Button
+                                    marginLeft={"-5"}
+                                    marginTop={"-130px"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/Resources" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3}>
+                                        <IoClipboardOutline name="Resources"/>
+                                        <Text>Resources</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/reports", "REPORT_ACCESS")}
+                            >
+                                <Button
+                                    marginLeft={"-5"}
+                                    marginTop={"-130px"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/reports" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3}>
+                                        <VscGraph name="Reports"/>
+                                        <Text>Reports</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/under-construction", "ROLE_READ")}
+                            >
+                                <Button
+                                    marginLeft={"-5"}
+                                    marginTop={"-130px"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/Marketing" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3}>
+                                        <LuMegaphone name="Marketing"/>
+                                        <Text>Marketing</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/under-construction", "ROLE_READ")}
+                            >
+                                <Button
+                                    marginLeft={"-5"}
+                                    marginTop={"-130px"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/Distribution" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3}>
+                                        <FaHandshake name="Distribution"/>
+                                        <Text>Distribution</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/under-construction", "ROLE_READ")}
+                            >
+                                <Button
+                                    marginLeft={"-5"}
+                                    marginTop={"-130px"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/under-construction" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3}>
+                                        <IoMdAppstore name="Distribution"/>
+                                        <Text>App Store</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/settings", "ROLE_READ")}
+                            >
+                                <Button
+                                    marginLeft={"-5"}
+                                    marginTop={"-130px"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/settings" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3}>
+                                        <GiSettingsKnobs name="Settings"/>
+                                        <Text>Settings</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/guides", "EMPLOYEE_READ")}
+                            >
+                                <Button
+                                    marginLeft={"-5"}
+                                    marginTop={"-130px"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/guides" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3}>
+                                        <FaUsersGear/>
+                                        <Text>Guides</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/list-addons", "TOUR_READ")}
+                            >
+                                <Button
+                                    marginLeft={"-5"}
+                                    marginTop={"-130px"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/list-addons" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3}>
+                                        <MdAddchart name="Add-ons"/>
+                                        <Text>Add-ons</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/categories", "TOUR_READ")}
+                            >
+                                <Button
+                                    marginLeft={"-5"}
+                                    marginTop={"-130px"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/categories" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3}>
+                                        <MdOutlineCategory name="Categories"/>
+                                        <Text>Categories</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                            <Text
+                                fontSize="md"
+                                color="gray.400"
+                                pl={4}
+                                onClick={() => handleNavigate("/dashboard/blackouts", "TOUR_READ")}
+                            >
+                                <Button
+                                    marginLeft={"-5"}
+                                    marginTop={"-130px"}
+                                    justifyContent="flex-start"
+                                    color="white"
+                                    variant="ghost"
+                                    w="230px"
+                                    background={router.pathname === "/dashboard/blackouts" ? "blue.500" : "transparent"}
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3}>
+                                        <SlCalender name="Blackouts"/>
+                                        <Text>Blackouts</Text>
+                                    </HStack>
+                                </Button>
+                            </Text>
+                        </VStack>
+
+                        <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"} marginTop={"-60px"} position="relative"
+                             zIndex={100}>
+                            <Menu
+                                placement="right-start"
+                                offset={[0, 0]}
+                                closeOnSelect={false}
+                                isLazy
+                                lazyBehavior="keepMounted"
+                                gutter={0}
+                                strategy="fixed"
+                            >
+                                <MenuButton
+                                    color="white"
+                                    variant="ghost"
+                                    as={Button}
+                                    borderRadius="md"
+                                    w="100%"
+                                    h="50px"
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="flex-start"
+                                    _hover={{
+                                        background: "rgba(255, 255, 255, 0.1)",
+                                        transition: "background 0.2s ease-in-out",
+                                    }}
+                                    _active={{
+                                        background: "blue.500",
+                                        color: "white",
+                                    }}
+                                >
+                                    <HStack spacing={3} alignItems="center">
+                                        <Avatar size="sm" src={selectedTenant?.imageUrl || "https://bit.ly/broken-link"}/>
+                                        <Box overflow="hidden">
+                                            <Text
+                                                fontSize="sm"
+                                                fontWeight="bold"
+                                                isTruncated
+                                                maxWidth="200px"
+                                            >
+                                                {selectedTenant?.name || "No City Selected"}
+                                            </Text>
+                                            <Text
+                                                fontSize="xs"
+                                                color="gray.400"
+                                                isTruncated
+                                                maxWidth="200px"
+                                            >
+                                                {selectedTenant?.description || "No location provided"}
+                                            </Text>
+                                        </Box>
+                                    </HStack>
+                                </MenuButton>
+                                <Portal>
+                                    <MenuList
+                                        minW="300px"
+                                        bg="#222324"
+                                        maxH="calc(100vh - 120px)"
+                                        overflowY="auto"
+                                        zIndex={9999}
+                                        position="relative"
+                                        boxShadow="0px 0px 15px rgba(0, 0, 0, 0.5)"
+                                    >
+                                        {tenants.map((tenant) => (
+                                            <MenuItem
+                                                key={tenant.id}
+                                                bg="#222324"
+                                                color="white"
+                                                _hover={{
+                                                    background: "rgba(255, 255, 255, 0.1)",
+                                                    transition: "background 0.2s ease-in-out",
+                                                }}
+                                                onClick={() => handleSelectTenant(tenant)}
+                                            >
+                                                <HStack spacing={3}>
+                                                    <Avatar size="sm" src={tenant.imageUrl}/>
+                                                    <Box>
+                                                        <Text fontSize="sm" fontWeight="bold">
+                                                            {tenant.name}
+                                                        </Text>
+                                                        <Text fontSize="xs" color="gray.400">
+                                                            {tenant.location}
+                                                        </Text>
+                                                    </Box>
+                                                </HStack>
+                                            </MenuItem>
+                                        ))}
+                                        <MenuDivider borderColor="#333" bg="#222324"/>
+                                        <MenuItem bg="#222324" color={"white"} _hover={{
+                                            background: "rgba(255, 255, 255, 0.1)",
+                                            transition: "background 0.2s ease-in-out",
+                                        }}>Privacy Policy</MenuItem>
+                                        <MenuItem bg="#222324" color={"white"} _hover={{
+                                            background: "rgba(255, 255, 255, 0.1)",
+                                            transition: "background 0.2s ease-in-out",
+                                        }}>Support</MenuItem>
+                                        <MenuItem bg="#222324" color={"white"} _hover={{
+                                            background: "rgba(255, 255, 255, 0.1)",
+                                            transition: "background 0.2s ease-in-out",
+                                        }}>Help Center</MenuItem>
+                                        <MenuDivider borderColor="#333"/>
+                                        <LogoutButton
+                                            as={MenuItem}
                                             bg="#222324"
                                             color="white"
+                                            w="100%"
+                                            justifyContent="flex-start"
+                                            _hover={{background: "rgba(255,255,255,0.1)"}}
+                                        >
+                                            Logout
+                                        </LogoutButton>
+                                        <MenuDivider borderColor="#333"/>
+                                        <MenuItem bg="#222324" color={"white"} icon={<AiOutlinePlus/>} _hover={{
+                                            background: "rgba(255, 255, 255, 0.1)",
+                                            transition: "background 0.2s ease-in-out",
+                                        }} onClick={onOpen}>
+                                            Add New City
+                                        </MenuItem>
+                                    </MenuList>
+                                </Portal>
+                            </Menu>
+                        </Box>
+                    </Box>
+                )}
+
+                <Drawer
+                    isOpen={isSidebarOpen}
+                    placement="left"
+                    onClose={onSidebarClose}
+                    size="full"
+                >
+                    <DrawerOverlay />
+                    <DrawerContent bg="#222324" color="white">
+                        <DrawerCloseButton color="white" />
+                        <DrawerBody p={0} overflowY="auto">
+                            <Box
+                                height="100%"
+                                display="flex"
+                                flexDirection="column"
+                                alignItems="stretch"
+                                p={4}
+                                overflowY="auto"
+                            >
+                                <VStack spacing={4} align="stretch" marginTop={"-50px"}>
+                                    <Box
+                                        as="button"
+                                        onClick={() => window.location.href = "/dashboard/reservation"}
+                                        display="flex"
+                                        justifyContent="center"
+                                        alignItems="center"
+                                    >
+                                        <Image
+                                            src="/assets/logo2.png"
+                                            alt="Home Logo"
+                                            boxSize="200px"
+                                            objectFit="contain"
+                                        />
+                                    </Box>
+                                    <Text
+                                        fontSize="xl"
+                                        fontWeight="bold"
+                                        color="white"
+                                        _hover={{cursor: "pointer"}}
+                                    >
+                                    </Text>
+
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/reservation", "DASHBOARD_ACCESS")}
+                                    >
+                                        <Button
+                                            marginTop={"-130px"}
+                                            marginLeft={"-5"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/Dashboard" ? "blue.500" : "transparent"}
                                             _hover={{
                                                 background: "rgba(255, 255, 255, 0.1)",
                                                 transition: "background 0.2s ease-in-out",
                                             }}
-                                            onClick={() => handleSelectTenant(tenant)}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
                                         >
                                             <HStack spacing={3}>
-                                                <Avatar size="sm" src={tenant.imageUrl}/>
-                                                <Box>
-                                                    <Text fontSize="sm" fontWeight="bold">
-                                                        {tenant.name}
+                                                <AiOutlineDashboard name="Dashboard"/>
+                                                <Text>Dashboard</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/purchases", "RESERVATION_MANAGE")}
+                                    >
+                                        <Button
+                                            marginLeft={"-5"}
+                                            marginTop={"-130px"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/Purchases" ? "blue.500" : "transparent"}
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3}>
+                                                <LuPiggyBank name="Purchases"/>
+                                                <Text>Purchases</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/under-construction", "EMPLOYEE_READ")}
+                                    >
+                                        <Button
+                                            marginLeft={"-5"}
+                                            marginTop={"-130px"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/Customer" ? "blue.500" : "transparent"}
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3}>
+                                                <GoPeople name="Customer"/>
+                                                <Text>Customer</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/list-tours", "TOUR_READ")}
+                                    >
+                                        <Button
+                                            marginLeft={"-5"}
+                                            marginTop={"-130px"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/list-tours" ? "blue.500" : "transparent"}
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3}>
+                                                <FaBoxArchive name="Products"/>
+                                                <Text>Products</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/under-construction", "REPORT_ACCESS")}
+                                    >
+                                        <Button
+                                            marginLeft={"-5"}
+                                            marginTop={"-130px"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/Resources" ? "blue.500" : "transparent"}
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3}>
+                                                <IoClipboardOutline name="Resources"/>
+                                                <Text>Resources</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/reports", "REPORT_ACCESS")}
+                                    >
+                                        <Button
+                                            marginLeft={"-5"}
+                                            marginTop={"-130px"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/reports" ? "blue.500" : "transparent"}
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3}>
+                                                <VscGraph name="Reports"/>
+                                                <Text>Reports</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/under-construction", "ROLE_READ")}
+                                    >
+                                        <Button
+                                            marginLeft={"-5"}
+                                            marginTop={"-130px"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/Marketing" ? "blue.500" : "transparent"}
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3}>
+                                                <LuMegaphone name="Marketing"/>
+                                                <Text>Marketing</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/under-construction", "ROLE_READ")}
+                                    >
+                                        <Button
+                                            marginLeft={"-5"}
+                                            marginTop={"-130px"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/Distribution" ? "blue.500" : "transparent"}
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3}>
+                                                <FaHandshake name="Distribution"/>
+                                                <Text>Distribution</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/under-construction", "ROLE_READ")}
+                                    >
+                                        <Button
+                                            marginLeft={"-5"}
+                                            marginTop={"-130px"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/under-construction" ? "blue.500" : "transparent"}
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3}>
+                                                <IoMdAppstore name="Distribution"/>
+                                                <Text>App Store</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/settings", "ROLE_READ")}
+                                    >
+                                        <Button
+                                            marginLeft={"-5"}
+                                            marginTop={"-130px"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/settings" ? "blue.500" : "transparent"}
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3}>
+                                                <GiSettingsKnobs name="Settings"/>
+                                                <Text>Settings</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/guides", "EMPLOYEE_READ")}
+                                    >
+                                        <Button
+                                            marginLeft={"-5"}
+                                            marginTop={"-130px"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/guides" ? "blue.500" : "transparent"}
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3}>
+                                                <FaUsersGear/>
+                                                <Text>Guides</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/list-addons", "TOUR_READ")}
+                                    >
+                                        <Button
+                                            marginLeft={"-5"}
+                                            marginTop={"-130px"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/list-addons" ? "blue.500" : "transparent"}
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3}>
+                                                <MdAddchart name="Add-ons"/>
+                                                <Text>Add-ons</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/categories", "TOUR_READ")}
+                                    >
+                                        <Button
+                                            marginLeft={"-5"}
+                                            marginTop={"-130px"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/categories" ? "blue.500" : "transparent"}
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3}>
+                                                <MdOutlineCategory name="Categories"/>
+                                                <Text>Categories</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                    <Text
+                                        fontSize="md"
+                                        color="gray.400"
+                                        pl={4}
+                                        onClick={() => handleNavigate("/dashboard/blackouts", "TOUR_READ")}
+                                    >
+                                        <Button
+                                            marginLeft={"-5"}
+                                            marginTop={"-130px"}
+                                            justifyContent="flex-start"
+                                            color="white"
+                                            variant="ghost"
+                                            w="230px"
+                                            background={router.pathname === "/dashboard/blackouts" ? "blue.500" : "transparent"}
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3}>
+                                                <SlCalender name="Blackouts"/>
+                                                <Text>Blackouts</Text>
+                                            </HStack>
+                                        </Button>
+                                    </Text>
+                                </VStack>
+
+                                <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"} marginTop={"-60px"} position="relative"
+                                     zIndex={100}>
+                                    <Menu
+                                        placement="right-start"
+                                        offset={[0, 0]}
+                                        closeOnSelect={false}
+                                        isLazy
+                                        lazyBehavior="keepMounted"
+                                        gutter={0}
+                                        strategy="fixed"
+                                    >
+                                        <MenuButton
+                                            color="white"
+                                            variant="ghost"
+                                            as={Button}
+                                            borderRadius="md"
+                                            w="100%"
+                                            h="50px"
+                                            display="flex"
+                                            alignItems="center"
+                                            justifyContent="flex-start"
+                                            _hover={{
+                                                background: "rgba(255, 255, 255, 0.1)",
+                                                transition: "background 0.2s ease-in-out",
+                                            }}
+                                            _active={{
+                                                background: "blue.500",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <HStack spacing={3} alignItems="center">
+                                                <Avatar size="sm" src={selectedTenant?.imageUrl || "https://bit.ly/broken-link"}/>
+                                                <Box overflow="hidden">
+                                                    <Text
+                                                        fontSize="sm"
+                                                        fontWeight="bold"
+                                                        isTruncated
+                                                        maxWidth="200px"
+                                                    >
+                                                        {selectedTenant?.name || "No City Selected"}
                                                     </Text>
-                                                    <Text fontSize="xs" color="gray.400">
-                                                        {tenant.location}
+                                                    <Text
+                                                        fontSize="xs"
+                                                        color="gray.400"
+                                                        isTruncated
+                                                        maxWidth="200px"
+                                                    >
+                                                        {selectedTenant?.description || "No location provided"}
                                                     </Text>
                                                 </Box>
                                             </HStack>
-                                        </MenuItem>
-                                    ))}
-                                    <MenuDivider borderColor="#333" bg="#222324"/>
-                                    <MenuItem bg="#222324" color={"white"} _hover={{
-                                        background: "rgba(255, 255, 255, 0.1)",
-                                        transition: "background 0.2s ease-in-out",
-                                    }}>Privacy Policy</MenuItem>
-                                    <MenuItem bg="#222324" color={"white"} _hover={{
-                                        background: "rgba(255, 255, 255, 0.1)",
-                                        transition: "background 0.2s ease-in-out",
-                                    }}>Support</MenuItem>
-                                    <MenuItem bg="#222324" color={"white"} _hover={{
-                                        background: "rgba(255, 255, 255, 0.1)",
-                                        transition: "background 0.2s ease-in-out",
-                                    }}>Help Center</MenuItem>
-                                    <MenuDivider borderColor="#333"/>
-                                    <LogoutButton
-                                        as={MenuItem}
-                                        bg="#222324"
-                                        color="white"
-                                        w="100%"
-                                        justifyContent="flex-start"
-                                        _hover={{background: "rgba(255,255,255,0.1)"}}
-                                    >
-                                        Logout
-                                    </LogoutButton>
-                                    <MenuDivider borderColor="#333"/>
-                                    <MenuItem bg="#222324" color={"white"} icon={<AiOutlinePlus/>} _hover={{
-                                        background: "rgba(255, 255, 255, 0.1)",
-                                        transition: "background 0.2s ease-in-out",
-                                    }} onClick={onOpen}>
-                                        Add New City
-                                    </MenuItem>
-                                </MenuList>
-                            </Portal>
-                        </Menu>
-                    </Box>
-                </Box>
+                                        </MenuButton>
+                                        <Portal>
+                                            <MenuList
+                                                minW="300px"
+                                                bg="#222324"
+                                                maxH="calc(100vh - 120px)"
+                                                overflowY="auto"
+                                                zIndex={9999}
+                                                position="relative"
+                                                boxShadow="0px 0px 15px rgba(0, 0, 0, 0.5)"
+                                            >
+                                            </MenuList>
+                                        </Portal>
+                                    </Menu>
+                                </Box>
+                            </Box>
+                        </DrawerBody>
+                    </DrawerContent>
+                </Drawer>
 
                 <Box
                     flex="1"
-                    p={8}
-                    marginLeft="250px"
-                    maxW="calc(100% - 250px)"
+                    p={{ base: 4, md: 8 }}
+                    marginLeft={{ base: 0, md: "250px" }}
+                    maxW={{ base: "100%", md: "calc(100% - 250px)" }}
                     overflowY="auto"
                     minH="100vh"
                     position="relative"
                     zIndex={1}
+                    pt={{ base: "50px", md: 4 }}
                 >
                     {isLoading ? (
                         <Text color="white">Loading...</Text>

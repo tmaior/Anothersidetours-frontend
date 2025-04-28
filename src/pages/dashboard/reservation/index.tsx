@@ -13,6 +13,9 @@ import {
     Stack,
     Text,
     VStack,
+    useBreakpointValue,
+    IconButton,
+    Collapse,
 } from "@chakra-ui/react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ReservationItem from "../../../components/ReservationItem";
@@ -25,6 +28,7 @@ import withPermission from "../../../utils/withPermission";
 import NotesFromReservationModalicon from "../../../components/NotesFromReservationModalicon";
 import CustomDatePicker from "../../../components/DatePickerDefault";
 import axios from "axios";
+import { IoMdFunnel } from "react-icons/io";
 
 function Dashboard() {
     const [searchTerm, setSearchTerm] = useState("");
@@ -39,6 +43,9 @@ function Dashboard() {
     const [userRoles, setUserRoles] = useState([]);
     const [userId, setUserId] = useState("");
     const [hasManageReservationPermission, setHasManageReservationPermission] = useState(false);
+    const [isFiltersVisible, setIsFiltersVisible] = useState(false);
+
+    const isMobile = useBreakpointValue({ base: true, md: false });
 
     const router = useRouter();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -357,6 +364,10 @@ function Dashboard() {
     const handleSelectReservation = (reserva) => {
         setSelectedReservation(reserva);
         setIsDetailVisible(true);
+
+        if (isMobile) {
+            window.scrollTo(0, 0);
+        }
     };
 
     const handleCloseDetail = () => {
@@ -375,6 +386,10 @@ function Dashboard() {
         const day = String(date.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
     }
+
+    const toggleFilters = () => {
+        setIsFiltersVisible(!isFiltersVisible);
+    };
 
     return (
         <DashboardLayout>
@@ -412,7 +427,7 @@ function Dashboard() {
                     <Button
                         colorScheme="green"
                         size="md"
-                        marginLeft={"-50px"}
+                        marginLeft={{base: 0, md: "-50px"}}
                         h={"40px"}
                         w={{base: "100%", md: "200px"}}
                         border={"none"}
@@ -425,37 +440,87 @@ function Dashboard() {
                 <Spacer/>
             </Flex>
             <Divider/>
-            <HStack spacing={2}
-                    mb={4}
-                    align="center"
-                    mt={{base: "10px", md: "10px"}}
-                    px={{base: 4, md: 0}}
-                    wrap="wrap">
-                <Box w={{base: "100px", md: "130px"}}>
-                    <CustomDatePicker
-                        selected={selectedDate ? createDateFromISO(selectedDate) : null}
-                        onDateChange={(date) => {
-                            const formattedDate = formatDate(date);
-                            setSelectedDate(formattedDate);
-                            setLoadedDates([formattedDate]);
-                        }}
+
+            <Flex align="center" justify="space-between" mt={4} mb={2} px={{base: 4, md: 0}}>
+                {isMobile ? (
+                    <IconButton
+                        aria-label="Toggle filters"
+                        icon={<IoMdFunnel />}
+                        size="sm"
+                        onClick={toggleFilters}
+                        variant="outline"
                     />
-                </Box>
-                <Select placeholder="Reserved" size="sm" w={{base: "100px", md: "120px"}}>
-                    <option value="reserved">Reserved</option>
-                    <option value="not_reserved">Not Reserved</option>
-                </Select>
-                <Select size="sm" w={{base: "80px", md: "90px"}} placeholder="List">
-                    <option value="list">List</option>
-                    <option value="grid">Grid</option>
-                </Select>
-                <Spacer/>
-                <Button variant="outline" size="sm">
+                ) : (
+                    <Text fontSize="sm" color="gray.600">Filters:</Text>
+                )}
+                
+                {!isMobile && (
+                    <HStack spacing={2} wrap="wrap">
+                        <Box w={{base: "100px", md: "130px"}}>
+                            <CustomDatePicker
+                                selected={selectedDate ? createDateFromISO(selectedDate) : null}
+                                onDateChange={(date) => {
+                                    const formattedDate = formatDate(date);
+                                    setSelectedDate(formattedDate);
+                                    setLoadedDates([formattedDate]);
+                                }}
+                            />
+                        </Box>
+                        <Select placeholder="Reserved" size="sm" w={{base: "100px", md: "120px"}}>
+                            <option value="reserved">Reserved</option>
+                            <option value="not_reserved">Not Reserved</option>
+                        </Select>
+                        <Select size="sm" w={{base: "80px", md: "90px"}} placeholder="List">
+                            <option value="list">List</option>
+                            <option value="grid">Grid</option>
+                        </Select>
+                    </HStack>
+                )}
+                
+                <Button variant="outline" size="sm" display={{base: "none", md: "block"}}>
                     Sync Calendar
                 </Button>
-            </HStack>
+            </Flex>
+
+            {isMobile && (
+                <Collapse in={isFiltersVisible} animateOpacity>
+                    <Box p={4} bg="gray.50" borderRadius="md" mb={4}>
+                        <VStack spacing={4} align="stretch">
+                            <Box>
+                                <Text fontSize="xs" mb={1}>Date</Text>
+                                <CustomDatePicker
+                                    selected={selectedDate ? createDateFromISO(selectedDate) : null}
+                                    onDateChange={(date) => {
+                                        const formattedDate = formatDate(date);
+                                        setSelectedDate(formattedDate);
+                                        setLoadedDates([formattedDate]);
+                                    }}
+                                />
+                            </Box>
+                            <Box>
+                                <Text fontSize="xs" mb={1}>Status</Text>
+                                <Select placeholder="Reserved" size="sm">
+                                    <option value="reserved">Reserved</option>
+                                    <option value="not_reserved">Not Reserved</option>
+                                </Select>
+                            </Box>
+                            <Box>
+                                <Text fontSize="xs" mb={1}>View</Text>
+                                <Select size="sm" placeholder="List">
+                                    <option value="list">List</option>
+                                    <option value="grid">Grid</option>
+                                </Select>
+                            </Box>
+                            <Button variant="outline" size="sm" w="full">
+                                Sync Calendar
+                            </Button>
+                        </VStack>
+                    </Box>
+                </Collapse>
+            )}
+            
             <Divider/>
-            <HStack spacing={4} mb={4} mt="10px" wrap="wrap" px={{base: 4, md: 0}}>
+            <HStack spacing={4} mb={4} mt="10px" wrap="wrap" px={{base: 4, md: 0}} overflowX="auto">
                 <Text fontSize="sm" color="gray.600">
                     Filters:
                 </Text>
@@ -469,56 +534,62 @@ function Dashboard() {
                     Guides: All
                 </Button>
             </HStack>
-            <Flex direction={{base: "column", md: "row"}}
-                  maxHeight="calc(100vh - 80px)"
-                  overflowY="auto"
-                  ml={{base: 0, md: "-40px"}}>
-                <Box
-                    w={{base: "100%", md: isDetailVisible ? "20%" : "100%"}}
-                    overflowY="auto"
-                    overflowX="hidden"
-                    borderRight={{base: "none", md: isDetailVisible ? "1px solid #e2e8f0" : "none"}}
-                    transition="width 0.3s ease"
-                    display="flex"
-                    flexDirection="column"
-                    px={{base: 4, md: 0}}
-                >
-                    <Box p={4} mt={{base: "0", md: "-30px"}}>
-
-                        <Divider orientation='horizontal' width="100%"/>
-                        <VStack spacing={6} align="stretch" marginTop={"10px"}>
-                            {filteredReservations.map((data, index) => (
-                                <ReservationItem
-                                    key={data.reservations[0]?.id || index}
-                                    reservationId={data.reservations[0]?.id}
-                                    date={data.date}
-                                    day={data.day}
-                                    availableSummary={data.availableSummary}
-                                    reservedSummary={data.reservedSummary}
-                                    reservations={filterReservations(data.reservations)}
-                                    onNoteClick={(notes, reservationId) =>
-                                        openNoteModal({
-                                            notes,
-                                            reservation: data.reservations.find(reservation => reservation.id === reservationId),
-                                        })
-                                    }
-                                    onSelectReservation={handleSelectReservation}
-                                    isCompactView={isDetailVisible}
-                                />
-                            ))}
-                        </VStack>
-                        <Box textAlign="center" mt={6}>
-                            <Button variant="outline" size="sm" onClick={handleLoadMore}>
-                                Load More
-                            </Button>
+            <Flex 
+                direction={{base: "column", md: "row"}}
+                maxHeight={{base: "unset", md: "calc(100vh - 80px)"}}
+                overflowY="auto"
+                ml={{base: 0, md: "-40px"}}
+            >
+                {(!isMobile || !isDetailVisible) && (
+                    <Box
+                        w={{base: "100%", md: isDetailVisible ? "20%" : "100%"}}
+                        overflowY="auto"
+                        overflowX="hidden"
+                        borderRight={{base: "none", md: isDetailVisible ? "1px solid #e2e8f0" : "none"}}
+                        transition="width 0.3s ease"
+                        display="flex"
+                        flexDirection="column"
+                        px={{base: 4, md: 0}}
+                    >
+                        <Box p={4} mt={{base: "0", md: "-30px"}}>
+                            <Divider orientation='horizontal' width="100%"/>
+                            <VStack spacing={6} align="stretch" marginTop={"10px"}>
+                                {filteredReservations.map((data, index) => (
+                                    <ReservationItem
+                                        key={data.reservations[0]?.id || index}
+                                        reservationId={data.reservations[0]?.id}
+                                        date={data.date}
+                                        day={data.day}
+                                        availableSummary={data.availableSummary}
+                                        reservedSummary={data.reservedSummary}
+                                        reservations={filterReservations(data.reservations)}
+                                        onNoteClick={(notes, reservationId) =>
+                                            openNoteModal({
+                                                notes,
+                                                reservation: data.reservations.find(reservation => reservation.id === reservationId),
+                                            })
+                                        }
+                                        onSelectReservation={handleSelectReservation}
+                                        isCompactView={isDetailVisible && !isMobile}
+                                    />
+                                ))}
+                            </VStack>
+                            <Box textAlign="center" mt={6}>
+                                <Button variant="outline" size="sm" onClick={handleLoadMore}>
+                                    Load More
+                                </Button>
+                            </Box>
                         </Box>
                     </Box>
-                </Box>
+                )}
+
                 {isDetailVisible && (
-                    <Box w={{base: "100%", md: "70%"}}
-                         overflowY="auto"
-                         transition="width 0.3s ease"
-                         px={{base: 4, md: 0}}>
+                    <Box 
+                        w={{base: "100%", md: "70%"}}
+                        overflowY="auto"
+                        transition="width 0.3s ease"
+                        px={{base: 4, md: 0}}
+                    >
                         <ReservationDetail
                             reservation={selectedReservation}
                             onCloseDetail={handleCloseDetail}

@@ -1,4 +1,4 @@
-import {Box, Flex, HStack, IconButton, Image, Text, useToast, VStack,} from "@chakra-ui/react";
+import {Box, Flex, HStack, IconButton, Image, Text, useToast, VStack, useBreakpointValue} from "@chakra-ui/react";
 import {BsSticky} from "react-icons/bs";
 import {FaPencilAlt} from "react-icons/fa";
 import React, {useCallback, useEffect, useState} from "react";
@@ -60,6 +60,7 @@ const ReservationItem = ({
     const {assignGuides, isAssigning,} = useGuideAssignment();
     const toast = useToast();
     const {reservationGuides, setReservationGuides} = useGuidesStore();
+    const isMobile = useBreakpointValue({ base: true, md: false });
 
     const handleNoteClick = async (item) => {
         try {
@@ -107,7 +108,7 @@ const ReservationItem = ({
                     const formattedGuides = validGuides.map(item => ({
                         id: item.guideId,
                         name: item.guide.name,
-                        expertise: ""
+                        email: item.guide.email || ""
                     }));
                     
                     setReservationGuides(itemId, formattedGuides);
@@ -140,9 +141,9 @@ const ReservationItem = ({
         const guideIds = selectedGuides.map((guide) => guide.id);
 
         const formattedGuides = selectedGuides.map((guide) => ({
-            ...guide,
-            expertise: "",
-            photoUrl: "",
+            id: guide.id,
+            name: guide.name,
+            email: ""
         }));
 
         setReservationGuides(itemId, formattedGuides);
@@ -202,7 +203,7 @@ const ReservationItem = ({
                 <Flex
                     key={index}
                     bg="white"
-                    p={{base: 2, md: 3}}
+                    p={{base: 3, md: 3}}
                     borderRadius="md"
                     align="center"
                     justify="space-between"
@@ -210,8 +211,9 @@ const ReservationItem = ({
                     cursor="pointer"
                     onClick={() => onSelectReservation(item)}
                     flexWrap={{base: "wrap", md: "nowrap"}}
+                    mb={isMobile ? 4 : 0}
                 >
-                    <HStack spacing={{base: 2, md: 3}} flexShrink={0}>
+                    <HStack spacing={{base: 3, md: 3}} flexShrink={0} w={isMobile ? "100%" : "auto"}>
                         <Box minWidth="40px" textAlign="center">
                             <Text fontWeight="medium" fontSize="sm" color="gray.600">
                                 {item.time?.split(' ')[0]}
@@ -222,27 +224,25 @@ const ReservationItem = ({
                         </Box>
                         <Image
                             src={item.imageUrl}
-                            boxSize="70px"
+                            boxSize={isMobile ? "80px" : "70px"}
                             borderRadius="md"
                             alt="Tour Icon"
                             objectFit="fill"
                         />
-                    </HStack>
-                    <Box flex="1" ml={{base: 2, md: 4}} mt={{base: 2, md: 0}}>
-                        {!isCompactView && (
+                        <Box flex="1">
                             <Text fontWeight="semibold" fontSize="sm">
                                 {item.title}
                             </Text>
-                        )}
-                        {!isCompactView && (
-                            <HStack spacing={{base: 2, md: 3}} fontSize={{base: "xs", md: "xs"}} color="gray.500">
-                                <Text>{item.available}</Text>
-                                <Text>{item.reservedDetails}</Text>
-                            </HStack>
-                        )}
-                    </Box>
+                            {!isCompactView && (
+                                <HStack spacing={{base: 2, md: 3}} fontSize={{base: "xs", md: "xs"}} color="gray.500">
+                                    <Text>{item.available}</Text>
+                                    <Text>{item.reservedDetails}</Text>
+                                </HStack>
+                            )}
+                        </Box>
+                    </HStack>
 
-                    {!isCompactView && (
+                    {!isCompactView && !isMobile && (
                         <HStack spacing={4} align="center">
                             <Box boxSize="8px" borderRadius="full" bg={item.statusColor}/>
                             <Flex
@@ -291,8 +291,73 @@ const ReservationItem = ({
                                     )}
                                 </Flex>
                             </Flex>
-                            <DashBoardMenu reservation={item}/>
+                            <DashBoardMenu reservation={item} />
                         </HStack>
+                    )}
+
+                    {(isMobile || isCompactView) && (
+                        <Flex 
+                            mt={3}
+                            w="100%"
+                            direction="column"
+                            borderTop="1px solid"
+                            borderColor="gray.100"
+                            pt={3}
+                        >
+                            <Flex justify="space-between" align="center" mb={2}>
+                                <HStack spacing={2}>
+                                    <Box boxSize="8px" borderRadius="full" bg={item.statusColor}/>
+                                    <HStack spacing={1}>
+                                        <FaPencilAlt size="12px" color="gray"/>
+                                        <Text fontSize="xs">{item.capacity}</Text>
+                                    </HStack>
+                                </HStack>
+                                
+                                <HStack>
+                                    {item.hasNotes && (
+                                        <IconButton
+                                            icon={<BsSticky/>}
+                                            variant="ghost"
+                                            aria-label="Notes"
+                                            size="sm"
+                                            color="orange.500"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleNoteClick(item);
+                                            }}
+                                        />
+                                    )}
+                                    <DashBoardMenu reservation={item} isMobile={true} />
+                                </HStack>
+                            </Flex>
+                            
+                            <Flex 
+                                p={2}
+                                bg="gray.50"
+                                borderRadius="md"
+                                align="center"
+                                onClick={(e) => handleOpenGuideModal(e, item)}
+                                cursor="pointer"
+                            >
+                                <AiOutlineCompass size="16px" color="#2D3748"/>
+                                <Text
+                                    marginLeft="8px"
+                                    fontSize="sm"
+                                    color="gray.700"
+                                    fontWeight="medium"
+                                >
+                                    Guides:
+                                </Text>
+                                <Text
+                                    marginLeft="5px"
+                                    fontSize="sm"
+                                    color="green.600"
+                                    flex="1"
+                                >
+                                    {displayGuideText(item)}
+                                </Text>
+                            </Flex>
+                        </Flex>
                     )}
                 </Flex>
             ))}

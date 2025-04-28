@@ -442,7 +442,7 @@ function Dashboard() {
             <Divider/>
 
             <Flex align="center" justify="space-between" mt={4} mb={2} px={{base: 4, md: 0}}>
-                {isMobile ? (
+                {isMobile && (
                     <IconButton
                         aria-label="Toggle filters"
                         icon={<IoMdFunnel />}
@@ -450,10 +450,8 @@ function Dashboard() {
                         onClick={toggleFilters}
                         variant="outline"
                     />
-                ) : (
-                    <Text fontSize="sm" color="gray.600">Filters:</Text>
                 )}
-                
+
                 {!isMobile && (
                     <HStack spacing={2} wrap="wrap">
                         <Box w={{base: "100px", md: "130px"}}>
@@ -466,14 +464,14 @@ function Dashboard() {
                                 }}
                             />
                         </Box>
-                        <Select placeholder="Reserved" size="sm" w={{base: "100px", md: "120px"}}>
-                            <option value="reserved">Reserved</option>
-                            <option value="not_reserved">Not Reserved</option>
-                        </Select>
-                        <Select size="sm" w={{base: "80px", md: "90px"}} placeholder="List">
-                            <option value="list">List</option>
-                            <option value="grid">Grid</option>
-                        </Select>
+                        {/*<Select placeholder="Reserved" size="sm" w={{base: "100px", md: "120px"}}>*/}
+                        {/*    <option value="reserved">Reserved</option>*/}
+                        {/*    <option value="not_reserved">Not Reserved</option>*/}
+                        {/*</Select>*/}
+                        {/*<Select size="sm" w={{base: "80px", md: "90px"}} placeholder="List">*/}
+                        {/*    <option value="list">List</option>*/}
+                        {/*    <option value="grid">Grid</option>*/}
+                        {/*</Select>*/}
                     </HStack>
                 )}
                 
@@ -520,20 +518,20 @@ function Dashboard() {
             )}
             
             <Divider/>
-            <HStack spacing={4} mb={4} mt="10px" wrap="wrap" px={{base: 4, md: 0}} overflowX="auto">
-                <Text fontSize="sm" color="gray.600">
-                    Filters:
-                </Text>
-                <Button variant="outline" size="sm">
-                    Products: All
-                </Button>
-                <Button variant="outline" size="sm">
-                    Equipment: All
-                </Button>
-                <Button variant="outline" size="sm">
-                    Guides: All
-                </Button>
-            </HStack>
+            {/*<HStack spacing={4} mb={4} mt="10px" wrap="wrap" px={{base: 4, md: 0}} overflowX="auto">*/}
+            {/*    <Text fontSize="sm" color="gray.600">*/}
+            {/*        Filters:*/}
+            {/*    </Text>*/}
+            {/*    <Button variant="outline" size="sm">*/}
+            {/*        Products: All*/}
+            {/*    </Button>*/}
+            {/*    <Button variant="outline" size="sm">*/}
+            {/*        Equipment: All*/}
+            {/*    </Button>*/}
+            {/*    <Button variant="outline" size="sm">*/}
+            {/*        Guides: All*/}
+            {/*    </Button>*/}
+            {/*</HStack>*/}
             <Flex 
                 direction={{base: "column", md: "row"}}
                 maxHeight={{base: "unset", md: "calc(100vh - 80px)"}}
@@ -553,7 +551,7 @@ function Dashboard() {
                     >
                         <Box p={4} mt={{base: "0", md: "-30px"}}>
                             <Divider orientation='horizontal' width="100%"/>
-                            <VStack spacing={6} align="stretch" marginTop={"10px"}>
+                            <VStack spacing={isMobile ? 8 : 6} align="stretch" marginTop={"10px"}>
                                 {filteredReservations.map((data, index) => (
                                     <ReservationItem
                                         key={data.reservations[0]?.id || index}

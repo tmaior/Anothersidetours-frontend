@@ -16,7 +16,12 @@ import {CiCalendar} from "react-icons/ci";
 import {CgNotes, CgPlayListAdd} from "react-icons/cg";
 import {FiSend} from "react-icons/fi";
 
-const DashBoardMenu = ({reservation}) => {
+interface DashBoardMenuProps {
+    reservation: any;
+    isMobile?: boolean;
+}
+
+const DashBoardMenu = ({reservation, isMobile = false}: DashBoardMenuProps) => {
     const [isUnassignModalOpen, setUnassignModalOpen] = useState(false);
     const [isAssignModalOpen, setAssignModalOpen] = useState(false);
     const [isCancelConfirmationOpen, setCancelConfirmationOpen] = useState(false);
@@ -67,42 +72,43 @@ const DashBoardMenu = ({reservation}) => {
 
     return (
         <>
-            <Menu placement="left-start" offset={[-200, 0]}>
+            <Menu placement={isMobile ? "bottom" : "left-start"} offset={isMobile ? [0, 0] : [-200, 0]}>
                 <MenuButton
                     as={IconButton}
                     icon={<BsThreeDots/>}
                     variant="ghost"
                     aria-label="Options"
-                    size="sm"
+                    size={isMobile ? "xs" : "sm"}
                     onClick={(e) => e.stopPropagation()}
                 />
                 <MenuList
                     p={0}
                     borderRadius="md"
                     boxShadow="lg"
-                    width="300px"
-                    maxWidth="300px"
+                    width={isMobile ? "260px" : "300px"}
+                    maxWidth={isMobile ? "260px" : "300px"}
                     minHeight="200px"
+                    zIndex={1000}
                 >
-                    <Box p={4} borderBottomWidth="1px" bg="gray.50">
-                        <Stack direction="row" spacing={4} align="center">
+                    <Box p={isMobile ? 2 : 4} borderBottomWidth="1px" bg="gray.50">
+                        <Stack direction="row" spacing={isMobile ? 2 : 4} align="center">
                             <Image
                                 src={reservation.imageUrl || "https://via.placeholder.com/50"}
                                 alt="Tour Image"
-                                boxSize="50px"
+                                boxSize={isMobile ? "40px" : "50px"}
                                 borderRadius="md"
                             />
                             <Box>
                                 <Text
                                     fontWeight="bold"
-                                    fontSize="md"
+                                    fontSize={isMobile ? "sm" : "md"}
                                     whiteSpace="normal"
                                     wordBreak="break-word"
-                                    maxWidth="260px"
+                                    maxWidth={isMobile ? "180px" : "260px"}
                                 >
                                     {reservation.title}
                                 </Text>
-                                <Text fontSize="sm" color="gray.600">
+                                <Text fontSize={isMobile ? "xs" : "sm"} color="gray.600">
                                     {`${formatDate(reservation.dateFormatted)} - ${reservation.time}`}
                                 </Text>
                             </Box>
@@ -113,6 +119,7 @@ const DashBoardMenu = ({reservation}) => {
                             e.stopPropagation();
                             setSendMessageModalOpen(true);
                         }}
+                        fontSize={isMobile ? "xs" : "sm"}
                     >
                         <HStack spacing={2}>
                             <FiSend/>
@@ -124,6 +131,7 @@ const DashBoardMenu = ({reservation}) => {
                             e.stopPropagation();
                             setAddEventNoteModalOpen(true);
                         }}
+                        fontSize={isMobile ? "xs" : "sm"}
                     >
                         <HStack spacing={2}>
                             <CgPlayListAdd/>
@@ -135,6 +143,7 @@ const DashBoardMenu = ({reservation}) => {
                             e.stopPropagation();
                             setChangeArrivalOpen(true);
                         }}
+                        fontSize={isMobile ? "xs" : "sm"}
                     >
                         <HStack spacing={2}>
                             <CiCalendar/>
@@ -146,14 +155,14 @@ const DashBoardMenu = ({reservation}) => {
                             e.stopPropagation();
                             setCancelConfirmationOpen(true);
                         }}
+                        fontSize={isMobile ? "xs" : "sm"}
                     >
                         <HStack spacing={2}>
                             <MdOutlineCancel/>
                             <Text>Cancel Reservations</Text>
                         </HStack>
                     </MenuItem>
-                    <MenuItem
-                    >
+                    <MenuItem fontSize={isMobile ? "xs" : "sm"}>
                         <HStack spacing={2}>
                             <CgNotes/>
                             <Text>Roster</Text>
@@ -164,6 +173,7 @@ const DashBoardMenu = ({reservation}) => {
                             e.stopPropagation();
                             setChangeCapacityModalOpen(true);
                         }}
+                        fontSize={isMobile ? "xs" : "sm"}
                     >
                         <HStack spacing={2}>
                             <MdOutlineReduceCapacity/>
@@ -175,6 +185,7 @@ const DashBoardMenu = ({reservation}) => {
                             e.stopPropagation();
                             setAssignModalOpen(true);
                         }}
+                        fontSize={isMobile ? "xs" : "sm"}
                     >
                         <HStack spacing={2}>
                             <IoPersonAddOutline/>
@@ -186,10 +197,11 @@ const DashBoardMenu = ({reservation}) => {
                             e.stopPropagation();
                             setUnassignModalOpen(true);
                         }}
+                        fontSize={isMobile ? "xs" : "sm"}
                     >
                         <HStack spacing={2}>
                             <BsPersonX/>
-                            <Text>Unassign Guides Guides</Text>
+                            <Text>Unassign Guides</Text>
                         </HStack>
                     </MenuItem>
                 </MenuList>

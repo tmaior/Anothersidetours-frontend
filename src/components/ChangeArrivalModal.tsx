@@ -20,6 +20,8 @@ import {
     Text,
     useToast,
     VStack,
+    useBreakpointValue,
+    Flex,
 } from "@chakra-ui/react";
 import axios from "axios";
 import {CiSquarePlus} from "react-icons/ci";
@@ -34,6 +36,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
     const [isTimeslotModalOpen, setTimeslotModalOpen] = useState(false);
     const [availableTimes, setAvailableTimes] = useState([]);
     const toast = useToast();
+    const isMobile = useBreakpointValue({ base: true, md: false });
 
     const [pendingBalance, setPendingBalance] = useState<number>(0);
     const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState<boolean>(true);
@@ -387,15 +390,24 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
     const isLoading = isLoadingPendingBalance || isLoadingAddons || isLoadingCardDetails;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="3xl">
+        <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "3xl"}>
             <ModalOverlay/>
-            <ModalContent h="600px" maxH="80vh">
+            <ModalContent h={isMobile ? "100%" : "600px"} maxH={isMobile ? "100vh" : "80vh"}>
                 <ModalHeader display="flex" justifyContent="center" fontSize={"3xl"} fontWeight={"medium"}>Change
                     Arrival</ModalHeader>
                 <ModalCloseButton/>
                 <ModalBody>
-                    <HStack align="center">
-                        <VStack align="start" flex="2" marginTop={"-130px"}>
+                    <Flex 
+                        direction={isMobile ? "column" : "row"} 
+                        align={isMobile ? "stretch" : "center"}
+                    >
+                        <VStack 
+                            align="start" 
+                            flex="2" 
+                            marginTop={isMobile ? "0" : "-130px"}
+                            w={isMobile ? "100%" : "auto"}
+                            mb={isMobile ? 6 : 0}
+                        >
                             <FormControl>
                                 <FormLabel>Date</FormLabel>
                                 <Input
@@ -407,7 +419,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                                     }
                                     onClick={() => setDatePickerOpen(true)}
                                     size="sm"
-                                    w="200px"
+                                    w={isMobile ? "100%" : "200px"}
                                     readOnly
                                     cursor="pointer"
                                 />
@@ -418,7 +430,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                                     value={selectedTime || booking.time}
                                     onChange={(e) => setSelectedTime(e.target.value)}
                                     size="sm"
-                                    w="200px"
+                                    w={isMobile ? "100%" : "200px"}
                                 >
                                     {availableTimes.map((time) => (
                                         <option key={time.value} value={time.value}>
@@ -438,7 +450,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                                 Add a new time
                             </Button>
                         </VStack>
-                        <HStack align="center">
+                        <Box w={isMobile ? "100%" : "auto"}>
                             {isLoading ? (
                                 <VStack
                                     bg="gray.50"
@@ -449,9 +461,9 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                                     spacing={6}
                                     align="stretch"
                                     w="100%"
-                                    h="350px"
-                                    minW="300px"
-                                    minH="300px"
+                                    h={isMobile ? "auto" : "350px"}
+                                    minW={isMobile ? "100%" : "300px"}
+                                    minH={isMobile ? "auto" : "300px"}
                                 >
                                     <HStack justifyContent="center">
                                         <Spinner size="sm"/>
@@ -468,11 +480,11 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                                     spacing={6}
                                     align="stretch"
                                     w="100%"
-                                    h="350px"
-                                    minW="300px"
-                                    minH="300px"
+                                    h={isMobile ? "auto" : "350px"}
+                                    minW={isMobile ? "100%" : "300px"}
+                                    minH={isMobile ? "auto" : "300px"}
                                 >
-                                    <Box padding="10px" w="100%" h="500px">
+                                    <Box padding="10px" w="100%" h={isMobile ? "auto" : "500px"}>
                                         <Text fontWeight="bold" mb={2}>
                                             Purchase Summary
                                         </Text>
@@ -549,23 +561,26 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                                     </Box>
                                 </VStack>
                             )}
-                        </HStack>
-                    </HStack>
+                        </Box>
+                    </Flex>
                 </ModalBody>
-                <ModalFooter>
-                    <HStack spacing={4}>
+                <ModalFooter flexDirection={isMobile ? "column" : "row"}>
+                    <HStack spacing={4} flexDirection={isMobile ? "column" : "row"} w={isMobile ? "100%" : "auto"}>
                         <Checkbox
                             isChecked={notifyCustomer}
                             onChange={(e) => setNotifyCustomer(e.target.checked)}
+                            mb={isMobile ? 2 : 0}
                         >
                             Notify Customer
                         </Checkbox>
-                        <Button variant="outline" onClick={onClose}>
-                            Cancel
-                        </Button>
-                        <Button colorScheme="blue" onClick={handleSaveChanges}>
-                            Save Changes
-                        </Button>
+                        <Flex w={isMobile ? "100%" : "auto"} justifyContent="space-between">
+                            <Button variant="outline" onClick={onClose} mr={isMobile ? 2 : 4} w={isMobile ? "48%" : "auto"}>
+                                Cancel
+                            </Button>
+                            <Button colorScheme="blue" onClick={handleSaveChanges} w={isMobile ? "48%" : "auto"}>
+                                Save Changes
+                            </Button>
+                        </Flex>
                     </HStack>
                 </ModalFooter>
             </ModalContent>
@@ -579,10 +594,10 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
             >
                 <ModalOverlay/>
                 <ModalContent
-                    mt="70px"
-                    ml="150px"
+                    mt={isMobile ? "20px" : "70px"}
+                    ml={isMobile ? "10px" : "150px"}
                     position="absolute"
-                    w="500px"
+                    w={isMobile ? "90%" : "500px"}
                 >
                     <ModalBody>
                         <DatePicker

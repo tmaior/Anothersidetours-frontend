@@ -90,87 +90,87 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
                 <Text fontSize="sm" mb={2}>Payment Workflow</Text>
                 <Wrap spacing={2}>
                     <WrapItem>
-                        <Button
-                            leftIcon={<AiOutlineDollar size="1.2em"/>}
-                            size="md"
-                            variant={workflowType === 'now' ? 'solid' : 'outline'}
-                            colorScheme={workflowType === 'now' ? 'blue' : 'gray'}
-                            onClick={() => handleWorkflowTypeChange('now')}
-                            aria-label="Now"
-                            borderRadius="md"
-                            px={4}
-                            py={2}
-                            border="1px solid"
-                            borderColor={workflowType === 'now' ? 'blue.500' : 'gray.200'}
-                            bg={workflowType === 'now' ? 'blue.500' : 'white'}
-                            color={workflowType === 'now' ? 'white' : 'black'}
+                    <Button
+                        leftIcon={<AiOutlineDollar size="1.2em"/>}
+                        size="md"
+                        variant={workflowType === 'now' ? 'solid' : 'outline'}
+                        colorScheme={workflowType === 'now' ? 'blue' : 'gray'}
+                        onClick={() => handleWorkflowTypeChange('now')}
+                        aria-label="Now"
+                        borderRadius="md"
+                        px={4}
+                        py={2}
+                        border="1px solid"
+                        borderColor={workflowType === 'now' ? 'blue.500' : 'gray.200'}
+                        bg={workflowType === 'now' ? 'blue.500' : 'white'}
+                        color={workflowType === 'now' ? 'white' : 'black'}
                             w={isMobile ? "100%" : "auto"}
-                        >
-                            <Text>Now</Text>
-                        </Button>
+                    >
+                        <Text>Now</Text>
+                    </Button>
                     </WrapItem>
 
                     <WrapItem>
-                        <Button
-                            leftIcon={<FaClock size="1.2em"/>}
-                            size="md"
-                            variant={workflowType === 'later' ? 'solid' : 'outline'}
-                            colorScheme={workflowType === 'later' ? 'blue' : 'gray'}
-                            onClick={() => handleWorkflowTypeChange('later')}
-                            aria-label="Later"
-                            borderRadius="md"
-                            px={4}
-                            py={2}
-                            border="1px solid"
-                            borderColor={workflowType === 'later' ? 'blue.500' : 'gray.200'}
-                            bg={workflowType === 'later' ? 'blue.500' : 'white'}
-                            color={workflowType === 'later' ? 'white' : 'black'}
+                    <Button
+                        leftIcon={<FaClock size="1.2em"/>}
+                        size="md"
+                        variant={workflowType === 'later' ? 'solid' : 'outline'}
+                        colorScheme={workflowType === 'later' ? 'blue' : 'gray'}
+                        onClick={() => handleWorkflowTypeChange('later')}
+                        aria-label="Later"
+                        borderRadius="md"
+                        px={4}
+                        py={2}
+                        border="1px solid"
+                        borderColor={workflowType === 'later' ? 'blue.500' : 'gray.200'}
+                        bg={workflowType === 'later' ? 'blue.500' : 'white'}
+                        color={workflowType === 'later' ? 'white' : 'black'}
                             w={isMobile ? "100%" : "auto"}
-                        >
-                            <Text>Later</Text>
-                        </Button>
+                    >
+                        <Text>Later</Text>
+                    </Button>
                     </WrapItem>
 
                     <WrapItem>
-                        <Button
-                            leftIcon={<FaHandHoldingUsd size="1.2em"/>}
-                            size="md"
-                            variant={workflowType === 'deposit' ? 'solid' : 'outline'}
-                            colorScheme={workflowType === 'deposit' ? 'blue' : 'gray'}
-                            onClick={() => handleWorkflowTypeChange('deposit')}
-                            aria-label="Deposit"
-                            borderRadius="md"
-                            px={4}
-                            py={2}
-                            border="1px solid"
-                            borderColor={workflowType === 'deposit' ? 'blue.500' : 'gray.200'}
-                            bg={workflowType === 'deposit' ? 'blue.500' : 'white'}
-                            color={workflowType === 'deposit' ? 'white' : 'black'}
+                    <Button
+                        leftIcon={<FaHandHoldingUsd size="1.2em"/>}
+                        size="md"
+                        variant={workflowType === 'deposit' ? 'solid' : 'outline'}
+                        colorScheme={workflowType === 'deposit' ? 'blue' : 'gray'}
+                        onClick={() => handleWorkflowTypeChange('deposit')}
+                        aria-label="Deposit"
+                        borderRadius="md"
+                        px={4}
+                        py={2}
+                        border="1px solid"
+                        borderColor={workflowType === 'deposit' ? 'blue.500' : 'gray.200'}
+                        bg={workflowType === 'deposit' ? 'blue.500' : 'white'}
+                        color={workflowType === 'deposit' ? 'white' : 'black'}
                             w={isMobile ? "100%" : "auto"}
-                        >
-                            <Text>Deposit</Text>
-                        </Button>
+                    >
+                        <Text>Deposit</Text>
+                    </Button>
                     </WrapItem>
 
                     <WrapItem>
-                        <Button
-                            leftIcon={<MdOutlineCallSplit size="1.2em"/>}
-                            size="md"
-                            variant={workflowType === 'split_pay' ? 'solid' : 'outline'}
-                            colorScheme={workflowType === 'split_pay' ? 'blue' : 'gray'}
-                            onClick={() => handleWorkflowTypeChange('split_pay')}
-                            aria-label="Split Pay"
-                            borderRadius="md"
-                            px={4}
-                            py={2}
-                            border="1px solid"
-                            borderColor={workflowType === 'split_pay' ? 'blue.500' : 'gray.200'}
-                            bg={workflowType === 'split_pay' ? 'blue.500' : 'white'}
-                            color={workflowType === 'split_pay' ? 'white' : 'black'}
+                    <Button
+                        leftIcon={<MdOutlineCallSplit size="1.2em"/>}
+                        size="md"
+                        variant={workflowType === 'split_pay' ? 'solid' : 'outline'}
+                        colorScheme={workflowType === 'split_pay' ? 'blue' : 'gray'}
+                        onClick={() => handleWorkflowTypeChange('split_pay')}
+                        aria-label="Split Pay"
+                        borderRadius="md"
+                        px={4}
+                        py={2}
+                        border="1px solid"
+                        borderColor={workflowType === 'split_pay' ? 'blue.500' : 'gray.200'}
+                        bg={workflowType === 'split_pay' ? 'blue.500' : 'white'}
+                        color={workflowType === 'split_pay' ? 'white' : 'black'}
                             w={isMobile ? "100%" : "auto"}
-                        >
-                            <Text>Split Pay</Text>
-                        </Button>
+                    >
+                        <Text>Split Pay</Text>
+                    </Button>
                     </WrapItem>
                 </Wrap>
             </Box>
@@ -181,107 +181,107 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
                         <Text fontSize="sm" mb={2}>Payment Method</Text>
                         <Wrap spacing={2}>
                             <WrapItem>
-                                <Button
-                                    leftIcon={<FaCreditCard size="1.2em"/>}
-                                    size="md"
-                                    variant={paymentMethod === 'credit_card' ? 'solid' : 'outline'}
-                                    colorScheme={paymentMethod === 'credit_card' ? 'blue' : 'gray'}
-                                    onClick={() => handlePaymentMethodChange('credit_card')}
-                                    aria-label="Credit Card"
-                                    borderRadius="md"
-                                    px={4}
-                                    py={2}
-                                    border="1px solid"
-                                    borderColor={paymentMethod === 'credit_card' ? 'blue.500' : 'gray.200'}
-                                    bg={paymentMethod === 'credit_card' ? 'blue.500' : 'white'}
-                                    color={paymentMethod === 'credit_card' ? 'white' : 'black'}
+                            <Button
+                                leftIcon={<FaCreditCard size="1.2em"/>}
+                                size="md"
+                                variant={paymentMethod === 'credit_card' ? 'solid' : 'outline'}
+                                colorScheme={paymentMethod === 'credit_card' ? 'blue' : 'gray'}
+                                onClick={() => handlePaymentMethodChange('credit_card')}
+                                aria-label="Credit Card"
+                                borderRadius="md"
+                                px={4}
+                                py={2}
+                                border="1px solid"
+                                borderColor={paymentMethod === 'credit_card' ? 'blue.500' : 'gray.200'}
+                                bg={paymentMethod === 'credit_card' ? 'blue.500' : 'white'}
+                                color={paymentMethod === 'credit_card' ? 'white' : 'black'}
                                     w={isMobile ? "100%" : "auto"}
-                                >
-                                    <Text>Credit Card</Text>
-                                </Button>
+                            >
+                                <Text>Credit Card</Text>
+                            </Button>
                             </WrapItem>
 
                             <WrapItem>
-                                <Button
-                                    leftIcon={<FaMoneyBill size="1.2em"/>}
-                                    size="md"
-                                    variant={paymentMethod === 'cash' ? 'solid' : 'outline'}
-                                    colorScheme={paymentMethod === 'cash' ? 'blue' : 'gray'}
-                                    onClick={() => handlePaymentMethodChange('cash')}
-                                    aria-label="Cash"
-                                    borderRadius="md"
-                                    px={4}
-                                    py={2}
-                                    border="1px solid"
-                                    borderColor={paymentMethod === 'cash' ? 'blue.500' : 'gray.200'}
-                                    bg={paymentMethod === 'cash' ? 'blue.500' : 'white'}
-                                    color={paymentMethod === 'cash' ? 'white' : 'black'}
+                            <Button
+                                leftIcon={<FaMoneyBill size="1.2em"/>}
+                                size="md"
+                                variant={paymentMethod === 'cash' ? 'solid' : 'outline'}
+                                colorScheme={paymentMethod === 'cash' ? 'blue' : 'gray'}
+                                onClick={() => handlePaymentMethodChange('cash')}
+                                aria-label="Cash"
+                                borderRadius="md"
+                                px={4}
+                                py={2}
+                                border="1px solid"
+                                borderColor={paymentMethod === 'cash' ? 'blue.500' : 'gray.200'}
+                                bg={paymentMethod === 'cash' ? 'blue.500' : 'white'}
+                                color={paymentMethod === 'cash' ? 'white' : 'black'}
                                     w={isMobile ? "100%" : "auto"}
-                                >
-                                    <Text>Cash</Text>
-                                </Button>
+                            >
+                                <Text>Cash</Text>
+                            </Button>
                             </WrapItem>
 
                             <WrapItem>
-                                <Button
-                                    leftIcon={<FaMoneyCheckAlt size="1.2em"/>}
-                                    size="md"
-                                    variant={paymentMethod === 'check' ? 'solid' : 'outline'}
-                                    colorScheme={paymentMethod === 'check' ? 'blue' : 'gray'}
-                                    onClick={() => handlePaymentMethodChange('check')}
-                                    aria-label="Check"
-                                    borderRadius="md"
-                                    px={4}
-                                    py={2}
-                                    border="1px solid"
-                                    borderColor={paymentMethod === 'check' ? 'blue.500' : 'gray.200'}
-                                    bg={paymentMethod === 'check' ? 'blue.500' : 'white'}
-                                    color={paymentMethod === 'check' ? 'white' : 'black'}
+                            <Button
+                                leftIcon={<FaMoneyCheckAlt size="1.2em"/>}
+                                size="md"
+                                variant={paymentMethod === 'check' ? 'solid' : 'outline'}
+                                colorScheme={paymentMethod === 'check' ? 'blue' : 'gray'}
+                                onClick={() => handlePaymentMethodChange('check')}
+                                aria-label="Check"
+                                borderRadius="md"
+                                px={4}
+                                py={2}
+                                border="1px solid"
+                                borderColor={paymentMethod === 'check' ? 'blue.500' : 'gray.200'}
+                                bg={paymentMethod === 'check' ? 'blue.500' : 'white'}
+                                color={paymentMethod === 'check' ? 'white' : 'black'}
                                     w={isMobile ? "100%" : "auto"}
-                                >
-                                    <Text>Check</Text>
-                                </Button>
+                            >
+                                <Text>Check</Text>
+                            </Button>
                             </WrapItem>
 
                             <WrapItem>
-                                <Button
-                                    leftIcon={<PiInvoice size="1.2em"/>}
-                                    size="md"
-                                    variant={paymentMethod === 'invoice' ? 'solid' : 'outline'}
-                                    colorScheme={paymentMethod === 'invoice' ? 'blue' : 'gray'}
-                                    onClick={() => handlePaymentMethodChange('invoice')}
-                                    aria-label="Invoice"
-                                    borderRadius="md"
-                                    px={4}
-                                    py={2}
-                                    border="1px solid"
-                                    borderColor={paymentMethod === 'invoice' ? 'blue.500' : 'gray.200'}
-                                    bg={paymentMethod === 'invoice' ? 'blue.500' : 'white'}
-                                    color={paymentMethod === 'invoice' ? 'white' : 'black'}
+                            <Button
+                                leftIcon={<PiInvoice size="1.2em"/>}
+                                size="md"
+                                variant={paymentMethod === 'invoice' ? 'solid' : 'outline'}
+                                colorScheme={paymentMethod === 'invoice' ? 'blue' : 'gray'}
+                                onClick={() => handlePaymentMethodChange('invoice')}
+                                aria-label="Invoice"
+                                borderRadius="md"
+                                px={4}
+                                py={2}
+                                border="1px solid"
+                                borderColor={paymentMethod === 'invoice' ? 'blue.500' : 'gray.200'}
+                                bg={paymentMethod === 'invoice' ? 'blue.500' : 'white'}
+                                color={paymentMethod === 'invoice' ? 'white' : 'black'}
                                     w={isMobile ? "100%" : "auto"}
-                                >
-                                    <Text>Invoice</Text>
-                                </Button>
+                            >
+                                <Text>Invoice</Text>
+                            </Button>
                             </WrapItem>
 
                             <WrapItem>
-                                <Button
-                                    size="md"
-                                    variant={paymentMethod === 'other' ? 'solid' : 'outline'}
-                                    colorScheme={paymentMethod === 'other' ? 'blue' : 'gray'}
-                                    onClick={() => handlePaymentMethodChange('other')}
-                                    aria-label="Other"
-                                    borderRadius="md"
-                                    px={4}
-                                    py={2}
-                                    border="1px solid"
-                                    borderColor={paymentMethod === 'other' ? 'blue.500' : 'gray.200'}
-                                    bg={paymentMethod === 'other' ? 'blue.500' : 'white'}
-                                    color={paymentMethod === 'other' ? 'white' : 'black'}
+                            <Button
+                                size="md"
+                                variant={paymentMethod === 'other' ? 'solid' : 'outline'}
+                                colorScheme={paymentMethod === 'other' ? 'blue' : 'gray'}
+                                onClick={() => handlePaymentMethodChange('other')}
+                                aria-label="Other"
+                                borderRadius="md"
+                                px={4}
+                                py={2}
+                                border="1px solid"
+                                borderColor={paymentMethod === 'other' ? 'blue.500' : 'gray.200'}
+                                bg={paymentMethod === 'other' ? 'blue.500' : 'white'}
+                                color={paymentMethod === 'other' ? 'white' : 'black'}
                                     w={isMobile ? "100%" : "auto"}
-                                >
-                                    <Text>Other</Text>
-                                </Button>
+                            >
+                                <Text>Other</Text>
+                            </Button>
                             </WrapItem>
                         </Wrap>
                     </Box>
@@ -403,23 +403,23 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
                                 </VStack>
                             ) : (
                                 <Box p={3} borderWidth="1px" borderRadius="md" borderColor="gray.300" bg="gray.50">
-                                    <CardElement options={{
-                                        style: {
-                                            base: {
-                                                fontSize: '16px',
-                                                color: '#424770',
-                                                fontFamily: 'Arial, sans-serif',
+                                <CardElement options={{
+                                    style: {
+                                        base: {
+                                            fontSize: '16px',
+                                            color: '#424770',
+                                            fontFamily: 'Arial, sans-serif',
                                                 '::placeholder': {
                                                     color: '#aab7c4',
                                                 },
-                                            },
-                                            invalid: {
-                                                color: '#9e2146',
-                                            },
                                         },
-                                        hidePostalCode: true,
-                                    }}/>
-                                </Box>
+                                        invalid: {
+                                            color: '#9e2146',
+                                        },
+                                    },
+                                    hidePostalCode: true,
+                                }}/>
+                            </Box>
                             )}
                             
                             <Text fontSize="xs" color="gray.500" textAlign="center" mt={4}>

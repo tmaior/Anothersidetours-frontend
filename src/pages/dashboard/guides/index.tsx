@@ -95,23 +95,45 @@ function GuidesPage() {
 
     return (
         <DashboardLayout>
-            <Box p={8} w={"1000px"} maxW="100%" marginLeft={"100px"} marginTop={"-30px"}>
-                <Flex justifyContent="space-between" alignItems="center" mb={3} w={"100%"}>
-                    <Flex alignItems="center">
-                        <Heading>Guide Management</Heading>
+            <Box 
+                p={{ base: 4, md: 6, lg: 8 }} 
+                w="100%" 
+                maxW={{ base: "100%", lg: "1000px" }}
+                mx="auto"
+                mt={{ base: 0, md: "-20px", lg: "-30px" }}
+            >
+                <Flex 
+                    direction={{ base: "column", sm: "row" }}
+                    justifyContent="space-between" 
+                    alignItems={{ base: "flex-start", sm: "center" }} 
+                    mb={{ base: 4, md: 3 }} 
+                    w="100%"
+                    gap={{ base: 3, sm: 0 }}
+                >
+                    <Flex 
+                        alignItems="center"
+                        mb={{ base: 2, sm: 0 }}
+                        w={{ base: "100%", sm: "auto" }}
+                    >
+                        <Heading size={{ base: "lg", md: "xl" }}>Guide Management</Heading>
                         <Divider
                             orientation="vertical"
                             height="50px"
                             ml={4}
                             borderColor="gray.300"
+                            display={{ base: "none", sm: "block" }}
                         />
                     </Flex>
-                    <Button colorScheme="blue" onClick={handleAdd}>
+                    <Button 
+                        colorScheme="blue" 
+                        onClick={handleAdd}
+                        w={{ base: "100%", sm: "auto" }}
+                    >
                         + Add Guide
                     </Button>
                 </Flex>
-                <Divider borderColor="gray.300" w={"100%"} marginLeft={"5px"}/>
-                <VStack spacing={4} mt={4}>
+                <Divider borderColor="gray.300" w="100%" />
+                <VStack spacing={4} mt={4} align="stretch">
                     {loading ? (
                         <Box>Loading guides...</Box>
                     ) : guides.length === 0 ? (

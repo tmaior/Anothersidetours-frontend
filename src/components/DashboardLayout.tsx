@@ -70,7 +70,22 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
         onClose: onSidebarClose
     } = useDisclosure();
 
-    const isMobile = useBreakpointValue({ base: true, md: false });
+    const showMobileMenu = useBreakpointValue({ base: true, md: true, lg: false });
+    
+    const isSmallMobile = useBreakpointValue({ base: true, sm: false });
+    
+    const isTablet = useBreakpointValue({ 
+        base: false, 
+        sm: true, 
+        md: true, 
+        lg: false 
+    });
+    
+    const drawerSize = useBreakpointValue({ 
+        base: "full",
+        sm: isTablet ? "xs" : "full",
+        md: isTablet ? "xs" : "full"
+    });
 
     useEffect(() => {
         const handleRouteChange = (url) => {
@@ -188,7 +203,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
         if (!requiredPermission || hasPermission(requiredPermission)) {
             window.location.href = path;
 
-            if (isMobile) {
+            if (showMobileMenu) {
                 onSidebarClose();
             }
         } else {
@@ -262,7 +277,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     return (
         <CartProvider>
             <Box display="flex" minH="100vh" position="relative">
-                {isMobile && (
+                {showMobileMenu && (
                     <IconButton
                         aria-label="Open menu"
                         icon={<IoMdMenu />}
@@ -275,7 +290,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     />
                 )}
 
-                {!isMobile && (
+                {!showMobileMenu && (
                     <Box
                         as="nav"
                         width="250px"
@@ -848,10 +863,14 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     isOpen={isSidebarOpen}
                     placement="left"
                     onClose={onSidebarClose}
-                    size="full"
+                    size={drawerSize}
                 >
                     <DrawerOverlay />
-                    <DrawerContent bg="#222324" color="white">
+                    <DrawerContent 
+                        bg="#222324" 
+                        color="white" 
+                        maxW={isSmallMobile ? "100%" : isTablet ? "250px" : "100%"}
+                    >
                         <DrawerCloseButton color="white" />
                         <DrawerBody p={0} overflowY="auto">
                             <Box
@@ -1367,8 +1386,8 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                 <Box
                     flex="1"
                     p={{ base: 4, md: 8 }}
-                    marginLeft={{ base: 0, md: "250px" }}
-                    maxW={{ base: "100%", md: "calc(100% - 250px)" }}
+                    marginLeft={{ base: 0, lg: "250px" }}
+                    maxW={{ base: "100%", lg: "calc(100% - 250px)" }}
                     overflowY="auto"
                     minH="100vh"
                     position="relative"

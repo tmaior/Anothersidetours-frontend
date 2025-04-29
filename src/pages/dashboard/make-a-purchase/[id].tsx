@@ -2369,18 +2369,21 @@ const PurchasePage = () => {
 
                         <Heading size="md" mb={4}>Payment</Heading>
 
-                        <PaymentWorkflow
-                            onWorkflowTypeChange={handlePaymentWorkflowTypeChange}
-                            onPaymentMethodChange={handlePaymentMethodChange}
-                            cardNumber={cardNumber}
-                            onCardNumberChange={(value) => setCardNumber(value)}
-                            doNotCharge={doNotCharge}
-                            onDoNotChargeChange={(value) => setDoNotCharge(value)}
-                            errorMessage={errorMessage}
-                            totalAmount={totalWithDiscount}
-                            reservationDate={getFormattedEventDate()}
-                            onInvoiceDataChange={(data) => setInvoiceData(data)}
-                        />
+                        <Box mb={6}>
+                            <PaymentWorkflow
+                                onWorkflowTypeChange={handlePaymentWorkflowTypeChange}
+                                onPaymentMethodChange={handlePaymentMethodChange}
+                                cardNumber={cardNumber}
+                                onCardNumberChange={(value) => setCardNumber(value)}
+                                doNotCharge={doNotCharge}
+                                onDoNotChargeChange={(value) => setDoNotCharge(value)}
+                                errorMessage={errorMessage}
+                                totalAmount={totalWithDiscount}
+                                reservationDate={getFormattedEventDate()}
+                                onInvoiceDataChange={(data) => setInvoiceData(data)}
+                            />
+                        </Box>
+                        
                         {isPurchaseNoteRequired() && (
                             <Box mt={4} mb={2} p={3} bg="red.50" borderRadius="md" borderLeft="4px solid"
                                  borderColor="red.500">

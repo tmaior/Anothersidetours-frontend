@@ -4,7 +4,6 @@ import {
     Divider,
     Flex,
     Heading,
-    HStack,
     Image,
     Input,
     InputGroup,
@@ -12,6 +11,7 @@ import {
     SimpleGrid,
     Spinner,
     Text,
+    useBreakpointValue,
 } from '@chakra-ui/react';
 import DashboardLayout from '../../../components/DashboardLayout';
 import {SearchIcon} from '@chakra-ui/icons';
@@ -28,6 +28,7 @@ function ToursPage() {
     const {addToCart, setNavigationSource, resetCart} = useCart();
     const router = useRouter();
     const [tourPricing, setTourPricing] = useState({});
+    const isMobile = useBreakpointValue({ base: true, md: false });
 
     const handleNavigateToProduct = (tour) => {
         resetCart();
@@ -109,24 +110,32 @@ function ToursPage() {
     return (
         <DashboardLayout>
             <Box maxW="1500px" mx="auto" py={8} px={4}>
-                <HStack marginTop={"-60px"}>
-                    <Heading as="h1" mb={4} w={"400px"}>
+                <Flex 
+                    direction={isMobile ? "column" : "row"} 
+                    align={isMobile ? "center" : "flex-start"}
+                    marginTop={"-60px"}
+                    mb={6}
+                >
+                    <Heading 
+                        as="h1" 
+                        mb={isMobile ? 4 : 0}
+                        w={isMobile ? "100%" : "400px"}
+                        textAlign={isMobile ? "center" : "left"}
+                    >
                         Make a Purchase
                     </Heading>
-                    <InputGroup>
-                        <InputLeftElement pointerEvents="none" marginTop={"20px"}>
+                    <InputGroup w={isMobile ? "100%" : "500px"}>
+                        <InputLeftElement pointerEvents="none" marginTop={isMobile ? "0" : "20px"}>
                             <SearchIcon color="gray.400"/>
                         </InputLeftElement>
                         <Input
-                            marginTop={"20px"}
+                            marginTop={isMobile ? "0" : "20px"}
                             placeholder="Search by name"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            mb={6}
-                            w={"500px"}
                         />
                     </InputGroup>
-                </HStack>
+                </Flex>
                 <Divider/>
                 <Text fontSize={"lg"} fontWeight={"bold"}>
                     Products

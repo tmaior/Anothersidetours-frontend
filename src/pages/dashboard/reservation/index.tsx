@@ -442,16 +442,6 @@ function Dashboard() {
             <Divider/>
 
             <Flex align="center" justify="space-between" mt={4} mb={2} px={{base: 4, md: 0}}>
-                {isMobile && (
-                    <IconButton
-                        aria-label="Toggle filters"
-                        icon={<IoMdFunnel />}
-                        size="sm"
-                        onClick={toggleFilters}
-                        variant="outline"
-                    />
-                )}
-
                 {!isMobile && (
                     <HStack spacing={2} wrap="wrap">
                         <Box w={{base: "100px", md: "130px"}}>
@@ -481,40 +471,14 @@ function Dashboard() {
             </Flex>
 
             {isMobile && (
-                <Collapse in={isFiltersVisible} animateOpacity>
-                    <Box p={4} bg="gray.50" borderRadius="md" mb={4}>
-                        <VStack spacing={4} align="stretch">
-                            <Box>
-                                <Text fontSize="xs" mb={1}>Date</Text>
-                                <CustomDatePicker
-                                    selected={selectedDate ? createDateFromISO(selectedDate) : null}
-                                    onDateChange={(date) => {
-                                        const formattedDate = formatDate(date);
-                                        setSelectedDate(formattedDate);
-                                        setLoadedDates([formattedDate]);
-                                    }}
-                                />
-                            </Box>
-                            <Box>
-                                <Text fontSize="xs" mb={1}>Status</Text>
-                                <Select placeholder="Reserved" size="sm">
-                                    <option value="reserved">Reserved</option>
-                                    <option value="not_reserved">Not Reserved</option>
-                                </Select>
-                            </Box>
-                            <Box>
-                                <Text fontSize="xs" mb={1}>View</Text>
-                                <Select size="sm" placeholder="List">
-                                    <option value="list">List</option>
-                                    <option value="grid">Grid</option>
-                                </Select>
-                            </Box>
-                            <Button variant="outline" size="sm" w="full">
-                                Sync Calendar
-                            </Button>
-                        </VStack>
-                    </Box>
-                </Collapse>
+                <CustomDatePicker
+                    selected={selectedDate ? createDateFromISO(selectedDate) : null}
+                    onDateChange={(date) => {
+                        const formattedDate = formatDate(date);
+                        setSelectedDate(formattedDate);
+                        setLoadedDates([formattedDate]);
+                    }}
+                />
             )}
             
             <Divider/>

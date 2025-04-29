@@ -2451,22 +2451,47 @@ const PurchasePage = () => {
 
                         <Divider my={6}/>
 
-                        <HStack justify="space-between">
-                            <Button variant="outline" onClick={handleCancel}>Cancel</Button>
-                            <HStack spacing={4}>
-                                <Button variant="outline" onClick={handleNavigateToProducts}>Add Another
-                                    Product</Button>
+                        <Flex 
+                            direction={{base: "column", md: "row"}} 
+                            justify={{base: "center", md: "space-between"}}
+                            align="stretch"
+                            w="100%"
+                        >
+                            <Button 
+                                variant="outline" 
+                                onClick={handleCancel}
+                                mb={{base: 3, md: 0}}
+                                w={{base: "100%", md: "auto"}}
+                            >
+                                Cancel
+                            </Button>
+                            
+                            <Flex 
+                                direction={{base: "column", md: "row"}}
+                                spacing={0} 
+                                gap={{base: 3, md: 4}}
+                                w={{base: "100%", md: "auto"}}
+                            >
+                                <Button 
+                                    variant="outline" 
+                                    onClick={handleNavigateToProducts}
+                                    w={{base: "100%", md: "auto"}}
+                                    mb={{base: 3, md: 0}}
+                                >
+                                    Add Another Product
+                                </Button>
                                 <Button
                                     colorScheme="green"
                                     onClick={handleCreateReservationAndPay}
                                     loadingText="Processing Payment"
                                     isLoading={submitting}
                                     isDisabled={submitting || !areAllFieldsValid()}
+                                    w={{base: "100%", md: "auto"}}
                                 >
                                     Pay US${finalCartTotal.toFixed(2)}
                                 </Button>
-                            </HStack>
-                        </HStack>
+                            </Flex>
+                        </Flex>
                     </Box>
 
                     <Box w={{base: "100%", md: "400px"}} bg="white" p={6} borderRadius="md">

@@ -27,6 +27,7 @@ import {
     useDisclosure,
     useToast,
     VStack,
+    useBreakpointValue,
 } from '@chakra-ui/react'
 import DashboardLayout from "../../../components/DashboardLayout";
 import {useRouter} from "next/router";
@@ -190,6 +191,8 @@ const PurchasePage = () => {
     const [newSelectedTime, setNewSelectedTime] = useState<string>('');
     const [tierPricing, setTierPricing] = useState<TierPricing[]>([]);
     const [selectedDemographic,] = useState<string>("");
+
+    const isMobile = useBreakpointValue({ base: true, md: false });
 
     const getPricesForDatePicker = () => {
         if (cart.length === 0 || selectedCartItemIndex >= cart.length) return Array(31).fill(0);
@@ -2103,15 +2106,22 @@ const PurchasePage = () => {
                             </>
                         )}
 
-                        <Modal isOpen={isLineItemModalOpen} onClose={() => setIsLineItemModalOpen(false)} size="2xl">
+                        <Modal isOpen={isLineItemModalOpen} onClose={() => setIsLineItemModalOpen(false)} size={isMobile ? "full" : "2xl"}>
                             <ModalOverlay/>
-                            <ModalContent h={"500px"}>
+                            <ModalContent h={isMobile ? "100%" : "500px"} maxH={isMobile ? "100vh" : "80vh"}>
                                 <ModalHeader>Custom Line Items</ModalHeader>
                                 <ModalCloseButton/>
 
                                 <ModalBody>
-                                    <Flex gap={4}>
-                                        <Box flex="2" maxH="300px" overflowY="auto" pr={2} maxW="350px">
+                                    <Flex direction={isMobile ? "column" : "row"} gap={4}>
+                                        <Box 
+                                            flex="2" 
+                                            maxH={isMobile ? "none" : "300px"} 
+                                            overflowY={isMobile ? "visible" : "auto"} 
+                                            pr={2} 
+                                            maxW={isMobile ? "100%" : "350px"}
+                                            mb={isMobile ? 4 : 0}
+                                        >
                                             {items.map((item) => (
                                                 <Box key={item.id} borderBottom="1px solid" borderColor="gray.200"
                                                      pb={3} mb={3}>
@@ -2120,6 +2130,7 @@ const PurchasePage = () => {
                                                             placeholder="Item"
                                                             value={item.name}
                                                             onChange={(e) => updateItem(item.id, "name", e.target.value)}
+                                                            w={isMobile ? "85%" : "auto"}
                                                         />
                                                         <IconButton
                                                             icon={<DeleteIcon/>}
@@ -2128,55 +2139,77 @@ const PurchasePage = () => {
                                                             onClick={() => removeItem(item.id)} aria-label={'delete'}/>
                                                     </HStack>
 
-                                                    <Flex mt={2} alignItems="center" justifyContent="space-between" flexWrap="nowrap">
+                                                    <Flex 
+                                                        mt={2} 
+                                                        alignItems="center" 
+                                                        justifyContent="space-between" 
+                                                        flexWrap={isMobile ? "wrap" : "nowrap"}
+                                                        direction={isMobile ? "column" : "row"}
+                                                    >
                                                         <Select
                                                             value={item.type}
                                                             onChange={(e) => updateItem(item.id, "type", e.target.value)}
-                                                            width="110px"
-                                                            mr={2}
+                                                            width={isMobile ? "100%" : "110px"}
+                                                            mr={isMobile ? 0 : 2}
+                                                            mb={isMobile ? 2 : 0}
                                                             size="md"
                                                         >
                                                             <option value="Charge">Charge</option>
                                                             <option value="Discount">Discount</option>
                                                         </Select>
                                                         
-                                                        <InputGroup size="md" width="100px" mr={2}>
-                                                            <InputLeftElement pointerEvents="none">
-                                                                <Text color="gray.500">$</Text>
-                                                            </InputLeftElement>
-                                                            <Input
-                                                                type="number"
-                                                                paddingLeft="30px"
-                                                                placeholder="0.00"
-                                                                value={item.amount === 0 ? '' : item.amount}
-                                                                onChange={(e) => updateItem(item.id, "amount", parseFloat(e.target.value) || 0)}
-                                                            />
-                                                        </InputGroup>
+                                                        <Flex 
+                                                            w={isMobile ? "100%" : "auto"} 
+                                                            justify="space-between"
+                                                            align="center"
+                                                        >
+                                                            <InputGroup size="md" width={isMobile ? "48%" : "100px"} mr={2}>
+                                                                <InputLeftElement pointerEvents="none">
+                                                                    <Text color="gray.500">$</Text>
+                                                                </InputLeftElement>
+                                                                <Input
+                                                                    type="number"
+                                                                    paddingLeft="30px"
+                                                                    placeholder="0.00"
+                                                                    value={item.amount === 0 ? '' : item.amount}
+                                                                    onChange={(e) => updateItem(item.id, "amount", parseFloat(e.target.value) || 0)}
+                                                                />
+                                                            </InputGroup>
 
-                                                        <Flex alignItems="center">
-                                                            <IconButton
-                                                                icon={<MinusIcon/>}
-                                                                size="sm"
-                                                                onClick={() => updateItem(item.id, "quantity", Math.max(1, item.quantity - 1))}
-                                                                aria-label={'Decrease quantity'}
-                                                                mr={1}
-                                                            />
-                                                            <Text mx={2} minWidth="20px" textAlign="center">{item.quantity}</Text>
-                                                            <IconButton
-                                                                icon={<AddIcon/>}
-                                                                size="sm"
-                                                                onClick={() => updateItem(item.id, "quantity", item.quantity + 1)}
-                                                                aria-label={'Increase quantity'}
-                                                                ml={1}
-                                                            />
+                                                            <Flex alignItems="center" justifyContent="space-between" width={isMobile ? "48%" : "auto"}>
+                                                                <IconButton
+                                                                    icon={<MinusIcon/>}
+                                                                    size="sm"
+                                                                    onClick={() => updateItem(item.id, "quantity", Math.max(1, item.quantity - 1))}
+                                                                    aria-label={'Decrease quantity'}
+                                                                    mr={1}
+                                                                />
+                                                                <Text mx={2} minWidth="20px" textAlign="center">{item.quantity}</Text>
+                                                                <IconButton
+                                                                    icon={<AddIcon/>}
+                                                                    size="sm"
+                                                                    onClick={() => updateItem(item.id, "quantity", item.quantity + 1)}
+                                                                    aria-label={'Increase quantity'}
+                                                                    ml={1}
+                                                                />
+                                                            </Flex>
                                                         </Flex>
                                                     </Flex>
                                                 </Box>
                                             ))}
                                         </Box>
 
-                                        <Box flex="1" bg="gray.100" p={4} borderRadius="md" h={"300px"} display="flex"
-                                             flexDirection="column" justifyContent="space-between">
+                                        <Box 
+                                            flex="1" 
+                                            bg="gray.100" 
+                                            p={4} 
+                                            borderRadius="md" 
+                                            h={isMobile ? "auto" : "300px"} 
+                                            minH={isMobile ? "200px" : "300px"}
+                                            display="flex"
+                                            flexDirection="column" 
+                                            justifyContent="space-between"
+                                        >
                                             <Text fontWeight="bold">Purchase Summary</Text>
                                             <HStack justify="space-between" mb={-10} spacing={2} mt={-8}>
                                                 <Text>Guests (${basePrice} × {quantity})</Text>
@@ -2213,11 +2246,22 @@ const PurchasePage = () => {
                                     </Flex>
                                 </ModalBody>
 
-                                <ModalFooter>
-                                    <Button variant="outline" onClick={addItem} leftIcon={<AddIcon/>}>
+                                <ModalFooter flexDirection={isMobile ? "column" : "row"}>
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={addItem} 
+                                        leftIcon={<AddIcon/>}
+                                        w={isMobile ? "100%" : "auto"}
+                                        mb={isMobile ? 2 : 0}
+                                    >
                                         Add Line Item
                                     </Button>
-                                    <Button colorScheme="blue" ml={3} onClick={handleSaveLineItems}>
+                                    <Button 
+                                        colorScheme="blue" 
+                                        ml={isMobile ? 0 : 3} 
+                                        onClick={handleSaveLineItems}
+                                        w={isMobile ? "100%" : "auto"}
+                                    >
                                         Save
                                     </Button>
                                 </ModalFooter>

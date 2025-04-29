@@ -9,7 +9,8 @@ import {
     ModalContent,
     ModalFooter,
     ModalHeader,
-    ModalOverlay
+    ModalOverlay,
+    useBreakpointValue
 } from "@chakra-ui/react";
 import React, {useEffect, useState} from "react";
 import TimePickerArrival from "./TimePickerArrival";
@@ -20,6 +21,7 @@ const AddTimeSlotModal = ({isOpen, onClose, onCreate, booking}) => {
     const [selectedTime, setSelectedTime] = useState("");
     const [isDatePickerOpen, setDatePickerOpen] = useState(false);
     const [isTimePickerOpen, setTimePickerOpen] = useState(false);
+    const isMobile = useBreakpointValue({ base: true, md: false });
 
     useEffect(() => {
         if (isOpen) {
@@ -89,7 +91,12 @@ const AddTimeSlotModal = ({isOpen, onClose, onCreate, booking}) => {
                 motionPreset="slideInBottom"
             >
                 <ModalOverlay/>
-                <ModalContent mt="70px" ml="150px" position="absolute" w="500px">
+                <ModalContent 
+                    mt={isMobile ? "20px" : "70px"} 
+                    ml={isMobile ? "10px" : "150px"} 
+                    position="absolute" 
+                    w={isMobile ? "90%" : "500px"}
+                >
                     <ModalBody>
                         <TimePickerArrival
                             prices={Array(31).fill(booking.valuePerGuest || booking.tour?.price || 0)}
@@ -109,7 +116,13 @@ const AddTimeSlotModal = ({isOpen, onClose, onCreate, booking}) => {
                 motionPreset="slideInBottom"
             >
                 <ModalOverlay/>
-                <ModalContent mt="70px" ml="150px" position="absolute" w="500px">
+                <ModalContent 
+                    mt={isMobile ? "20px" : "70px"} 
+                    position="absolute" 
+                    w={isMobile ? "90%" : "500px"}
+                    mx={isMobile ? "auto" : "0"}
+                    ml={isMobile ? "20px" : "150px"}
+                >
                     <ModalBody>
                         <TimePicker
                             onTimeSelect={(time) => {

@@ -2369,7 +2369,14 @@ const PurchasePage = () => {
 
                         <Heading size="md" mb={4}>Payment</Heading>
 
-                        <Box mb={6}>
+                        <Box 
+                            mb={6}
+                            bg="white" 
+                            p={4}
+                            borderRadius="md"
+                            boxShadow="xs"
+                            width="100%"
+                        >
                             <PaymentWorkflow
                                 onWorkflowTypeChange={handlePaymentWorkflowTypeChange}
                                 onPaymentMethodChange={handlePaymentMethodChange}

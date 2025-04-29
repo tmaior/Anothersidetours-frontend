@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Alert, AlertIcon, Box, Button, Stack, Switch, Text, Wrap, WrapItem, useBreakpointValue, VStack, Flex} from '@chakra-ui/react';
 import {FaClock, FaCreditCard, FaHandHoldingUsd, FaMoneyBill, FaMoneyCheckAlt} from 'react-icons/fa';
-import {CardElement} from "@stripe/react-stripe-js";
+import {CardElement, CardNumberElement, CardExpiryElement, CardCvcElement} from "@stripe/react-stripe-js";
 import {AiOutlineDollar} from 'react-icons/ai';
 import {MdOutlineCallSplit} from "react-icons/md";
 import {PiInvoice} from "react-icons/pi";
@@ -302,28 +302,129 @@ const PaymentWorkflow: React.FC<PaymentWorkflowProps> = ({
                     {paymentMethod === 'credit_card' && !doNotCharge && (
                         <Box 
                             mb={4} 
-                            p={4} 
+                            p={5} 
                             borderWidth="1px" 
                             borderRadius="md" 
                             borderColor="gray.200"
                             w="100%"
+                            bg="white"
                         >
-                            <Text fontSize="sm" mb={2}>Credit Card Information</Text>
-                            <Box p={2} borderWidth="1px" borderRadius="md" borderColor="gray.300">
-                                <CardElement options={{
-                                    style: {
-                                        base: {
-                                            fontSize: '16px',
-                                            color: '#424770',
-                                            fontFamily: 'Arial, sans-serif',
+                            <Text fontSize="sm" mb={4} fontWeight="medium">Credit Card Information</Text>
+                            
+                            {isMobile ? (
+                                <VStack spacing={4} align="stretch" w="100%">
+                                    <Box
+                                        p={3}
+                                        borderWidth="1px"
+                                        borderRadius="md"
+                                        borderColor="gray.300"
+                                        bg="gray.50"
+                                    >
+                                        <Text fontSize="xs" mb={1} color="gray.600">Card Number</Text>
+                                        <CardNumberElement
+                                            options={{
+                                                style: {
+                                                    base: {
+                                                        fontSize: '16px',
+                                                        color: '#424770',
+                                                        fontFamily: 'Arial, sans-serif',
+                                                        '::placeholder': {
+                                                            color: '#aab7c4',
+                                                        },
+                                                        padding: '10px 0',
+                                                    },
+                                                    invalid: {
+                                                        color: '#9e2146',
+                                                    },
+                                                },
+                                            }}
+                                        />
+                                    </Box>
+                                    
+                                    <Flex gap={4}>
+                                        <Box
+                                            p={3}
+                                            borderWidth="1px"
+                                            borderRadius="md"
+                                            borderColor="gray.300"
+                                            bg="gray.50"
+                                            flex="1"
+                                        >
+                                            <Text fontSize="xs" mb={1} color="gray.600">Expiration Date</Text>
+                                            <CardExpiryElement
+                                                options={{
+                                                    style: {
+                                                        base: {
+                                                            fontSize: '16px',
+                                                            color: '#424770',
+                                                            fontFamily: 'Arial, sans-serif',
+                                                            '::placeholder': {
+                                                                color: '#aab7c4',
+                                                            },
+                                                            padding: '10px 0',
+                                                        },
+                                                        invalid: {
+                                                            color: '#9e2146',
+                                                        },
+                                                    },
+                                                }}
+                                            />
+                                        </Box>
+                                        
+                                        <Box
+                                            p={3}
+                                            borderWidth="1px"
+                                            borderRadius="md"
+                                            borderColor="gray.300"
+                                            bg="gray.50"
+                                            flex="1"
+                                        >
+                                            <Text fontSize="xs" mb={1} color="gray.600">CVC</Text>
+                                            <CardCvcElement
+                                                options={{
+                                                    style: {
+                                                        base: {
+                                                            fontSize: '16px',
+                                                            color: '#424770',
+                                                            fontFamily: 'Arial, sans-serif',
+                                                            '::placeholder': {
+                                                                color: '#aab7c4',
+                                                            },
+                                                            padding: '10px 0',
+                                                        },
+                                                        invalid: {
+                                                            color: '#9e2146',
+                                                        },
+                                                    },
+                                                }}
+                                            />
+                                        </Box>
+                                    </Flex>
+                                </VStack>
+                            ) : (
+                                <Box p={3} borderWidth="1px" borderRadius="md" borderColor="gray.300" bg="gray.50">
+                                    <CardElement options={{
+                                        style: {
+                                            base: {
+                                                fontSize: '16px',
+                                                color: '#424770',
+                                                fontFamily: 'Arial, sans-serif',
+                                                '::placeholder': {
+                                                    color: '#aab7c4',
+                                                },
+                                            },
+                                            invalid: {
+                                                color: '#9e2146',
+                                            },
                                         },
-                                        invalid: {
-                                            color: '#9e2146',
-                                        },
-                                    },
-                                    hidePostalCode: true,
-                                }}/>
-                            </Box>
+                                        hidePostalCode: true,
+                                    }}/>
+                                </Box>
+                            )}
+                            
+                            <Text fontSize="xs" color="gray.500" textAlign="center" mt={4}>
+                                Card information is secured and encrypted
+                            </Text>
                         </Box>
                     )}
 

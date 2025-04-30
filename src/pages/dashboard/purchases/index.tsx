@@ -24,7 +24,7 @@ import {
     useToast,
     VStack
 } from '@chakra-ui/react';
-import {SearchIcon} from '@chakra-ui/icons';
+import {ArrowBackIcon, SearchIcon} from '@chakra-ui/icons';
 import DashboardLayout from "../../../components/DashboardLayout";
 import {CiCalendar, CiClock2, CiLocationArrow1, CiSquarePlus} from "react-icons/ci";
 import {IoPersonOutline} from "react-icons/io5";
@@ -426,15 +426,15 @@ const PurchaseList = ({
 
     return (
         <VStack
-            marginTop={"-100px"}
-            marginLeft={"-40px"}
+            marginTop={{ base: "-70px", md: "-100px" }}
+            marginLeft={{ base: "0", md: "-40px" }}
             ref={containerRef}
             spacing={0}
-            width="30%"
-            borderRight="1px solid #E2E8F0"
+            width={{ base: "100%", md: "30%" }}
+            borderRight={{ base: "none", md: "1px solid #E2E8F0" }}
             height="calc(100vh - 100px)"
-            w={"300px"}
-            p={4}
+            w={{ base: "100%", md: "300px" }}
+            p={{ base: "4px 0px 4px 4px", md: 4 }}
             onScroll={handleScroll}
             overflowY="auto"
             css={{
@@ -504,7 +504,7 @@ const PurchaseList = ({
 };
 
 
-const PurchaseDetails = ({reservation}) => {
+const PurchaseDetails = ({reservation, onBack}) => {
     const toast = useToast();
     const {
         onClose: onConfirmClose,
@@ -898,6 +898,18 @@ const PurchaseDetails = ({reservation}) => {
 
     return (
         <VStack>
+            {onBack && (
+                <Button 
+                    leftIcon={<ArrowBackIcon />} 
+                    alignSelf="flex-start" 
+                    variant="ghost" 
+                    onClick={onBack}
+                    mb={4}
+                    display={{ base: "flex", md: "none" }}
+                >
+                    Back to list
+                </Button>
+            )}
             <Box
                 position="relative"
                 width={{base: "30%", md: "90%", xl: "100%", "2xl": "175%"}}
@@ -2056,6 +2068,11 @@ const PurchasesPage = () => {
         tours: [],
         payments: []
     });
+
+    const [isMobileDetailView, setIsMobileDetailView] = useState(false);
+    const windowWidth = useWindowWidth();
+    const isMobile = windowWidth < 768;
+
     const fetchAddonsForReservation = useCallback(async (reservationId: string, tourId?: string) => {
         try {
             const reservationAddonsResponse = await axios.get(
@@ -2094,6 +2111,10 @@ const PurchasesPage = () => {
     const handleSelectReservation = useCallback(async (reservation: ReservationItem) => {
         setSelectedReservation(reservation);
         setShowDetailedSummary(!!reservation.isGroupBooking);
+
+        if (isMobile) {
+            setIsMobileDetailView(true);
+        }
 
         if (reservation) {
             const formattedDate = new Date(reservation.createdAt || reservation.reservation_date).toLocaleDateString('en-US', {
@@ -2163,7 +2184,7 @@ const PurchasesPage = () => {
                 console.error("Error preparing detailed summary data:", error);
             }
         }
-    }, [fetchAddonsForReservation, setDetailedSummaryData, setSelectedReservation, setShowDetailedSummary]);
+    }, [fetchAddonsForReservation, setDetailedSummaryData, setSelectedReservation, setShowDetailedSummary, isMobile]);
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value.toLowerCase());
@@ -2200,11 +2221,16 @@ const PurchasesPage = () => {
         router.push("/dashboard/choose-a-product");
     };
 
+    const handleBackToList = () => {
+        setIsMobileDetailView(false);
+    };
+
     return (
         <Box
             width="100vw"
             height="100vh"
             overflow="hidden"
+            px={{ base: 0, md: "initial" }}
         >
             <DashboardLayout>
                 <Flex align="center"
@@ -2256,8 +2282,17 @@ const PurchasesPage = () => {
                     </Flex>
                     <Spacer/>
                 </Flex>
-                <HStack height="100vh" width="100%">
-                    <Box>
+                <HStack height="100vh" width="100%" spacing={0}>
+                    <Box 
+                        display={{ 
+                            base: isMobileDetailView ? "none" : "block", 
+                            md: "block" 
+                        }}
+                        width={{ base: "100%", md: "auto" }}
+                        borderRight={{ base: "none", md: "1px solid #E2E8F0" }}
+                        px={{ base: 0, md: "initial" }}
+                        mx={{ base: 0, md: "initial" }}
+                    >
                         <PurchaseList
                             onSelectReservation={handleSelectReservation}
                             selectedReservation={selectedReservation}
@@ -2272,6 +2307,11 @@ const PurchasesPage = () => {
                         flex="1"
                         height="100%"
                         overflowY="auto"
+                        display={{ 
+                            base: isMobileDetailView ? "block" : "none", 
+                            md: "block" 
+                        }}
+                        width={{ base: "100%", md: "auto" }}
                         css={{
                             '&::-webkit-scrollbar': {
                                 width: '6px',
@@ -2291,16 +2331,20 @@ const PurchasesPage = () => {
                         <Box
                             padding="20px"
                             marginBottom="20px"
-                            maxWidth="800px"
+                            maxWidth={{ base: "100%", md: "800px" }}
                             mx="auto"
                         >
-                            <PurchaseDetails reservation={selectedReservation}/>
+                            <PurchaseDetails 
+                                reservation={selectedReservation} 
+                                onBack={handleBackToList} 
+                            />
                         </Box>
                         <Box
                             padding="20px"
                             maxWidth="500px"
                             mx="auto"
                             marginLeft={showDetailedSummary ? "800px" : "500px"}
+                            display={{ base: "none", md: "block" }}
                         >
                             {showDetailedSummary ? (
                                 <PurchaseSummaryDetailed

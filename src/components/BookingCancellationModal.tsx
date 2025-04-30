@@ -1119,17 +1119,21 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="5xl">
+        <Modal isOpen={isOpen} onClose={onClose} size={{ base: "full", md: "5xl" }}>
             <ModalOverlay/>
-            <ModalContent>
+            <ModalContent maxW={{ base: "100%", md: "5xl" }}>
                 <ModalHeader textAlign="center">
                     Reduce Booking Value and Return Payment
                 </ModalHeader>
                 <ModalCloseButton/>
                 <ModalBody>
                     <Box>
-                        <HStack align="start" spacing={10}>
-                            <VStack align="start" spacing={5} flex="2.5">
+                        <Flex 
+                            direction={{ base: "column", lg: "row" }} 
+                            align="start" 
+                            gap={{ base: 6, lg: 10 }}
+                        >
+                            <VStack align="start" spacing={5} flex="2.5" w={{ base: "100%", lg: "auto" }}>
                                 <Box w="full" p={4} borderWidth="1px" borderRadius="md" bg="gray.100">
                                     <Text fontWeight="bold">{booking.user?.name || "Guest"}</Text>
                                     <Divider/>
@@ -1185,7 +1189,11 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
 
                                 <Box w="full">
                                     <Text mb={2}>Payment Method</Text>
-                                    <HStack spacing={3}>
+                                    <Flex 
+                                        flexWrap="wrap" 
+                                        gap={3} 
+                                        direction={{ base: "column", sm: "row" }}
+                                    >
                                         {cardList.length > 0 ? (
                                             <Button
                                                 variant={paymentMethod === "Credit Card" ? "solid" : "outline"}
@@ -1195,6 +1203,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                 bg={paymentMethod === "Credit Card" ? 'blue.50' : 'white'}
                                                 color={paymentMethod === "Credit Card" ? 'blue.700' : 'gray.700'}
                                                 _hover={{bg: paymentMethod === "Credit Card" ? 'blue.100' : 'gray.100'}}
+                                                width={{ base: "full", sm: "auto" }}
                                             >
                                                 Credit Card
                                             </Button>
@@ -1208,6 +1217,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                             bg={paymentMethod === "Cash" ? 'blue.50' : 'white'}
                                             color={paymentMethod === "Cash" ? 'blue.700' : 'gray.700'}
                                             _hover={{bg: paymentMethod === "Cash" ? 'blue.100' : 'gray.100'}}
+                                            width={{ base: "full", sm: "auto" }}
                                         >
                                             Cash
                                         </Button>
@@ -1219,6 +1229,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                             bg={paymentMethod === "store" ? 'blue.50' : 'white'}
                                             color={paymentMethod === "store" ? 'blue.700' : 'gray.700'}
                                             _hover={{bg: paymentMethod === "store" ? 'blue.100' : 'gray.100'}}
+                                            width={{ base: "full", sm: "auto" }}
                                         >
                                             Store Credit
                                         </Button>
@@ -1230,10 +1241,11 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                             bg={paymentMethod === "other" ? 'blue.50' : 'white'}
                                             color={paymentMethod === "other" ? 'blue.700' : 'gray.700'}
                                             _hover={{bg: paymentMethod === "other" ? 'blue.100' : 'gray.100'}}
+                                            width={{ base: "full", sm: "auto" }}
                                         >
                                             Other
                                         </Button>
-                                    </HStack>
+                                    </Flex>
 
                                     {paymentMethod === 'store' && (
                                         <Box mt={2} p={3} bg="green.50" borderRadius="md" borderColor="green.200"
@@ -1267,7 +1279,12 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                         _hover={{ borderColor: "blue.300", cursor: "pointer" }}
                                                         onClick={() => handleCardSelection(card)}
                                                     >
-                                                        <Flex align="center" justify="space-between">
+                                                        <Flex 
+                                                            align="center" 
+                                                            justify="space-between"
+                                                            direction={{ base: "column", sm: "row" }}
+                                                            gap={2}
+                                                        >
                                                             <Flex align="center">
                                                                 {card.brand?.toLowerCase() === 'visa' ? (
                                                                     <Icon as={FaCcVisa} boxSize="24px" color="blue.600" mr={2}/>
@@ -1284,7 +1301,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                                     {card.brand || 'Card'} •••• {card.last4}
                                                                 </Text>
                                                             </Flex>
-                                                            <VStack align="flex-end" spacing={0}>
+                                                            <VStack align={{ base: "center", sm: "flex-end" }} spacing={0}>
                                                                 <Text fontSize="sm" fontWeight="bold">
                                                                     ${card.refundableAmount?.toFixed(2)} available
                                                                 </Text>
@@ -1320,7 +1337,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                     ) : (
                                                         <Icon as={FaRegCreditCard} boxSize="20px" mr={2}/>
                                                     )}
-                                                    <Text fontWeight="medium">
+                                                    <Text fontWeight="medium" fontSize={{ base: "sm", md: "md" }}>
                                                         {cardInfo.brand?.toLowerCase() === 'visa' ? 'Visa' :
                                                             cardInfo.brand?.toLowerCase() === 'mastercard' ? 'MasterCard' :
                                                                 cardInfo.brand?.toLowerCase() === 'amex' ? 'American Express' :
@@ -1355,7 +1372,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                 alignSelf="start"
                                 flex="2"
                                 spacing={5}
-                                w="600px"
+                                w={{ base: "100%", lg: "600px" }}
                             >
                                 <Box w="full">
                                     <Text fontWeight="bold">Purchase Summary</Text>
@@ -1367,30 +1384,41 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                             </Flex>
                                         ) : (
                                             <>
-                                                <HStack justifyContent="space-between">
-                                                    <Text>
+                                                <Flex justifyContent="space-between" 
+                                                      direction={{ base: "column", sm: "row" }}
+                                                      gap={{ base: 1, sm: 0 }}>
+                                                    <Text fontSize={{ base: "sm", md: "md" }}>
                                                         {`Guests ($${(tierPricing && tierPricing.pricingType === 'flat'
                                                             ? tierPricing.basePrice
                                                             : guestPrice).toFixed(2)} × ${guestQuantity})`}
                                                     </Text>
-                                                    <Text>${calculateGuestPrice().toFixed(2)}</Text>
-                                                </HStack>
+                                                    <Text fontSize={{ base: "sm", md: "md" }}>${calculateGuestPrice().toFixed(2)}</Text>
+                                                </Flex>
 
                                                 {getCombinedAddons().length > 0 && (
                                                     <>
                                                         <Divider />
                                                         <Text fontWeight="semibold">Add-ons:</Text>
                                                         {getCombinedAddons().map((addon) => (
-                                                            <HStack key={addon.id} justify="space-between">
-                                                                <Text>{addon.label || addon.name} (${addon.price.toFixed(2)} x {addon.quantity})</Text>
-                                                                <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
-                                                            </HStack>
+                                                            <Flex key={addon.id} justify="space-between"
+                                                                  direction={{ base: "column", sm: "row" }}
+                                                                  gap={{ base: 1, sm: 0 }}>
+                                                                <Text fontSize={{ base: "sm", md: "md" }}>
+                                                                    {addon.label || addon.name} (${addon.price.toFixed(2)} x {addon.quantity})
+                                                                </Text>
+                                                                <Text fontSize={{ base: "sm", md: "md" }}>
+                                                                    ${(addon.price * addon.quantity).toFixed(2)}
+                                                                </Text>
+                                                            </Flex>
                                                         ))}
-                                                        <HStack justify="space-between" mt={1}>
+                                                        <Flex justify="space-between" mt={1}
+                                                              direction={{ base: "column", sm: "row" }}
+                                                              gap={{ base: 1, sm: 0 }}>
                                                             <Text fontWeight="semibold">Add-ons Subtotal</Text>
-                                                            <Text
-                                                                fontWeight="semibold">${calculateAddonTotal().toFixed(2)}</Text>
-                                                        </HStack>
+                                                            <Text fontWeight="semibold">
+                                                                ${calculateAddonTotal().toFixed(2)}
+                                                            </Text>
+                                                        </Flex>
                                                     </>
                                                 )}
 
@@ -1399,42 +1427,54 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                         <Divider />
                                                         <Text fontWeight="semibold">Custom Items:</Text>
                                                         {customItems.map((item) => (
-                                                            <HStack key={item.id} justify="space-between">
-                                                                <Text>
+                                                            <Flex key={item.id} justify="space-between"
+                                                                  direction={{ base: "column", sm: "row" }}
+                                                                  gap={{ base: 1, sm: 0 }}>
+                                                                <Text fontSize={{ base: "sm", md: "md" }}>
                                                                     {item.name} (${item.amount.toFixed(2)} × {item.quantity})
                                                                     {item.type === 'Discount' && ' - Discount'}
                                                                 </Text>
-                                                                <Text>
+                                                                <Text fontSize={{ base: "sm", md: "md" }}>
                                                                     {item.type === 'Discount' ? '-' : ''}
                                                                     ${(item.amount * item.quantity).toFixed(2)}
                                                                 </Text>
-                                                            </HStack>
+                                                            </Flex>
                                                         ))}
-                                                        <HStack justify="space-between" mt={1}>
+                                                        <Flex justify="space-between" mt={1}
+                                                              direction={{ base: "column", sm: "row" }}
+                                                              gap={{ base: 1, sm: 0 }}>
                                                             <Text fontWeight="semibold">Custom Items Subtotal</Text>
-                                                            <Text
-                                                                fontWeight="semibold">${calculateCustomItemsTotal().toFixed(2)}</Text>
-                                                        </HStack>
+                                                            <Text fontWeight="semibold">
+                                                                ${calculateCustomItemsTotal().toFixed(2)}
+                                                            </Text>
+                                                        </Flex>
                                                     </>
                                                 )}
 
                                                 <Divider />
-                                                <HStack justifyContent="space-between" mt={2}>
+                                                <Flex justifyContent="space-between" mt={2}
+                                                      direction={{ base: "column", sm: "row" }}
+                                                      gap={{ base: 1, sm: 0 }}>
                                                     <Text fontWeight="bold">Total:</Text>
                                                     <Text fontWeight="bold">${calculateTotalPrice().toFixed(2)}</Text>
-                                                </HStack>
+                                                </Flex>
 
-                                                <HStack justifyContent="space-between" color="red.500">
+                                                <Flex justifyContent="space-between" color="red.500"
+                                                      direction={{ base: "column", sm: "row" }}
+                                                      gap={{ base: 1, sm: 0 }}>
                                                     <Text>Cancellation:</Text>
                                                     <Text>-${refundAmount > 0 ? refundAmount.toFixed(2) : calculateTotalPrice().toFixed(2)}</Text>
-                                                </HStack>
+                                                </Flex>
 
                                                 <Divider/>
-                                                <HStack justifyContent="space-between">
+                                                <Flex justifyContent="space-between"
+                                                      direction={{ base: "column", sm: "row" }}
+                                                      gap={{ base: 1, sm: 0 }}>
                                                     <Text fontWeight="bold">Final Total:</Text>
-                                                    <Text
-                                                        fontWeight="bold">${(calculateTotalPrice() - refundAmount).toFixed(2)}</Text>
-                                                </HStack>
+                                                    <Text fontWeight="bold">
+                                                        ${(calculateTotalPrice() - refundAmount).toFixed(2)}
+                                                    </Text>
+                                                </Flex>
                                             </>
                                         )}
                                     </VStack>
@@ -1443,7 +1483,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                     <Text fontWeight="bold">Payment Summary</Text>
                                     <VStack align="stretch" spacing={3} mt={3}>
                                         {cardInfo && (
-                                            <HStack justifyContent="space-between">
+                                            <Flex justifyContent="space-between"
+                                                  direction={{ base: "column", sm: "row" }}
+                                                  gap={{ base: 1, sm: 0 }}>
                                                 <HStack>
                                                     {cardInfo.brand?.toLowerCase() === 'visa' ? (
                                                         <Icon as={FaCcVisa} boxSize="20px" color="blue.600"/>
@@ -1456,18 +1498,20 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                     ) : (
                                                         <Icon as={FaRegCreditCard} boxSize="16px"/>
                                                     )}
-                                                    <Text>
+                                                    <Text fontSize={{ base: "sm", md: "md" }}>
                                                         Payment {booking.dateFormatted || formatDate(new Date().toISOString())}:
                                                         {` *${cardInfo.last4 || 'xxxx'}`}
                                                     </Text>
                                                 </HStack>
-                                                <Text fontWeight="bold">
+                                                <Text fontWeight="bold" fontSize={{ base: "sm", md: "md" }}>
                                                     ${calculateTotalPrice().toFixed(2)}
                                                 </Text>
-                                            </HStack>
+                                            </Flex>
                                         )}
 
-                                        <HStack justifyContent="space-between">
+                                        <Flex justifyContent="space-between"
+                                              direction={{ base: "column", sm: "row" }}
+                                              gap={{ base: 1, sm: 0 }}>
                                             <HStack>
                                                 {paymentMethod === 'Credit Card' && cardInfo ? (
                                                     <>
@@ -1490,26 +1534,29 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                                 ) : (
                                                     <Icon as={BsCheck2} boxSize="16px"/>
                                                 )}
-                                                <Text color="blue.500">
+                                                <Text color="blue.500" fontSize={{ base: "sm", md: "md" }}>
                                                     Return Payment {formatDate(new Date().toISOString())}
                                                     {paymentMethod === 'Credit Card' && cardInfo && ` *${cardInfo.last4 || 'xxxx'}`}
                                                 </Text>
                                             </HStack>
-                                            <Text fontWeight="bold" color="blue.500">
+                                            <Text fontWeight="bold" color="blue.500" fontSize={{ base: "sm", md: "md" }}>
                                                 -${refundAmount > 0 ? refundAmount.toFixed(2) : calculateTotalPrice().toFixed(2)}
                                             </Text>
-                                        </HStack>
+                                        </Flex>
 
                                         <Divider mt={4}/>
-                                        <HStack justifyContent="space-between">
+                                        <Flex justifyContent="space-between" 
+                                              direction={{ base: "column", sm: "row" }}
+                                              gap={{ base: 1, sm: 0 }}>
                                             <Text fontWeight="bold">Paid:</Text>
-                                            <Text
-                                                fontWeight="bold">${(calculateTotalPrice() - refundAmount).toFixed(2)}</Text>
-                                        </HStack>
+                                            <Text fontWeight="bold">
+                                                ${(calculateTotalPrice() - refundAmount).toFixed(2)}
+                                            </Text>
+                                        </Flex>
                                     </VStack>
                                 </Box>
                             </VStack>
-                        </HStack>
+                        </Flex>
                     </Box>
                 </ModalBody>
 
@@ -1521,11 +1568,16 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                     <Text fontWeight="bold" fontSize="lg" color="green.700">
                                         Store Credit Voucher Generated
                                     </Text>
-                                    <HStack justify="space-between">
+                                    <Flex justify="space-between"
+                                          direction={{ base: "column", sm: "row" }}
+                                          gap={{ base: 1, sm: 0 }}>
                                         <Text>Amount:</Text>
                                         <Text fontWeight="bold">${generatedVoucher.amount.toFixed(2)}</Text>
-                                    </HStack>
-                                    <HStack justify="space-between">
+                                    </Flex>
+                                    <Flex justify="space-between"
+                                          direction={{ base: "column", sm: "row" }}
+                                          gap={{ base: 2, sm: 0 }}
+                                          align={{ base: "start", sm: "center" }}>
                                         <Text>Voucher Code:</Text>
                                         <Box
                                             bg="white"
@@ -1533,12 +1585,15 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                             borderRadius="md"
                                             fontFamily="monospace"
                                             fontWeight="bold"
-                                            fontSize="lg"
+                                            fontSize={{ base: "md", md: "lg" }}
                                             boxShadow="sm"
+                                            w={{ base: "full", sm: "auto" }}
+                                            textAlign="center"
+                                            overflowX="auto"
                                         >
                                             {generatedVoucher.code}
                                         </Box>
-                                    </HStack>
+                                    </Flex>
                                     <Text fontSize="sm" color="gray.600">
                                         The customer can use this code for future bookings.
                                     </Text>
@@ -1551,23 +1606,31 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                             </Flex>
                         </VStack>
                     ) : (
-                        <HStack>
+                        <Flex 
+                            width="100%" 
+                            justifyContent={{ base: "center", sm: "space-between" }}
+                            flexDirection={{ base: "column", sm: "row" }}
+                            gap={3}
+                        >
                             <Checkbox
                                 isChecked={notifyCustomer}
                                 onChange={(e) => setNotifyCustomer(e.target.checked)}
                             >
                                 Notify Customer
                             </Checkbox>
-                            <Button onClick={onClose}>Cancel</Button>
-                            <Button
-                                colorScheme="blue"
-                                onClick={handleSaveChanges}
-                                isLoading={isSubmitting}
-                                isDisabled={isLoadingTierPricing || isLoadingAddons || isLoadingCustomItems}
-                            >
-                                Process Cancellation
-                            </Button>
-                        </HStack>
+                            <HStack spacing={3}>
+                                <Button onClick={onClose} width={{ base: "full", sm: "auto" }}>Cancel</Button>
+                                <Button
+                                    colorScheme="blue"
+                                    onClick={handleSaveChanges}
+                                    isLoading={isSubmitting}
+                                    isDisabled={isLoadingTierPricing || isLoadingAddons || isLoadingCustomItems}
+                                    width={{ base: "full", sm: "auto" }}
+                                >
+                                    Process Cancellation
+                                </Button>
+                            </HStack>
+                        </Flex>
                     )}
                 </ModalFooter>
             </ModalContent>

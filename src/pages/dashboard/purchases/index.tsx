@@ -912,18 +912,20 @@ const PurchaseDetails = ({reservation, onBack}) => {
             )}
             <Box
                 position="relative"
-                width={{base: "30%", md: "90%", xl: "100%", "2xl": "175%"}}
+                width={{base: "100%", md: "90%", xl: "100%", "2xl": "175%"}}
                 maxWidth={{base: "none", md: "none", xl: "none"}}
                 borderRadius="lg"
                 overflow="hidden"
                 marginTop={{base: "0", md: "-5px"}}
                 marginLeft={{base: "0", md: "10px"}}
+                px={{ base: 0, md: 4 }}
             >
                 <Box
                     position="relative"
-                    width="100%"
                     height="200px"
                     overflow="hidden"
+                    mx={{ base: "-16px", md: 0 }}
+                    width={{ base: "calc(100% + 32px)", md: "100%" }}
                 >
                     <Image
                         src={reservation.tour.imageUrl || "https://via.placeholder.com/1000x300"}

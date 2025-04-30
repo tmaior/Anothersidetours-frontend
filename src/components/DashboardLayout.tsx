@@ -82,9 +82,9 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     });
     
     const drawerSize = useBreakpointValue({ 
-        base: "full",
-        sm: isTablet ? "xs" : "full",
-        md: isTablet ? "xs" : "full"
+        base: "xs",
+        sm: "xs",
+        md: "xs"
     });
 
     useEffect(() => {
@@ -735,7 +735,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                             </Text>
                         </VStack>
 
-                        <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"} marginTop={"-60px"} position="relative"
+                        <Box mt="10vh" p={4} marginLeft={"-6"} w={"238px"} marginTop={"-60px"} position="relative"
                              zIndex={100}>
                             <Menu
                                 placement="right-start"
@@ -869,7 +869,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     <DrawerContent 
                         bg="#222324" 
                         color="white" 
-                        maxW={isSmallMobile ? "100%" : isTablet ? "250px" : "100%"}
+                        maxW="250px"
                     >
                         <DrawerCloseButton color="white" />
                         <DrawerBody p={0} overflowY="auto">
@@ -1312,7 +1312,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                     </Text>
                                 </VStack>
 
-                                <Box mt="10vh" p={4} marginLeft={"-6"} w={"273px"} marginTop={"-60px"} position="relative"
+                                <Box mt="10vh" p={4} marginLeft={"-6"} w={"238px"} marginTop={"-60px"} position="relative"
                                      zIndex={100}>
                                     <Menu
                                         placement="right-start"
@@ -1387,8 +1387,9 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                     flex="1"
                     p={{ base: 4, md: 8 }}
                     marginLeft={{ base: 0, lg: "250px" }}
-                    maxW={{ base: "100%", lg: "calc(100% - 250px)" }}
+                    maxW={{ base: "100vw", lg: "calc(100vw - 250px)" }}
                     overflowY="auto"
+                    overflowX="hidden"
                     minH="100vh"
                     position="relative"
                     zIndex={1}

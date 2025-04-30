@@ -2359,6 +2359,26 @@ const PurchasesPage = () => {
                                 />
                             )}
                         </Box>
+                        <Box
+                            padding="20px"
+                            width="100%"
+                            mx="auto"
+                            display={{ base: "block", md: "none" }}
+                        >
+                            {showDetailedSummary ? (
+                                <PurchaseSummaryDetailed
+                                    tours={detailedSummaryData.tours}
+                                    payments={detailedSummaryData.payments}
+                                    onApplyCode={() => console.log("Apply code clicked")}
+                                />
+                            ) : (
+                                <PaymentSummary
+                                    reservation={selectedReservation}
+                                    isPurchasePage={true}
+                                />
+                            )}
+                        </Box>
+                        
                         <Divider mb={4}/>
                         <Box>
                             <PurchaseNotes reservationId={selectedReservation?.id}/>

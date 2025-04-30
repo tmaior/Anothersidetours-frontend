@@ -230,7 +230,7 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
     };
 
     return (
-        <Box p={4} w="400px">
+        <Box p={4} w={{ base: "100%", md: "400px" }}>
             <HStack justify="space-between" align="center" mb={4}>
                 <HStack>
                     <IconButton
@@ -259,8 +259,8 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
             {allSectionsVisible && (
                 <>
                     <VStack align="start" spacing={4} mb={4}>
-                        <HStack justify="space-between" w="100%">
-                            <HStack>
+                        <HStack justify="space-between" w="100%" spacing={{ base: 2, md: 4 }}>
+                            <HStack spacing={{ base: 1, md: 2 }}>
                                 <IconButton
                                     icon={sections.eventNotes ? <ChevronDownIcon/> : <ChevronRightIcon/>}
                                     size="sm"
@@ -268,7 +268,7 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
                                     onClick={() => toggleSection("eventNotes")}
                                     aria-label="Toggle Event Notes"
                                 />
-                                <Text fontWeight="bold">Event Notes</Text>
+                                <Text fontWeight="bold" fontSize={{ base: "sm", md: "md" }}>Event Notes</Text>
                                 {eventNotes.length > 0 && (
                                     <Box
                                         bg="yellow.200"
@@ -287,6 +287,8 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
                                 variant="outline"
                                 onClick={onEventNoteOpen}
                                 isDisabled={!reservationId}
+                                fontSize={{ base: "xs", md: "sm" }}
+                                px={{ base: 2, md: 4 }}
                             >
                                 + Add Note
                             </Button>
@@ -329,8 +331,8 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
                     </VStack>
 
                     <VStack align="start" spacing={4} mb={4}>
-                        <HStack justify="space-between" w="100%">
-                            <HStack>
+                        <HStack justify="space-between" w="100%" spacing={{ base: 2, md: 4 }}>
+                            <HStack spacing={{ base: 1, md: 2 }}>
                                 <IconButton
                                     icon={sections.purchaseNotes ? <ChevronDownIcon/> : <ChevronRightIcon/>}
                                     size="sm"
@@ -338,7 +340,7 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
                                     onClick={() => toggleSection("purchaseNotes")}
                                     aria-label="Toggle Purchase Notes"
                                 />
-                                <Text fontWeight="bold">Purchase Notes</Text>
+                                <Text fontWeight="bold" fontSize={{ base: "sm", md: "md" }}>Purchase Notes</Text>
                                 {purchaseNotes.length > 0 && (
                                     <Box
                                         bg="yellow.200"
@@ -357,6 +359,8 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
                                 variant="outline"
                                 onClick={onOpen}
                                 isDisabled={!reservationId}
+                                fontSize={{ base: "xs", md: "sm" }}
+                                px={{ base: 2, md: 4 }}
                             >
                                 + Add Note
                             </Button>

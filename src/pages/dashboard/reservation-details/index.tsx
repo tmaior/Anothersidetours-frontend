@@ -385,7 +385,12 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                     </Box>
                 </HStack>
             </HStack>
-            <HStack spacing={4} mt={4}>
+            <Flex 
+                mt={4} 
+                gap={4} 
+                flexWrap="wrap"
+                direction={{ base: "column", md: "row" }}
+            >
                 {hasManageReservationPermission && (
                     <>
                         <Button
@@ -437,7 +442,7 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                 <Button size="sm" variant="outline">Email Roster</Button>
                 <Button size="sm" variant="outline">Export Roster</Button>
                 <Button size="sm" variant="outline" color={"green"}> + Purchase</Button>
-            </HStack>
+            </Flex>
 
             <CancelConfirmationModal
                 isOpen={isConfirmOpen}

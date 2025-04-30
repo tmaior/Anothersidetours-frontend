@@ -229,17 +229,17 @@ const ReservationItem = ({
                             alt="Tour Icon"
                             objectFit="fill"
                         />
-                        <Box flex="1">
-                            <Text fontWeight="semibold" fontSize="sm">
-                                {item.title}
-                            </Text>
-                            {!isCompactView && (
+                        {!isCompactView && (
+                            <Box flex="1">
+                                <Text fontWeight="semibold" fontSize="sm">
+                                    {item.title}
+                                </Text>
                                 <HStack spacing={{base: 2, md: 3}} fontSize={{base: "xs", md: "xs"}} color="gray.500">
                                     <Text>{item.available}</Text>
                                     <Text>{item.reservedDetails}</Text>
                                 </HStack>
-                            )}
-                        </Box>
+                            </Box>
+                        )}
                     </HStack>
 
                     {!isCompactView && !isMobile && (
@@ -295,7 +295,7 @@ const ReservationItem = ({
                         </HStack>
                     )}
 
-                    {(isMobile || isCompactView) && (
+                    {(isMobile && !isCompactView) && (
                         <Flex 
                             mt={3}
                             w="100%"

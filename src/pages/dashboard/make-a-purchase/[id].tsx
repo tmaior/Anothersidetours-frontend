@@ -106,6 +106,15 @@ interface TierPricing {
     name: string;
   };
 }
+
+interface CustomLineItem {
+    id: number | string;
+    name: string;
+    type: "Charge" | "Discount";
+    amount: number;
+    quantity: number;
+}
+
 const PurchasePage = () => {
     const router = useRouter();
     const {id} = router.query;
@@ -146,7 +155,7 @@ const PurchasePage = () => {
     const [purchaseTags, setPurchaseTags] = useState("");
     const [purchaseNote, setPurchaseNote] = useState("");
     const [isCustomLineItemsEnabled, setIsCustomLineItemsEnabled] = useState(false);
-    const [customLineItems, setCustomLineItems] = useState<{[tourId: string]: any[]}>({});
+    const [customLineItems, setCustomLineItems] = useState<Record<string, CustomLineItem[]>>({});
     const [pickUpAddOn,] = useState(0);
     const [privateTourAddOn,] = useState(0);
     const toast = useToast();
@@ -169,7 +178,9 @@ const PurchasePage = () => {
         clearCart
     } = useCart();
 
-    const [items, setItems] = useState([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
+    const [items, setItems] = useState<CustomLineItem[]>([
+        { id: 1, type: "Charge", amount: 0, quantity: 1, name: "" }
+    ]);
     const [additionalInformationQuestions, setAdditionalInformationQuestions] = useState([]);
     const [additionalInformationResponses, setAdditionalInformationResponses] = useState<{ [key: string]: string }>({});
 

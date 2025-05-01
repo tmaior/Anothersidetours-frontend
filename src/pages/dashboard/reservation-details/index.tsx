@@ -20,6 +20,7 @@ import {
     Tr,
     useDisclosure,
     useToast,
+    useBreakpointValue,
 } from "@chakra-ui/react";
 import {FiCalendar, FiWatch} from "react-icons/fi";
 import {ArrowBackIcon} from "@chakra-ui/icons";
@@ -116,6 +117,7 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
         }
     };
 
+    const isTablet = useBreakpointValue({ base: false, md: true, lg: false });
 
     if (!reservation) {
         return (
@@ -329,7 +331,7 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
     };
 
     return (
-        <Box p={4} overflowX="hidden">
+        <Box p={{base: 4, md: 2, lg: 4}} overflowX="hidden">
             <Divider marginTop={"-15px"} maxW={"100%"}/>
             <Button
                 marginTop={"15px"}
@@ -358,20 +360,20 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                 {/*    </Menu>*/}
                 {/*</HStack>*/}
             </Flex>
-            <HStack alignItems="flex-start" justifyContent="space-between">
-                <HStack alignItems="flex-start">
-                    <Box boxSize="130px">
+            <HStack alignItems="flex-start" justifyContent="space-between" spacing={{base: 2, md: 3, lg: 4}}>
+                <HStack alignItems="flex-start" spacing={{base: 2, md: 3, lg: 4}}>
+                    <Box boxSize={{base: "100px", md: "110px", lg: "130px"}}>
                         <Image
                             src={reservation.imageUrl || "https://via.placeholder.com/80"}
                             alt="Event Image"
                             borderRadius="md"
-                            width="130px"
-                            height="130px"
+                            width="100%"
+                            height="100%"
                             objectFit="contain"
                         />
                     </Box>
                     <Box>
-                        <Text fontSize="xl" fontWeight="bold">{reservation.title}</Text>
+                        <Text fontSize={{base: "lg", lg: "xl"}} fontWeight="bold">{reservation.title}</Text>
                         <HStack spacing={2}>
                             <Icon as={FiCalendar} color="gray.500"/>
                             <Text fontSize="sm" color="gray.600">
@@ -387,7 +389,7 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
             </HStack>
             <Flex 
                 mt={4} 
-                gap={4} 
+                gap={{base: 2, md: 3, lg: 4}} 
                 flexWrap="wrap"
                 direction={{ base: "column", md: "row" }}
             >
@@ -485,11 +487,11 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                 onClose={() => setChangeArrivalOpen(false)}
             />
 
-            <HStack spacing={8} mt={4}>
+            <HStack spacing={{base: 4, md: 6, lg: 8}} mt={4} flexWrap="wrap">
                 <Box mt={6}>
                     <HStack spacing={2}>
                         <AiOutlineCompass/>
-                        <Text fontSize="xl" fontWeight="bold">Guide</Text>
+                        <Text fontSize={{base: "lg", lg: "xl"}} fontWeight="bold">Guide</Text>
                     </HStack>
                     <Text fontSize="sm" color="black.500">
                         {displayGuideText()}

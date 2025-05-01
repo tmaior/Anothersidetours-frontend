@@ -506,18 +506,18 @@ function Dashboard() {
                 direction={{base: "column", md: "row"}}
                 maxHeight={{base: "unset", md: "calc(100vh - 80px)"}}
                 overflowY="auto"
-                ml={{base: 0, md: "-40px"}}
+                ml={{base: 0, md: 0}}
             >
                 {(!isMobile || !isDetailVisible) && (
                     <Box
-                        w={{base: "100%", md: isDetailVisible ? "20%" : "100%"}}
+                        w={{base: "100%", md: isDetailVisible ? "30%" : "100%"}}
                         overflowY="auto"
                         overflowX="hidden"
                         borderRight={{base: "none", md: isDetailVisible ? "1px solid #e2e8f0" : "none"}}
                         transition="width 0.3s ease"
                         display="flex"
                         flexDirection="column"
-                        px={{base: 4, md: 0}}
+                        px={{base: 4, md: isDetailVisible ? 2 : 0}}
                     >
                         <Box p={4} mt={{base: "0", md: "-30px"}}>
                             <Divider orientation='horizontal' width="100%"/>
@@ -556,7 +556,8 @@ function Dashboard() {
                         w={{base: "100%", md: "70%"}}
                         overflowY="auto"
                         transition="width 0.3s ease"
-                        px={{base: 4, md: 0}}
+                        px={{base: 4, md: 4}}
+                        pl={{md: 6}}
                     >
                         <ReservationDetail
                             reservation={selectedReservation}

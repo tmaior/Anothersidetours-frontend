@@ -30,6 +30,7 @@ import {
     MenuList,
     MenuItem,
     useMediaQuery,
+    InputRightAddon,
 } from "@chakra-ui/react";
 import axios from "axios";
 import {BsCash, BsCheck2} from "react-icons/bs";
@@ -1114,8 +1115,9 @@ const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
     const [tag, setTag] = useState('');
     const [message, setMessage] = useState('');
     const [daysBeforeArrival, setDaysBeforeArrival] = useState(0);
+    const [daysInputValue, setDaysInputValue] = useState('0');
     const [isLoading, setIsLoading] = useState(false);
-
+    
     const [isMobile] = useMediaQuery("(max-width: 768px)");
 
     const getBookingDate = () => {
@@ -1166,7 +1168,8 @@ const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
         const month = bookingDate.getMonth();
         const day = bookingDate.getDate();
         const localDate = new Date(year, month, day);
-        localDate.setDate(localDate.getDate() - daysBeforeArrival);
+        const days = daysInputValue === '' ? 0 : parseInt(daysInputValue, 10);
+        localDate.setDate(localDate.getDate() - days);
 
         return localDate;
     };
@@ -1174,6 +1177,21 @@ const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
     const dueDate = calculateDueDate();
     const formattedDueDate = format(dueDate, 'MMMM d, yyyy');
     const formattedBookingDate = format(bookingDate, 'MMMM d, yyyy');
+    
+    const handleDaysChange = (e) => {
+        const value = e.target.value;
+        setDaysInputValue(value);
+        
+        if (value === '') {
+            setDaysBeforeArrival(0);
+        } else {
+            const numValue = parseInt(value, 10);
+            if (!isNaN(numValue)) {
+                setDaysBeforeArrival(numValue);
+            }
+        }
+    };
+    
     const handleSendInvoice = async () => {
         try {
             setIsLoading(true);
@@ -1257,25 +1275,37 @@ const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
 
                         <Box>
                             <Text mb={2}>Payment due</Text>
-                            <Flex align="center" flexDirection={isMobile ? "column" : "row"}>
-                                <Input
-                                    type="number"
-                                    value={daysBeforeArrival}
-                                    onChange={(e) => {
-                                        const value = parseInt(e.target.value, 10);
-                                        if (!isNaN(value)) {
-                                            setDaysBeforeArrival(value);
-                                        }
-                                    }}
-                                    width={isMobile ? "100%" : "60px"}
-                                    mb={isMobile ? 2 : 0}
-                                    mr={isMobile ? 0 : 2}
-                                    size={isMobile ? "sm" : "md"}
-                                />
-                                <Text mr={2} fontSize={isMobile ? "sm" : "md"}>
-                                    days before arrival (due on {formattedDueDate})
-                                </Text>
-                            </Flex>
+                            {isMobile ? (
+                                <VStack align="stretch" spacing={2}>
+                                    <InputGroup size="sm">
+                                        <Input
+                                            type="text"
+                                            inputMode="numeric"
+                                            value={daysInputValue}
+                                            onChange={handleDaysChange}
+                                            placeholder="Days"
+                                            mb={2}
+                                        />
+                                        <InputRightAddon children="days" />
+                                    </InputGroup>
+                                    <Text fontSize="sm" color="gray.600">
+                                        before arrival (due on {formattedDueDate})
+                                    </Text>
+                                </VStack>
+                            ) : (
+                                <Flex align="center">
+                                    <Input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={daysInputValue}
+                                        onChange={handleDaysChange}
+                                        placeholder="Days"
+                                        width="60px"
+                                        mr={2}
+                                    />
+                                    <Text mr={2}>days before arrival (due on {formattedDueDate})</Text>
+                                </Flex>
+                            )}
                         </Box>
 
                         <Box>

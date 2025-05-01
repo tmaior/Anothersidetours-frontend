@@ -5,6 +5,8 @@ import {
     Text,
     HStack,
     Button,
+    Flex,
+    useMediaQuery,
 } from '@chakra-ui/react';
 
 interface TimeSlotPickerProps {
@@ -14,6 +16,7 @@ interface TimeSlotPickerProps {
 const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({ onTimeSelect }) => {
     const [selectedHour, setSelectedHour] = React.useState<{hour: string, period: 'AM' | 'PM'} | null>(null);
     const [selectedMinute, setSelectedMinute] = React.useState<string | null>(null);
+    const [isMobile] = useMediaQuery("(max-width: 768px)");
 
     const hours = ['12', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'];
     const minutes = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
@@ -32,7 +35,7 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({ onTimeSelect }) => {
 
     return (
         <Box p={4}>
-            <HStack spacing={12} align="flex-start">
+            <Flex direction={isMobile ? "column" : "row"} align="flex-start">
                 <Box>
                     <Text fontWeight="medium" mb={3}>Hour</Text>
                     <Box position="relative">
@@ -85,7 +88,7 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({ onTimeSelect }) => {
                     </Box>
                 </Box>
 
-                <Box>
+                <Box mt={isMobile ? 6 : 0} ml={isMobile ? 0 : 12}>
                     <Text fontWeight="medium" mb={3}>Minute</Text>
                     <Grid templateColumns="repeat(3, 1fr)" gap={2}>
                         {minutes.map((minute) => (
@@ -109,7 +112,7 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({ onTimeSelect }) => {
                         ))}
                     </Grid>
                 </Box>
-            </HStack>
+            </Flex>
         </Box>
     );
 };

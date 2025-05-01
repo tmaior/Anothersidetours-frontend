@@ -256,35 +256,40 @@ const ReservationItem = ({
                                 w={{md: "100%", lg: "600px"}}
                                 maxW={{md: "350px", lg: "600px"}}
                                 display="flex"
-                                justifyContent="space-between"
                                 alignItems="center"
                                 p={2}
                             >
-                                <HStack spacing={1}>
+                                <HStack spacing={1} width={isTablet ? "70px" : "auto"} minW="70px" justifyContent="flex-start">
                                     <FaPencilAlt
                                         color="gray"
                                         onClick={(e) => e.stopPropagation()}
                                     />
                                     <Text fontSize="xs">{item.capacity}</Text>
                                 </HStack>
-                                <Flex justify="center" align="center" flex="1" maxW={{md: "140px", lg: "100%"}}>
-                                    <AiOutlineCompass/>
+                                <Flex 
+                                    justify="center" 
+                                    align="center" 
+                                    flex="1" 
+                                    minW={{md: "140px"}}
+                                    maxW={{md: "140px", lg: "100%"}}
+                                >
+                                    <AiOutlineCompass size="14px"/>
                                     <Text
                                         marginLeft={"5px"}
                                         fontSize="xs"
                                         color="green.600"
-                                        textAlign="center"
+                                        textAlign="left"
                                         onClick={(e) => handleOpenGuideModal(e, item)}
                                         cursor="pointer"
                                         _hover={{color: "blue.500"}}
                                         isTruncated
-                                        maxW={{md: "120px", lg: "100%"}}
+                                        maxW={{md: "110px", lg: "100%"}}
                                         title={displayGuideText(item)}
                                     >
                                         {displayGuideText(item)}
                                     </Text>
                                 </Flex>
-                                <Flex align="center" justify="center">
+                                <Flex align="center" justify="flex-end" minW="80px">
                                     {item.hasNotes ? (
                                         <IconButton
                                             icon={<BsSticky/>}
@@ -298,13 +303,13 @@ const ReservationItem = ({
                                             }}
                                         />
                                     ) : (
-                                        <Box width="20px"/>
+                                        <Box width="32px" height="32px"/>
                                     )}
+                                    <Box>
+                                        <DashBoardMenu reservation={item} />
+                                    </Box>
                                 </Flex>
                             </Flex>
-                            <Box ml={isTablet ? "-10px" : 0}>
-                                <DashBoardMenu reservation={item} />
-                            </Box>
                         </HStack>
                     )}
 

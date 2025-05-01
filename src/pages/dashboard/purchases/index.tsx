@@ -1735,13 +1735,8 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
             bg="gray.100"
             borderRadius="md"
             boxShadow="sm"
-            marginTop={{base: "0", md: "0", lg: "-470px"}}
-            marginLeft={{base: "0", md: "0", lg: "200px"}}
             padding={{base: "10px", md: "20px"}}
-            position="relative"
-            left={{base: "0", md: "0"}}
-            width={{base: "100%", xl: "100%", "2xl": "150%"}}
-            maxWidth={{base: "100%", md: "90%", lg: "100%", "2xl": "130%"}}
+            width="100%"
             overflow="hidden"
         >
             <Text fontSize="xl" fontWeight="bold">Purchase Summary</Text>
@@ -2348,80 +2343,45 @@ const PurchasesPage = () => {
                             },
                         }}
                     >
-                        <Box
-                            padding="20px"
-                            marginBottom="20px"
-                            maxWidth={{ base: "100%", md: "800px" }}
-                            mx="auto"
-                        >
-                            <PurchaseDetails 
-                                reservation={selectedReservation} 
-                                onBack={handleBackToList} 
-                            />
-                        </Box>
+                        <Flex direction={{ base: "column", lg: "row" }} width="100%">
+                            <Box width={{ base: "100%", lg: "60%" }} pr={{ lg: 4 }}>
+                                <Box
+                                    padding="20px"
+                                    maxWidth={{ base: "100%" }}
+                                    textAlign="left"
+                                >
+                                    <PurchaseDetails 
+                                        reservation={selectedReservation} 
+                                        onBack={handleBackToList} 
+                                    />
+                                </Box>
+                            </Box>
 
-                        <Box
-                            padding="20px"
-                            maxWidth={{ base: "100%", md: "800px" }}
-                            mx="auto"
-                            display={{ base: "none", md: "block", lg: "none" }}
-                        >
-                            {showDetailedSummary ? (
-                                <PurchaseSummaryDetailed
-                                    tours={detailedSummaryData.tours}
-                                    payments={detailedSummaryData.payments}
-                                    onApplyCode={() => console.log("Apply code clicked")}
-                                />
-                            ) : (
-                                <PaymentSummary
-                                    reservation={selectedReservation}
-                                    isPurchasePage={true}
-                                />
-                            )}
-                        </Box>
-
-                        <Box
-                            padding="20px"
-                            maxWidth="500px"
-                            mx="auto"
-                            marginLeft={showDetailedSummary ? "800px" : "500px"}
-                            display={{ base: "none", md: "none", lg: "block" }}
-                        >
-                            {showDetailedSummary ? (
-                                <PurchaseSummaryDetailed
-                                    tours={detailedSummaryData.tours}
-                                    payments={detailedSummaryData.payments}
-                                    onApplyCode={() => console.log("Apply code clicked")}
-                                />
-                            ) : (
-                                <PaymentSummary
-                                    reservation={selectedReservation}
-                                    isPurchasePage={true}
-                                />
-                            )}
-                        </Box>
-                        <Box
-                            padding="20px"
-                            width="100%"
-                            mx="auto"
-                            display={{ base: "block", md: "none" }}
-                        >
-                            {showDetailedSummary ? (
-                                <PurchaseSummaryDetailed
-                                    tours={detailedSummaryData.tours}
-                                    payments={detailedSummaryData.payments}
-                                    onApplyCode={() => console.log("Apply code clicked")}
-                                />
-                            ) : (
-                                <PaymentSummary
-                                    reservation={selectedReservation}
-                                    isPurchasePage={true}
-                                />
-                            )}
-                        </Box>
+                            <Box 
+                                width={{ base: "100%", lg: "40%" }} 
+                                padding="20px"
+                                borderRadius="md"
+                                mt={{ base: 4, lg: "300px" }}
+                                ml={{ lg: 4 , lg: "-260px"}}
+                                display={{ base: "block", md: "block" }}
+                            >
+                                {showDetailedSummary ? (
+                                    <PurchaseSummaryDetailed
+                                        tours={detailedSummaryData.tours}
+                                        payments={detailedSummaryData.payments}
+                                        onApplyCode={() => console.log("Apply code clicked")}
+                                    />
+                                ) : (
+                                    <PaymentSummary
+                                        reservation={selectedReservation}
+                                        isPurchasePage={true}
+                                    />
+                                )}
+                            </Box>
+                        </Flex>
                         
-                        <Divider mb={4}/>
-                        <Box>
+                        <Divider mb={4} mt={6}/>
+                        <Box padding="20px">
                             <PurchaseNotes reservationId={selectedReservation?.id}/>
                         </Box>
                         <Divider mb={4}/>

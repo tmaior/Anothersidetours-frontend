@@ -430,10 +430,10 @@ const PurchaseList = ({
             marginLeft={{ base: "0", md: "-40px" }}
             ref={containerRef}
             spacing={0}
-            width={{ base: "100%", md: "30%" }}
+            width={{ base: "100%", md: "25%" }}
             borderRight={{ base: "none", md: "1px solid #E2E8F0" }}
             height="calc(100vh - 100px)"
-            w={{ base: "100%", md: "300px" }}
+            w={{ base: "100%", md: "270px" }}
             p={{ base: "4px 0px 4px 4px", md: 4 }}
             onScroll={handleScroll}
             overflowY="auto"
@@ -939,8 +939,17 @@ const PurchaseDetails = ({reservation, onBack}) => {
                 </Box>
             </Box>
 
-            <Box flex="1" p={6} marginTop={"-50px"} marginLeft={"15px"}>
-                <HStack spacing={3} mt={5} wrap="nowrap">
+            <Box 
+                flex="1" 
+                p={6} 
+                marginTop={"-50px"}
+                marginLeft={{base: "15px", md: "0"}}
+                marginRight={{md: "15px"}}
+                textAlign={{md: "left"}}
+                maxWidth={{md: "100%"}}
+                overflow="hidden"
+            >
+                <HStack spacing={3} mt={5} wrap="nowrap" justifyContent={{md: "flex-start"}} overflow="auto">
                     {visibleItems.map((item, idx) => (
                         <HStack key={idx}>
                             {item.icon}
@@ -979,14 +988,17 @@ const PurchaseDetails = ({reservation, onBack}) => {
                     )}
                 </HStack>
                 <Box
-                    mt={{base: "50px", xl: "15px", "2xl": "50px"}}
-                    ml={{base: "50px", xl: "-30px", "2xl": "-10px"}}
+                    mt={{base: "20px", xl: "15px", "2xl": "50px"}}
+                    ml={{base: "0", md: "10px", xl: "0"}}
+                    textAlign={{md: "left"}}
+                    width="100%"
+                    maxWidth={{md: "95%"}}
                 >
                     <Text fontSize="xl" fontWeight="bold">
                         {reservation.tour.name}
                     </Text>
 
-                    <HStack>
+                    <HStack justifyContent={{md: "flex-start"}}>
                         <HStack>
                             <CiCalendar size={18}/>
                             <Text>{formatDate(datePart)}</Text>
@@ -997,7 +1009,7 @@ const PurchaseDetails = ({reservation, onBack}) => {
                         </HStack>
                     </HStack>
 
-                    <Box mt={6}>
+                    <Box mt={6} width="100%" maxWidth={{md: "95%"}}>
                         <Text fontSize="2xl" fontWeight="bold">
                             Reservation Confirmation
                         </Text>
@@ -1005,7 +1017,7 @@ const PurchaseDetails = ({reservation, onBack}) => {
 
                         <Box mt={6}>
                             <Text fontWeight="bold">Contact Information</Text>
-                            <VStack align="start" spacing={1}>
+                            <VStack align={{base: "start", md: "start"}} spacing={1}>
                                 <HStack>
                                     <RxPerson/>
                                     <Text>{reservation.user.name}</Text>
@@ -1021,9 +1033,9 @@ const PurchaseDetails = ({reservation, onBack}) => {
                             </VStack>
                         </Box>
 
-                        <HStack spacing={8} mt={4}>
+                        <HStack spacing={8} mt={4} justifyContent={{md: "flex-start"}}>
                             <Box mt={6}>
-                                <HStack spacing={2}>
+                                <HStack spacing={2} justifyContent={{md: "flex-start"}}>
                                     <AiOutlineCompass/>
                                     <Text fontSize="xl" fontWeight="bold">Guide</Text>
                                 </HStack>
@@ -2347,12 +2359,33 @@ const PurchasesPage = () => {
                                 onBack={handleBackToList} 
                             />
                         </Box>
+
+                        <Box
+                            padding="20px"
+                            maxWidth={{ base: "100%", md: "800px" }}
+                            mx="auto"
+                            display={{ base: "none", md: "block", lg: "none" }}
+                        >
+                            {showDetailedSummary ? (
+                                <PurchaseSummaryDetailed
+                                    tours={detailedSummaryData.tours}
+                                    payments={detailedSummaryData.payments}
+                                    onApplyCode={() => console.log("Apply code clicked")}
+                                />
+                            ) : (
+                                <PaymentSummary
+                                    reservation={selectedReservation}
+                                    isPurchasePage={true}
+                                />
+                            )}
+                        </Box>
+
                         <Box
                             padding="20px"
                             maxWidth="500px"
                             mx="auto"
                             marginLeft={showDetailedSummary ? "800px" : "500px"}
-                            display={{ base: "none", md: "block" }}
+                            display={{ base: "none", md: "none", lg: "block" }}
                         >
                             {showDetailedSummary ? (
                                 <PurchaseSummaryDetailed

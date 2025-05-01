@@ -29,6 +29,7 @@ import {
     MenuButton,
     MenuList,
     MenuItem,
+    useMediaQuery,
 } from "@chakra-ui/react";
 import axios from "axios";
 import {BsCash, BsCheck2} from "react-icons/bs";
@@ -63,6 +64,9 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
     const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState(null);
     const stripe = useStripe();
     const elements = useElements();
+    
+    // Add breakpoint hook for responsive layout
+    const [isMobile] = useMediaQuery("(max-width: 768px)");
 
     useEffect(() => {
         if (isOpen) {
@@ -761,16 +765,16 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
     const pricePerGuest = newGuestQuantity > 0 ? guestPrice / newGuestQuantity : 0;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="4xl">
+        <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "4xl"}>
             <ModalOverlay/>
-            <ModalContent>
+            <ModalContent margin={isMobile ? 0 : "auto"} borderRadius={isMobile ? 0 : "md"}>
                 <ModalHeader textAlign="center">
                     {finalBalance < 0 ? "Process Refund" : "Collect Payment"}
                 </ModalHeader>
                 <ModalCloseButton/>
                 <ModalBody>
-                    <Flex>
-                        <Box flex="1" mr={4}>
+                    <Flex direction={isMobile ? "column" : "row"} gap={isMobile ? 4 : 0}>
+                        <Box flex="1" mr={isMobile ? 0 : 4} mb={isMobile ? 4 : 0}>
                             <Text mb={2}>Amount</Text>
                             <InputGroup mb={4}>
                                 <InputLeftElement pointerEvents="none">$</InputLeftElement>
@@ -778,40 +782,49 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                             </InputGroup>
 
                             <Text mb={2}>Payment Method</Text>
-                            <HStack spacing={2} mb={4}>
+                            <Flex 
+                                mb={4} 
+                                gap={2} 
+                                flexWrap={isMobile ? "wrap" : "nowrap"}
+                                justifyContent={isMobile ? "space-between" : "flex-start"}
+                            >
                                 <Button
-                                    size="sm"
+                                    size={isMobile ? "xs" : "sm"}
                                     variant={paymentMethod === 'Credit Card' ? 'solid' : 'outline'}
                                     onClick={() => setPaymentMethod('Credit Card')}
                                     leftIcon={<FaRegCreditCard/>}
+                                    flex={isMobile ? "1 0 48%" : "0 1 auto"}
                                 >
                                     Credit Card
                                 </Button>
                                 <Button
-                                    size="sm"
+                                    size={isMobile ? "xs" : "sm"}
                                     variant={paymentMethod === 'Cash' ? 'solid' : 'outline'}
                                     onClick={() => setPaymentMethod('Cash')}
                                     leftIcon={<BsCash/>}
+                                    flex={isMobile ? "1 0 48%" : "0 1 auto"}
                                 >
                                     Cash
                                 </Button>
                                 <Button
-                                    size="sm"
+                                    size={isMobile ? "xs" : "sm"}
                                     variant={paymentMethod === 'Check' ? 'solid' : 'outline'}
                                     onClick={() => setPaymentMethod('Check')}
                                     leftIcon={<BiCheck/>}
+                                    flex={isMobile ? "1 0 48%" : "0 1 auto"}
                                 >
                                     Check
                                 </Button>
                                 <Button
-                                    size="sm"
+                                    size={isMobile ? "xs" : "sm"}
                                     variant={paymentMethod === 'Other' ? 'solid' : 'outline'}
                                     onClick={() => setPaymentMethod('Other')}
                                     leftIcon={<BsCheck2/>}
+                                    flex={isMobile ? "1 0 48%" : "0 1 auto"}
                                 >
                                     Other
                                 </Button>
-                            </HStack>
+                            </Flex>
 
                             {paymentMethod === 'Credit Card' && (
                                 <Box mt={2} mb={4} p={3} borderWidth="1px" borderRadius="md">
@@ -838,7 +851,7 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                                         <Flex align="center" justify="space-between">
                                                             <Flex align="center">
                                                                 <Icon as={FaRegCreditCard} mr={2} />
-                                                                <Text>
+                                                                <Text fontSize={isMobile ? "sm" : "md"}>
                                                                     {selectedPaymentMethodId
                                                                         ? `${cardInfo.brand || "Card"} •••• ${cardInfo.last4}`
                                                                         : "Select a card"}
@@ -860,7 +873,7 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                                                 <Flex align="center" justify="space-between" w="100%">
                                                                     <Flex align="center">
                                                                         <Icon as={FaRegCreditCard} mr={2} />
-                                                                        <Text>
+                                                                        <Text fontSize={isMobile ? "sm" : "md"}>
                                                                             {card.brand || "Card"} •••• {card.last4}
                                                                         </Text>
                                                                     </Flex>
@@ -873,7 +886,11 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                                     </MenuList>
                                                 </Menu>
                                             )}
-                                            <Button size="sm" onClick={() => setShowCardForm(true)} leftIcon={<FaRegCreditCard />}>
+                                            <Button 
+                                                size={isMobile ? "sm" : "sm"} 
+                                                onClick={() => setShowCardForm(true)} 
+                                                leftIcon={<FaRegCreditCard />}
+                                            >
                                                 Use a different card
                                             </Button>
                                         </VStack>
@@ -895,7 +912,7 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                                                 color: '#000',
                                                                 fontWeight: '500',
                                                                 fontFamily: 'Arial, sans-serif',
-                                                                fontSize: '16px',
+                                                                fontSize: isMobile ? '14px' : '16px',
                                                                 fontSmoothing: 'antialiased',
                                                                 '::placeholder': {
                                                                     color: '#aab7c4',
@@ -910,12 +927,12 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                                 />
                                             </Box>
                                             {savedPaymentMethods.length > 0 && (
-                                                <Button size="sm" onClick={() => setShowCardForm(false)}>
+                                                <Button size={isMobile ? "sm" : "sm"} onClick={() => setShowCardForm(false)}>
                                                     Use saved card
                                                 </Button>
                                             )}
                                             {errorMessage && (
-                                                <Text color="red.500" fontSize="sm">{errorMessage}</Text>
+                                                <Text color="red.500" fontSize={isMobile ? "xs" : "sm"}>{errorMessage}</Text>
                                             )}
                                         </VStack>
                                     )}
@@ -927,21 +944,22 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                 placeholder="Add a tag"
                                 value={tag}
                                 onChange={(e) => setTag(e.target.value)}
+                                size={isMobile ? "sm" : "md"}
                             />
                         </Box>
 
-                        <Box flex="1">
+                        <Box flex="1" w={isMobile ? "100%" : "auto"}>
                             <VStack
                                 bg="gray.50"
-                                p={4}
+                                p={isMobile ? 3 : 4}
                                 borderRadius="md"
                                 borderWidth="1px"
                                 spacing={4}
                                 align="stretch"
                                 w="100%"
-                                minH="300px"
-                                maxH="400px"
-                                overflowY="auto"
+                                minH={isMobile ? "auto" : "300px"}
+                                maxH={isMobile ? "none" : "400px"}
+                                overflowY={isMobile ? "visible" : "auto"}
                             >
                                 {isDataLoading ? (
                                     <HStack justifyContent="center">
@@ -951,42 +969,48 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                 ) : (
                                     <>
                                         <Box>
-                                            <Text fontWeight="bold" mb={2}>Purchase Summary</Text>
+                                            <Text fontWeight="bold" mb={2} fontSize={isMobile ? "sm" : "md"}>Purchase Summary</Text>
                                             <VStack align="stretch" spacing={2}>
                                                 <HStack justify="space-between">
-                                                    <Text>
+                                                    <Text fontSize={isMobile ? "sm" : "md"}>
                                                         {`Guests ($${pricePerGuest.toFixed(2)} × ${newGuestQuantity})`}
                                                     </Text>
-                                                    <Text>${guestPrice.toFixed(2)}</Text>
+                                                    <Text fontSize={isMobile ? "sm" : "md"}>${guestPrice.toFixed(2)}</Text>
                                                 </HStack>
                                             </VStack>
 
                                             {combinedAddons.length > 0 ? (
                                                 combinedAddons.map((addon) => (
                                                     <HStack key={addon.id} justifyContent="space-between">
-                                                        <Text>{addon.label || 'Add-on'} (${addon.price} x {addon.quantity})</Text>
-                                                        <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
+                                                        <Text fontSize={isMobile ? "sm" : "md"}>
+                                                            {addon.label || 'Add-on'} (${addon.price} x {addon.quantity})
+                                                        </Text>
+                                                        <Text fontSize={isMobile ? "sm" : "md"}>
+                                                            ${(addon.price * addon.quantity).toFixed(2)}
+                                                        </Text>
                                                     </HStack>
                                                 ))
                                             ) : (
-                                                <Text>No add-ons selected.</Text>
+                                                <Text fontSize={isMobile ? "sm" : "md"}>No add-ons selected.</Text>
                                             )}
 
                                             <Divider my={2}/>
                                             <HStack justify="space-between">
-                                                <Text fontWeight="bold">Total</Text>
-                                                <Text fontWeight="bold">${totalPrice.toFixed(2)}</Text>
+                                                <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"}>Total</Text>
+                                                <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"}>${totalPrice.toFixed(2)}</Text>
                                             </HStack>
 
-                                            {finalBalance !== 0 && (
+                                            {calculateFinalBalance() !== 0 && (
                                                 <HStack justify="space-between" mt={2}>
                                                     <Text fontWeight="bold"
-                                                          color={finalBalance < 0 ? "green.500" : "red.500"}>
-                                                        {finalBalance < 0 ? "Refund Due" : "Balance Due"}
+                                                          fontSize={isMobile ? "sm" : "md"}
+                                                          color={calculateFinalBalance() < 0 ? "green.500" : "red.500"}>
+                                                        {calculateFinalBalance() < 0 ? "Refund Due" : "Balance Due"}
                                                     </Text>
                                                     <Text fontWeight="bold"
-                                                          color={finalBalance < 0 ? "green.500" : "red.500"}>
-                                                        ${Math.abs(finalBalance).toFixed(2)}
+                                                          fontSize={isMobile ? "sm" : "md"}
+                                                          color={calculateFinalBalance() < 0 ? "green.500" : "red.500"}>
+                                                        ${Math.abs(calculateFinalBalance()).toFixed(2)}
                                                     </Text>
                                                 </HStack>
                                             )}
@@ -995,14 +1019,14 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                         <Divider/>
 
                                         <Box>
-                                            <Text fontWeight="bold" mb={2}>Payment Summary</Text>
+                                            <Text fontWeight="bold" mb={2} fontSize={isMobile ? "sm" : "md"}>Payment Summary</Text>
                                             {cardInfo && (
                                                 <HStack justify="space-between">
                                                     <HStack spacing={2}>
-                                                        <Box as="span" role="img" aria-label="Card Icon" fontSize="lg">
+                                                        <Box as="span" role="img" aria-label="Card Icon" fontSize={isMobile ? "md" : "lg"}>
                                                             💳
                                                         </Box>
-                                                        <Text>
+                                                        <Text fontSize={isMobile ? "sm" : "md"}>
                                                             Original Payment
                                                             <Box
                                                                 as="span"
@@ -1012,29 +1036,35 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                                                 borderRadius="md"
                                                                 boxShadow="sm"
                                                                 ml={1}
+                                                                fontSize={isMobile ? "xs" : "sm"}
                                                             >
                                                                 *{cardInfo.last4}
                                                             </Box>
                                                         </Text>
                                                     </HStack>
-                                                    <Text>${booking.total_price.toFixed(2)}</Text>
+                                                    <Text fontSize={isMobile ? "sm" : "md"}>${booking.total_price.toFixed(2)}</Text>
                                                 </HStack>
                                             )}
                                             <HStack justify="space-between" mt={2}>
-                                                <Text>Paid</Text>
-                                                <Text>${booking.total_price.toFixed(2)}</Text>
+                                                <Text fontSize={isMobile ? "sm" : "md"}>Paid</Text>
+                                                <Text fontSize={isMobile ? "sm" : "md"}>${booking.total_price.toFixed(2)}</Text>
                                             </HStack>
 
                                             <HStack justify="space-between"
-                                                    color={finalBalance < 0 ? "green.500" : "red.500"} fontWeight="bold"
+                                                    color={calculateFinalBalance() < 0 ? "green.500" : "red.500"} 
+                                                    fontWeight="bold"
                                                     mt={2}>
-                                                <Text>{finalBalance < 0 ? "Refund:" : "Balance Due:"}</Text>
-                                                <Text>${Math.abs(finalBalance).toFixed(2)}</Text>
+                                                <Text fontSize={isMobile ? "sm" : "md"}>
+                                                    {calculateFinalBalance() < 0 ? "Refund:" : "Balance Due:"}
+                                                </Text>
+                                                <Text fontSize={isMobile ? "sm" : "md"}>
+                                                    ${Math.abs(calculateFinalBalance()).toFixed(2)}
+                                                </Text>
                                             </HStack>
 
                                             <HStack justify="space-between" fontWeight="bold" mt={2}>
-                                                <Text>Final Total:</Text>
-                                                <Text>${totalPrice.toFixed(2)}</Text>
+                                                <Text fontSize={isMobile ? "sm" : "md"}>Final Total:</Text>
+                                                <Text fontSize={isMobile ? "sm" : "md"}>${totalPrice.toFixed(2)}</Text>
                                             </HStack>
                                         </Box>
                                     </>
@@ -1043,13 +1073,21 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                         </Box>
                     </Flex>
                 </ModalBody>
-                <ModalFooter>
-                    <Flex width="100%" justifyContent="space-between" alignItems="center">
-                        <Checkbox isChecked={notifyCustomer} onChange={(e) => setNotifyCustomer(e.target.checked)}>
+                <ModalFooter flexDirection={isMobile ? "column" : "row"} gap={isMobile ? 2 : 0}>
+                    <Flex width="100%" justifyContent="space-between" alignItems={isMobile ? "stretch" : "center"} flexDirection={isMobile ? "column" : "row"} gap={isMobile ? 2 : 0}>
+                        <Checkbox 
+                            isChecked={notifyCustomer} 
+                            onChange={(e) => setNotifyCustomer(e.target.checked)}
+                            mb={isMobile ? 2 : 0}
+                        >
                             Notify Customer
                         </Checkbox>
-                        <HStack>
-                            <Button colorScheme="gray" onClick={handleLater}>
+                        <HStack spacing={2} width={isMobile ? "100%" : "auto"}>
+                            <Button 
+                                colorScheme="gray" 
+                                onClick={handleLater}
+                                flex={isMobile ? 1 : "auto"}
+                            >
                                 Later
                             </Button>
                             <Button
@@ -1059,8 +1097,9 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                 loadingText="Processing"
                                 isDisabled={(paymentMethod === 'Credit Card' && savedPaymentMethods.length === 0 && !showCardForm) || 
                                            (paymentMethod === 'Credit Card' && showCardForm && !stripe)}
+                                flex={isMobile ? 1 : "auto"}
                             >
-                                {finalBalance < 0 ? "Refund" : "Collect"}
+                                {calculateFinalBalance() < 0 ? "Refund" : "Collect"}
                             </Button>
                         </HStack>
                     </Flex>
@@ -1076,6 +1115,8 @@ const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
     const [message, setMessage] = useState('');
     const [daysBeforeArrival, setDaysBeforeArrival] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
+
+    const [isMobile] = useMediaQuery("(max-width: 768px)");
 
     const getBookingDate = () => {
         try {
@@ -1195,9 +1236,9 @@ const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "lg"}>
             <ModalOverlay/>
-            <ModalContent>
+            <ModalContent margin={isMobile ? 0 : "auto"} borderRadius={isMobile ? 0 : "md"}>
                 <ModalHeader textAlign="center">Collect Payment via Invoice</ModalHeader>
                 <ModalCloseButton/>
                 <ModalBody>
@@ -1206,13 +1247,17 @@ const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
                             <Text mb={2}>Amount</Text>
                             <InputGroup>
                                 <InputLeftElement pointerEvents="none">$</InputLeftElement>
-                                <Input value={bookingChanges?.priceDifference.toFixed(2)} readOnly/>
+                                <Input 
+                                    value={bookingChanges?.priceDifference.toFixed(2)} 
+                                    readOnly
+                                    size={isMobile ? "sm" : "md"}
+                                />
                             </InputGroup>
                         </Box>
 
                         <Box>
                             <Text mb={2}>Payment due</Text>
-                            <Flex align="center">
+                            <Flex align="center" flexDirection={isMobile ? "column" : "row"}>
                                 <Input
                                     type="number"
                                     value={daysBeforeArrival}
@@ -1222,15 +1267,19 @@ const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                             setDaysBeforeArrival(value);
                                         }
                                     }}
-                                    width="60px"
-                                    mr={2}
+                                    width={isMobile ? "100%" : "60px"}
+                                    mb={isMobile ? 2 : 0}
+                                    mr={isMobile ? 0 : 2}
+                                    size={isMobile ? "sm" : "md"}
                                 />
-                                <Text mr={2}>days before arrival (due on {formattedDueDate})</Text>
+                                <Text mr={2} fontSize={isMobile ? "sm" : "md"}>
+                                    days before arrival (due on {formattedDueDate})
+                                </Text>
                             </Flex>
                         </Box>
 
                         <Box>
-                            <Text color="gray.500" fontSize="sm">
+                            <Text color="gray.500" fontSize={isMobile ? "xs" : "sm"}>
                                 Reservation date: {formattedBookingDate}
                             </Text>
                         </Box>
@@ -1242,6 +1291,7 @@ const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 height="120px"
+                                size={isMobile ? "sm" : "md"}
                             />
                         </Box>
 
@@ -1251,12 +1301,19 @@ const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
                                 placeholder="Add a tag"
                                 value={tag}
                                 onChange={(e) => setTag(e.target.value)}
+                                size={isMobile ? "sm" : "md"}
                             />
                         </Box>
                     </VStack>
                 </ModalBody>
-                <ModalFooter>
-                    <Button variant="outline" mr={3} onClick={onClose}>
+                <ModalFooter flexDirection={isMobile ? "column" : "row"} gap={isMobile ? 2 : 0}>
+                    <Button 
+                        variant="outline" 
+                        mr={isMobile ? 0 : 3} 
+                        mb={isMobile ? 2 : 0}
+                        onClick={onClose}
+                        width={isMobile ? "100%" : "auto"}
+                    >
                         Cancel
                     </Button>
                     <Button
@@ -1264,6 +1321,7 @@ const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
                         onClick={handleSendInvoice}
                         isLoading={isLoading}
                         loadingText="Sending"
+                        width={isMobile ? "100%" : "auto"}
                     >
                         Send Invoice
                     </Button>
@@ -1277,6 +1335,8 @@ const CollectBalanceModal = ({isOpen, onClose, bookingChanges, booking}) => {
     const toast = useToast();
     const {isOpen: isPaymentModalOpen, onOpen: onPaymentModalOpen, onClose: onPaymentModalClose} = useDisclosure();
     const {isOpen: isInvoiceModalOpen, onOpen: onInvoiceModalOpen, onClose: onInvoiceModalClose} = useDisclosure();
+
+    const [isMobile] = useMediaQuery("(max-width: 768px)");
 
     const handleCollectNow = () => {
         onClose();
@@ -1294,9 +1354,9 @@ const CollectBalanceModal = ({isOpen, onClose, bookingChanges, booking}) => {
 
     return (
         <>
-            <Modal isOpen={isOpen} onClose={onClose} size="4xl">
+            <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "4xl"}>
                 <ModalOverlay/>
-                <ModalContent>
+                <ModalContent margin={isMobile ? 0 : "auto"} borderRadius={isMobile ? 0 : "md"}>
                     <ModalHeader textAlign="center">
                         {bookingChanges?.isRefund
                             ? "How Do You Want To Process Refund?"
@@ -1307,21 +1367,21 @@ const CollectBalanceModal = ({isOpen, onClose, bookingChanges, booking}) => {
                         <VStack spacing={4} align="stretch">
                             <Box
                                 as="button"
-                                p={4}
+                                p={isMobile ? 3 : 4}
                                 borderWidth="1px"
                                 borderRadius="md"
                                 onClick={handleCollectNow}
                                 _hover={{bg: "gray.50"}}
                             >
                                 <Flex align="center">
-                                    <Icon as={FaRegCreditCard} boxSize={5} mr={4}/>
+                                    <Icon as={FaRegCreditCard} boxSize={isMobile ? 4 : 5} mr={4}/>
                                     <Box textAlign="left">
-                                        <Text fontWeight="bold">
+                                        <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"}>
                                             {bookingChanges?.isRefund
                                                 ? "Process Refund Now"
                                                 : "Collect Balance Now"}
                                         </Text>
-                                        <Text>
+                                        <Text fontSize={isMobile ? "xs" : "sm"}>
                                             Use standard methods of {bookingChanges?.isRefund
                                             ? "processing refund"
                                             : "collecting balance"}
@@ -1332,42 +1392,42 @@ const CollectBalanceModal = ({isOpen, onClose, bookingChanges, booking}) => {
 
                             <Box
                                 as="button"
-                                p={4}
+                                p={isMobile ? 3 : 4}
                                 borderWidth="1px"
                                 borderRadius="md"
                                 onClick={handleCollectViaInvoice}
                                 _hover={{bg: "gray.50"}}
                             >
                                 <Flex align="center">
-                                    <Icon as={BsCheck2} boxSize={5} mr={4}/>
+                                    <Icon as={BsCheck2} boxSize={isMobile ? 4 : 5} mr={4}/>
                                     <Box textAlign="left">
-                                        <Text fontWeight="bold">
+                                        <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"}>
                                             {bookingChanges?.isRefund
                                                 ? "Process Refund via Invoice"
                                                 : "Collect Balance via Invoice"}
                                         </Text>
-                                        <Text>Send an invoice to the organizer</Text>
+                                        <Text fontSize={isMobile ? "xs" : "sm"}>Send an invoice to the organizer</Text>
                                     </Box>
                                 </Flex>
                             </Box>
 
                             <Box
                                 as="button"
-                                p={4}
+                                p={isMobile ? 3 : 4}
                                 borderWidth="1px"
                                 borderRadius="md"
                                 onClick={handleCollectLater}
                                 _hover={{bg: "gray.50"}}
                             >
                                 <Flex align="center">
-                                    <Icon as={BsCash} boxSize={5} mr={4}/>
+                                    <Icon as={BsCash} boxSize={isMobile ? 4 : 5} mr={4}/>
                                     <Box textAlign="left">
-                                        <Text fontWeight="bold">
+                                        <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"}>
                                             {bookingChanges?.isRefund
                                                 ? "Process Refund Later"
                                                 : "Collect Balance Later"}
                                         </Text>
-                                        <Text>
+                                        <Text fontSize={isMobile ? "xs" : "sm"}>
                                             {bookingChanges?.isRefund
                                                 ? "Process refund"
                                                 : "Collect balance"} later
@@ -1378,7 +1438,12 @@ const CollectBalanceModal = ({isOpen, onClose, bookingChanges, booking}) => {
                         </VStack>
                     </ModalBody>
                     <ModalFooter>
-                        <Button colorScheme="blue" variant="outline" onClick={onClose}>
+                        <Button 
+                            colorScheme="blue" 
+                            variant="outline" 
+                            onClick={onClose}
+                            width={isMobile ? "100%" : "auto"}
+                        >
                             Cancel
                         </Button>
                     </ModalFooter>
@@ -1413,12 +1478,15 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
     const [reservationAddons, setReservationAddons] = useState([]);
     const [allAddons, setAllAddons] = useState([]);
     const [isLoadingAddons, setIsLoadingAddons] = useState(true);
+    const [notifyCustomer, setNotifyCustomer] = useState(true);
     const toast = useToast();
     const {
         isOpen: isCollectBalanceOpen,
         onOpen: onCollectBalanceOpen,
         onClose: onCollectBalanceClose
     } = useDisclosure();
+
+    const [isMobile] = useMediaQuery("(max-width: 768px)");
 
     useEffect(() => {
         const fetchTierPricing = async () => {
@@ -1917,31 +1985,44 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
     const isLoadingData = isLoadingPendingBalance || isLoadingCardDetails || isLoadingAddons;
     return (
         <>
-            <Modal isOpen={isOpen} onClose={onClose} size="4xl">
+            <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "4xl"}>
                 <ModalOverlay/>
-                <ModalContent>
+                <ModalContent margin={isMobile ? 0 : "auto"} borderRadius={isMobile ? 0 : "md"}>
                     <ModalHeader textAlign={"center"}>Change Guest Quantity</ModalHeader>
                     <ModalCloseButton/>
                     <ModalBody>
-                        <Flex>
-                            <Box flex="1" mr={6}>
+                        <Flex 
+                            direction={isMobile ? "column" : "row"} 
+                            gap={4}
+                        >
+                            <Box flex="1" mr={isMobile ? 0 : 6} mb={isMobile ? 4 : 0}>
                                 <Text fontSize="lg" fontWeight="bold" mb={4}>
                                     Guest Summary
                                 </Text>
                                 <Flex align="center" mb={4}>
                                     <Text mr={2}>Guests</Text>
                                     <HStack spacing={2}>
-                                        <Button size="sm" onClick={handleDecrease} isDisabled={changesConfirmed}>
+                                        <Button 
+                                            size={isMobile ? "md" : "sm"} 
+                                            onClick={handleDecrease} 
+                                            isDisabled={changesConfirmed}
+                                            minW={isMobile ? "40px" : "auto"}
+                                        >
                                             -
                                         </Button>
                                         <Input
-                                            size="sm"
-                                            width="50px"
+                                            size={isMobile ? "md" : "sm"}
+                                            width={isMobile ? "60px" : "50px"}
                                             textAlign="center"
                                             value={guestCount}
                                             isReadOnly
                                         />
-                                        <Button size="sm" onClick={handleIncrease} isDisabled={changesConfirmed}>
+                                        <Button 
+                                            size={isMobile ? "md" : "sm"} 
+                                            onClick={handleIncrease} 
+                                            isDisabled={changesConfirmed}
+                                            minW={isMobile ? "40px" : "auto"}
+                                        >
                                             +
                                         </Button>
                                     </HStack>
@@ -1979,18 +2060,17 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                 </TableContainer>
                             </Box>
 
-                            <Box flex="1">
+                            <Box flex="1" w={isMobile ? "100%" : "auto"}>
                                 <VStack
                                     bg="gray.50"
-                                    p={6}
+                                    p={isMobile ? 4 : 6}
                                     borderRadius="md"
                                     borderWidth="1px"
-                                    spacing={6}
+                                    spacing={4}
                                     align="stretch"
                                     w="100%"
-                                    h="350px"
-                                    minW="300px"
-                                    minH="300px"
+                                    minH={isMobile ? "auto" : "300px"}
+                                    overflowY={isMobile ? "visible" : "auto"}
                                 >
                                     {isLoadingData ? (
                                         <HStack justifyContent="center">
@@ -1999,51 +2079,59 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                         </HStack>
                                     ) : (
                                         <>
-                                            <Box padding="10px" w="100%" h="500px">
+                                            <Box padding={isMobile ? "6px" : "10px"} w="100%">
                                                 <Text fontWeight="bold" mb={2}>
                                                     Purchase Summary
                                                 </Text>
                                                 <VStack align="stretch" spacing={2}>
                                                     <HStack justify="space-between">
-                                                        <Text>
+                                                        <Text fontSize={isMobile ? "sm" : "md"}>
                                                             {`Guests ($${(guestTotalPrice / guestCount).toFixed(2)} × ${guestCount})`}
                                                         </Text>
-                                                        <Text>${guestTotalPrice.toFixed(2)}</Text>
+                                                        <Text fontSize={isMobile ? "sm" : "md"}>${guestTotalPrice.toFixed(2)}</Text>
                                                     </HStack>
                                                 </VStack>
 
                                                 {combinedAddons.length > 0 ? (
                                                     combinedAddons.map((addon) => (
                                                         <HStack key={addon.id} justifyContent="space-between">
-                                                            <Text>{addon.label || 'Add-on'} (${addon.price} x {addon.quantity})</Text>
-                                                            <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
+                                                            <Text fontSize={isMobile ? "sm" : "md"}>
+                                                                {addon.label || 'Add-on'} (${addon.price} x {addon.quantity})
+                                                            </Text>
+                                                            <Text fontSize={isMobile ? "sm" : "md"}>
+                                                                ${(addon.price * addon.quantity).toFixed(2)}
+                                                            </Text>
                                                         </HStack>
                                                     ))
                                                 ) : (
-                                                    <Text>No add-ons selected.</Text>
+                                                    <Text fontSize={isMobile ? "sm" : "md"}>No add-ons selected.</Text>
                                                 )}
 
                                                 <Divider my={2}/>
                                                 <HStack justify="space-between">
-                                                    <Text fontWeight="bold">Total</Text>
-                                                    <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
+                                                    <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"}>Total</Text>
+                                                    <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"}>${finalTotalPrice.toFixed(2)}</Text>
                                                 </HStack>
 
                                                 {totalBalanceDue !== 0 && (
                                                     <HStack justify="space-between" mt={2}>
-                                                        <Text fontWeight="bold"
-                                                              color={isRefund ? "green.500" : "red.500"}>
+                                                        <Text 
+                                                            fontWeight="bold" 
+                                                            fontSize={isMobile ? "sm" : "md"}
+                                                            color={isRefund ? "green.500" : "red.500"}>
                                                             {isRefund ? "Refund Due" : "Balance Due"}
                                                         </Text>
-                                                        <Text fontWeight="bold"
-                                                              color={isRefund ? "green.500" : "red.500"}>
+                                                        <Text 
+                                                            fontWeight="bold" 
+                                                            fontSize={isMobile ? "sm" : "md"}
+                                                            color={isRefund ? "green.500" : "red.500"}>
                                                             ${displayBalanceValue.toFixed(2)}
                                                         </Text>
                                                     </HStack>
                                                 )}
                                             </Box>
                                             <Box>
-                                                <Text fontWeight="bold" mb={2}>
+                                                <Text fontWeight="bold" mb={2} fontSize={isMobile ? "sm" : "md"}>
                                                     Payment Summary
                                                 </Text>
                                                 <VStack align="stretch" spacing={2}>
@@ -2051,10 +2139,10 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                                         <HStack justify="space-between">
                                                             <HStack spacing={2}>
                                                                 <Box as="span" role="img" aria-label="Card Icon"
-                                                                     fontSize="lg">
+                                                                     fontSize={isMobile ? "md" : "lg"}>
                                                                     💳
                                                                 </Box>
-                                                                <Text>
+                                                                <Text fontSize={isMobile ? "sm" : "md"}>
                                                                     Payment
                                                                     <Box
                                                                         as="span"
@@ -2063,17 +2151,18 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                                                                         py={1}
                                                                         borderRadius="md"
                                                                         boxShadow="sm"
+                                                                        fontSize={isMobile ? "xs" : "sm"}
                                                                     >
                                                                         *{cardDetails.last4}
                                                                     </Box>{" "}
-                                                                    {formatDateToAmerican(formatDate(cardDetails.paymentDate))}
+                                                                    {isMobile ? "" : formatDateToAmerican(formatDate(cardDetails.paymentDate))}
                                                                 </Text>
                                                             </HStack>
                                                         </HStack>
                                                     )}
                                                     <HStack justify="space-between">
-                                                        <Text>Paid</Text>
-                                                        <Text>${paidTotal.toFixed(2)}</Text>
+                                                        <Text fontSize={isMobile ? "sm" : "md"}>Paid</Text>
+                                                        <Text fontSize={isMobile ? "sm" : "md"}>${paidTotal.toFixed(2)}</Text>
                                                     </HStack>
                                                 </VStack>
                                             </Box>
@@ -2083,29 +2172,44 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                             </Box>
                         </Flex>
                     </ModalBody>
-                    <ModalFooter>
-                        <Checkbox mr={4}>Notify Customer</Checkbox>
-                        <Button variant="outline" mr={3} onClick={onClose}>
-                            Cancel
-                        </Button>
-                        {!changesConfirmed ? (
-                            <Button
-                                colorScheme="blue"
-                                onClick={handleChangeConfirm}
-                                isLoading={isLoading}
-                                loadingText="Updating"
+                    <ModalFooter flexDirection={isMobile ? "column" : "row"} gap={isMobile ? 2 : 0} alignItems={isMobile ? "stretch" : "center"}>
+                        <Checkbox 
+                            isChecked={notifyCustomer} 
+                            onChange={(e) => setNotifyCustomer(e.target.checked)}
+                            mb={isMobile ? 2 : 0} 
+                            mr={isMobile ? 0 : 4}
+                        >
+                            Notify Customer
+                        </Checkbox>
+                        <Flex width={isMobile ? "100%" : "auto"} gap={2} justifyContent={isMobile ? "space-between" : "flex-end"}>
+                            <Button 
+                                variant="outline" 
+                                onClick={onClose}
+                                flex={isMobile ? 1 : "auto"}
                             >
-                                Modify
+                                Cancel
                             </Button>
-                        ) : (
-                            <Button
-                                colorScheme="green"
-                                onClick={handleComplete}
-                                leftIcon={<BsCheck2/>}
-                            >
-                                Done
-                            </Button>
-                        )}
+                            {!changesConfirmed ? (
+                                <Button
+                                    colorScheme="blue"
+                                    onClick={handleChangeConfirm}
+                                    isLoading={isLoading}
+                                    loadingText="Updating"
+                                    flex={isMobile ? 1 : "auto"}
+                                >
+                                    Modify
+                                </Button>
+                            ) : (
+                                <Button
+                                    colorScheme="green"
+                                    onClick={handleComplete}
+                                    leftIcon={<BsCheck2/>}
+                                    flex={isMobile ? 1 : "auto"}
+                                >
+                                    Done
+                                </Button>
+                            )}
+                        </Flex>
                     </ModalFooter>
                 </ModalContent>
             </Modal>

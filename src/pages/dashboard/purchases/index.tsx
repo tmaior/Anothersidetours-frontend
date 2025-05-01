@@ -912,7 +912,7 @@ const PurchaseDetails = ({reservation, onBack}) => {
             )}
             <Box
                 position="relative"
-                width={{base: "100%", md: "90%", xl: "100%", "2xl": "175%"}}
+                width={{base: "100%", md: "95%", xl: "110%", "2xl": "175%"}}
                 maxWidth={{base: "none", md: "none", xl: "none"}}
                 borderRadius="lg"
                 overflow="hidden"
@@ -2362,7 +2362,7 @@ const PurchasesPage = () => {
                                 padding="20px"
                                 borderRadius="md"
                                 mt={{ base: 4, lg: "300px" }}
-                                ml={{ lg: 4 , lg: "-260px"}}
+                                ml={{ lg: "-100px" }}
                                 display={{ base: "block", md: "block" }}
                             >
                                 {showDetailedSummary ? (

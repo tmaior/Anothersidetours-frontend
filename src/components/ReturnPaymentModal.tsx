@@ -1328,9 +1328,9 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="6xl">
+        <Modal isOpen={isOpen} onClose={onClose} size={{ base: "full", md: "6xl" }}>
             <ModalOverlay/>
-            <ModalContent maxW="1000px">
+            <ModalContent maxW={{ base: "100%", md: "1000px" }} margin={{ base: 0, md: "auto" }} borderRadius={{ base: 0, md: "md" }}>
                 <ModalHeader>
                     Return Payment Only
                     <CloseButton
@@ -1340,34 +1340,34 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                         onClick={onClose}
                     />
                 </ModalHeader>
-                <ModalBody>
-                    <Flex gap={6}>
+                <ModalBody px={{ base: 3, md: 6 }}>
+                    <Flex direction={{ base: "column", md: "row" }} gap={{ base: 4, md: 6 }}>
                         <Box flex="1">
-                            <Box bg="gray.50" p={4} borderRadius="md" mb={4}>
-                                <Text fontWeight="bold">{booking?.user?.name}</Text>
+                            <Box bg="gray.50" p={{ base: 3, md: 4 }} borderRadius="md" mb={4}>
+                                <Text fontWeight="bold" fontSize={{ base: "sm", md: "md" }}>{booking?.user?.name}</Text>
                                 <HStack mt={2}>
                                     <Image
                                         src={booking?.imageUrl || "https://via.placeholder.com/80"}
                                         alt={booking?.title}
-                                        boxSize="80px"
+                                        boxSize={{ base: "60px", md: "80px" }}
                                         objectFit="cover"
                                         borderRadius="md"
                                     />
                                     <VStack align="start" spacing={1}>
-                                        <Text fontWeight="semibold">{booking?.title}</Text>
-                                        <Text fontSize="sm" color="gray.600">
+                                        <Text fontWeight="semibold" fontSize={{ base: "sm", md: "md" }}>{booking?.title}</Text>
+                                        <Text fontSize={{ base: "xs", md: "sm" }} color="gray.600">
                                             {booking?.dateFormatted} {booking?.time}
                                         </Text>
                                     </VStack>
                                 </HStack>
                             </Box>
 
-                            <VStack spacing={4} align="stretch">
+                            <VStack spacing={{ base: 3, md: 4 }} align="stretch">
                                 <Box>
                                     <HStack mb={2} justify="space-between">
-                                        <Text>Amount</Text>
+                                        <Text fontSize={{ base: "sm", md: "md" }}>Amount</Text>
                                         {selectedCard && (
-                                            <Text fontSize="sm" color="blue.600">
+                                            <Text fontSize={{ base: "xs", md: "sm" }} color="blue.600">
                                                 Maximum available: ${selectedCard.refundableAmount?.toFixed(2)}
                                             </Text>
                                         )}
@@ -1381,9 +1381,10 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                             min="0"
                                             max={selectedCard?.refundableAmount || maxRefundableAmount}
                                             placeholder="$ 0.00"
+                                            size={{ base: "sm", md: "md" }}
                                         />
                                     </Flex>
-                                    <Text fontSize="sm" color="gray.600" mt={1}>
+                                    <Text fontSize={{ base: "xs", md: "sm" }} color="gray.600" mt={1}>
                                         {paymentMethod === 'credit_card' && selectedCard
                                             ? `until $${selectedCard.refundableAmount?.toFixed(2)}`
                                             : paymentMethod === 'credit_card' && cardTransactions.length > 0
@@ -1394,8 +1395,12 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 </Box>
 
                                 <Box>
-                                    <Text mb={2}>Payment Method</Text>
-                                    <HStack spacing={2}>
+                                    <Text mb={2} fontSize={{ base: "sm", md: "md" }}>Payment Method</Text>
+                                    <Flex 
+                                        direction={{ base: "column", sm: "row" }} 
+                                        gap={2} 
+                                        wrap={{ base: "nowrap", sm: "wrap" }}
+                                    >
                                         {hasOriginalCardPayment && (
                                             <Button
                                                 leftIcon={<FaRegCreditCard/>}
@@ -1405,6 +1410,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                 color={paymentMethod === 'credit_card' ? 'blue.700' : 'gray.700'}
                                                 _hover={{bg: paymentMethod === 'credit_card' ? 'blue.100' : 'gray.100'}}
                                                 onClick={() => setPaymentMethod('credit_card')}
+                                                width={{ base: "full", sm: "auto" }}
+                                                size={{ base: "sm", md: "md" }}
                                             >
                                                 Credit Card
                                             </Button>
@@ -1417,6 +1424,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                             color={paymentMethod === 'cash' ? 'blue.700' : 'gray.700'}
                                             _hover={{bg: paymentMethod === 'cash' ? 'blue.100' : 'gray.100'}}
                                             onClick={() => setPaymentMethod('cash')}
+                                            width={{ base: "full", sm: "auto" }}
+                                            size={{ base: "sm", md: "md" }}
                                         >
                                             Cash
                                         </Button>
@@ -1428,6 +1437,8 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                             color={paymentMethod === 'store_credit' ? 'blue.700' : 'gray.700'}
                                             _hover={{bg: paymentMethod === 'store_credit' ? 'blue.100' : 'gray.100'}}
                                             onClick={() => setPaymentMethod('store_credit')}
+                                            width={{ base: "full", sm: "auto" }}
+                                            size={{ base: "sm", md: "md" }}
                                         >
                                             Store Credit
                                         </Button>
@@ -1439,15 +1450,17 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                             color={paymentMethod === 'other' ? 'blue.700' : 'gray.700'}
                                             _hover={{bg: paymentMethod === 'other' ? 'blue.100' : 'gray.100'}}
                                             onClick={() => setPaymentMethod('other')}
+                                            width={{ base: "full", sm: "auto" }}
+                                            size={{ base: "sm", md: "md" }}
                                         >
                                             Other
                                         </Button>
-                                    </HStack>
+                                    </Flex>
                                     
                                     {paymentMethod === 'store_credit' && (
                                         <Box mt={2} p={3} bg="green.50" borderRadius="md" borderColor="green.200"
                                              borderWidth="1px">
-                                            <Text fontSize="sm" color="green.700">
+                                            <Text fontSize={{ base: "xs", md: "sm" }} color="green.700">
                                                 A voucher code will be generated for the refund amount. The customer can
                                                 use this voucher for future bookings.
                                             </Text>
@@ -1460,7 +1473,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                         {!selectedCardId && cardList.length > 0 && (
                                             <Box p={3} mb={3} borderWidth="1px" borderRadius="md" borderColor="blue.200"
                                                  bg="blue.50">
-                                                <Text fontSize="sm">
+                                                <Text fontSize={{ base: "xs", md: "sm" }}>
                                                     Select a card to process the refund or choose another payment
                                                     method.
                                                 </Text>
@@ -1469,14 +1482,14 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                         
                                         {isLoadingTransactions ? (
                                             <HStack spacing={2} py={2}>
-                                                <Text>Loading card information...</Text>
+                                                <Text fontSize={{ base: "sm", md: "md" }}>Loading card information...</Text>
                                             </HStack>
                                         ) : cardList.length > 0 ? (
                                             <VStack spacing={2} align="stretch">
                                                 {cardList.map((card) => (
                                                     <Box
                                                         key={card.id}
-                                                        p={3}
+                                                        p={{ base: 2, md: 3 }}
                                                         borderWidth="1px"
                                                         borderRadius="md"
                                                         borderColor={selectedCardId === card.id ? "blue.500" : "gray.200"}
@@ -1490,17 +1503,17 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                         }}
                                                     >
                                                         <HStack justify="space-between" mb={2}
-                                                                mt={selectedCardId === card.id ? 4 : 0}>
+                                                                mt={selectedCardId === card.id ? { base: 2, md: 4 } : 0}>
                                                             <Radio value={card.id} colorScheme="blue"
                                                                    isChecked={selectedCardId === card.id}>
                                                                 <HStack>
-                                                                    <FaRegCreditCard/>
-                                                                    <Text>
+                                                                    <Box fontSize={{ base: "sm", md: "md" }}><FaRegCreditCard/></Box>
+                                                                    <Text fontSize={{ base: "sm", md: "md" }}>
                                                                         {card.brand.charAt(0).toUpperCase() + card.brand.slice(1)} •••• {card.last4}
                                                                     </Text>
                                                                 </HStack>
                                                             </Radio>
-                                                            <Text fontSize="sm" color="gray.500">
+                                                            <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">
                                                                 {formatDate(card.paymentDate)}
                                                             </Text>
                                                         </HStack>
@@ -1508,12 +1521,12 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                         <HStack justify="space-between" mt={2} p={2} bg="gray.50"
                                                                 borderRadius="md">
                                                             <VStack align="start" spacing={0}>
-                                                                <Text fontSize="sm" fontWeight="medium"
+                                                                <Text fontSize={{ base: "xs", md: "sm" }} fontWeight="medium"
                                                                       color="gray.600">Available:</Text>
                                                             </VStack>
                                                             <VStack align="end" spacing={0}>
                                                                 <Text
-                                                                    fontSize="sm"
+                                                                    fontSize={{ base: "xs", md: "sm" }}
                                                                     fontWeight="semibold"
                                                                     color={(card.refundableAmount > 0 || (card.refundedAmount === 0 && card.amount > 0)) ? "green.500" : "red.500"}
                                                                 >
@@ -1527,17 +1540,17 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                                 r.metadata?.cardId === selectedCardId
                                                         ) && (
                                                             <Box mt={2} p={2} bg="gray.50" borderRadius="md">
-                                                                <Text fontWeight="semibold" fontSize="sm" mb={1}>Previous
+                                                                <Text fontWeight="semibold" fontSize={{ base: "xs", md: "sm" }} mb={1}>Previous
                                                                     refunds</Text>
                                                                 {refundHistory
                                                                     .filter(r => r.metadata?.paymentMethodId === selectedCardId ||
                                                                         r.metadata?.cardId === selectedCardId)
                                                                     .map((refund, idx) => (
                                                                         <HStack key={idx} justify="space-between">
-                                                                            <Text fontSize="sm">
+                                                                            <Text fontSize={{ base: "xs", md: "sm" }}>
                                                                                 {formatDate(refund.created_at)}
                                                                             </Text>
-                                                                            <Text fontSize="sm" color="red.500">
+                                                                            <Text fontSize={{ base: "xs", md: "sm" }} color="red.500">
                                                                                 -${refund.amount.toFixed(2)}
                                                                             </Text>
                                                                         </HStack>
@@ -1549,14 +1562,14 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                 ))}
                                             </VStack>
                                         ) : (
-                                            <Text color="red.500">No card information found</Text>
+                                            <Text color="red.500" fontSize={{ base: "sm", md: "md" }}>No card information found</Text>
                                         )}
                                     </Box>
                                 )}
 
                                 <Box>
-                                    <Text mb={2}>Reason</Text>
-                                    <Select defaultValue="return_payment">
+                                    <Text mb={2} fontSize={{ base: "sm", md: "md" }}>Reason</Text>
+                                    <Select defaultValue="return_payment" size={{ base: "sm", md: "md" }}>
                                         <option value="reduce_booking">Reduce Booking Value and Return Payment</option>
                                         <option value="return_payment">Return Payment Only</option>
                                         <option value="change_guest">Change Guest Quantity</option>
@@ -1564,38 +1577,50 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                 </Box>
 
                                 <Box>
-                                    <Text mb={2}>Comment</Text>
+                                    <Text mb={2} fontSize={{ base: "sm", md: "md" }}>Comment</Text>
                                     <Textarea
                                         value={comment}
                                         onChange={(e) => setComment(e.target.value)}
                                         placeholder="Add a comment..."
+                                        size={{ base: "sm", md: "md" }}
                                     />
                                 </Box>
                             </VStack>
                         </Box>
 
-                        <Box flex="1" bg="gray.50" p={6} borderRadius="md">
-                            <VStack spacing={6} align="stretch">
+                        <Box flex="1" bg="gray.50" p={{ base: 4, md: 6 }} borderRadius="md">
+                            <VStack spacing={{ base: 4, md: 6 }} align="stretch">
                                 <Box>
-                                    <Text fontWeight="bold" mb={3}>Purchase Summary</Text>
+                                    <Text fontWeight="bold" mb={3} fontSize={{ base: "md", md: "lg" }}>Purchase Summary</Text>
                                     {isLoadingTierPricing || isLoadingAddons || isLoadingTourId ? (
-                                        <Text fontSize="sm" color="gray.500">Loading...</Text>
+                                        <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Loading...</Text>
                                     ) : (
                                         <>
-                                            <HStack justify="space-between">
+                                            <Flex 
+                                                justify="space-between" 
+                                                direction={{ base: "column", sm: "row" }}
+                                                fontSize={{ base: "sm", md: "md" }}
+                                                mb={1}
+                                            >
                                                 <Text>
                                                     {`Guests ($${(tierPricing && tierPricing.pricingType === 'flat' ? tierPricing.basePrice : guestPrice).toFixed(2)} × ${guestQuantity})`}
                                                 </Text>
                                                 <Text>${calculateGuestPrice().toFixed(2)}</Text>
-                                            </HStack>
+                                            </Flex>
 
                                             {getCombinedAddons().length > 0 && (
                                                 <>
                                                     {getCombinedAddons().map((addon) => (
-                                                        <HStack key={addon.id} justify="space-between">
+                                                        <Flex 
+                                                            key={addon.id} 
+                                                            justify="space-between"
+                                                            direction={{ base: "column", sm: "row" }}
+                                                            fontSize={{ base: "sm", md: "md" }}
+                                                            mb={1}
+                                                        >
                                                             <Text>{addon.label || addon.name} (${addon.price.toFixed(2)} x {addon.quantity})</Text>
                                                             <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
-                                                        </HStack>
+                                                        </Flex>
                                                     ))}
                                                 </>
                                             )}
@@ -1603,7 +1628,13 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                             {displayedCustomItems && displayedCustomItems.length > 0 && (
                                                 <>
                                                     {displayedCustomItems.map((item) => (
-                                                        <HStack key={item.id} justify="space-between">
+                                                        <Flex 
+                                                            key={item.id} 
+                                                            justify="space-between"
+                                                            direction={{ base: "column", sm: "row" }}
+                                                            fontSize={{ base: "sm", md: "md" }}
+                                                            mb={1}
+                                                        >
                                                             <Text>
                                                                 {item.name} (${item.amount.toFixed(2)} × {item.quantity})
                                                                 {item.type === 'Discount' && ' - Discount'}
@@ -1612,38 +1643,54 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                                 {item.type === 'Discount' ? '-' : ''}
                                                                 ${(item.amount * item.quantity).toFixed(2)}
                                                             </Text>
-                                                        </HStack>
+                                                        </Flex>
                                                     ))}
-                                                    <HStack justify="space-between" mt={1}>
+                                                    <Flex 
+                                                        justify="space-between" 
+                                                        mt={1}
+                                                        direction={{ base: "column", sm: "row" }}
+                                                        fontSize={{ base: "sm", md: "md" }}
+                                                    >
                                                         <Text fontWeight="semibold">Custom Items Subtotal</Text>
-                                                        <Text
-                                                            fontWeight="semibold">${calculateCustomItemsTotal().toFixed(2)}</Text>
-                                                    </HStack>
+                                                        <Text fontWeight="semibold">${calculateCustomItemsTotal().toFixed(2)}</Text>
+                                                    </Flex>
                                                 </>
                                             )}
                                             
-                                            <HStack justify="space-between" mt={2}>
+                                            <Divider my={2} />
+                                            
+                                            <Flex 
+                                                justify="space-between" 
+                                                mt={2}
+                                                direction={{ base: "column", sm: "row" }}
+                                                fontSize={{ base: "sm", md: "md" }}
+                                            >
                                                 <Text fontWeight="bold">Total</Text>
                                                 <Text fontWeight="bold">${calculateTotalPrice().toFixed(2)}</Text>
-                                            </HStack>
+                                            </Flex>
 
                                             {!isLoadingPendingBalance && pendingBalance !== 0 && (
-                                                <HStack justify="space-between" mt={2}
-                                                        color={pendingBalance > 0 ? "red.500" : "green.500"}>
+                                                <Flex 
+                                                    justify="space-between" 
+                                                    mt={2}
+                                                    direction={{ base: "column", sm: "row" }}
+                                                    fontSize={{ base: "sm", md: "md" }}
+                                                    color={pendingBalance > 0 ? "red.500" : "green.500"}
+                                                >
                                                     <Text fontWeight="semibold">
                                                         {pendingBalance < 0 ? "Refund Due" : "Balance Due"}
                                                     </Text>
                                                     <Text fontWeight="semibold">
                                                         ${Math.abs(pendingBalance).toFixed(2)}
                                                     </Text>
-                                                </HStack>
+                                                </Flex>
                                             )}
                                         </>
                                     )}
                                 </Box>
 
                                 <Box>
-                                    <Text fontWeight="bold" mb={3}>Payment Summary</Text>
+                                    <Text fontWeight="bold" mb={3} fontSize={{ base: "md", md: "lg" }}>Payment Summary</Text>
                                     <VStack align="stretch" spacing={2}>
                                         {!isLoadingTransactions ? (
                                             <>
@@ -1654,7 +1701,12 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                     )
                                                     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                                                     .map((transaction) => (
-                                                        <HStack key={transaction.id} justify="space-between">
+                                                        <Flex 
+                                                            key={transaction.id} 
+                                                            justify="space-between"
+                                                            direction={{ base: "column", sm: "row" }}
+                                                            fontSize={{ base: "sm", md: "md" }}
+                                                        >
                                                             <HStack>
                                                                 <Text>
                                                                     {transaction.transaction_direction === 'refund' ? 'Refund' : 'Payment'}
@@ -1668,7 +1720,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                             <Text color={transaction.transaction_direction === 'refund' ? "red.500" : "inherit"}>
                                                                 {transaction.transaction_direction === 'refund' ? '-' : ''}${transaction.amount.toFixed(2)}
                                                             </Text>
-                                                        </HStack>
+                                                        </Flex>
                                                     ))}
 
                                                 {/*{amount > 0 && (*/}
@@ -1685,7 +1737,7 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                                 {/*)}*/}
                                             </>
                                         ) : (
-                                            <Text fontSize="sm" color="gray.500">Loading payment information...</Text>
+                                            <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500">Loading payment information...</Text>
                                         )}
                                     </VStack>
                                 </Box>
@@ -1694,19 +1746,29 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                     </Flex>
                 </ModalBody>
 
-                <ModalFooter borderTopWidth={1} borderColor="gray.200">
+                <ModalFooter borderTopWidth={1} borderColor="gray.200" px={{ base: 3, md: 6 }} py={{ base: 4, md: 6 }}>
                     {generatedVoucher ? (
                         <VStack w="100%" spacing={4} align="stretch">
                             <Box p={4} bg="green.50" borderRadius="md" borderWidth="1px" borderColor="green.200">
                                 <VStack spacing={3} align="stretch">
-                                    <Text fontWeight="bold" fontSize="lg" color="green.700">
+                                    <Text fontWeight="bold" fontSize={{ base: "md", md: "lg" }} color="green.700">
                                         Store Credit Voucher Generated
                                     </Text>
-                                    <HStack justify="space-between">
+                                    <Flex 
+                                        justify="space-between"
+                                        direction={{ base: "column", sm: "row" }}
+                                        fontSize={{ base: "sm", md: "md" }}
+                                    >
                                         <Text>Amount:</Text>
                                         <Text fontWeight="bold">${generatedVoucher.amount.toFixed(2)}</Text>
-                                    </HStack>
-                                    <HStack justify="space-between">
+                                    </Flex>
+                                    <Flex 
+                                        justify="space-between"
+                                        direction={{ base: "column", sm: "row" }}
+                                        fontSize={{ base: "sm", md: "md" }}
+                                        align={{ base: "flex-start", sm: "center" }}
+                                        gap={{ base: 2, sm: 0 }}
+                                    >
                                         <Text>Voucher Code:</Text>
                                         <Box
                                             bg="white"
@@ -1714,40 +1776,60 @@ const ReturnPaymentModal: React.FC<ReturnPaymentModalProps> = ({
                                             borderRadius="md"
                                             fontFamily="monospace"
                                             fontWeight="bold"
-                                            fontSize="lg"
+                                            fontSize={{ base: "sm", md: "lg" }}
                                             boxShadow="sm"
+                                            w={{ base: "full", sm: "auto" }}
+                                            textAlign="center"
                                         >
                                             {generatedVoucher.code}
                                         </Box>
-                                    </HStack>
-                                    <Text fontSize="sm" color="gray.600">
+                                    </Flex>
+                                    <Text fontSize={{ base: "xs", md: "sm" }} color="gray.600">
                                         The customer can use this code for future bookings.
                                     </Text>
                                 </VStack>
                             </Box>
                             <Flex justify="flex-end">
-                                <Button colorScheme="blue" onClick={onClose}>
+                                <Button colorScheme="blue" onClick={onClose} size={{ base: "sm", md: "md" }}>
                                     Close
                                 </Button>
                             </Flex>
                         </VStack>
                     ) : (
-                        <HStack spacing={4}>
+                        <Flex 
+                            w="100%"
+                            direction={{ base: "column", sm: "row" }}
+                            justify={{ base: "stretch", sm: "space-between" }}
+                            align={{ base: "stretch", sm: "center" }}
+                            gap={{ base: 3, sm: 4 }}
+                        >
                             <Checkbox
                                 isChecked={notifyCustomer}
                                 onChange={(e) => setNotifyCustomer(e.target.checked)}
+                                size={{ base: "sm", md: "md" }}
                             >
-                                Notify Customer
+                                <Text fontSize={{ base: "sm", md: "md" }}>Notify Customer</Text>
                             </Checkbox>
-                            <Button variant="ghost" onClick={onClose}>Skip</Button>
-                            <Button
-                                colorScheme="blue"
-                                onClick={handleSaveChanges}
-                                isLoading={isProcessing}
-                            >
-                                Save Changes
-                            </Button>
-                        </HStack>
+                            <HStack spacing={4} w={{ base: "100%", sm: "auto" }}>
+                                <Button 
+                                    variant="ghost" 
+                                    onClick={onClose}
+                                    size={{ base: "sm", md: "md" }}
+                                    flex={{ base: 1, sm: "auto" }}
+                                >
+                                    Skip
+                                </Button>
+                                <Button
+                                    colorScheme="blue"
+                                    onClick={handleSaveChanges}
+                                    isLoading={isProcessing}
+                                    size={{ base: "sm", md: "md" }}
+                                    flex={{ base: 1, sm: "auto" }}
+                                >
+                                    Save Changes
+                                </Button>
+                            </HStack>
+                        </Flex>
                     )}
                 </ModalFooter>
             </ModalContent>

@@ -213,7 +213,7 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                 if (cardTransactions.length > 0) {
                     setHasOriginalCardPayment(true);
                     setPaymentMethod('Credit Card');
-                    const uniquePaymentMethodIds = new Set();
+                    const uniquePaymentMethodIds = new Set<string>();
                     
                     cardTransactions.forEach(t => {
                         if (t.paymentMethodId) uniquePaymentMethodIds.add(t.paymentMethodId);
@@ -253,8 +253,8 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                     }
                     if (uniquePaymentMethodIds.size > 0) {
                         const paymentMethods = [];
-                        
-                        for (const paymentMethodId of uniquePaymentMethodIds) {
+
+                        for (const paymentMethodId of Array.from(uniquePaymentMethodIds)) {
                             try {
                                 const cardResponse = await axios.get(
                                     `${process.env.NEXT_PUBLIC_API_URL}/payments/payment-method/${paymentMethodId}`,

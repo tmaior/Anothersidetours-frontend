@@ -113,23 +113,26 @@ function ToursPage() {
                 <Flex 
                     direction={isMobile ? "column" : "row"} 
                     align={isMobile ? "center" : "flex-start"}
-                    marginTop={"-60px"}
+                    justifyContent="space-between"
+                    marginTop="10px"
+                    pt={4}
                     mb={6}
                 >
                     <Heading 
                         as="h1" 
                         mb={isMobile ? 4 : 0}
-                        w={isMobile ? "100%" : "400px"}
+                        w={isMobile ? "100%" : "auto"}
                         textAlign={isMobile ? "center" : "left"}
+                        display="flex"
+                        alignItems="center"
                     >
                         Make a Purchase
                     </Heading>
                     <InputGroup w={isMobile ? "100%" : "500px"}>
-                        <InputLeftElement pointerEvents="none" marginTop={isMobile ? "0" : "20px"}>
+                        <InputLeftElement pointerEvents="none">
                             <SearchIcon color="gray.400"/>
                         </InputLeftElement>
                         <Input
-                            marginTop={isMobile ? "0" : "20px"}
                             placeholder="Search by name"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}

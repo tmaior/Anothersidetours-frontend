@@ -61,6 +61,7 @@ const ReservationItem = ({
     const toast = useToast();
     const {reservationGuides, setReservationGuides} = useGuidesStore();
     const isMobile = useBreakpointValue({ base: true, md: false });
+    const isTablet = useBreakpointValue({ base: false, md: true, lg: false });
 
     const handleNoteClick = async (item) => {
         try {
@@ -230,8 +231,14 @@ const ReservationItem = ({
                             objectFit="fill"
                         />
                         {!isCompactView && (
-                            <Box flex="1">
-                                <Text fontWeight="semibold" fontSize="sm">
+                            <Box flex="1" maxW={isTablet ? "120px" : "auto"}>
+                                <Text 
+                                    fontWeight="semibold" 
+                                    fontSize="sm"
+                                    isTruncated={isTablet}
+                                    maxW={isTablet ? "120px" : "auto"}
+                                    title={item.title}
+                                >
                                     {item.title}
                                 </Text>
                                 <HStack spacing={{base: 2, md: 3}} fontSize={{base: "xs", md: "xs"}} color="gray.500">
@@ -246,7 +253,8 @@ const ReservationItem = ({
                         <HStack spacing={4} align="center">
                             <Box boxSize="8px" borderRadius="full" bg={item.statusColor}/>
                             <Flex
-                                w={"600px"}
+                                w={{md: "100%", lg: "600px"}}
+                                maxW={{md: "350px", lg: "600px"}}
                                 display="flex"
                                 justifyContent="space-between"
                                 alignItems="center"
@@ -259,7 +267,7 @@ const ReservationItem = ({
                                     />
                                     <Text fontSize="xs">{item.capacity}</Text>
                                 </HStack>
-                                <Flex justify="center" align="center" flex="1">
+                                <Flex justify="center" align="center" flex="1" maxW={{md: "140px", lg: "100%"}}>
                                     <AiOutlineCompass/>
                                     <Text
                                         marginLeft={"5px"}
@@ -269,6 +277,9 @@ const ReservationItem = ({
                                         onClick={(e) => handleOpenGuideModal(e, item)}
                                         cursor="pointer"
                                         _hover={{color: "blue.500"}}
+                                        isTruncated
+                                        maxW={{md: "120px", lg: "100%"}}
+                                        title={displayGuideText(item)}
                                     >
                                         {displayGuideText(item)}
                                     </Text>
@@ -291,7 +302,9 @@ const ReservationItem = ({
                                     )}
                                 </Flex>
                             </Flex>
-                            <DashBoardMenu reservation={item} />
+                            <Box ml={isTablet ? "-10px" : 0}>
+                                <DashBoardMenu reservation={item} />
+                            </Box>
                         </HStack>
                     )}
 

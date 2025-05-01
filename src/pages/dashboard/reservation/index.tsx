@@ -397,7 +397,13 @@ function Dashboard() {
                   mb={4}
                   direction={{base: "column", md: "row"}}
                   px={{base: 4, md: 0}}>
-                <Text fontSize="2xl" fontWeight="medium" ml={{base: 0, md: "-15px"}}>
+                <Text 
+                    fontSize="2xl" 
+                    fontWeight="medium" 
+                    ml={{base: 0, md: "20px"}}
+                    mt={{base: 0, md: "10px"}}
+                    mb={{base: 0, md: "10px"}}
+                >
                     Dashboard
                 </Text>
                 <Center height="50px"

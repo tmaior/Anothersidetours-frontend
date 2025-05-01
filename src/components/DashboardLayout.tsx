@@ -70,7 +70,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
         onClose: onSidebarClose
     } = useDisclosure();
 
-    const showMobileMenu = useBreakpointValue({ base: true, md: true, lg: false });
+    const showMobileMenu = useBreakpointValue({ base: true, md: true, lg: true, xl: false });
     
     const isSmallMobile = useBreakpointValue({ base: true, sm: false });
     
@@ -78,7 +78,8 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
         base: false, 
         sm: true, 
         md: true, 
-        lg: false 
+        lg: true,
+        xl: false 
     });
     
     const drawerSize = useBreakpointValue({ 
@@ -1386,8 +1387,8 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                 <Box
                     flex="1"
                     p={{ base: 4, md: 8 }}
-                    marginLeft={{ base: 0, lg: "250px" }}
-                    maxW={{ base: "100vw", lg: "calc(100vw - 250px)" }}
+                    marginLeft={{ base: 0, xl: "250px" }}
+                    maxW={{ base: "100vw", xl: "calc(100vw - 250px)" }}
                     overflowY="auto"
                     overflowX="hidden"
                     minH="100vh"

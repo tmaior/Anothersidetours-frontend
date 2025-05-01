@@ -2362,7 +2362,7 @@ const PurchasesPage = () => {
                                 padding="20px"
                                 borderRadius="md"
                                 mt={{ base: 4, lg: "300px" }}
-                                ml={{ lg: "-100px" }}
+                                ml={{ lg: "-60px" }}
                                 display={{ base: "block", md: "block" }}
                             >
                                 {showDetailedSummary ? (

@@ -12,13 +12,15 @@ import {
     Flex,
     Text,
     HStack,
+    VStack,
     Input,
     Select,
     IconButton,
     Divider,
     useToast,
     InputGroup,
-    InputLeftElement
+    InputLeftElement,
+    useMediaQuery
 } from '@chakra-ui/react';
 import { AddIcon, DeleteIcon, MinusIcon } from '@chakra-ui/icons';
 import axios from 'axios';
@@ -56,6 +58,7 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
     const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState(true);
     const [originalTotal, setOriginalTotal] = useState(0);
     const toast = useToast();
+    const [isMobile] = useMediaQuery("(max-width: 768px)");
 
     useEffect(() => {
         if (quantity) {
@@ -335,15 +338,24 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="4xl">
+        <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "4xl"}>
             <ModalOverlay/>
-            <ModalContent maxW="800px">
+            <ModalContent maxW={isMobile ? "100%" : "800px"} margin={isMobile ? 0 : "auto"} borderRadius={isMobile ? 0 : "md"}>
                 <ModalHeader>Custom Line Items</ModalHeader>
                 <ModalCloseButton/>
 
                 <ModalBody>
-                    <Flex gap={4}>
-                        <Box flex="1" maxH="300px" overflowY="auto" pr={2}>
+                    <Flex 
+                        direction={isMobile ? "column" : "row"} 
+                        gap={4}
+                    >
+                        <Box 
+                            flex="1" 
+                            maxH={isMobile ? "auto" : "300px"} 
+                            overflowY={isMobile ? "visible" : "auto"} 
+                            pr={2}
+                            mb={isMobile ? 4 : 0}
+                        >
                             {items.map((item) => (
                                 <Box key={item.id} pb={4} mb={4} borderBottom="1px solid" borderColor="gray.100">
                                     <Flex align="center" mb={2}>
@@ -352,7 +364,7 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                                             value={item.name}
                                             onChange={(e) => updateItem(item.id, "name", e.target.value)}
                                             mr={2}
-                                            size="md"
+                                            size={isMobile ? "sm" : "md"}
                                         />
                                         <IconButton
                                             icon={<DeleteIcon />}
@@ -363,49 +375,61 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                                             aria-label="Delete item"
                                         />
                                     </Flex>
-                                    <Flex align="center" justify="space-between">
+                                    <Flex 
+                                        align={isMobile ? "flex-start" : "center"} 
+                                        justify="space-between" 
+                                        direction={isMobile ? "column" : "row"}
+                                        gap={isMobile ? 2 : 0}
+                                    >
                                         <Select
                                             value={item.type}
                                             onChange={(e) => updateItem(item.id, "type", e.target.value as 'Charge' | 'Discount')}
-                                            width="150px"
-                                            size="md"
+                                            width={isMobile ? "100%" : "150px"}
+                                            size={isMobile ? "sm" : "md"}
                                         >
                                             <option value="Charge">Charge</option>
                                             <option value="Discount">Discount</option>
                                         </Select>
                                         
-                                        <InputGroup width="120px" ml={2}>
-                                            <InputLeftElement pointerEvents="none">
-                                                <Text color="gray.500">$</Text>
-                                            </InputLeftElement>
-                                            <Input
-                                                type="number"
-                                                placeholder="0.00"
-                                                value={item.amount === 0 ? '' : item.amount}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    updateItem(item.id, "amount", value === '' ? 0 : parseFloat(value));
-                                                }}
-                                                size="md"
-                                            />
-                                        </InputGroup>
-                                        
-                                        <Flex align="center" ml={2}>
-                                            <IconButton
-                                                icon={<MinusIcon />}
-                                                size="sm"
-                                                onClick={() => updateItem(item.id, "quantity", Math.max(1, item.quantity - 1))}
-                                                aria-label="Decrease quantity"
-                                                variant="outline"
-                                            />
-                                            <Text mx={2}>{item.quantity}</Text>
-                                            <IconButton
-                                                icon={<AddIcon />}
-                                                size="sm"
-                                                onClick={() => updateItem(item.id, "quantity", item.quantity + 1)}
-                                                aria-label="Increase quantity"
-                                                variant="outline"
-                                            />
+                                        <Flex
+                                            width={isMobile ? "100%" : "auto"}
+                                            align="center"
+                                            justify={isMobile ? "space-between" : "flex-start"}
+                                            mt={isMobile ? 2 : 0}
+                                        >
+                                            <InputGroup width={isMobile ? "45%" : "120px"} ml={isMobile ? 0 : 2}>
+                                                <InputLeftElement pointerEvents="none">
+                                                    <Text color="gray.500">$</Text>
+                                                </InputLeftElement>
+                                                <Input
+                                                    type="number"
+                                                    placeholder="0.00"
+                                                    value={item.amount === 0 ? '' : item.amount}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        updateItem(item.id, "amount", value === '' ? 0 : parseFloat(value));
+                                                    }}
+                                                    size={isMobile ? "sm" : "md"}
+                                                />
+                                            </InputGroup>
+                                            
+                                            <Flex align="center" ml={isMobile ? 0 : 2}>
+                                                <IconButton
+                                                    icon={<MinusIcon />}
+                                                    size="sm"
+                                                    onClick={() => updateItem(item.id, "quantity", Math.max(1, item.quantity - 1))}
+                                                    aria-label="Decrease quantity"
+                                                    variant="outline"
+                                                />
+                                                <Text mx={2} fontSize={isMobile ? "sm" : "md"}>{item.quantity}</Text>
+                                                <IconButton
+                                                    icon={<AddIcon />}
+                                                    size="sm"
+                                                    onClick={() => updateItem(item.id, "quantity", item.quantity + 1)}
+                                                    aria-label="Increase quantity"
+                                                    variant="outline"
+                                                />
+                                            </Flex>
                                         </Flex>
                                     </Flex>
                                 </Box>
@@ -420,13 +444,18 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                             display="flex"
                             flexDirection="column"
                             justifyContent="space-between"
-                            h="300px"
+                            h={isMobile ? "auto" : "300px"}
+                            minH={isMobile ? "250px" : "auto"}
                         >
                             <Text fontWeight="bold" mb={4}>Purchase Summary</Text>
                             
                             <HStack justify="space-between" mb={3}>
-                                <Text>Guests (${Number(basePrice).toFixed(2)} × {currentQuantity})</Text>
-                                <Text fontWeight="semibold">${(Number(basePrice) * currentQuantity).toFixed(2)}</Text>
+                                <Text fontSize={isMobile ? "sm" : "md"}>
+                                    Guests (${Number(basePrice).toFixed(2)} × {currentQuantity})
+                                </Text>
+                                <Text fontWeight="semibold" fontSize={isMobile ? "sm" : "md"}>
+                                    ${(Number(basePrice) * currentQuantity).toFixed(2)}
+                                </Text>
                             </HStack>
                             
                             {items.map((item) => {
@@ -434,12 +463,12 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                                 const totalItem = item.amount * item.quantity;
                                 return (
                                     <HStack key={item.id} justify="space-between" mb={2}>
-                                        <Text>
+                                        <Text fontSize={isMobile ? "sm" : "md"}>
                                             {item.name || "Unnamed"} 
                                             {item.type === "Discount" ? " (-" : " ("}
                                             ${item.amount.toFixed(2)} × {item.quantity})
                                         </Text>
-                                        <Text fontWeight="semibold">
+                                        <Text fontWeight="semibold" fontSize={isMobile ? "sm" : "md"}>
                                             {item.type === "Discount" ? "-" : ""}
                                             ${totalItem.toFixed(2)}
                                         </Text>
@@ -447,24 +476,34 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                                 );
                             })}
                             
-                            <Box mt="auto">
+                            <Box mt={isMobile ? 4 : "auto"}>
                                 <Divider my={4} />
                                 <Flex justify="space-between">
-                                    <Text fontWeight="bold" fontSize="lg">Total:</Text>
-                                    <Text fontWeight="bold" fontSize="lg">${currentTotal.toFixed(2)}</Text>
+                                    <Text fontWeight="bold" fontSize={isMobile ? "md" : "lg"}>Total:</Text>
+                                    <Text fontWeight="bold" fontSize={isMobile ? "md" : "lg"}>
+                                        ${currentTotal.toFixed(2)}
+                                    </Text>
                                 </Flex>
                                 
                                 {!isLoadingPendingBalance && finalBalanceDue > 0 && (
                                     <Flex justify="space-between" mt={2}>
-                                        <Text fontWeight="bold" color="red.500">Balance Due:</Text>
-                                        <Text fontWeight="bold" color="red.500">${finalBalanceDue.toFixed(2)}</Text>
+                                        <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"} color="red.500">
+                                            Balance Due:
+                                        </Text>
+                                        <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"} color="red.500">
+                                            ${finalBalanceDue.toFixed(2)}
+                                        </Text>
                                     </Flex>
                                 )}
                                 
                                 {!isLoadingPendingBalance && finalRefundAmount > 0 && (
                                     <Flex justify="space-between" mt={2}>
-                                        <Text fontWeight="bold" color="green.500">Refund:</Text>
-                                        <Text fontWeight="bold" color="green.500">${finalRefundAmount.toFixed(2)}</Text>
+                                        <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"} color="green.500">
+                                            Refund:
+                                        </Text>
+                                        <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"} color="green.500">
+                                            ${finalRefundAmount.toFixed(2)}
+                                        </Text>
                                     </Flex>
                                 )}
                             </Box>
@@ -472,18 +511,21 @@ const CustomLineItemsModal: React.FC<CustomLineItemsModalProps> = ({
                     </Flex>
                 </ModalBody>
 
-                <ModalFooter>
+                <ModalFooter flexDirection={isMobile ? "column" : "row"} gap={isMobile ? 2 : 0}>
                     <Button 
                         variant="outline" 
                         onClick={addItem} 
                         leftIcon={<AddIcon />}
-                        mr={3}
+                        mr={isMobile ? 0 : 3}
+                        mb={isMobile ? 2 : 0}
+                        width={isMobile ? "100%" : "auto"}
                     >
                         Add Line Item
                     </Button>
                     <Button 
                         colorScheme="blue" 
                         onClick={handleSaveLineItems}
+                        width={isMobile ? "100%" : "auto"}
                     >
                         Save
                     </Button>

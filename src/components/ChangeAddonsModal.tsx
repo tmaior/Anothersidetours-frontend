@@ -19,6 +19,7 @@ import {
     Box,
     Divider,
     useDisclosure,
+    useMediaQuery
 } from "@chakra-ui/react";
 import React, {useEffect, useState} from "react";
 import axios from "axios";
@@ -38,6 +39,7 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
     const [tierPricing, setTierPricing] = useState(null);
     const [bookingChanges, setBookingChanges] = useState(null);
     const [changesConfirmed, setChangesConfirmed] = useState(false);
+    const [isMobile] = useMediaQuery("(max-width: 768px)");
     const {
         isOpen: isCollectBalanceOpen,
         onOpen: onCollectBalanceOpen,
@@ -601,9 +603,9 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
 
     if (isLoadingAddons) {
         return (
-            <Modal isOpen={isOpen} onClose={onClose} size="3xl">
+            <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "3xl"}>
                 <ModalOverlay/>
-                <ModalContent>
+                <ModalContent margin={isMobile ? 0 : "auto"} borderRadius={isMobile ? 0 : "md"}>
                     <ModalHeader textAlign="center">Change Add-Ons</ModalHeader>
                     <ModalCloseButton/>
                     <ModalBody>
@@ -618,37 +620,72 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
 
     return (
         <>
-            <Modal isOpen={isOpen} onClose={onClose} size="3xl">
+            <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "3xl"}>
                 <ModalOverlay/>
-                <ModalContent>
+                <ModalContent margin={isMobile ? 0 : "auto"} borderRadius={isMobile ? 0 : "md"}>
                     <ModalHeader textAlign="center">Change Add-Ons</ModalHeader>
                     <ModalCloseButton/>
                     <ModalBody>
-                        <Flex justify="space-between" align="start">
-                            <Box minW="250px" maxW="300px" w="100%" mr={6}>
+                        <Flex 
+                            justify="space-between" 
+                            align="start" 
+                            direction={isMobile ? "column" : "row"}
+                            gap={isMobile ? 4 : 0}
+                        >
+                            <Box 
+                                minW={isMobile ? "100%" : "250px"} 
+                                maxW={isMobile ? "100%" : "300px"} 
+                                w="100%" 
+                                mr={isMobile ? 0 : 6}
+                                mb={isMobile ? 4 : 0}
+                            >
                                 {allAddons.length > 0 ? (
                                     <VStack spacing={4} align="stretch">
                                         {allAddons.map(addon => (
-                                            <Flex key={addon.id} justify="space-between" align="center">
-                                                <VStack align="start" spacing={1} flex="1">
-                                                    <Text fontWeight="bold">{addon.label}</Text>
-                                                    <Text color="gray.500">${addon.price.toFixed(2)}</Text>
+                                            <Flex 
+                                                key={addon.id} 
+                                                justify="space-between" 
+                                                align={isMobile ? "center" : "center"}
+                                                direction="row"
+                                                gap={isMobile ? 2 : 0}
+                                            >
+                                                <VStack 
+                                                    align="start" 
+                                                    spacing={1} 
+                                                    flex="1"
+                                                    mb={0}
+                                                >
+                                                    <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"}>
+                                                        {addon.label}
+                                                    </Text>
+                                                    <Text color="gray.500" fontSize={isMobile ? "xs" : "sm"}>
+                                                        ${addon.price.toFixed(2)}
+                                                    </Text>
                                                 </VStack>
                                                 {addon.type === 'SELECT' ? (
-                                                    <Flex align="center">
-                                                        <Button size="sm" onClick={() => handleDecrement(addon.id)}
-                                                                disabled={selectedAddons[addon.id] <= 0 || changesConfirmed}>
+                                                    <Flex align="center" width={isMobile ? "auto" : "auto"}>
+                                                        <Button 
+                                                            size="sm" 
+                                                            onClick={() => handleDecrement(addon.id)}
+                                                            disabled={selectedAddons[addon.id] <= 0 || changesConfirmed}
+                                                            flex={isMobile ? "0 0 auto" : "auto"}
+                                                        >
                                                             -
                                                         </Button>
                                                         <Input
                                                             value={selectedAddons[addon.id] || 0}
                                                             readOnly
-                                                            w="50px"
+                                                            w={isMobile ? "45px" : "50px"}
                                                             textAlign="center"
                                                             mx={2}
+                                                            size={isMobile ? "sm" : "md"}
                                                         />
-                                                        <Button size="sm" onClick={() => handleIncrement(addon.id)}
-                                                                disabled={changesConfirmed}>
+                                                        <Button 
+                                                            size="sm" 
+                                                            onClick={() => handleIncrement(addon.id)}
+                                                            disabled={changesConfirmed}
+                                                            flex={isMobile ? "0 0 auto" : "auto"}
+                                                        >
                                                             +
                                                         </Button>
                                                     </Flex>
@@ -657,6 +694,8 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                                         isChecked={selectedAddons[addon.id] || false}
                                                         onChange={() => handleCheckboxChange(addon.id)}
                                                         isDisabled={changesConfirmed}
+                                                        size={isMobile ? "sm" : "md"}
+                                                        alignSelf="center"
                                                     />
                                                 ) : null}
                                             </Flex>
@@ -664,7 +703,9 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                     </VStack>
                                 ) : (
                                     <Box p={4} borderWidth="1px" borderRadius="md" bg="gray.50">
-                                        <Text align="center">No add-ons available for this reservation</Text>
+                                        <Text align="center" fontSize={isMobile ? "sm" : "md"}>
+                                            No add-ons available for this reservation
+                                        </Text>
                                     </Box>
                                 )}
                             </Box>
@@ -676,10 +717,10 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                 borderWidth="1px"
                                 spacing={4}
                                 align="stretch"
-                                w="320px"
-                                minH="300px"
-                                maxH="400px"
-                                overflowY="auto"
+                                w={isMobile ? "100%" : "320px"}
+                                minH={isMobile ? "auto" : "300px"}
+                                maxH={isMobile ? "none" : "400px"}
+                                overflowY={isMobile ? "visible" : "auto"}
                             >
                                 {isLoadingAddons || isLoadingCardDetails || isLoadingPendingBalance ? (
                                     <HStack justifyContent="center">
@@ -689,41 +730,63 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                 ) : (
                                     <>
                                         <Box w="100%">
-                                            <Text fontWeight="bold" mb={2}>
+                                            <Text 
+                                                fontWeight="bold" 
+                                                mb={2}
+                                                fontSize={isMobile ? "sm" : "md"}
+                                            >
                                                 Purchase Summary
                                             </Text>
                                             <VStack align="stretch" spacing={2}>
                                                 <HStack justify="space-between">
-                                                    <Text>
+                                                    <Text fontSize={isMobile ? "sm" : "md"}>
                                                         {`Guests ($${(guestTotalPrice / booking.guestQuantity).toFixed(2)} × ${booking.guestQuantity})`}
                                                     </Text>
-                                                    <Text>${guestTotalPrice.toFixed(2)}</Text>
+                                                    <Text fontSize={isMobile ? "sm" : "md"}>
+                                                        ${guestTotalPrice.toFixed(2)}
+                                                    </Text>
                                                 </HStack>
                                             </VStack>
                                             {combinedAddons.length > 0 ? (
                                                 combinedAddons.map((addon) => (
                                                     <HStack key={addon.id} justifyContent="space-between">
-                                                        <Text>{addon.label} (${addon.price} x {addon.quantity})</Text>
-                                                        <Text>${(addon.price * addon.quantity).toFixed(2)}</Text>
+                                                        <Text fontSize={isMobile ? "sm" : "md"}>
+                                                            {addon.label} (${addon.price} x {addon.quantity})
+                                                        </Text>
+                                                        <Text fontSize={isMobile ? "sm" : "md"}>
+                                                            ${(addon.price * addon.quantity).toFixed(2)}
+                                                        </Text>
                                                     </HStack>
                                                 ))
                                             ) : (
-                                                <Text>No add-ons selected.</Text>
+                                                <Text fontSize={isMobile ? "sm" : "md"}>
+                                                    No add-ons selected.
+                                                </Text>
                                             )}
                                             <Divider my={2}/>
                                             <HStack justify="space-between">
-                                                <Text fontWeight="bold">Total</Text>
-                                                <Text fontWeight="bold">${finalTotalPrice.toFixed(2)}</Text>
+                                                <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"}>
+                                                    Total
+                                                </Text>
+                                                <Text fontWeight="bold" fontSize={isMobile ? "sm" : "md"}>
+                                                    ${finalTotalPrice.toFixed(2)}
+                                                </Text>
                                             </HStack>
 
                                             {totalBalanceDue !== 0 && (
                                                 <HStack justify="space-between" mt={2}>
-                                                    <Text fontWeight="bold"
-                                                          color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                    <Text 
+                                                        fontWeight="bold"
+                                                        fontSize={isMobile ? "sm" : "md"}
+                                                        color={totalBalanceDue < 0 ? "green.500" : "red.500"}
+                                                    >
                                                         {totalBalanceDue < 0 ? "Refund Due" : "Balance Due"}
                                                     </Text>
-                                                    <Text fontWeight="bold"
-                                                          color={totalBalanceDue < 0 ? "green.500" : "red.500"}>
+                                                    <Text 
+                                                        fontWeight="bold"
+                                                        fontSize={isMobile ? "sm" : "md"}
+                                                        color={totalBalanceDue < 0 ? "green.500" : "red.500"}
+                                                    >
                                                         ${Math.abs(totalBalanceDue).toFixed(2)}
                                                     </Text>
                                                 </HStack>
@@ -732,17 +795,25 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
 
                                         {cardDetails && (
                                             <Box>
-                                                <Text fontWeight="bold" mb={2}>
+                                                <Text 
+                                                    fontWeight="bold" 
+                                                    mb={2}
+                                                    fontSize={isMobile ? "sm" : "md"}
+                                                >
                                                     Payment Summary
                                                 </Text>
                                                 <VStack align="stretch" spacing={2}>
                                                     <HStack justify="space-between">
                                                         <HStack spacing={2}>
-                                                            <Box as="span" role="img" aria-label="Card Icon"
-                                                                 fontSize="lg">
+                                                            <Box 
+                                                                as="span" 
+                                                                role="img" 
+                                                                aria-label="Card Icon"
+                                                                fontSize={isMobile ? "md" : "lg"}
+                                                            >
                                                                 💳
                                                             </Box>
-                                                            <Text>
+                                                            <Text fontSize={isMobile ? "sm" : "md"}>
                                                                 Payment
                                                                 <Box
                                                                     as="span"
@@ -751,16 +822,19 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                                                                     py={1}
                                                                     borderRadius="md"
                                                                     boxShadow="sm"
+                                                                    fontSize={isMobile ? "xs" : "sm"}
                                                                 >
                                                                     *{cardDetails.last4}
                                                                 </Box>{" "}
-                                                                {formatDateToAmerican(formatDate(cardDetails.paymentDate))}
+                                                                {isMobile ? "" : formatDateToAmerican(formatDate(cardDetails.paymentDate))}
                                                             </Text>
                                                         </HStack>
                                                     </HStack>
                                                     <HStack justify="space-between">
-                                                        <Text>Paid</Text>
-                                                        <Text>${paidTotal.toFixed(2)}</Text>
+                                                        <Text fontSize={isMobile ? "sm" : "md"}>Paid</Text>
+                                                        <Text fontSize={isMobile ? "sm" : "md"}>
+                                                            ${paidTotal.toFixed(2)}
+                                                        </Text>
                                                     </HStack>
                                                 </VStack>
                                             </Box>
@@ -771,22 +845,47 @@ export default function ChangeAddOns({isOpen, onClose, booking}) {
                         </Flex>
                     </ModalBody>
 
-                    <ModalFooter>
-                        <Flex justify="flex-end" align="center" w="100%">
-                            <Checkbox id="notifyCustomer" mr={4}>
-                                Notify Customer
-                            </Checkbox>
-                            <Button colorScheme="gray" mr={2} onClick={onClose}>
-                                Cancel
-                            </Button>
-                            <Button
-                                colorScheme="blue"
-                                onClick={handleSaveChanges}
-                                isLoading={isSaving}
-                                isDisabled={changesConfirmed}
+                    <ModalFooter flexDirection={isMobile ? "column" : "row"} gap={isMobile ? 2 : 0}>
+                        <Flex 
+                            justify={isMobile ? "stretch" : "flex-end"} 
+                            align={isMobile ? "stretch" : "center"} 
+                            w="100%"
+                            direction={isMobile ? "column" : "row"}
+                            gap={isMobile ? 2 : 0}
+                        >
+                            <Checkbox 
+                                id="notifyCustomer" 
+                                mr={isMobile ? 0 : 4}
+                                mb={isMobile ? 2 : 0}
+                                alignSelf={isMobile ? "flex-start" : "center"}
                             >
-                                Save Changes
-                            </Button>
+                                <Text fontSize={isMobile ? "sm" : "md"}>Notify Customer</Text>
+                            </Checkbox>
+                            <HStack 
+                                spacing={2} 
+                                width={isMobile ? "100%" : "auto"}
+                                justifyContent={isMobile ? "stretch" : "flex-end"}
+                            >
+                                <Button 
+                                    colorScheme="gray" 
+                                    mr={isMobile ? 0 : 2} 
+                                    onClick={onClose}
+                                    flex={isMobile ? 1 : "auto"}
+                                    size={isMobile ? "sm" : "md"}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    colorScheme="blue"
+                                    onClick={handleSaveChanges}
+                                    isLoading={isSaving}
+                                    isDisabled={changesConfirmed}
+                                    flex={isMobile ? 1 : "auto"}
+                                    size={isMobile ? "sm" : "md"}
+                                >
+                                    Save Changes
+                                </Button>
+                            </HStack>
                         </Flex>
                     </ModalFooter>
                 </ModalContent>

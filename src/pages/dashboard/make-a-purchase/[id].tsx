@@ -2468,7 +2468,6 @@ const PurchasePage = () => {
                             
                             <Flex 
                                 direction={{base: "column", md: "row"}}
-                                spacing={0} 
                                 gap={{base: 3, md: 4}}
                                 w={{base: "100%", md: "auto"}}
                             >

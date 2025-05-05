@@ -941,7 +941,6 @@ const PurchaseDetails = ({reservation, onBack}) => {
                     />
                 </Box>
             </Box>
-            
             <Box
                 width={{base: "100%", md: "95%", xl: "110%", "2xl": "175%"}}
                 maxWidth={{base: "none", md: "none", xl: "none"}}
@@ -995,94 +994,99 @@ const PurchaseDetails = ({reservation, onBack}) => {
                     )}
                 </HStack>
             </Box>
-            <Box 
-                flex="1" 
-                p={6} 
-                marginTop={"-50px"}
-                marginLeft={{base: "15px", md: "0"}}
-                marginRight={{md: "15px"}}
-                textAlign={{md: "left"}}
-                maxWidth={{md: "100%"}}
-                overflow="hidden"
+            
+            <Box
+                width={{base: "100%", md: "95%", xl: "110%", "2xl": "175%"}}
+                maxWidth={{base: "none", md: "none", xl: "none"}}
+                marginX={{base: "0", md: "auto"}}
+                px={{ base: 0, md: 4 }}
+                p={0}
+                marginTop={0}
             >
-                <Box
-                    mt={{base: "20px", xl: "15px", "2xl": "50px"}}
-                    ml={{base: "0", md: "10px", xl: "0"}}
-                    textAlign={{md: "left"}}
+                <Box 
+                    p={{base: 4, md: 6}}
+                    marginTop={0}
+                    textAlign="left"
                     width="100%"
-                    maxWidth={{md: "95%"}}
+                    overflow="hidden"
                 >
-                    <Text fontSize="xl" fontWeight="bold">
-                        {reservation.tour.name}
-                    </Text>
-
-                    <HStack justifyContent={{md: "flex-start"}}>
-                        <HStack>
-                            <CiCalendar size={18}/>
-                            <Text>{formatDate(datePart)}</Text>
-                        </HStack>
-                        <HStack>
-                            <CiClock2/>
-                            <Text>{timePart}</Text>
-                        </HStack>
-                    </HStack>
-
-                    <Box mt={6} width="100%" maxWidth={{md: "95%"}}>
-                        <Text fontSize="2xl" fontWeight="bold">
-                            Reservation Confirmation
+                    <Box
+                        mt={{base: "0", md: "0"}}
+                        textAlign="left"
+                        width="100%"
+                    >
+                        <Text fontSize="xl" fontWeight="bold">
+                            {reservation.tour.name}
                         </Text>
-                        <StatusBadge status={reservation.status}/>
 
-                        <Box mt={6}>
-                            <Text fontWeight="bold">Contact Information</Text>
-                            <VStack align={{base: "start", md: "start"}} spacing={1}>
-                                <HStack>
-                                    <RxPerson/>
-                                    <Text>{reservation.user.name}</Text>
-                                </HStack>
-                                <HStack>
-                                    <HiOutlineMail/>
-                                    <Text>{reservation.user.email}</Text>
-                                </HStack>
-                                <HStack>
-                                    <BsTelephone/>
-                                    <Text>{reservation.user.phone}</Text>
-                                </HStack>
-                            </VStack>
-                        </Box>
-
-                        <HStack spacing={8} mt={4} justifyContent={{md: "flex-start"}}>
-                            <Box mt={6}>
-                                <HStack spacing={2} justifyContent={{md: "flex-start"}}>
-                                    <AiOutlineCompass/>
-                                    <Text fontSize="xl" fontWeight="bold">Guide</Text>
-                                </HStack>
-                                <Text fontSize="sm" color="black.500">
-                                    {displayGuideText()}
-                                </Text>
-
-                                <Button
-                                    variant="link"
-                                    size="xs"
-                                    onClick={() => setGuideModalOpen(true)}
-                                    color="black"
-                                    fontWeight={"bold"}
-                                >
-                                    <CiSquarePlus size={"17px"}/>
-                                    Manage Guides
-                                </Button>
-                            </Box>
-                            <ManageGuidesModal
-                                isOpen={isGuideModalOpen}
-                                onClose={() => setGuideModalOpen(false)}
-                                onSelectGuide={(selected) => {
-                                    setSelectedGuide(selected);
-                                    setGuideModalOpen(false);
-                                    handleSaveGuides(selected);
-                                }}
-                                reservationId={reservation?.id || ''}
-                            />
+                        <HStack justifyContent="flex-start">
+                            <HStack>
+                                <CiCalendar size={18}/>
+                                <Text>{formatDate(datePart)}</Text>
+                            </HStack>
+                            <HStack>
+                                <CiClock2/>
+                                <Text>{timePart}</Text>
+                            </HStack>
                         </HStack>
+
+                        <Box mt={6} width="100%">
+                            <Text fontSize="2xl" fontWeight="bold">
+                                Reservation Confirmation
+                            </Text>
+                            <StatusBadge status={reservation.status}/>
+
+                            <Box mt={6}>
+                                <Text fontWeight="bold">Contact Information</Text>
+                                <VStack align="start" spacing={1}>
+                                    <HStack>
+                                        <RxPerson/>
+                                        <Text>{reservation.user.name}</Text>
+                                    </HStack>
+                                    <HStack>
+                                        <HiOutlineMail/>
+                                        <Text>{reservation.user.email}</Text>
+                                    </HStack>
+                                    <HStack>
+                                        <BsTelephone/>
+                                        <Text>{reservation.user.phone}</Text>
+                                    </HStack>
+                                </VStack>
+                            </Box>
+
+                            <HStack spacing={8} mt={4} justifyContent="flex-start">
+                                <Box mt={6}>
+                                    <HStack spacing={2} justifyContent="flex-start">
+                                        <AiOutlineCompass/>
+                                        <Text fontSize="xl" fontWeight="bold">Guide</Text>
+                                    </HStack>
+                                    <Text fontSize="sm" color="black.500">
+                                        {displayGuideText()}
+                                    </Text>
+
+                                    <Button
+                                        variant="link"
+                                        size="xs"
+                                        onClick={() => setGuideModalOpen(true)}
+                                        color="black"
+                                        fontWeight={"bold"}
+                                    >
+                                        <CiSquarePlus size={"17px"}/>
+                                        Manage Guides
+                                    </Button>
+                                </Box>
+                                <ManageGuidesModal
+                                    isOpen={isGuideModalOpen}
+                                    onClose={() => setGuideModalOpen(false)}
+                                    onSelectGuide={(selected) => {
+                                        setSelectedGuide(selected);
+                                        setGuideModalOpen(false);
+                                        handleSaveGuides(selected);
+                                    }}
+                                    reservationId={reservation?.id || ''}
+                                />
+                            </HStack>
+                        </Box>
                     </Box>
                 </Box>
             </Box>

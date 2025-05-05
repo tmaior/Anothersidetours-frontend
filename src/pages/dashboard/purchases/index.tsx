@@ -956,7 +956,7 @@ const PurchaseDetails = ({reservation, onBack}) => {
                         src={reservation.tour.imageUrl || "https://via.placeholder.com/1000x300"}
                         alt={reservation.tour.name}
                         width="100%"
-                        filter="blur(4px) brightness(0.8)"
+                        // filter="blur(4px) brightness(0.8)"
                         height="100%"
                         objectFit="cover"
                         objectPosition="center"

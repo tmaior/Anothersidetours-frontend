@@ -307,8 +307,15 @@ const PurchaseList = ({
                     }
                 );
                 const data = await response.json();
-                setReservations(data);
-                setDisplayedReservations(data.slice(0, PAGE_LIMIT));
+
+                const sortedData = [...data].sort((a, b) => {
+                    const dateA = new Date(a.createdAt || a.created_at || '').getTime();
+                    const dateB = new Date(b.createdAt || b.created_at || '').getTime();
+                    return dateB - dateA;
+                });
+                
+                setReservations(sortedData);
+                setDisplayedReservations(sortedData.slice(0, PAGE_LIMIT));
             } catch (error) {
                 console.error("Error fetching reservations:", error);
             } finally {
@@ -405,7 +412,13 @@ const PurchaseList = ({
         const grouped: { [groupId: string]: ReservationItem[] } = {};
         const ungrouped: ReservationItem[] = [];
 
-        reservations.forEach(reservation => {
+        const sortedReservations = [...reservations].sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.created_at || '').getTime();
+            const dateB = new Date(b.createdAt || b.created_at || '').getTime();
+            return dateB - dateA;
+        });
+
+        sortedReservations.forEach(reservation => {
             if (reservation.groupId) {
                 if (!grouped[reservation.groupId]) {
                     grouped[reservation.groupId] = [];
@@ -414,6 +427,14 @@ const PurchaseList = ({
             } else {
                 ungrouped.push(reservation);
             }
+        });
+
+        Object.keys(grouped).forEach(groupId => {
+            grouped[groupId].sort((a, b) => {
+                const dateA = new Date(a.createdAt || a.created_at || '').getTime();
+                const dateB = new Date(b.createdAt || b.created_at || '').getTime();
+                return dateB - dateA;
+            });
         });
 
         return {grouped, ungrouped};

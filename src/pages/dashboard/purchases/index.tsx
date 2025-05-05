@@ -919,7 +919,6 @@ const PurchaseDetails = ({reservation, onBack}) => {
                 marginTop={{base: "0", md: "-5px"}}
                 marginX={{base: "0", md: "auto"}}
                 px={{ base: 0, md: 4 }}
-                bg={"tomato"}
             >
                 <Box
                     position="relative"

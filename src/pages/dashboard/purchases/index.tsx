@@ -941,44 +941,60 @@ const PurchaseDetails = ({reservation, onBack}) => {
                     />
                 </Box>
             </Box>
-            <HStack ml={"600px"} spacing={3} wrap="nowrap" justifyContent={{md: "flex-start"}} overflow="auto">
-                {visibleItems.map((item, idx) => (
-                    <HStack key={idx}>
-                        {item.icon}
-                        <Link style={{whiteSpace: "nowrap"}} onClick={item.onClick}>
-                            {item.label}
-                        </Link>
-                    </HStack>
-                ))}
-                {hiddenItems.length > 0 && (
-                    <Menu placement="left-start" offset={[-50, 0]}>
-                        <MenuButton
-                            as={IconButton}
-                            icon={<BsThreeDots/>}
-                            variant="outline"
-                            aria-label="Options"
-                            size="sm"
-                            onClick={(e) => e.stopPropagation()}
-                        />
-                        <MenuList p={0} borderRadius="md" boxShadow="lg">
-                            {hiddenItems.map((item, idx) => (
-                                <MenuItem
-                                    key={idx}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        item.onClick?.(e);
-                                    }}
-                                >
-                                    <HStack spacing={2}>
-                                        {item.icon}
-                                        <Text>{item.label}</Text>
-                                    </HStack>
-                                </MenuItem>
-                            ))}
-                        </MenuList>
-                    </Menu>
-                )}
-            </HStack>
+            
+            <Box
+                width={{base: "100%", md: "95%", xl: "110%", "2xl": "175%"}}
+                maxWidth={{base: "none", md: "none", xl: "none"}}
+                marginX={{base: "0", md: "auto"}}
+                px={{ base: 0, md: 4 }}
+            >
+                <HStack 
+                    spacing={1}
+                    wrap="wrap" 
+                    justifyContent="flex-start"
+                    overflow="visible"
+                    width="100%"
+                    px={{ base: 4, md: 0 }}
+                >
+                    {visibleItems.map((item, idx) => (
+                        <HStack key={idx} my={1} mr={2}>
+                            {item.icon}
+                            <Link style={{whiteSpace: "nowrap"}} onClick={item.onClick}>
+                                {item.label}
+                            </Link>
+                        </HStack>
+                    ))}
+                    {hiddenItems.length > 0 && (
+                        <Menu placement="bottom-end">
+                            <MenuButton
+                                as={IconButton}
+                                icon={<BsThreeDots/>}
+                                variant="outline"
+                                aria-label="Options"
+                                size="sm"
+                                onClick={(e) => e.stopPropagation()}
+                                my={1}
+                            />
+                            <MenuList p={0} borderRadius="md" boxShadow="lg">
+                                {hiddenItems.map((item, idx) => (
+                                    <MenuItem
+                                        key={idx}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            item.onClick?.(e);
+                                        }}
+                                    >
+                                        <HStack spacing={2}>
+                                            {item.icon}
+                                            <Text>{item.label}</Text>
+                                        </HStack>
+                                    </MenuItem>
+                                ))}
+                            </MenuList>
+                        </Menu>
+                    )}
+                </HStack>
+            </Box>
             <Box 
                 flex="1" 
                 p={6} 

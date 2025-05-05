@@ -950,6 +950,7 @@ const PurchaseDetails = ({reservation, onBack}) => {
                     display="flex"
                     justifyContent="center"
                     alignItems="center"
+                    borderRadius="md"
                 >
                     <Image
                         src={reservation.tour.imageUrl || "https://via.placeholder.com/1000x300"}

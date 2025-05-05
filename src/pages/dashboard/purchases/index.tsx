@@ -933,7 +933,7 @@ const PurchaseDetails = ({reservation, onBack}) => {
             )}
             <Box
                 position="relative"
-                width={{base: "100%", md: "95%", xl: "110%", "2xl": "175%"}}
+                width={{base: "100%", sm:   "40%",md:  "100%",lg:  "165%",xl:  "170%",}}
                 maxWidth={{base: "none", md: "none", xl: "none"}}
                 borderRadius="lg"
                 overflow="hidden"
@@ -964,8 +964,9 @@ const PurchaseDetails = ({reservation, onBack}) => {
                     />
                 </Box>
             </Box>
+            
             <Box
-                width={{base: "100%", md: "95%", xl: "110%", "2xl": "175%"}}
+                width={{base: "100%", md: "95%", xl: "120%", "2xl": "175%"}}
                 maxWidth={{base: "none", md: "none", xl: "none"}}
                 marginX={{base: "0", md: "auto"}}
                 px={{ base: 0, md: 4 }}
@@ -1019,7 +1020,7 @@ const PurchaseDetails = ({reservation, onBack}) => {
             </Box>
             
             <Box
-                width={{base: "100%", md: "95%", xl: "110%", "2xl": "175%"}}
+                width={{base: "100%", md: "95%", xl: "120%", "2xl": "175%"}}
                 maxWidth={{base: "none", md: "none", xl: "none"}}
                 marginX={{base: "0", md: "auto"}}
                 px={{ base: 0, md: 4 }}

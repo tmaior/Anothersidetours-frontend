@@ -917,8 +917,9 @@ const PurchaseDetails = ({reservation, onBack}) => {
                 borderRadius="lg"
                 overflow="hidden"
                 marginTop={{base: "0", md: "-5px"}}
-                marginLeft={{base: "0", md: "10px"}}
+                marginX={{base: "0", md: "auto"}}
                 px={{ base: 0, md: 4 }}
+                bg={"tomato"}
             >
                 <Box
                     position="relative"
@@ -926,6 +927,9 @@ const PurchaseDetails = ({reservation, onBack}) => {
                     overflow="hidden"
                     mx={{ base: "-16px", md: 0 }}
                     width={{ base: "calc(100% + 32px)", md: "100%" }}
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
                 >
                     <Image
                         src={reservation.tour.imageUrl || "https://via.placeholder.com/1000x300"}

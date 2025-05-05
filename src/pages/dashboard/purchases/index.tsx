@@ -941,7 +941,44 @@ const PurchaseDetails = ({reservation, onBack}) => {
                     />
                 </Box>
             </Box>
-
+            <HStack ml={"600px"} spacing={3} wrap="nowrap" justifyContent={{md: "flex-start"}} overflow="auto">
+                {visibleItems.map((item, idx) => (
+                    <HStack key={idx}>
+                        {item.icon}
+                        <Link style={{whiteSpace: "nowrap"}} onClick={item.onClick}>
+                            {item.label}
+                        </Link>
+                    </HStack>
+                ))}
+                {hiddenItems.length > 0 && (
+                    <Menu placement="left-start" offset={[-50, 0]}>
+                        <MenuButton
+                            as={IconButton}
+                            icon={<BsThreeDots/>}
+                            variant="outline"
+                            aria-label="Options"
+                            size="sm"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                        <MenuList p={0} borderRadius="md" boxShadow="lg">
+                            {hiddenItems.map((item, idx) => (
+                                <MenuItem
+                                    key={idx}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        item.onClick?.(e);
+                                    }}
+                                >
+                                    <HStack spacing={2}>
+                                        {item.icon}
+                                        <Text>{item.label}</Text>
+                                    </HStack>
+                                </MenuItem>
+                            ))}
+                        </MenuList>
+                    </Menu>
+                )}
+            </HStack>
             <Box 
                 flex="1" 
                 p={6} 
@@ -952,44 +989,6 @@ const PurchaseDetails = ({reservation, onBack}) => {
                 maxWidth={{md: "100%"}}
                 overflow="hidden"
             >
-                <HStack spacing={3} mt={5} wrap="nowrap" justifyContent={{md: "flex-start"}} overflow="auto">
-                    {visibleItems.map((item, idx) => (
-                        <HStack key={idx}>
-                            {item.icon}
-                            <Link style={{whiteSpace: "nowrap"}} onClick={item.onClick}>
-                                {item.label}
-                            </Link>
-                        </HStack>
-                    ))}
-                    {hiddenItems.length > 0 && (
-                        <Menu placement="left-start" offset={[-50, 0]}>
-                            <MenuButton
-                                as={IconButton}
-                                icon={<BsThreeDots/>}
-                                variant="outline"
-                                aria-label="Options"
-                                size="sm"
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                            <MenuList p={0} borderRadius="md" boxShadow="lg">
-                                {hiddenItems.map((item, idx) => (
-                                    <MenuItem
-                                        key={idx}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            item.onClick?.(e);
-                                        }}
-                                    >
-                                        <HStack spacing={2}>
-                                            {item.icon}
-                                            <Text>{item.label}</Text>
-                                        </HStack>
-                                    </MenuItem>
-                                ))}
-                            </MenuList>
-                        </Menu>
-                    )}
-                </HStack>
                 <Box
                     mt={{base: "20px", xl: "15px", "2xl": "50px"}}
                     ml={{base: "0", md: "10px", xl: "0"}}

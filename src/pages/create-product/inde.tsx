@@ -25,8 +25,10 @@ interface TourFormProps {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function DescriptionContentPage({isEditing, tourId, initialData}: TourFormProps) {
     const [includedItems, setIncludedItems] = useState([]);
+    const [notIncludedItems, setNotIncludedItems] = useState([]);
     const [bringItems, setBringItems] = useState([]);
     const [newIncludedItem, setNewIncludedItem] = useState("");
+    const [newNotIncludedItem, setNewNotIncludedItem] = useState("");
     const [newBringItem, setNewBringItem] = useState("");
     const [overrideFooter, setOverrideFooter] = useState(false);
 
@@ -34,6 +36,13 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
         if (newIncludedItem.trim()) {
             setIncludedItems([...includedItems, newIncludedItem.trim()]);
             setNewIncludedItem("");
+        }
+    };
+
+    const handleAddNotIncludedItem = () => {
+        if (newNotIncludedItem.trim()) {
+            setNotIncludedItems([...notIncludedItems, newNotIncludedItem.trim()]);
+            setNewNotIncludedItem("");
         }
     };
 
@@ -46,6 +55,10 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
 
     const handleRemoveIncludedItem = (index) => {
         setIncludedItems(includedItems.filter((_, i) => i !== index));
+    };
+
+    const handleRemoveNotIncludedItem = (index) => {
+        setNotIncludedItems(notIncludedItems.filter((_, i) => i !== index));
     };
 
     const handleRemoveBringItem = (index) => {
@@ -142,22 +155,22 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
                                 <Flex>
                                     <Input
                                         placeholder="Add Item"
-                                        value={newIncludedItem}
-                                        onChange={(e) => setNewIncludedItem(e.target.value)}
+                                        value={newNotIncludedItem}
+                                        onChange={(e) => setNewNotIncludedItem(e.target.value)}
                                     />
                                     <IconButton
                                         icon={<AddIcon/>}
                                         ml={2}
-                                        onClick={handleAddIncludedItem} aria-label={""}/>
+                                        onClick={handleAddNotIncludedItem} aria-label={""}/>
                                 </Flex>
                                 <VStack align="stretch" mt={2}>
-                                    {includedItems.map((item, index) => (
+                                    {notIncludedItems.map((item, index) => (
                                         <Flex key={index} align="center" justify="space-between">
                                             <Text>{item}</Text>
                                             <Button
                                                 size="sm"
                                                 colorScheme="red"
-                                                onClick={() => handleRemoveIncludedItem(index)}
+                                                onClick={() => handleRemoveNotIncludedItem(index)}
                                             >
                                                 Remove
                                             </Button>

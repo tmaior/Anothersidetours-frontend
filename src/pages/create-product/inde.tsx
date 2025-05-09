@@ -137,6 +137,37 @@ export default function DescriptionContentPage({isEditing, tourId, initialData}:
 
                             <Box flex="1">
                                 <Text fontSize="sm" mb={1}>
+                                    What&#39;s Not Included
+                                </Text>
+                                <Flex>
+                                    <Input
+                                        placeholder="Add Item"
+                                        value={newIncludedItem}
+                                        onChange={(e) => setNewIncludedItem(e.target.value)}
+                                    />
+                                    <IconButton
+                                        icon={<AddIcon/>}
+                                        ml={2}
+                                        onClick={handleAddIncludedItem} aria-label={""}/>
+                                </Flex>
+                                <VStack align="stretch" mt={2}>
+                                    {includedItems.map((item, index) => (
+                                        <Flex key={index} align="center" justify="space-between">
+                                            <Text>{item}</Text>
+                                            <Button
+                                                size="sm"
+                                                colorScheme="red"
+                                                onClick={() => handleRemoveIncludedItem(index)}
+                                            >
+                                                Remove
+                                            </Button>
+                                        </Flex>
+                                    ))}
+                                </VStack>
+                            </Box>
+
+                            <Box flex="1">
+                                <Text fontSize="sm" mb={1}>
                                     What to Bring
                                 </Text>
                                 <Flex>

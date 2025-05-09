@@ -57,6 +57,7 @@ import { ScheduleItem } from "../../../contexts/GuestContext";
 
 function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEditing?: boolean }) {
     const [newIncludedItem, setNewIncludedItem] = useState("");
+    const [newNotIncludedItem, setNotIncludedItem] = useState("");
     const [newBringItem, setNewBringItem] = useState("");
     const [sopNotes, setSopNotes] = useState("");
     const [meetingLocation, setMeetingLocation] = useState("");
@@ -222,15 +223,17 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
         setDescription("");
         setPrice(0);
         setIncludedItems([]);
+        setNotIncludedItem([]);
         setBringItems([]);
         setNewIncludedItem("");
+        setNotIncludedItem("");
         setNewBringItem("");
         setOperationProcedures("");
         setCancellationPolicy("");
         setConsiderations("");
         setImagePreview(null);
         setImageFile(null);
-    }, [setTitle, setDescription, setPrice, setIncludedItems, setBringItems, setNewIncludedItem, setNewBringItem, setOperationProcedures, setCancellationPolicy, setConsiderations, setImagePreview, setImageFile]);
+    }, [setTitle, setDescription, setPrice, setIncludedItems, setNotIncludedItem ,setBringItems, setNewIncludedItem, setNewBringItem, setOperationProcedures, setCancellationPolicy, setConsiderations, setImagePreview, setImageFile]);
 
     function handleFormChange(field: keyof typeof formData, value: string | number) {
 
@@ -473,6 +476,36 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
                                             onClick={handleAddIncludedItem}
                                             aria-label={""}
                                         />
+                                    </Flex>
+                                    <VStack align="stretch" mt={2}>
+                                        {includedItems.map((item, index) => (
+                                            <Flex key={index} align="center" justify="space-between">
+                                                <Text>{item}</Text>
+                                                <Button
+                                                    size="sm"
+                                                    colorScheme="red"
+                                                    onClick={() => handleRemoveIncludedItem(index)}
+                                                >
+                                                    Remove
+                                                </Button>
+                                            </Flex>
+                                        ))}
+                                    </VStack>
+                                </Box>
+                                <Box flex="1">
+                                    <Text fontSize="sm" mb={1}>
+                                        What&#39;s Not Included
+                                    </Text>
+                                    <Flex>
+                                        <Input
+                                            placeholder="Add Item"
+                                            value={newIncludedItem}
+                                            onChange={(e) => setNewIncludedItem(e.target.value)}
+                                        />
+                                        <IconButton
+                                            icon={<AddIcon/>}
+                                            ml={2}
+                                            onClick={handleAddIncludedItem} aria-label={""}/>
                                     </Flex>
                                     <VStack align="stretch" mt={2}>
                                         {includedItems.map((item, index) => (

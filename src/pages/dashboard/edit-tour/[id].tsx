@@ -18,6 +18,7 @@ function EditTourPage() {
         setConsiderations,
         setSchedule,
         setIncludedItems,
+        setNotIncludedItems,
         setBringItems
     } = useGuest();
 
@@ -163,7 +164,7 @@ function EditTourPage() {
         }
 
         fetchTourData();
-    }, [id, setDescription, setImagePreview, setOperationProcedures, setPrice, setTitle, setTourId, setCancellationPolicy, setConsiderations, setSchedule, setIncludedItems, setBringItems]);
+    }, [id, setDescription, setImagePreview, setOperationProcedures, setPrice, setTitle, setTourId, setCancellationPolicy, setConsiderations, setSchedule, setIncludedItems, setNotIncludedItems, setBringItems]);
 
     if (isLoading) {
         return <div>Carregando dados...</div>;

@@ -522,7 +522,7 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
                                         <IconButton
                                             icon={<AddIcon/>}
                                             ml={2}
-                                            onClick={handleAddNotIncludedItem} 
+                                            onClick={handleAddNotIncludedItem}
                                             aria-label={""}
                                         />
                                     </Flex>
@@ -599,6 +599,11 @@ interface SchedulesAvailabilityStepProps {
     onBack: () => void;
     isEditing?: boolean;
     pricingData?: any;
+    originalItems?: {
+        includedItems: string[];
+        notIncludedItems: string[];
+        bringItems: string[];
+    };
 }
 
 interface Demographic {
@@ -636,6 +641,7 @@ function SchedulesAvailabilityStep({
     onBack,
     isEditing = false,
     pricingData = null,
+    originalItems = { includedItems: [], notIncludedItems: [], bringItems: [] }
 }: SchedulesAvailabilityStepProps) {
     const router = useRouter();
 
@@ -1363,20 +1369,47 @@ function SchedulesAvailabilityStep({
                 }
             }
 
-            if (bringItems.length > 0) {
-                await Promise.all(
-                    bringItems.map((item) =>
-                        fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/what-to-bring`, {
-                            method: "POST",
-                            credentials: "include",
-                            headers: {"Content-Type": "application/json"},
-                            body: JSON.stringify({tourId, item})
-                        })
-                    )
+            if (isEditing) {
+                const addedIncludedItems = includedItems.filter(
+                    item => !originalItems.includedItems.includes(item)
                 );
-            }
+                const removedIncludedItems = originalItems.includedItems.filter(
+                    item => !includedItems.includes(item)
+                );
 
-            if (includedItems.length > 0) {
+                if (addedIncludedItems.length > 0) {
+                    await Promise.all(
+                        addedIncludedItems.map((item) =>
+                            fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/whats-included`, {
+                                method: "POST",
+                                credentials: "include",
+                                headers: {"Content-Type": "application/json"},
+                                body: JSON.stringify({tourId, item})
+                            })
+                        )
+                    );
+                }
+
+                if (removedIncludedItems.length > 0) {
+                    const includedItemsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/whats-included/${tourId}`, {
+                        credentials: "include",
+                    });
+                    
+                    if (includedItemsRes.ok) {
+                        const includedItemsData = await includedItemsRes.json();
+                        
+                        for (const itemToRemove of removedIncludedItems) {
+                            const itemData = includedItemsData.find(data => data.item === itemToRemove);
+                            if (itemData) {
+                                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/whats-included/${itemData.id}`, {
+                                    method: "DELETE",
+                                    credentials: "include",
+                                });
+                            }
+                        }
+                    }
+                }
+            } else if (includedItems.length > 0) {
                 await Promise.all(
                     includedItems.map((item) =>
                         fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/whats-included`, {
@@ -1389,10 +1422,103 @@ function SchedulesAvailabilityStep({
                 );
             }
 
-            if (notIncludedItems.length > 0) {
+            if (isEditing) {
+                const addedNotIncludedItems = notIncludedItems.filter(
+                    item => !originalItems.notIncludedItems.includes(item)
+                );
+                const removedNotIncludedItems = originalItems.notIncludedItems.filter(
+                    item => !notIncludedItems.includes(item)
+                );
+
+                if (addedNotIncludedItems.length > 0) {
+                    await Promise.all(
+                        addedNotIncludedItems.map((item) =>
+                            fetch(`${process.env.NEXT_PUBLIC_API_URL}/whats-not-included`, {
+                                method: "POST",
+                                credentials: "include",
+                                headers: {"Content-Type": "application/json"},
+                                body: JSON.stringify({tourId, item})
+                            })
+                        )
+                    );
+                }
+
+                if (removedNotIncludedItems.length > 0) {
+                    const notIncludedItemsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/whats-not-included/${tourId}`, {
+                        credentials: "include",
+                    });
+                    
+                    if (notIncludedItemsRes.ok) {
+                        const notIncludedItemsData = await notIncludedItemsRes.json();
+                        
+                        for (const itemToRemove of removedNotIncludedItems) {
+                            const itemData = notIncludedItemsData.find(data => data.item === itemToRemove);
+                            if (itemData) {
+                                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/whats-not-included/${itemData.id}`, {
+                                    method: "DELETE",
+                                    credentials: "include",
+                                });
+                            }
+                        }
+                    }
+                }
+            } else if (notIncludedItems.length > 0) {
                 await Promise.all(
                     notIncludedItems.map((item) =>
                         fetch(`${process.env.NEXT_PUBLIC_API_URL}/whats-not-included`, {
+                            method: "POST",
+                            credentials: "include",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({tourId, item})
+                        })
+                    )
+                );
+            }
+
+            if (isEditing) {
+                const addedBringItems = bringItems.filter(
+                    item => !originalItems.bringItems.includes(item)
+                );
+                const removedBringItems = originalItems.bringItems.filter(
+                    item => !bringItems.includes(item)
+                );
+
+                if (addedBringItems.length > 0) {
+                    await Promise.all(
+                        addedBringItems.map((item) =>
+                            fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/what-to-bring`, {
+                                method: "POST",
+                                credentials: "include",
+                                headers: {"Content-Type": "application/json"},
+                                body: JSON.stringify({tourId, item})
+                            })
+                        )
+                    );
+                }
+
+                if (removedBringItems.length > 0) {
+                    const bringItemsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/what-to-bring/${tourId}`, {
+                        credentials: "include",
+                    });
+                    
+                    if (bringItemsRes.ok) {
+                        const bringItemsData = await bringItemsRes.json();
+                        
+                        for (const itemToRemove of removedBringItems) {
+                            const itemData = bringItemsData.find(data => data.item === itemToRemove);
+                            if (itemData) {
+                                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/what-to-bring/${itemData.id}`, {
+                                    method: "DELETE",
+                                    credentials: "include",
+                                });
+                            }
+                        }
+                    }
+                }
+            } else if (bringItems.length > 0) {
+                await Promise.all(
+                    bringItems.map((item) =>
+                        fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/what-to-bring`, {
                             method: "POST",
                             credentials: "include",
                             headers: {"Content-Type": "application/json"},
@@ -2479,11 +2605,25 @@ function SchedulesAvailabilityStep({
     );
 }
 
-function CreateToursPage({isEditing = false, pricingData = null}: { isEditing?: boolean, pricingData?: any }) {
+interface CreateToursPageProps {
+    isEditing?: boolean;
+    pricingData?: any;
+    originalItems?: {
+        includedItems: string[];
+        notIncludedItems: string[];
+        bringItems: string[];
+    };
+}
+
+function CreateToursPage({
+    isEditing = false, 
+    pricingData = null, 
+    originalItems = { includedItems: [], notIncludedItems: [], bringItems: [] }
+}: CreateToursPageProps) {
     const [currentStep, setCurrentStep] = useState(1);
 
     if (currentStep === 1) {
-        return <DescriptionContentStep onNext={() => setCurrentStep(2)} isEditing={isEditing}/>;
+        return <DescriptionContentStep onNext={() => setCurrentStep(2)} isEditing={isEditing} />;
     } else {
         return (
             <SchedulesAvailabilityStep
@@ -2492,6 +2632,7 @@ function CreateToursPage({isEditing = false, pricingData = null}: { isEditing?: 
                 }}
                 isEditing={isEditing}
                 pricingData={pricingData}
+                originalItems={originalItems}
             />
         );
     }

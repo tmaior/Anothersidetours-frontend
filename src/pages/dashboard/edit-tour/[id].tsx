@@ -25,6 +25,10 @@ function EditTourPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [pricingData, setPricingData] = useState(null);
 
+    const [originalIncludedItems, setOriginalIncludedItems] = useState([]);
+    const [originalNotIncludedItems, setOriginalNotIncludedItems] = useState([]);
+    const [originalBringItems, setOriginalBringItems] = useState([]);
+
     useEffect(() => {
         if (!id) return;
 
@@ -56,6 +60,7 @@ function EditTourPage() {
                         if (Array.isArray(whatsIncludedData)) {
                             const items = whatsIncludedData.map(item => item.item || "");
                             setIncludedItems(items);
+                            setOriginalIncludedItems(items);
                         }
                     } else {
                         console.error("Failed to fetch What's Included:", whatsIncludedRes.status);
@@ -73,6 +78,7 @@ function EditTourPage() {
                         if (Array.isArray(whatsNotIncludedData)) {
                             const items = whatsNotIncludedData.map(item => item.item || "");
                             setNotIncludedItems(items);
+                            setOriginalNotIncludedItems(items);
                         }
                     } else {
                         console.error("Failed to fetch What's Not Included:", whatsNotIncludedRes.status);
@@ -90,6 +96,7 @@ function EditTourPage() {
                         if (Array.isArray(whatToBringData)) {
                             const items = whatToBringData.map(item => item.item || "");
                             setBringItems(items);
+                            setOriginalBringItems(items);
                         }
                     } else {
                         console.error("Failed to fetch What to Bring:", whatToBringRes.status);
@@ -170,7 +177,15 @@ function EditTourPage() {
         return <div>Carregando dados...</div>;
     }
 
-    return <CreateToursPage isEditing pricingData={pricingData}/>;
+    return <CreateToursPage 
+        isEditing 
+        pricingData={pricingData} 
+        originalItems={{
+            includedItems: originalIncludedItems,
+            notIncludedItems: originalNotIncludedItems,
+            bringItems: originalBringItems
+        }}
+    />;
 }
 
 export default EditTourPage;

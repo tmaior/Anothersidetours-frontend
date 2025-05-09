@@ -52,11 +52,11 @@ interface GuestContextType {
     // cvc: string;
     // setCvc: React.Dispatch<React.SetStateAction<string>>;
     includedItems: string[];
-    setIncludedItems: (items: string[]) => void;
+    setIncludedItems: React.Dispatch<React.SetStateAction<string[]>>;
     notIncludedItems: string[];
-    setNotIncludedItems: (items: string[]) => void;
+    setNotIncludedItems: React.Dispatch<React.SetStateAction<string[]>>;
     bringItems: string[];
-    setBringItems: (items: string[]) => void;
+    setBringItems: React.Dispatch<React.SetStateAction<string[]>>;
     description: string;
     setDescription: React.Dispatch<React.SetStateAction<string>>;
     operationProcedures: string;

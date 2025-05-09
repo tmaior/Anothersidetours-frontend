@@ -52,9 +52,11 @@ interface GuestContextType {
     // cvc: string;
     // setCvc: React.Dispatch<React.SetStateAction<string>>;
     includedItems: string[];
-    setIncludedItems: React.Dispatch<React.SetStateAction<string[]>>;
+    setIncludedItems: (items: string[]) => void;
+    notIncludedItems: string[];
+    setNotIncludedItems: (items: string[]) => void;
     bringItems: string[];
-    setBringItems: React.Dispatch<React.SetStateAction<string[]>>;
+    setBringItems: (items: string[]) => void;
     description: string;
     setDescription: React.Dispatch<React.SetStateAction<string>>;
     operationProcedures: string;
@@ -103,6 +105,7 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [detailedAddons, setDetailedAddons] = useState([]);
     const [reservationId, setReservationId] = useState("");
     const [includedItems, setIncludedItems] = useState<string[]>([]);
+    const [notIncludedItems, setNotIncludedItems] = useState<string[]>([]);
     const [bringItems, setBringItems] = useState<string[]>([]);
     const [description, setDescription] = useState("");
     const [operationProcedures, setOperationProcedures] = useState("");
@@ -128,6 +131,7 @@ export function GuestProvider({children}: { children: ReactNode }) {
         setPhone("");
         setReservationId("");
         setIncludedItems([]);
+        setNotIncludedItems([]);
         setBringItems([]);
         setDescription("");
         setOperationProcedures("");
@@ -170,6 +174,8 @@ export function GuestProvider({children}: { children: ReactNode }) {
                 setReservationId,
                 includedItems,
                 setIncludedItems,
+                notIncludedItems,
+                setNotIncludedItems,
                 bringItems,
                 setBringItems,
                 description,

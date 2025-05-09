@@ -62,6 +62,24 @@ function EditTourPage() {
                 } catch (includedItemsError) {
                     console.error("Error fetching included items:", includedItemsError);
                 }
+
+                try {
+                    const whatsNotIncludedRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/whats-not-included/${id}`,{
+                        credentials: "include",
+                    });
+                    if (whatsNotIncludedRes.ok) {
+                        const whatsNotIncludedData = await whatsNotIncludedRes.json();
+                        if (Array.isArray(whatsNotIncludedData)) {
+                            const items = whatsNotIncludedData.map(item => item.item || "");
+                            setNotIncludedItems(items);
+                        }
+                    } else {
+                        console.error("Failed to fetch What's Not Included:", whatsNotIncludedRes.status);
+                    }
+                } catch (notIncludedItemsError) {
+                    console.error("Error fetching not included items:", notIncludedItemsError);
+                }
+
                 try {
                     const whatToBringRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/what-to-bring/${id}`,{
                         credentials: "include",

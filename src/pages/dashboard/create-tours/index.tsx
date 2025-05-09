@@ -57,7 +57,7 @@ import { ScheduleItem } from "../../../contexts/GuestContext";
 
 function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEditing?: boolean }) {
     const [newIncludedItem, setNewIncludedItem] = useState("");
-    const [newNotIncludedItem, setNotIncludedItem] = useState("");
+    const [newNotIncludedItem, setNewNotIncludedItem] = useState("");
     const [newBringItem, setNewBringItem] = useState("");
     const [sopNotes, setSopNotes] = useState("");
     const [meetingLocation, setMeetingLocation] = useState("");
@@ -71,6 +71,8 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
         setDescription,
         includedItems,
         setIncludedItems,
+        notIncludedItems,
+        setNotIncludedItems,
         bringItems,
         setBringItems,
         setOperationProcedures,
@@ -118,8 +120,10 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
     useEffect(() => {
         const data = {
             includedItems,
+            notIncludedItems,
             bringItems,
             newIncludedItem,
+            newNotIncludedItem,
             newBringItem,
             title,
             description,
@@ -130,8 +134,10 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
         localStorage.setItem("descriptionContentData", JSON.stringify(data));
     }, [
         includedItems,
+        notIncludedItems,
         bringItems,
         newIncludedItem,
+        newNotIncludedItem,
         newBringItem,
         imagePreview,
         title,
@@ -168,6 +174,13 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
         }
     }
 
+    function handleAddNotIncludedItem() {
+        if (newNotIncludedItem.trim()) {
+            setNotIncludedItems([...notIncludedItems, newNotIncludedItem.trim()]);
+            setNewNotIncludedItem("");
+        }
+    }
+
     function handleAddBringItem() {
         if (newBringItem.trim()) {
             setBringItems([...bringItems, newBringItem.trim()]);
@@ -177,6 +190,10 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
 
     function handleRemoveIncludedItem(index: number) {
         setIncludedItems(includedItems.filter((_, i) => i !== index));
+    }
+
+    function handleRemoveNotIncludedItem(index: number) {
+        setNotIncludedItems(notIncludedItems.filter((_, i) => i !== index));
     }
 
     function handleRemoveBringItem(index: number) {
@@ -223,17 +240,17 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
         setDescription("");
         setPrice(0);
         setIncludedItems([]);
-        setNotIncludedItem([]);
+        setNotIncludedItems([]);
         setBringItems([]);
         setNewIncludedItem("");
-        setNotIncludedItem("");
+        setNewNotIncludedItem("");
         setNewBringItem("");
         setOperationProcedures("");
         setCancellationPolicy("");
         setConsiderations("");
         setImagePreview(null);
         setImageFile(null);
-    }, [setTitle, setDescription, setPrice, setIncludedItems, setNotIncludedItem ,setBringItems, setNewIncludedItem, setNewBringItem, setOperationProcedures, setCancellationPolicy, setConsiderations, setImagePreview, setImageFile]);
+    }, [setTitle, setDescription, setPrice, setIncludedItems, setNotIncludedItems, setBringItems, setOperationProcedures, setCancellationPolicy, setConsiderations, setImagePreview, setImageFile]);
 
     function handleFormChange(field: keyof typeof formData, value: string | number) {
 
@@ -499,22 +516,24 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
                                     <Flex>
                                         <Input
                                             placeholder="Add Item"
-                                            value={newIncludedItem}
-                                            onChange={(e) => setNewIncludedItem(e.target.value)}
+                                            value={newNotIncludedItem}
+                                            onChange={(e) => setNewNotIncludedItem(e.target.value)}
                                         />
                                         <IconButton
                                             icon={<AddIcon/>}
                                             ml={2}
-                                            onClick={handleAddIncludedItem} aria-label={""}/>
+                                            onClick={handleAddNotIncludedItem} 
+                                            aria-label={""}
+                                        />
                                     </Flex>
                                     <VStack align="stretch" mt={2}>
-                                        {includedItems.map((item, index) => (
+                                        {notIncludedItems.map((item, index) => (
                                             <Flex key={index} align="center" justify="space-between">
                                                 <Text>{item}</Text>
                                                 <Button
                                                     size="sm"
                                                     colorScheme="red"
-                                                    onClick={() => handleRemoveIncludedItem(index)}
+                                                    onClick={() => handleRemoveNotIncludedItem(index)}
                                                 >
                                                     Remove
                                                 </Button>
@@ -632,6 +651,7 @@ function SchedulesAvailabilityStep({
         description,
         title,
         includedItems,
+        notIncludedItems,
         bringItems,
         imagePreview,
         imageFile,
@@ -640,6 +660,7 @@ function SchedulesAvailabilityStep({
         setDescription,
         setPrice,
         setIncludedItems,
+        setNotIncludedItems,
         setBringItems,
         setImagePreview,
         operationProcedures,
@@ -668,6 +689,7 @@ function SchedulesAvailabilityStep({
         setDescription("");
         setPrice(0);
         setIncludedItems([]);
+        setNotIncludedItems([]);
         setBringItems([]);
         setImagePreview(null);
         setOperationProcedures("");
@@ -678,7 +700,7 @@ function SchedulesAvailabilityStep({
             questionnaireRef.current.resetQuestions();
         }
     }, [setSchedule, setEventDuration, setGuestLimit, setEarlyArrival, setTitle, setDescription, 
-        setPrice, setIncludedItems, setBringItems, setImagePreview, 
+        setPrice, setIncludedItems, setNotIncludedItems, setBringItems, setImagePreview, 
         setOperationProcedures, setCancellationPolicy, setConsiderations]);
 
     const [pricingStructure, setPricingStructure] = useState("tiered");
@@ -1358,6 +1380,19 @@ function SchedulesAvailabilityStep({
                 await Promise.all(
                     includedItems.map((item) =>
                         fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/whats-included`, {
+                            method: "POST",
+                            credentials: "include",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({tourId, item})
+                        })
+                    )
+                );
+            }
+
+            if (notIncludedItems.length > 0) {
+                await Promise.all(
+                    notIncludedItems.map((item) =>
+                        fetch(`${process.env.NEXT_PUBLIC_API_URL}/whats-not-included`, {
                             method: "POST",
                             credentials: "include",
                             headers: {"Content-Type": "application/json"},

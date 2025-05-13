@@ -16,6 +16,15 @@ import {
     useBreakpointValue,
     IconButton,
     Collapse,
+    useToast,
+    useDisclosure,
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+    ModalCloseButton,
 } from "@chakra-ui/react";
 import DashboardLayout from "../../../components/DashboardLayout";
 import ReservationItem from "../../../components/ReservationItem";
@@ -55,6 +64,10 @@ function Dashboard() {
     const [selectedDate, setSelectedDate] = useState("");
     const [isNotesOpen, setNotesOpen] = useState(false);
     const [notesReservationList, setNotesReservationList] = useState([]);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [hasCalendarAuth, setHasCalendarAuth] = useState(false);
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const toast = useToast();
 
     const filteredReservations = reservations.filter((reservation) =>
         loadedDates.includes(reservation.date)
@@ -302,6 +315,58 @@ function Dashboard() {
         }
     }, [userDetails, tenantId, userId, hasManageReservationPermission]);
 
+    useEffect(() => {
+        const checkGoogleCalendarAuth = async () => {
+            if (!userId) return;
+            
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/google-calendar/auth-status/${userId}`,
+                    { withCredentials: true }
+                );
+                
+                if (response.data.isAuthorized) {
+                    setHasCalendarAuth(true);
+                }
+            } catch (error) {
+                console.error("Error checking Google Calendar auth:", error);
+            }
+        };
+        
+        if (userId) {
+            checkGoogleCalendarAuth();
+        }
+    }, [userId]);
+
+    useEffect(() => {
+        if (router.query.calendarConnected) {
+            if (router.query.calendarConnected === 'true') {
+                toast({
+                    title: "Google Calendar Connected",
+                    description: "Your account was successfully connected to Google Calendar",
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
+                });
+                setHasCalendarAuth(true);
+            } else if (router.query.error) {
+                toast({
+                    title: "Connection Failed",
+                    description: "Failed to connect to Google Calendar",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
+
+            const { calendarConnected, error, ...rest } = router.query;
+            router.replace({
+                pathname: router.pathname,
+                query: { ...rest }
+            }, undefined, { shallow: true });
+        }
+    }, [router.query]);
+
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
     };
@@ -391,6 +456,93 @@ function Dashboard() {
         setIsFiltersVisible(!isFiltersVisible);
     };
 
+    const handleSyncCalendar = async () => {
+        if (!hasCalendarAuth) {
+            onOpen();
+            return;
+        }
+        
+        syncReservationsToCalendar();
+    };
+    
+    const authorizeGoogleCalendar = async () => {
+        try {
+            const response = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/google-calendar/auth-url`,
+                { withCredentials: true }
+            );
+
+            window.location.href = response.data.authUrl;
+        } catch (error) {
+            console.error("Error getting auth URL:", error);
+            toast({
+                title: "Authorization Error",
+                description: "Could not initiate Google Calendar authorization",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+    
+    const syncReservationsToCalendar = async () => {
+        if (!userId || !tenantId) return;
+        
+        setIsSyncing(true);
+        
+        try {
+            const reservationsToSync = reservations.flatMap(dateGroup => 
+                dateGroup.reservations.map(reservation => ({
+                    id: reservation.id,
+                    title: `${reservation.title} - ${reservation.user?.name || 'Guest'}`,
+                    description:
+                    // `Reservation ID: ${reservation.id}
+                   `Guest: ${reservation.user?.name || 'N/A'}
+                    Email: ${reservation.user?.email || 'N/A'}
+                    Phone: ${reservation.user?.phone || 'N/A'}
+                    Guests: ${reservation.guestQuantity}
+                    Status: ${reservation.status}`,
+                    // Total: $${reservation.total_price}
+                    startTime: new Date(reservation.dateFormatted + ' ' + reservation.time),
+                    endTime: (() => {
+                        const start = new Date(reservation.dateFormatted + ' ' + reservation.time);
+                        const end = new Date(start);
+                        end.setMinutes(end.getMinutes() + (reservation.duration || 60));
+                        return end;
+                    })(),
+                }))
+            );
+            
+            const response = await axios.post(
+                `${process.env.NEXT_PUBLIC_API_URL}/google-calendar/sync`,
+                { 
+                    userId,
+                    reservations: reservationsToSync
+                },
+                { withCredentials: true }
+            );
+            
+            toast({
+                title: "Calendar Synced",
+                description: `Successfully synced ${response.data.syncedCount} reservations to your Google Calendar`,
+                status: "success",
+                duration: 5000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error("Error syncing with calendar:", error);
+            toast({
+                title: "Sync Error",
+                description: "Could not sync reservations with Google Calendar",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
     return (
         <DashboardLayout>
             <Flex align="center"
@@ -471,7 +623,14 @@ function Dashboard() {
                     </HStack>
                 )}
                 
-                <Button variant="outline" size="sm" display={{base: "none", md: "block"}}>
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    display={{base: "none", md: "block"}}
+                    onClick={handleSyncCalendar}
+                    isLoading={isSyncing}
+                    loadingText="Syncing"
+                >
                     Sync Calendar
                 </Button>
             </Flex>
@@ -502,7 +661,7 @@ function Dashboard() {
             {/*        Guides: All*/}
             {/*    </Button>*/}
             {/*</HStack>*/}
-            <Flex 
+            <Flex
                 direction={{base: "column", md: "row"}}
                 maxHeight={{base: "unset", md: "calc(100vh - 80px)"}}
                 overflowY="auto"
@@ -579,6 +738,27 @@ function Dashboard() {
                     setNotesReservationList([]);
                 }}
             />
+
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Google Calendar Authorization</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <Text mb={4}>
+                            To sync your reservations with Google Calendar, you need to authorize access first.
+                        </Text>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button variant="ghost" mr={3} onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button colorScheme="blue" onClick={authorizeGoogleCalendar}>
+                            Authorize Google Calendar
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </DashboardLayout>
     );
 }

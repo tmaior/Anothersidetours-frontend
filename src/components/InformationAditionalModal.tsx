@@ -41,7 +41,7 @@ export default function InformationAdditionalModal({
     
     useEffect(() => {
         if (isOpen) {
-            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${tourId}`,
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/tour/${tourId}`,
                 {
                     credentials: 'include',
                 })

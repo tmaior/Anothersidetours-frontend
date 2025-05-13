@@ -44,7 +44,7 @@ export default function BookingDetailsPage({reservationData}) {
 
     useEffect(() => {
         if (tourIdAsString) {
-            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${tourIdAsString}`)
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/tour/${tourIdAsString}`)
                 .then(response => response.json())
                 .then(data => {
                     setHasAdditionalFields(data.length > 0);

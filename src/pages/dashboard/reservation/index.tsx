@@ -491,27 +491,67 @@ function Dashboard() {
         setIsSyncing(true);
         
         try {
-            const reservationsToSync = reservations.flatMap(dateGroup => 
-                dateGroup.reservations.map(reservation => ({
-                    id: reservation.id,
-                    title: `${reservation.title} - ${reservation.user?.name || 'Guest'}`,
-                    description:
-                    // `Reservation ID: ${reservation.id}
-                   `Guest: ${reservation.user?.name || 'N/A'}
-                    Email: ${reservation.user?.email || 'N/A'}
-                    Phone: ${reservation.user?.phone || 'N/A'}
-                    Guests: ${reservation.guestQuantity}
-                    Status: ${reservation.status}`,
-                    // Total: $${reservation.total_price}
-                    startTime: new Date(reservation.dateFormatted + ' ' + reservation.time),
-                    endTime: (() => {
-                        const start = new Date(reservation.dateFormatted + ' ' + reservation.time);
-                        const end = new Date(start);
-                        end.setMinutes(end.getMinutes() + (reservation.duration || 60));
-                        return end;
-                    })(),
-                }))
-            );
+            const reservationsToSync = [];
+            
+            for (const dateGroup of reservations) {
+                for (const reservation of dateGroup.reservations) {
+                    let additionalInfo = [];
+                    try {
+                        const additionalResponse = await fetch(
+                            `${process.env.NEXT_PUBLIC_API_URL}/additional-information/tour/${reservation.tourId}`,
+                            { credentials: 'include' }
+                        );
+                        if (additionalResponse.ok) {
+                            additionalInfo = await additionalResponse.json();
+                        }
+                    } catch (error) {
+                        console.error("Error fetching additional information:", error);
+                    }
+
+                    let customerResponses = [];
+                    try {
+                        const responsesResponse = await fetch(
+                            `${process.env.NEXT_PUBLIC_API_URL}/customer-additional-information?reservationId=${reservation.id}`,
+                            { credentials: 'include' }
+                        );
+                        if (responsesResponse.ok) {
+                            customerResponses = await responsesResponse.json();
+                        }
+                    } catch (error) {
+                        console.error("Error fetching customer responses:", error);
+                    }
+
+                    let additionalInfoText = '';
+                    if (additionalInfo.length > 0 && customerResponses.length > 0) {
+                        additionalInfoText = '\n\nAdditional Information:';
+                        
+                        for (const info of additionalInfo) {
+                            const response = customerResponses.find(
+                                resp => resp.additionalInformationId === info.id
+                            );
+                            additionalInfoText += `\n${info.title}: ${response?.value || 'No response'}`;
+                        }
+                    }
+                    
+                    reservationsToSync.push({
+                        id: reservation.id,
+                        title: `${reservation.title} - ${reservation.user?.name || 'Guest'}`,
+                        description:
+                        `Guest: ${reservation.user?.name || 'N/A'}
+                         Email: ${reservation.user?.email || 'N/A'}
+                         Phone: ${reservation.user?.phone || 'N/A'}
+                         Guests: ${reservation.guestQuantity}
+                         Status: ${reservation.status}${additionalInfoText}`,
+                        startTime: new Date(reservation.dateFormatted + ' ' + reservation.time),
+                        endTime: (() => {
+                            const start = new Date(reservation.dateFormatted + ' ' + reservation.time);
+                            const end = new Date(start);
+                            end.setMinutes(end.getMinutes() + (reservation.duration || 60));
+                            return end;
+                        })(),
+                    });
+                }
+            }
             
             const response = await axios.post(
                 `${process.env.NEXT_PUBLIC_API_URL}/google-calendar/sync`,

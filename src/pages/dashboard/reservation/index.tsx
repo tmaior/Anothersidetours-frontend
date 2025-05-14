@@ -491,10 +491,29 @@ function Dashboard() {
         setIsSyncing(true);
         
         try {
-            const reservationsToSync = [];
+            const reservationsByTenant = {};
             
             for (const dateGroup of reservations) {
                 for (const reservation of dateGroup.reservations) {
+                    let tenantName = '';
+                    try {
+                        const tenantResponse = await fetch(
+                            `${process.env.NEXT_PUBLIC_API_URL}/tenants/${reservation.tenantId || tenantId}`,
+                            { credentials: 'include' }
+                        );
+                        if (tenantResponse.ok) {
+                            const tenantData = await tenantResponse.json();
+                            tenantName = tenantData.name;
+                        }
+                    } catch (error) {
+                        console.error("Error fetching tenant information:", error);
+                        tenantName = 'Default Location';
+                    }
+                    
+                    if (!reservationsByTenant[tenantName]) {
+                        reservationsByTenant[tenantName] = [];
+                    }
+                    
                     let additionalInfo = [];
                     try {
                         const additionalResponse = await fetch(
@@ -533,7 +552,7 @@ function Dashboard() {
                         }
                     }
                     
-                    reservationsToSync.push({
+                    reservationsByTenant[tenantName].push({
                         id: reservation.id,
                         title: `${reservation.title} - ${reservation.user?.name || 'Guest'}`,
                         description:
@@ -549,26 +568,60 @@ function Dashboard() {
                             end.setMinutes(end.getMinutes() + (reservation.duration || 60));
                             return end;
                         })(),
+                        tenantId: reservation.tenantId || tenantId
                     });
                 }
             }
-            
-            const response = await axios.post(
-                `${process.env.NEXT_PUBLIC_API_URL}/google-calendar/sync`,
-                { 
-                    userId,
-                    reservations: reservationsToSync
-                },
-                { withCredentials: true }
-            );
-            
-            toast({
-                title: "Calendar Synced",
-                description: `Successfully synced ${response.data.syncedCount} reservations to your Google Calendar`,
-                status: "success",
-                duration: 5000,
-                isClosable: true,
-            });
+
+            try {
+                const response = await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/google-calendar/sync-by-tenant`,
+                    { 
+                        userId,
+                        reservationsByTenant
+                    },
+                    { withCredentials: true }
+                );
+                
+                const totalSynced = Object.values(response.data.syncedByTenant).reduce(
+                    (acc: number, count: number) => acc + (count || 0), 
+                    0
+                );
+                
+                toast({
+                    title: "Calendar Synced",
+                    description: `Successfully synced ${totalSynced} reservations from ${Object.keys(response.data.syncedByTenant).length} location(s) to separate Google Calendars`,
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            } catch (error) {
+                console.error("Error syncing with tenant calendars:", error);
+
+                try {
+                    const allReservations = Object.values(reservationsByTenant).flat();
+                    
+                    const fallbackResponse = await axios.post(
+                        `${process.env.NEXT_PUBLIC_API_URL}/google-calendar/sync`,
+                        { 
+                            userId,
+                            reservations: allReservations
+                        },
+                        { withCredentials: true }
+                    );
+                    
+                    toast({
+                        title: "Calendar Synced",
+                        description: `Successfully synced ${fallbackResponse.data.syncedCount} reservations to your Google Calendar`,
+                        status: "success",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                } catch (fallbackError) {
+                    console.error("Fallback sync also failed:", fallbackError);
+                    throw error;
+                }
+            }
         } catch (error) {
             console.error("Error syncing with calendar:", error);
             toast({

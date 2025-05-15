@@ -275,6 +275,8 @@ export const syncAfterGuideAssignment = async (reservationId: string, addedGuide
         
         if (authStatusResponse.data.isAuthorized) {
           await syncSingleReservation(reservationId, guideId);
+        } else {
+          console.error('Guide has not authorized calendar access:', guideId);
         }
       } catch (error) {
         console.error(`Error adding calendar event for guide ${guideId}:`, error);
@@ -289,7 +291,7 @@ export const syncAfterGuideAssignment = async (reservationId: string, addedGuide
         );
         
         if (authStatusResponse.data.isAuthorized) {
-          await axios.post(
+          const removeResponse = await axios.post(
             `${process.env.NEXT_PUBLIC_API_URL}/google-calendar/remove-event`,
             {
               userId: guideId,
@@ -297,12 +299,18 @@ export const syncAfterGuideAssignment = async (reservationId: string, addedGuide
             },
             { withCredentials: true }
           );
+          console.log(`Removal response:`, removeResponse.data);
+        } else {
+          console.error(`Guide ${guideId} is not authorized for calendar access`);
         }
       } catch (error) {
         console.error(`Error removing calendar event for guide ${guideId}:`, error);
+        if (error.response) {
+          console.error('Response data:', error.response.data);
+          console.error('Response status:', error.response.status);
+        }
       }
     }
-    await syncReservationForGuides(reservationId);
   } catch (error) {
     console.error('Error in syncAfterGuideAssignment:', error);
   }

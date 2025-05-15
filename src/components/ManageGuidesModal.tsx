@@ -18,6 +18,7 @@ import {useEffect, useState} from "react";
 import axios from "axios";
 import useGuidesStore from "../utils/store";
 import {useGuideAssignment} from "../hooks/useGuideAssignment";
+import { syncAfterGuideAssignment } from "../utils/calendarSync";
 
 interface Guide {
     id: string;
@@ -35,6 +36,7 @@ interface GuideInfo {
 const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedGuides, setSelectedGuides] = useState<string[]>([]);
+    const [initialSelectedGuides, setInitialSelectedGuides] = useState<string[]>([]);
     const [guides, setGuides] = useState<Guide[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -80,6 +82,7 @@ const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
 
                 const assignedGuideIds = assignedResponse.data.map(item => item.guideId);
                 setSelectedGuides(assignedGuideIds);
+                setInitialSelectedGuides(assignedGuideIds);
             })
             .catch((error) => {
                 console.error("Failed to fetch guides:", error);
@@ -124,7 +127,10 @@ const ManageGuidesModal = ({isOpen, onClose, onSelectGuide, reservationId}) => {
                     name: guide.name, 
                     email: guide.email
                 }));
+            const addedGuideIds = selectedGuides.filter(id => !initialSelectedGuides.includes(id));
+            const removedGuideIds = initialSelectedGuides.filter(id => !selectedGuides.includes(id));
             await assignGuides(reservationId, selectedGuides);
+            await syncAfterGuideAssignment(reservationId, addedGuideIds, removedGuideIds);
 
             setReservationGuides(reservationId, selectedGuidesWithInfo);
             onSelectGuide(selectedGuidesWithInfo);

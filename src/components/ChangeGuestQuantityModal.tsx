@@ -39,6 +39,7 @@ import {BiCheck} from "react-icons/bi";
 import {format} from 'date-fns';
 import {CardElement, useElements, useStripe} from "@stripe/react-stripe-js";
 import {FiChevronDown} from "react-icons/fi";
+import { syncSingleReservation, syncReservationForGuides } from "../utils/calendarSync";
 
 const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
     const toast = useToast();
@@ -585,6 +586,16 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
                 );
 
                 if (bookingResponse.data) {
+                    try {
+                        const userId = localStorage.getItem('userId');
+                        if (userId) {
+                            await syncSingleReservation(booking.id, userId);
+                        }
+                        await syncReservationForGuides(booking.id);
+                    } catch (syncError) {
+                        console.error("Error syncing calendar:", syncError);
+                    }
+
                     toast({
                         title: "Success",
                         description: "Payment collected and booking updated successfully.",
@@ -1229,6 +1240,16 @@ const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
             });
 
             if (transactionResponse.data && bookingResponse.data) {
+                try {
+                    const userId = localStorage.getItem('userId');
+                    if (userId) {
+                        await syncSingleReservation(booking.id, userId);
+                    }
+                    await syncReservationForGuides(booking.id);
+                } catch (syncError) {
+                    console.error("Error syncing calendar:", syncError);
+                }
+
                 toast({
                     title: "Success",
                     description: "Invoice sent and booking updated successfully.",
@@ -1971,6 +1992,17 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                     {
                         withCredentials: true
                     });
+
+                try {
+                    const userId = localStorage.getItem('userId');
+                    if (userId) {
+                        await syncSingleReservation(booking.id, userId);
+                    }
+                    await syncReservationForGuides(booking.id);
+                } catch (syncError) {
+                    console.error("Error syncing calendar:", syncError);
+                }
+                
                 const actionType = priceDifference > 0 ? "additional charge" :
                     priceDifference < 0 ? "refund" : "change";
 

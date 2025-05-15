@@ -27,6 +27,7 @@ import axios from "axios";
 import {CiSquarePlus} from "react-icons/ci";
 import DatePicker from "./TimePickerArrival";
 import AddTimeSlotModal from "./AddTimeSlotModal";
+import { syncSingleReservation, syncReservationForGuides } from "../utils/calendarSync";
 
 const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
     const [selectedDate, setSelectedDate] = useState<string>();
@@ -301,6 +302,17 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                     withCredentials: true,
                 }
             );
+
+            try {
+                const userId = localStorage.getItem('userId');
+                if (userId) {
+                    await syncSingleReservation(booking.id, userId);
+                }
+                await syncReservationForGuides(booking.id);
+            } catch (syncError) {
+                console.error("Error syncing calendar:", syncError);
+            }
+            
             console.log("Update successful:", response.data);
             toast({
                 title: "Arrival date and time updated successfully!",

@@ -25,6 +25,7 @@ import React, {useEffect, useState} from "react";
 import {FaCcAmex, FaCcDiscover, FaCcMastercard, FaCcVisa, FaRegCreditCard} from "react-icons/fa";
 import {BsCash, BsCheck2} from "react-icons/bs";
 import axios from "axios";
+import { syncSingleReservation, syncReservationForGuides } from "../utils/calendarSync";
 
 const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) => {
     const [refundAmount, setRefundAmount] = useState(booking?.total_price || 0);
@@ -845,6 +846,16 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                             onStatusChange("CANCELED");
                         }
                         onClose();
+
+                        try {
+                            const userId = localStorage.getItem('userId');
+                            if (userId) {
+                                await syncSingleReservation(booking.id, userId);
+                            }
+                            await syncReservationForGuides(booking.id);
+                        } catch (syncError) {
+                            console.error("Error syncing calendar after cancellation:", syncError);
+                        }
                     }
                 } catch (error) {
                     console.error("Stripe refund error:", error);

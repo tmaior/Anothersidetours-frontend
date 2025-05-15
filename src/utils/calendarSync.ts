@@ -65,6 +65,32 @@ export const syncSingleReservation = async (reservationId: string, userId: strin
       console.error('Error fetching customer responses:', error);
     }
 
+    let guides = [];
+    try {
+      const guidesResponse = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservationId}/guides`,
+        { withCredentials: true }
+      );
+      if (guidesResponse.data) {
+        guides = guidesResponse.data;
+      }
+    } catch (error) {
+      console.error('Error fetching guides:', error);
+    }
+
+    let purchaseNotes = [];
+    try {
+      const notesResponse = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/purchase-notes/${reservationId}`,
+        { withCredentials: true }
+      );
+      if (notesResponse.data) {
+        purchaseNotes = notesResponse.data;
+      }
+    } catch (error) {
+      console.error('Error fetching purchase notes:', error);
+    }
+
     let additionalInfoText = '';
     if (additionalInfo.length > 0 && customerResponses.length > 0) {
       additionalInfoText = '\n\nAdditional Information:';
@@ -73,6 +99,20 @@ export const syncSingleReservation = async (reservationId: string, userId: strin
           resp => resp.additionalInformationId === info.id
         );
         additionalInfoText += `\n${info.title}: ${response?.value || 'No response'}`;
+      }
+    }
+
+    let guidesText = '';
+    if (guides.length > 0) {
+      guidesText = '\nGuides: ';
+      guidesText += guides.map(guide => guide.guide?.name || 'Unknown Guide').join(', ');
+    }
+
+    let notesText = '';
+    if (purchaseNotes.length > 0) {
+      notesText = '\n\nPurchase Notes:';
+      for (const note of purchaseNotes) {
+        notesText += `\n- ${note.description}`;
       }
     }
 
@@ -87,7 +127,7 @@ export const syncSingleReservation = async (reservationId: string, userId: strin
 Email: ${reservation.user?.email || 'N/A'}
 Phone: ${reservation.user?.phone || 'N/A'}
 Guests: ${reservation.guestQuantity}
-Status: ${reservation.status}${additionalInfoText}`,
+Status: ${reservation.status}${guidesText}${additionalInfoText}${notesText}`,
       startTime,
       endTime,
       tenantId: reservation.tenantId
@@ -126,6 +166,36 @@ Status: ${reservation.status}${additionalInfoText}`,
       const startTime = new Date(reservation.reservation_date);
       const endTime = new Date(startTime);
       endTime.setMinutes(endTime.getMinutes() + (reservation.tour?.duration || 60));
+
+      let guidesText = '';
+      try {
+        const guidesResponse = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${reservationId}/guides`,
+          { withCredentials: true }
+        );
+        if (guidesResponse.data && guidesResponse.data.length > 0) {
+          guidesText = '\nGuides: ';
+          guidesText += guidesResponse.data.map(guide => guide.guide?.name || 'Unknown Guide').join(', ');
+        }
+      } catch (error) {
+        console.error('Error fetching guides:', error);
+      }
+
+      let notesText = '';
+      try {
+        const notesResponse = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/purchase-notes/${reservationId}`,
+          { withCredentials: true }
+        );
+        if (notesResponse.data && notesResponse.data.length > 0) {
+          notesText = '\n\nPurchase Notes:';
+          for (const note of notesResponse.data) {
+            notesText += `\n- ${note.description}`;
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching purchase notes:', error);
+      }
       
       const reservationData = {
         id: reservationId,
@@ -134,7 +204,7 @@ Status: ${reservation.status}${additionalInfoText}`,
 Email: ${reservation.user?.email || 'N/A'}
 Phone: ${reservation.user?.phone || 'N/A'}
 Guests: ${reservation.guestQuantity}
-Status: ${reservation.status}`,
+Status: ${reservation.status}${guidesText}${notesText}`,
         startTime,
         endTime
       };
@@ -168,6 +238,7 @@ export const syncReservationForGuides = async (reservationId: string): Promise<b
     }
     
     const guides = guidesResponse.data;
+    let synced = false;
     for (const guide of guides) {
       try {
         const authStatusResponse = await axios.get(
@@ -176,7 +247,8 @@ export const syncReservationForGuides = async (reservationId: string): Promise<b
         );
         
         if (authStatusResponse.data.isAuthorized) {
-          await syncSingleReservation(reservationId, guide.guideId);
+          const success = await syncSingleReservation(reservationId, guide.guideId);
+          if (success) synced = true;
         } else {
           console.error('Guide has not authorized calendar access:', guide.guideId);
         }
@@ -185,7 +257,7 @@ export const syncReservationForGuides = async (reservationId: string): Promise<b
       }
     }
     
-    return true;
+    return synced;
   } catch (error) {
     console.error('Error syncing calendar for guides:', error);
     return false;
@@ -194,7 +266,6 @@ export const syncReservationForGuides = async (reservationId: string): Promise<b
 
 export const syncAfterGuideAssignment = async (reservationId: string, addedGuideIds: string[] = [], removedGuideIds: string[] = []): Promise<void> => {
   try {
-
     for (const guideId of addedGuideIds) {
       try {
         const authStatusResponse = await axios.get(

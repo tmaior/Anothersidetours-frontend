@@ -93,7 +93,7 @@ export const syncSingleReservation = async (reservationId: string, userId: strin
 
     let additionalInfoText = '';
     if (additionalInfo.length > 0 && customerResponses.length > 0) {
-      additionalInfoText = '\n\nAdditional Information:';
+      additionalInfoText = '\n\nQuestionnaire:';
       for (const info of additionalInfo) {
         const response = customerResponses.find(
           resp => resp.additionalInformationId === info.id

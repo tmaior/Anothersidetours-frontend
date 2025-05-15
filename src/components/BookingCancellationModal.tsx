@@ -25,7 +25,7 @@ import React, {useEffect, useState} from "react";
 import {FaCcAmex, FaCcDiscover, FaCcMastercard, FaCcVisa, FaRegCreditCard} from "react-icons/fa";
 import {BsCash, BsCheck2} from "react-icons/bs";
 import axios from "axios";
-import { syncSingleReservation, syncReservationForGuides } from "../utils/calendarSync";
+import { syncSingleReservation } from "../utils/calendarSync";
 
 const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) => {
     const [refundAmount, setRefundAmount] = useState(booking?.total_price || 0);
@@ -852,7 +852,23 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                             if (userId) {
                                 await syncSingleReservation(booking.id, userId);
                             }
-                            await syncReservationForGuides(booking.id);
+                            const guidesResponse = await axios.get(
+                                `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${booking.id}/guides`,
+                                { withCredentials: true }
+                            );
+                            
+                            if (guidesResponse.data && guidesResponse.data.length > 0) {
+                                const guides = guidesResponse.data;
+                                for (const guide of guides) {
+                                    try {
+                                        await syncSingleReservation(booking.id, guide.guideId);
+                                    } catch (guideError) {
+                                        console.error(`Error syncing calendar for guide ${guide.guideId}:`, guideError);
+                                    }
+                                }
+                            } else {
+                                console.error('No guides found for this reservation');
+                            }
                         } catch (syncError) {
                             console.error("Error syncing calendar after cancellation:", syncError);
                         }

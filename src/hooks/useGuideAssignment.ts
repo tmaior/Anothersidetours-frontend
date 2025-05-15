@@ -1,5 +1,6 @@
 import axios from "axios";
 import {useState} from "react";
+import { syncAfterGuideAssignment } from "../utils/calendarSync";
 
 export function useGuideAssignment() {
     const [isAssigning, setIsAssigning] = useState(false);
@@ -22,6 +23,11 @@ export function useGuideAssignment() {
                     withCredentials: true
                 }
             );
+            try {
+                await syncAfterGuideAssignment(reservationId, guideIds, []);
+            } catch (syncError) {
+                console.error('Error syncing calendar after guide assignment:', syncError);
+            }
             return response.data;
         } catch (err) {
             console.error("Failed to assign guides:", err);
@@ -51,6 +57,11 @@ export function useGuideAssignment() {
                     withCredentials: true
                 }
             );
+            try {
+                await syncAfterGuideAssignment(reservationId, [], guideIds);
+            } catch (syncError) {
+                console.error('Error syncing calendar after guide removal:', syncError);
+            }
             return response.data;
         } catch (err) {
             console.error("Failed to remove guides:", err);

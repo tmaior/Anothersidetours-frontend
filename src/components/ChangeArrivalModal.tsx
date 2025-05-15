@@ -302,13 +302,30 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                     withCredentials: true,
                 }
             );
-
+            
             try {
                 const userId = localStorage.getItem('userId');
                 if (userId) {
                     await syncSingleReservation(booking.id, userId);
                 }
-                await syncReservationForGuides(booking.id);
+                const guidesResponse = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${booking.id}/guides`,
+                    { withCredentials: true }
+                );
+                
+                if (guidesResponse.data && guidesResponse.data.length > 0) {
+                    const guides = guidesResponse.data;
+                    
+                    for (const guide of guides) {
+                        try {
+                            await syncSingleReservation(booking.id, guide.guideId);
+                        } catch (guideError) {
+                            console.error(`Error syncing calendar for guide ${guide.guideId}:`, guideError);
+                        }
+                    }
+                } else {
+                    console.log('No guides found for this reservation');
+                }
             } catch (syncError) {
                 console.error("Error syncing calendar:", syncError);
             }

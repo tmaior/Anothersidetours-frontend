@@ -168,9 +168,21 @@ export const syncReservationForGuides = async (reservationId: string): Promise<b
     }
     
     const guides = guidesResponse.data;
-
     for (const guide of guides) {
-      await syncSingleReservation(reservationId, guide.guideId);
+      try {
+        const authStatusResponse = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/google-calendar/auth-status/${guide.guideId}`,
+          { withCredentials: true }
+        );
+        
+        if (authStatusResponse.data.isAuthorized) {
+          await syncSingleReservation(reservationId, guide.guideId);
+        } else {
+          console.error('Guide has not authorized calendar access:', guide.guideId);
+        }
+      } catch (error) {
+        console.error(`Error syncing calendar for guide ${guide.guideId}:`, error);
+      }
     }
     
     return true;
@@ -180,6 +192,50 @@ export const syncReservationForGuides = async (reservationId: string): Promise<b
   }
 };
 
+export const syncAfterGuideAssignment = async (reservationId: string, addedGuideIds: string[] = [], removedGuideIds: string[] = []): Promise<void> => {
+  try {
+
+    for (const guideId of addedGuideIds) {
+      try {
+        const authStatusResponse = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/google-calendar/auth-status/${guideId}`,
+          { withCredentials: true }
+        );
+        
+        if (authStatusResponse.data.isAuthorized) {
+          await syncSingleReservation(reservationId, guideId);
+        }
+      } catch (error) {
+        console.error(`Error adding calendar event for guide ${guideId}:`, error);
+      }
+    }
+
+    for (const guideId of removedGuideIds) {
+      try {
+        const authStatusResponse = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/google-calendar/auth-status/${guideId}`,
+          { withCredentials: true }
+        );
+        
+        if (authStatusResponse.data.isAuthorized) {
+          await axios.post(
+            `${process.env.NEXT_PUBLIC_API_URL}/google-calendar/remove-event`,
+            {
+              userId: guideId,
+              reservationId: reservationId
+            },
+            { withCredentials: true }
+          );
+        }
+      } catch (error) {
+        console.error(`Error removing calendar event for guide ${guideId}:`, error);
+      }
+    }
+    await syncReservationForGuides(reservationId);
+  } catch (error) {
+    console.error('Error in syncAfterGuideAssignment:', error);
+  }
+};
 export const authorizeGoogleCalendar = async (): Promise<string> => {
   try {
     const response = await axios.get(

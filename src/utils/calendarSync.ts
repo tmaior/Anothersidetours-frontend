@@ -307,6 +307,42 @@ export const syncAfterGuideAssignment = async (reservationId: string, addedGuide
     console.error('Error in syncAfterGuideAssignment:', error);
   }
 };
+
+export const syncAfterNotesChange = async (reservationId: string): Promise<void> => {
+  try {
+    const reservationResponse = await axios.get(
+      `${process.env.NEXT_PUBLIC_API_URL}/reservations/${reservationId}`,
+      { withCredentials: true }
+    );
+    
+    if (!reservationResponse.data) {
+      console.error('Could not fetch reservation details for notes sync');
+      return;
+    }
+    
+    const reservation = reservationResponse.data;
+
+    if (reservation.userId) {
+      try {
+        const authStatusResponse = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/google-calendar/auth-status/${reservation.userId}`,
+          { withCredentials: true }
+        );
+        
+        if (authStatusResponse.data.isAuthorized) {
+          await syncSingleReservation(reservationId, reservation.userId);
+        }
+      } catch (error) {
+        console.error(`Error updating calendar for reservation owner:`, error);
+      }
+    }
+
+    await syncReservationForGuides(reservationId);
+  } catch (error) {
+    console.error('Error syncing calendar after notes change:', error);
+  }
+};
+
 export const authorizeGoogleCalendar = async (): Promise<string> => {
   try {
     const response = await axios.get(

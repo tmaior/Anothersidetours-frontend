@@ -19,6 +19,7 @@ import {
 } from "@chakra-ui/react";
 import {ChevronDownIcon, ChevronRightIcon, DeleteIcon} from "@chakra-ui/icons";
 import axios from "axios";
+import { syncAfterNotesChange } from "../utils/calendarSync";
 
 interface Note {
     id: string;
@@ -113,6 +114,12 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
             setNewNoteText("");
             onClose();
             fetchPurchaseNotes();
+
+            try {
+                await syncAfterNotesChange(reservationId);
+            } catch (syncError) {
+                console.error("Error syncing calendar after note creation:", syncError);
+            }
             toast({
                 title: "Note created",
                 status: "success",
@@ -173,6 +180,11 @@ const NotesComponent: React.FC<PurchaseNotesProps> = ({reservationId}) => {
                 withCredentials:true
             });
             fetchPurchaseNotes();
+            try {
+                await syncAfterNotesChange(reservationId);
+            } catch (syncError) {
+                console.error("Error syncing calendar after note deletion:", syncError);
+            }
             toast({
                 title: "Note deleted",
                 status: "success",

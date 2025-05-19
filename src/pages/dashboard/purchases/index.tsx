@@ -1125,7 +1125,27 @@ const PurchaseDetails = ({reservation, onBack}) => {
             />
 
             <ChangeArrivalModal
-                booking={reservation}
+                booking={{
+                    ...reservation,
+                    id: reservation?.id,
+                    tourId: reservation?.tourId || reservation?.tour?.id,
+                    reservation_date: reservation?.reservation_date,
+                    time: reservation?.reservation_date ? 
+                        new Date(reservation.reservation_date).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) : '',
+                    dateFormatted: reservation?.reservation_date ? 
+                        new Date(reservation.reservation_date).toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric'
+                        }) : '',
+                    paymentMethodId: reservation?.PaymentTransaction?.[0]?.paymentMethodId || reservation?.paymentMethodId,
+                    valuePerGuest: reservation?.valuePerGuest,
+                    guestQuantity: reservation?.guestQuantity,
+                    total_price: reservation?.total_price,
+                }}
                 isOpen={isChangeArrivalonOpen}
                 onClose={() => setChangeArrivalOpen(false)}
             />

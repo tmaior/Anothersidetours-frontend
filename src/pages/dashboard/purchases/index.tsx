@@ -2182,7 +2182,34 @@ const PurchasesPage = () => {
             try {
                 if (reservation.isGroupBooking && reservation.groupItems) {
                     const groupToursPromises = reservation.groupItems.map(async (item) => {
-                        const tourPrice = Number(item.valuePerGuest || item.tour?.price || 0);
+                        let tourPrice = 0;
+                        try {
+                            const tierResponse = await axios.get(
+                                `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${item.tour?.id}`,
+                                { withCredentials: true }
+                            );
+                            if (tierResponse.data && tierResponse.data.length > 0) {
+                                const tierData = tierResponse.data[0];
+                                const itemGuestCount = Number(item.guestQuantity || 0);
+                                
+                                if (tierData.pricingType === 'tiered' && tierData.tierEntries?.length > 0) {
+                                    const sortedTiers = [...tierData.tierEntries].sort((a, b) => b.quantity - a.quantity);
+                                    const applicableTier = sortedTiers.find(tier => itemGuestCount >= tier.quantity);
+                                    if (applicableTier) {
+                                        tourPrice = applicableTier.price;
+                                    } else {
+                                        tourPrice = tierData.basePrice;
+                                    }
+                                } else {
+                                    tourPrice = tierData.basePrice;
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error fetching tier pricing:', error);
+                        }
+                        if (tourPrice <= 0) {
+                            tourPrice = Number(item.valuePerGuest || item.tour?.price || 0);
+                        }
                         const guestCount = Number(item.guestQuantity || 0);
                         const gratuityAmount = Number(item.gratuityAmount || 0);
                         const addons = await fetchAddonsForReservation(item.id, item.tour?.id);
@@ -2202,7 +2229,7 @@ const PurchasesPage = () => {
                     });
 
                     const groupTours = await Promise.all(groupToursPromises);
-                    const totalAmount = groupTours.reduce((sum, tour) => sum + tour.total, 0);
+                    const totalAmount = groupTours.reduce((sum, tour) => sum + (tour.total || 0), 0);
 
                     setDetailedSummaryData({
                         tours: groupTours,
@@ -2212,7 +2239,36 @@ const PurchasesPage = () => {
                         }]
                     });
                 } else {
-                    const tourPrice = Number(reservation.valuePerGuest || reservation.tour?.price || 0);
+                    let tourPrice = 0;
+                    try {
+                        const tierResponse = await axios.get(
+                            `${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${reservation.tour?.id}`,
+                            { withCredentials: true }
+                        );
+                        
+                        if (tierResponse.data && tierResponse.data.length > 0) {
+                            const tierData = tierResponse.data[0];
+                            const singleGuestCount = Number(reservation.guestQuantity || 0);
+                            
+                            if (tierData.pricingType === 'tiered' && tierData.tierEntries?.length > 0) {
+                                const sortedTiers = [...tierData.tierEntries].sort((a, b) => b.quantity - a.quantity);
+                                const applicableTier = sortedTiers.find(tier => singleGuestCount >= tier.quantity);
+                                
+                                if (applicableTier) {
+                                    tourPrice = applicableTier.price;
+                                } else {
+                                    tourPrice = tierData.basePrice;
+                                }
+                            } else {
+                                tourPrice = tierData.basePrice;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error fetching tier pricing for single reservation:', error);
+                    }
+                    if (tourPrice <= 0) {
+                        tourPrice = Number(reservation.valuePerGuest || reservation.tour?.price || 0);
+                    }
                     const guestCount = Number(reservation.guestQuantity || 0);
                     const gratuityAmount = Number(reservation.gratuityAmount || 0);
                     const addons = await fetchAddonsForReservation(reservation.id, reservation.tour?.id);

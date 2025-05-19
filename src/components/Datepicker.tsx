@@ -308,7 +308,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                                         ? '#337AB7'
                                         : isPast || isBlocked || isDayUnavailable
                                             ? 'white.300'
-                                            : '#E9F7D4'
+                                            : 'gray.100'
                                 }
                                 color={
                                     isSelected

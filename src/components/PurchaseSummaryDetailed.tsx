@@ -52,8 +52,7 @@ const PurchaseSummaryDetailed: React.FC<PurchaseSummaryDetailedProps> = ({
     const grandTotal = tours.reduce((total, tour) => total + calculateTourTotal(tour), 0);
 
     return (
-        <Box bg="gray.50" p={6} borderRadius="md"
-             marginTop={"-350"}>
+        <Box bg="gray.50" p={6} borderRadius="md">
             <VStack spacing={4} align="stretch">
                 <Text fontWeight="bold" fontSize="lg" mb={2}>Purchase Summary</Text>
 

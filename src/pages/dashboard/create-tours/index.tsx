@@ -599,6 +599,7 @@ interface SchedulesAvailabilityStepProps {
     onBack: () => void;
     isEditing?: boolean;
     pricingData?: any;
+    tourIdProp?: string;
     originalItems?: {
         includedItems: string[];
         notIncludedItems: string[];
@@ -641,6 +642,7 @@ function SchedulesAvailabilityStep({
     onBack,
     isEditing = false,
     pricingData = null,
+    tourIdProp = "",
     originalItems = { includedItems: [], notIncludedItems: [], bringItems: [] }
 }: SchedulesAvailabilityStepProps) {
     const router = useRouter();
@@ -2438,7 +2440,11 @@ function SchedulesAvailabilityStep({
                                     </ModalContent>
                                 </Modal>
                             </Box>
-                            <CustomerQuestionnaire ref={questionnaireRef} isEditing={isEditing}/>
+                            <CustomerQuestionnaire 
+                                ref={questionnaireRef} 
+                                isEditing={isEditing} 
+                                tourId={tourId || tourIdProp} 
+                            />
                         </Box>
                         <Divider/>
                         <HStack justify="space-between">
@@ -2608,6 +2614,7 @@ function SchedulesAvailabilityStep({
 interface CreateToursPageProps {
     isEditing?: boolean;
     pricingData?: any;
+    tourId?: string;
     originalItems?: {
         includedItems: string[];
         notIncludedItems: string[];
@@ -2617,7 +2624,8 @@ interface CreateToursPageProps {
 
 function CreateToursPage({
     isEditing = false, 
-    pricingData = null, 
+    pricingData = null,
+    tourId = "",
     originalItems = { includedItems: [], notIncludedItems: [], bringItems: [] }
 }: CreateToursPageProps) {
     const [currentStep, setCurrentStep] = useState(1);
@@ -2632,6 +2640,7 @@ function CreateToursPage({
                 }}
                 isEditing={isEditing}
                 pricingData={pricingData}
+                tourIdProp={tourId}
                 originalItems={originalItems}
             />
         );

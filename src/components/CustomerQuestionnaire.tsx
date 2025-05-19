@@ -10,26 +10,34 @@ export interface QuestionnaireRef {
 
 interface CustomerQuestionnaireProps {
     isEditing?: boolean;
+    tourId?: string;
 }
 
 const CustomerQuestionnaire = forwardRef((props: CustomerQuestionnaireProps, ref: ForwardedRef<QuestionnaireRef>) => {
-    const { isEditing = false } = props;
+    const { isEditing = false, tourId } = props;
     const [questions, setQuestions] = useState<Array<{id: number, label: string, required: boolean}>>([]);
 
     useEffect(() => {
-        if (isEditing) {
-            try {
-                const savedQuestions = window.localStorage.getItem('tourQuestions');
-                if (savedQuestions) {
-                    const parsedQuestions = JSON.parse(savedQuestions);
-                    setQuestions(parsedQuestions);
-                    window.localStorage.removeItem('tourQuestions');
+        if (isEditing && tourId) {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/tour/${tourId}`, {
+                credentials: "include"
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    const formattedQuestions = data.map(item => ({
+                        id: item.id,
+                        label: item.title,
+                        required: false
+                    }));
+                    setQuestions(formattedQuestions);
                 }
-            } catch (error) {
-                console.error("Error loading questions from localStorage:", error);
-            }
+            })
+            .catch(error => {
+                console.error("Error loading questions:", error);
+            });
         }
-    }, [isEditing]);
+    }, [isEditing, tourId]);
 
     useImperativeHandle(ref, () => ({
         getQuestions: () => questions,

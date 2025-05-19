@@ -105,19 +105,11 @@ function EditTourPage() {
                     console.error("Error fetching bring items:", bringItemsError);
                 }
                 try {
-                    const additionalInfoRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${id}`,{
+                    const additionalInfoRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/tour/${id}`,{
                         credentials: "include",
                     });
                     if (additionalInfoRes.ok) {
-                        const additionalInfoData = await additionalInfoRes.json();
-                        if (Array.isArray(additionalInfoData) && additionalInfoData.length > 0) {
-                            const formattedQuestions = additionalInfoData.map(question => ({
-                                id: Date.now() + Math.floor(Math.random() * 10000),
-                                label: question.title,
-                                required: false
-                            }));
-                            window.localStorage.setItem('tourQuestions', JSON.stringify(formattedQuestions));
-                        }
+                        await additionalInfoRes.json();
                     }
                 } catch (additionalInfoError) {
                     console.error("Error fetching additional information:", additionalInfoError);
@@ -180,6 +172,7 @@ function EditTourPage() {
     return <CreateToursPage 
         isEditing 
         pricingData={pricingData} 
+        tourId={id as string}
         originalItems={{
             includedItems: originalIncludedItems,
             notIncludedItems: originalNotIncludedItems,

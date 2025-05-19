@@ -649,14 +649,6 @@ const PurchaseDetails = ({reservation, onBack}) => {
             reservation.paymentIntentId;
         const paymentMethodId = reservation.PaymentTransaction?.[0]?.paymentMethodId ||
             reservation.paymentMethodId;
-        console.log('Reservation data for refund:', {
-            id: reservation.id,
-            paymentIntentId: paymentIntentId,
-            paymentMethodId: paymentMethodId,
-            setupIntentId: reservation.setupIntentId,
-            total_price: reservation.total_price,
-            PaymentTransaction: reservation.PaymentTransaction
-        });
 
         return {
             id: reservation.id,

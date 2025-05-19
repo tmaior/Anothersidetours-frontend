@@ -29,13 +29,17 @@ export default function FinalModal({isOpen, onClose}: FinalModalProps) {
             <Flex flex="1" direction="column" p={4}>
                 <Flex>
                     <Text
-                        bg="#DFF1DB"
+                        bg="#3182ce"
                         w="full"
                         h="70px"
                         textAlign="center"
                         display="flex"
                         alignItems="center"
                         justifyContent="center"
+                        fontSize="sm"
+                        sx={{
+                            WebkitTextStroke: '1px white',
+                        }}
                     >
                         YOUR BOOKING HAS BEEN PLACED
                     </Text>

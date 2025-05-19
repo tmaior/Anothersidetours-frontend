@@ -414,8 +414,8 @@ const PurchaseList = ({
         const ungrouped: ReservationItem[] = [];
 
         const sortedReservations = [...reservations].sort((a, b) => {
-            const dateA = new Date(a.createdAt || a.created_at || '').getTime();
-            const dateB = new Date(b.createdAt || b.created_at || '').getTime();
+            const dateA = new Date(String(a.createdAt || a.created_at || '')).getTime();
+            const dateB = new Date(String(b.createdAt || b.created_at || '')).getTime();
             return dateB - dateA;
         });
 
@@ -432,8 +432,8 @@ const PurchaseList = ({
 
         Object.keys(grouped).forEach(groupId => {
             grouped[groupId].sort((a, b) => {
-                const dateA = new Date(a.createdAt || a.created_at || '').getTime();
-                const dateB = new Date(b.createdAt || b.created_at || '').getTime();
+                const dateA = new Date(String(a.createdAt || a.created_at || '')).getTime();
+                const dateB = new Date(String(b.createdAt || b.created_at || '')).getTime();
                 return dateB - dateA;
             });
         });

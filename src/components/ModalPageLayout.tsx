@@ -45,7 +45,7 @@ export default function ModalPageLayout({
             left="0"
             right="0"
             bottom="0"
-            zIndex="9999"
+            zIndex="999"
             onClick={handleBackgroundClick}
             overflowY={{ base: "auto", md: "auto" }}
             overflowX="hidden"
@@ -60,6 +60,8 @@ export default function ModalPageLayout({
                 onClick={(e) => e.stopPropagation()}
                 overflowY={{ base: "auto", md: "auto" }}
                 overflowX="hidden"
+                position="relative"
+                zIndex="1000"
             >
                 {children}
             </Container>

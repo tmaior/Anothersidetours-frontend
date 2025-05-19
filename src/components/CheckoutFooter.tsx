@@ -101,6 +101,7 @@ export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
                             onChange={handleCheckboxChange}
                             w={{ base: "full", md: "300px" }}
                             textAlign={{ base: "center", md: "left" }}
+                            zIndex="1001"
                         >
                             I agree to the{" "}
                             <Link color="teal.500" onClick={(e) => {
@@ -145,8 +146,8 @@ export default function CheckoutFooter({totalAmount, onCheckout, onPayment}) {
                     </Flex>
 
                     <Modal isOpen={isOpen} onClose={onClose} isCentered>
-                        <ModalOverlay/>
-                        <ModalContent maxW={{ base: "90%", md: "600px" }} maxH={{ base: "80vh", md: "400px" }}>
+                        <ModalOverlay zIndex="1002"/>
+                        <ModalContent maxW={{ base: "90%", md: "600px" }} maxH={{ base: "80vh", md: "400px" }} zIndex="1002">
                             <ModalHeader>Terms and Conditions</ModalHeader>
                             <ModalCloseButton/>
                             <ModalBody overflowY="auto" padding="20px">

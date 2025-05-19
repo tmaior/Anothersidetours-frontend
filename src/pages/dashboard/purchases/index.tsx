@@ -61,6 +61,8 @@ import ReturnPaymentModal from '../../../components/ReturnPaymentModal';
 import {FaRegCreditCard} from 'react-icons/fa';
 import {BiCheck} from 'react-icons/bi';
 import withPermission from "../../../utils/withPermission";
+import {TbClipboardText} from 'react-icons/tb';
+import ManageQuestionnairesModal from '../../../components/ManageQuestionnairesModal';
 
 type GuestItemProps = {
     name: string;
@@ -553,6 +555,7 @@ const PurchaseDetails = ({reservation, onBack}) => {
     const loading = false;
     const [localGuides, setLocalGuides] = useState([]);
     const [isReturnPaymentModalOpen, setIsReturnPaymentModalOpen] = useState(false);
+    const [isQuestionnaireModalOpen, setQuestionnaireModalOpen] = useState(false);
 
     useEffect(() => {
         if (reservation?.id) {
@@ -1092,16 +1095,26 @@ const PurchaseDetails = ({reservation, onBack}) => {
                                         Manage Guides
                                     </Button>
                                 </Box>
-                                <ManageGuidesModal
-                                    isOpen={isGuideModalOpen}
-                                    onClose={() => setGuideModalOpen(false)}
-                                    onSelectGuide={(selected) => {
-                                        setSelectedGuide(selected);
-                                        setGuideModalOpen(false);
-                                        handleSaveGuides(selected);
-                                    }}
-                                    reservationId={reservation?.id || ''}
-                                />
+                                <Box mt={6}>
+                                    <HStack spacing={2} justifyContent="flex-start">
+                                        <TbClipboardText/>
+                                        <Text fontSize="xl" fontWeight="bold">Questionnaire</Text>
+                                    </HStack>
+                                    <Text fontSize="sm" color="black.500">
+                                        Click to manage responses
+                                    </Text>
+
+                                    <Button
+                                        variant="link"
+                                        size="xs"
+                                        onClick={() => setQuestionnaireModalOpen(true)}
+                                        color="black"
+                                        fontWeight={"bold"}
+                                    >
+                                        <CiSquarePlus size={"17px"}/>
+                                        Manage Questionnaire
+                                    </Button>
+                                </Box>
                             </HStack>
                         </Box>
                     </Box>
@@ -1208,6 +1221,24 @@ const PurchaseDetails = ({reservation, onBack}) => {
                         reservation?.paymentMethodId,
                     setupIntentId: reservation?.setupIntentId
                 }}
+            />
+
+            <ManageGuidesModal
+                isOpen={isGuideModalOpen}
+                onClose={() => setGuideModalOpen(false)}
+                onSelectGuide={(selected) => {
+                    setSelectedGuide(selected);
+                    setGuideModalOpen(false);
+                    handleSaveGuides(selected);
+                }}
+                reservationId={reservation?.id || ''}
+            />
+
+            <ManageQuestionnairesModal
+                isOpen={isQuestionnaireModalOpen}
+                onClose={() => setQuestionnaireModalOpen(false)}
+                tourId={reservation?.tourId || reservation?.tour?.id}
+                reservationId={reservation?.id || ''}
             />
         </VStack>
     );

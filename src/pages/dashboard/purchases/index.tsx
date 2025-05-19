@@ -185,6 +185,7 @@ const GroupCard: React.FC<GroupCardProps> = ({
         if (toggleDetailedSummary && items.length > 0) {
             const groupReservation = {
                 ...items[0],
+                user: items[0].user,
                 isGroupBooking: true,
                 groupItems: items
             };
@@ -241,7 +242,7 @@ const GroupCard: React.FC<GroupCardProps> = ({
                         </Box>
                     </Box>
                     <VStack align="start" spacing={0}>
-                        <Text fontWeight="bold" fontSize="sm">{selectedReservation.user.name}</Text>
+                        <Text fontWeight="bold" fontSize="sm">{items[0]?.user?.name || 'Group Booking'}</Text>
                         <Text fontSize="sm">⦿ {totalGuests} Total Guests</Text>
                     </VStack>
                 </HStack>

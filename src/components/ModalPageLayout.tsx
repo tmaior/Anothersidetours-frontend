@@ -9,6 +9,8 @@ export interface ModalPageLayoutProps {
     width?: string | { base: string; md: string; lg: string };
     height?: string | { base: string; md: string; lg: string };
     minHeight?: string | { base: string; md: string };
+    maxHeight?: string | { base: string; md: string };
+    overflow?: string;
 }
 
 export default function ModalPageLayout({ 
@@ -18,7 +20,9 @@ export default function ModalPageLayout({
     isCheckout = false,
     width,
     height,
-    minHeight
+    minHeight,
+    maxHeight,
+    overflow
 }: ModalPageLayoutProps) {
     if (!isOpen) {
         return null;
@@ -54,11 +58,12 @@ export default function ModalPageLayout({
                 maxW={width || { base: "100%", md: "95%", lg: "6xl" }}
                 h={height || { base: "100%", md: "auto" }}
                 minH={minHeight || { base: "100vh", md: "750px" }}
+                maxH={maxHeight}
                 bg="white"
                 p={0}
                 borderRadius="md"
                 onClick={(e) => e.stopPropagation()}
-                overflowY={{ base: "auto", md: "auto" }}
+                overflowY={overflow === "auto" ? "auto" : { base: "auto", md: "auto" }}
                 overflowX="hidden"
                 position="relative"
                 zIndex="1000"

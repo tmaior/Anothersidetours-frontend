@@ -8,12 +8,16 @@ interface NavbarProps {
 }
 
 export default function Navbar({title, description}:NavbarProps) {
-
     const {imageUrl} = useGuest();
 
     return (
         <>
-            <Box position="relative" w="full" h={{ base: "180px", sm: "200px", md: "250px" }}>
+            <Box 
+                position="relative" 
+                w="full"
+                minH={{ base: "180px", sm: "200px", md: "250px" }}
+                h="auto"
+            >
                 <Box
                     position="absolute"
                     top={0}
@@ -25,6 +29,7 @@ export default function Navbar({title, description}:NavbarProps) {
                     bgSize="cover"
                     bgRepeat="no-repeat"
                     filter="brightness(0.5)"
+                    minH={{ base: "180px", sm: "200px", md: "250px" }}
                 />
 
                 <Box
@@ -34,36 +39,39 @@ export default function Navbar({title, description}:NavbarProps) {
                     right={0}
                     bottom={0}
                     bg="rgba(0, 0, 0, 0.5)"
+                    minH={{ base: "180px", sm: "200px", md: "250px" }}
                 />
 
                 <Flex
                     position="relative"
                     w="full"
-                    h="100%"
+                    minH={{ base: "180px", sm: "200px", md: "250px" }}
+                    py={{ base: 4, md: 6 }}
+                    px={{ base: 2, md: 4 }}
                     align="center"
-                    justify="flex-start"
+                    justify="center"
                     flexDirection="column"
                     color="white"
                     textAlign="center"
-                    p={{ base: 2, md: 4 }}
                 >
                     <Text 
                         fontSize={{ base: "xl", sm: "2xl", md: "3xl" }} 
                         fontWeight="thin" 
                         mb={{ base: 2, md: 4 }}
                         px={{ base: 2, md: 4 }}
+                        maxW="90%"
+                        wordBreak="break-word"
                     >
                         {title}
                     </Text>
-                    <Text fontSize={{ base: "sm", md: "md" }}>
-                        <span>⏱ 4 hours</span> <br/>
+                    <Text fontSize={{ base: "sm", md: "md" }} mb={{ base: 2, md: 3 }}>
+                        <span>⏱ 4 hours</span>
                     </Text>
                     <Text 
-                        mt={{ base: 2, md: 4 }} 
-                        noOfLines={5}
                         fontSize={{ base: "xs", sm: "sm", md: "sm" }}
                         px={{ base: 4, md: 6 }}
-                        maxW={{ base: "100%", md: "80%" }}
+                        maxW={{ base: "90%", md: "80%" }}
+                        wordBreak="break-word"
                     >
                         {description}
                     </Text>
@@ -76,6 +84,7 @@ export default function Navbar({title, description}:NavbarProps) {
                 alignItems="center" 
                 justify="center" 
                 p={{ base: 2, md: 4 }}
+                mt={2}
             >
                 <Text fontSize={{ base: "sm", sm: "md", md: "lg" }} fontWeight="medium">BOOKING DETAILS</Text>
             </Flex>

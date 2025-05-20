@@ -158,7 +158,9 @@ export default function BookingDetailsPage({reservationData}) {
             <ModalPageLayout 
                 isOpen={isBookingOpen} 
                 width={{ base: "98%", md: "95%", lg: "1000px" }}
-                minHeight={{ base: "90vh", md: "700px" }}
+                minHeight={{ base: "auto", md: "700px" }}
+                maxHeight={{ base: "none", md: "90vh" }}
+                overflow="auto"
             >
                 <BookingDetails
                     tourId={tourIdAsString}

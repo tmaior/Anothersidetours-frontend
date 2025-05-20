@@ -226,13 +226,13 @@ export default function BookingDetails({
         <Flex
             direction="column"
             minHeight="89vh"
-            justify="space-between"
+            h="auto"
             w="full"
             maxW="100vw"
-            overflow="hidden"
             position="relative"
+            overflow="hidden"
         >
-            <Box>
+            <Box flex="1" overflow="auto">
                 <Navbar title={title} description={description}/>
                 <Grid
                     originalPrice={calculatedPrice.toString()}
@@ -249,7 +249,7 @@ export default function BookingDetails({
                 <AddOns addons={addons}/>
             </Box>
 
-            <Box mt="auto" mb={4} marginTop="-30px" zIndex="1">
+            <Box mt={4} mb={4} position="sticky" bottom={0} bg="white" zIndex={1}>
                 <FooterBar onContinue={handleValidation} continueText={"CONTINUE"}/>
             </Box>
         </Flex>

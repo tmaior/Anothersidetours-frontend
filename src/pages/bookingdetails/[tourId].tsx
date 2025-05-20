@@ -198,7 +198,10 @@ export default function BookingDetailsPage({reservationData}) {
             >
                 <InformationAdditionalModal 
                     isOpen={isAdditionalOpen} 
-                    onClose={handleAdditionalComplete} 
+                    onClose={handleAdditionalComplete}
+                    name={tourData.name}
+                    description={tourData.description}
+                    imageUrl={tourData.imageUrl} 
                 />
             </ModalPageLayout>
             

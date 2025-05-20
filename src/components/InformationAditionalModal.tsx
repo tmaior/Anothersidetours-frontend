@@ -18,7 +18,10 @@ import {useGuest} from "../contexts/GuestContext";
 interface InformationAdditionalModalProps {
     isOpen: boolean,
     onClose: () => void,
-    onContinue?: () => void
+    onContinue?: () => void,
+    name: string,
+    description: string,
+    imageUrl: string
 }
 
 function TimeIcon() {
@@ -28,16 +31,14 @@ function TimeIcon() {
 export default function InformationAdditionalModal({
                                                        isOpen,
                                                        onClose,
+                                                       name,
+                                                       description,
+                                                       imageUrl
                                                    }: InformationAdditionalModalProps) {
     const {isOpen: isFinalOpen, onOpen: onFinalOpen, onClose: onFinalClose} = useDisclosure();
     const [inputs, setInputs] = useState([]);
     const [updatedValues, setUpdatedValues] = useState({});
-    const {reservationId, tourId, title, description, selectedDate, selectedTime, imageUrl} = useGuest();
-    const [tourDetails, setTourDetails] = useState({
-        name: title || "",
-        description: description || "",
-        imageUrl: imageUrl || "https://anothersideoflosangelestours.com/wp-content/uploads/2022/02/image3-e1471839954960-1-1.jpg"
-    });
+    const {reservationId, tourId, selectedDate, selectedTime} = useGuest();
     
     useEffect(() => {
         if (isOpen) {
@@ -58,25 +59,21 @@ export default function InformationAdditionalModal({
                         onFinalOpen();
                     }
                 });
-            if (!title || !description) {
+            if (!name || !description) {
                 fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`,
                     {
                         credentials: 'include',
                     })
                     .then(response => response.json())
                     .then(data => {
-                        setTourDetails({
-                            name: data.name || "",
-                            description: data.description || "",
-                            imageUrl: data.imageUrl || tourDetails.imageUrl
-                        });
+                        imageUrl = data.imageUrl || imageUrl;
                     })
                     .catch(error => {
                         console.error("Error fetching tour details:", error);
                     });
             }
         }
-    },[tourId, isOpen, onClose, onFinalOpen, title, description]);
+    },[tourId, isOpen, onClose, onFinalOpen, name, description, imageUrl]);
 
     const handleInputChange = (id: string, value: string) => {
         setUpdatedValues((prev) => ({...prev, [id]: value}));
@@ -168,7 +165,7 @@ export default function InformationAdditionalModal({
                                     width="100%"
                                 >
                                     <Image
-                                        src={tourDetails.imageUrl}
+                                        src={imageUrl}
                                         borderRadius="sm"
                                         width="100%"
                                         height="150px"
@@ -179,10 +176,10 @@ export default function InformationAdditionalModal({
                                     
                                     <VStack align="start" spacing={2}>
                                         <Text fontWeight="bold" fontSize="lg">
-                                            {tourDetails.name}
+                                            {name}
                                         </Text>
                                         <Text fontSize="sm" color="gray.600" noOfLines={6}>
-                                            {tourDetails.description}
+                                            {description}
                                         </Text>
                                         <HStack spacing={4} mt={2} color="gray.500">
                                             <HStack spacing={1}>

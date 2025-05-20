@@ -36,10 +36,10 @@ export default function ModalPageLayout({
 
     return (
         <Box
-            marginTop={isCheckout ? "0px" : "-30px"}
+            marginTop={"0px"}
             paddingTop={isCheckout ? { base: "20px", md: "80px" } : "0px"}
             display="flex"
-            alignItems="center"
+            alignItems="flex-start"
             justifyContent="center"
             minHeight="100vh"
             maxWidth="100vw"
@@ -56,14 +56,14 @@ export default function ModalPageLayout({
         >
             <Container
                 maxW={width || { base: "100%", md: "95%", lg: "6xl" }}
-                h={height || { base: "100%", md: "auto" }}
-                minH={minHeight || { base: "100vh", md: "750px" }}
-                maxH={maxHeight}
+                h="calc(100vh - 16px)"
+                minH="auto"
+                maxH="calc(100vh - 16px)"
                 bg="white"
                 p={0}
                 borderRadius="md"
                 onClick={(e) => e.stopPropagation()}
-                overflowY={overflow === "auto" ? "auto" : { base: "auto", md: "auto" }}
+                overflowY="auto"
                 overflowX="hidden"
                 position="relative"
                 zIndex="1000"

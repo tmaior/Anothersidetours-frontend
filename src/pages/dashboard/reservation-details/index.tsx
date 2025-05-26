@@ -130,31 +130,146 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
 
     const handleAccept = async () => {
         try {
-            const transactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`,{
+            const transactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${reservation.id}`, {
                 credentials: "include",
             });
 
-            if (!transactionResponse.ok) throw new Error("Failed to get payment transaction data");
+            if (!transactionResponse.ok) {
+                const errorText = await transactionResponse.text();
+                console.error("Transaction response error:", {
+                    status: transactionResponse.status,
+                    statusText: transactionResponse.statusText,
+                    body: errorText
+                });
+                throw new Error(`Failed to get payment transaction data: ${transactionResponse.status} ${transactionResponse.statusText}`);
+            }
 
-            const transactionData = await transactionResponse.json();
+            const transactionText = await transactionResponse.text();
+            if (!transactionText) {
+                console.error("Empty response received from transaction endpoint");
+                throw new Error("No data received from payment transaction endpoint");
+            }
+
+            let transactionData;
+            try {
+                transactionData = JSON.parse(transactionText);
+            } catch (e) {
+                console.error("Failed to parse transaction response:", e, "Response text:", transactionText);
+                throw new Error("Invalid response format from payment transaction endpoint");
+            }
 
             if (!transactionData || transactionData.length === 0) {
                 throw new Error("No payment transaction found for this reservation");
             }
 
             const transaction = transactionData[0];
+
+            if (!reservation.tenantId) {
+                const tourResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${reservation.tourId}`, {
+                    credentials: "include",
+                });
+
+                if (!tourResponse.ok) {
+                    const errorText = await tourResponse.text();
+                    console.error("Tour response error:", {
+                        status: tourResponse.status,
+                        statusText: tourResponse.statusText,
+                        body: errorText
+                    });
+                    throw new Error("Failed to get tour data");
+                }
+
+                const tourText = await tourResponse.text();
+                if (!tourText) {
+                    console.error("Empty response received from tour endpoint");
+                    throw new Error("No data received from tour endpoint");
+                }
+
+                let tourData;
+                try {
+                    tourData = JSON.parse(tourText);
+                    console.log("Tour data:", tourData);
+                    if (!tourData.tenantId) {
+                        throw new Error("No tenantId found in tour data");
+                    }
+                    reservation.tenantId = tourData.tenantId;
+                } catch (e) {
+                    console.error("Failed to parse tour response or get tenantId:", e, "Response text:", tourText);
+                    throw new Error("Invalid response format from tour endpoint or missing tenantId");
+                }
+            }
+
+            const tenantResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants/${reservation.tenantId}`, {
+                credentials: "include",
+            });
+
+            if (!tenantResponse.ok) {
+                const errorText = await tenantResponse.text();
+                console.error("Tenant response error:", {
+                    status: tenantResponse.status,
+                    statusText: tenantResponse.statusText,
+                    body: errorText,
+                    tenantId: reservation.tenantId
+                });
+                throw new Error(`Failed to get tenant data: ${tenantResponse.status} ${tenantResponse.statusText}`);
+            }
+
+            const tenantText = await tenantResponse.text();
+            
+            if (!tenantText) {
+                console.error("Empty response received from tenant endpoint", {
+                    tenantId: reservation.tenantId,
+                    endpoint: `${process.env.NEXT_PUBLIC_API_URL}/tenants/${reservation.tenantId}`
+                });
+                throw new Error("No data received from tenant endpoint");
+            }
+
+            let tenantData;
+            try {
+                tenantData = JSON.parse(tenantText);
+            } catch (e) {
+                console.error("Failed to parse tenant response:", e, "Response text:", tenantText);
+                throw new Error("Invalid response format from tenant endpoint");
+            }
+
+            const stripeAccountId = tenantData.stripeAccountId;
+            if (!stripeAccountId) {
+                console.warn("No stripeAccountId found for tenant:", tenantData);
+            }
+
             const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
                 method: "POST",
                 credentials: "include",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
-                    transactionId: transaction.id
+                    transactionId: transaction.id,
+                    stripeAccountId: stripeAccountId
                 }),
             });
 
-            if (!paymentResponse.ok) throw new Error("Failed to process payment");
+            if (!paymentResponse.ok) {
+                const errorText = await paymentResponse.text();
+                console.error("Payment processing error:", {
+                    status: paymentResponse.status,
+                    statusText: paymentResponse.statusText,
+                    body: errorText
+                });
+                throw new Error("Failed to process payment");
+            }
 
-            const paymentResult = await paymentResponse.json();
+            const paymentText = await paymentResponse.text();
+            if (!paymentText) {
+                console.error("Empty response received from payment endpoint");
+                throw new Error("No data received from payment endpoint");
+            }
+
+            let paymentResult;
+            try {
+                paymentResult = JSON.parse(paymentText);
+            } catch (e) {
+                console.error("Failed to parse payment response:", e, "Response text:", paymentText);
+                throw new Error("Invalid response format from payment endpoint");
+            }
 
             const parsedDate = parse(reservation.dateFormatted, 'MMM dd, yyyy', new Date());
             const formattedDate = format(parsedDate, 'yyyy-MM-dd');
@@ -189,7 +304,26 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                 }),
             });
 
-            if (!emailResponse.ok) throw new Error("Failed to send email");
+            if (!emailResponse.ok) {
+                const errorText = await emailResponse.text();
+                console.error("Email sending error:", {
+                    status: emailResponse.status,
+                    statusText: emailResponse.statusText,
+                    body: errorText
+                });
+                throw new Error("Failed to send email");
+            }
+
+            const emailText = await emailResponse.text();
+            if (emailText) {
+                try {
+                    const emailResult = JSON.parse(emailText);
+                    console.log("Email sent successfully:", emailResult);
+                } catch (e) {
+                    console.warn("Email response not JSON format:", emailText);
+                }
+            }
+
             setCurrentStatus("ACCEPTED");
             setReservations((prevDays) =>
                 prevDays.map((dayObj) => ({
@@ -212,7 +346,7 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                 isClosable: true,
             });
         } catch (error) {
-            console.error("Error processing payment:", error);
+            console.error("Error in handleAccept:", error);
             toast({
                 title: "Error",
                 description: error.message || "Failed to accept reservation.",

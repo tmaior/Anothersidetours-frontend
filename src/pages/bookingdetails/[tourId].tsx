@@ -41,6 +41,7 @@ export default function BookingDetailsPage({reservationData}) {
     const [finalPrice, setFinalPrice] = useState(0);
     const [, setTierPricing] = useState(null);
     const [hasAdditionalFields, setHasAdditionalFields] = useState(false);
+    const [tenantStripeAccountId, setTenantStripeAccountId] = useState(null);
 
     useEffect(() => {
         if (tourIdAsString) {
@@ -76,6 +77,17 @@ export default function BookingDetailsPage({reservationData}) {
                     setTourData(data);
                     setTourId(id);
                     setImageUrl(data.imageUrl);
+
+                    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants/${data.tenantId}`, {
+                        credentials: 'include'
+                    });
+                })
+                .then(async (tenantRes) => {
+                    if (!tenantRes.ok) {
+                        throw new Error(`Error fetching tenant: ${tenantRes.status}`);
+                    }
+                    const tenantData = await tenantRes.json();
+                    setTenantStripeAccountId(tenantData.stripeAccountId);
 
                     return fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/tour/${id}`);
                 })
@@ -175,6 +187,7 @@ export default function BookingDetailsPage({reservationData}) {
                     selectedDate={reservationData?.date || ""}
                     selectedTime={reservationData?.time || ""}
                     onContinue={handleContinueToCheckout}
+                    stripeAccountId={tenantStripeAccountId}
                 />
             </ModalPageLayout>
 
@@ -190,6 +203,7 @@ export default function BookingDetailsPage({reservationData}) {
                     valuePrice={finalPrice}
                     onClose={handleCloseCheckout}
                     onBack={handleBackToBooking}
+                    stripeAccountId={tenantStripeAccountId}
                 />
             </ModalPageLayout>
 

@@ -20,6 +20,7 @@ interface BookingDetailsProps {
     phone?: string;
     selectedDate?: string;
     selectedTime?: string;
+    stripeAccountId?: string;
 }
 
 interface TierEntry {

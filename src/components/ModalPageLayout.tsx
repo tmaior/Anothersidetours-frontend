@@ -55,9 +55,7 @@ export default function ModalPageLayout({
             overflowX="hidden"
         >
             <Container
-                marginTop={"2px"}
-                width="100%"
-                maxW="none"
+                maxW={width || { base: "100%", md: "95%", lg: "6xl" }}
                 h="calc(100vh - 16px)"
                 minH="auto"
                 maxH="calc(100vh - 16px)"

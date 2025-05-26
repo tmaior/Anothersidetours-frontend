@@ -40,6 +40,7 @@ interface CheckoutModalProps {
     valuePrice: number | string;
     reservationId?: string;
     isInvoicePayment?: boolean;
+    stripeAccountId?: string;
 }
 
 export default function CheckoutModal({
@@ -49,7 +50,8 @@ export default function CheckoutModal({
                                           title,
                                           valuePrice,
                                           reservationId: propReservationId,
-                                          isInvoicePayment = false
+                                          isInvoicePayment = false,
+                                          stripeAccountId
                                       }: CheckoutModalProps) {
     const {isOpen: isCodeModalOpen, onOpen: openCodeModal, onClose: closeCodeModal} = useDisclosure();
     const {
@@ -208,8 +210,8 @@ export default function CheckoutModal({
                 : `${process.env.NEXT_PUBLIC_API_URL}/payments/create-setup-intent`;
 
             const setupIntentData = isInvoicePayment && transactionId
-                ? {transactionId: transactionId}
-                : {reservationId: reservation.id};
+                ? {transactionId: transactionId, stripeAccountId}
+                : {reservationId: reservation.id, stripeAccountId};
 
             const setupIntentResponse = await fetch(setupIntentEndpoint, {
                 method: 'POST',
@@ -249,8 +251,8 @@ export default function CheckoutModal({
                 : `${process.env.NEXT_PUBLIC_API_URL}/payments/save-payment-method`;
 
             const savePaymentData = isInvoicePayment && transactionId
-                ? {paymentMethodId, transactionId: transactionId}
-                : {paymentMethodId, reservationId: reservation.id};
+                ? {paymentMethodId, transactionId: transactionId, stripeAccountId}
+                : {paymentMethodId, reservationId: reservation.id, stripeAccountId};
 
             const savePaymentMethodResponse = await fetch(saveEndpoint, {
                 method: 'POST',
@@ -272,7 +274,10 @@ export default function CheckoutModal({
                     method: 'POST',
                     credentials: 'include',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({transactionId}),
+                    body: JSON.stringify({
+                        transactionId,
+                        stripeAccountId
+                    }),
                 });
 
                 if (!processPaymentRes.ok) {

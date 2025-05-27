@@ -29,11 +29,16 @@ export default function SelectCity() {
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const { currentUser, isLoadingAuth } = useAuth();
+    const { currentUser, isLoadingAuth, getUserIdFromToken } = useAuth();
 
     useEffect(() => {
         if (isLoadingAuth) return;
-        if (!currentUser) {
+        
+        const userIdFromToken = getUserIdFromToken();
+        const isAuthenticated = !!userIdFromToken || !!currentUser;
+
+        if (!isAuthenticated) {
+            setError("You need to be logged in to view this page");
             router.push("/login");
             return;
         }

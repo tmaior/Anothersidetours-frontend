@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
+import { parseCookies } from 'nookies';
 
 interface Role {
     id: string;
@@ -20,7 +21,24 @@ interface AuthContextType {
     isLoadingAuth: boolean;
     isAuthenticated: boolean;
     refetchUserProfile: () => Promise<void>;
+    getUserIdFromToken: () => string | null;
 }
+const parseJwt = (token: string): any => {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+            atob(base64)
+                .split('')
+                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+        );
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        console.error('Error parsing JWT token:', e);
+        return null;
+    }
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -50,6 +68,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const getUserIdFromToken = (): string | null => {
+        try {
+            const cookies = parseCookies();
+            const authToken = cookies.authToken || cookies.jwt || cookies.token;
+            
+            if (!authToken) return null;
+            
+            const decodedToken = parseJwt(authToken);
+            return decodedToken?.userId || decodedToken?.sub || null;
+        } catch (error) {
+            console.error('Error getting userId from token:', error);
+            return null;
+        }
+    };
+
     useEffect(() => {
         fetchUserProfile();
     }, []);
@@ -59,7 +92,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             currentUser,
             isLoadingAuth,
             isAuthenticated: !!currentUser,
-            refetchUserProfile: fetchUserProfile
+            refetchUserProfile: fetchUserProfile,
+            getUserIdFromToken
         }}>
             {children}
         </AuthContext.Provider>

@@ -1,4 +1,6 @@
 import {createContext, useContext, useState, useEffect} from 'react';
+import axios from 'axios';
+import { parseCookies, setCookie, destroyCookie } from 'nookies';
 
 interface Tour {
     id: string;
@@ -19,55 +21,116 @@ interface CartContextType {
     clearCart: () => void;
     setNavigationSource: (source: string) => void;
     navigationSource: string;
+    isAuthenticated: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider = ({children}) => {
-    const [cart, setCart] = useState<Tour[]>(() => {
-        if (typeof window !== 'undefined') {
-            const savedCart = localStorage.getItem('cart');
-            return savedCart ? JSON.parse(savedCart) : [];
-        }
-        return [];
+const saveCartToCookie = (cart: Tour[]) => {
+    setCookie(null, 'tour_cart', JSON.stringify(cart), {
+        maxAge: 30 * 24 * 60 * 60,
+        path: '/',
     });
+};
+
+const getCartFromCookie = () => {
+    const cookies = parseCookies();
+    return cookies.tour_cart ? JSON.parse(cookies.tour_cart) : [];
+};
+
+const clearCartCookie = () => {
+    destroyCookie(null, 'tour_cart', { path: '/' });
+};
+
+export const CartProvider = ({children}) => {
+    const [cart, setCart] = useState<Tour[]>([]);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     
     const [navigationSource, setNavigationSource] = useState<string>(() => {
         if (typeof window !== 'undefined') {
-            return localStorage.getItem('navigationSource') || '';
+            const cookies = parseCookies();
+            return cookies.navigationSource || '';
         }
         return '';
     });
+
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('cart', JSON.stringify(cart));
+        const checkAuth = async () => {
+            try {
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
+                    withCredentials: true
+                });
+                
+                setIsAuthenticated(true);
+                
+                const savedCart = getCartFromCookie();
+                setCart(savedCart);
+            } catch (error) {
+                setIsAuthenticated(false);
+                setCart([]);
+                clearCartCookie();
+            }
+        };
+        
+        checkAuth();
+    }, []);
+
+    useEffect(() => {
+        if (isAuthenticated && cart.length > 0) {
+            saveCartToCookie(cart);
         }
-    }, [cart]);
+    }, [cart, isAuthenticated]);
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            localStorage.setItem('navigationSource', navigationSource);
+            setCookie(null, 'navigationSource', navigationSource, {
+                maxAge: 30 * 24 * 60 * 60,
+                path: '/',
+            });
         }
     }, [navigationSource]);
+
     const addToCart = (tour: Tour) => {
-        setCart(prevCart => [...prevCart, tour]);
-    };
-    const removeFromCart = (index: number) => {
+        if (!isAuthenticated) return;
+        
         setCart(prevCart => {
-            const newCart = [...prevCart];
-            newCart.splice(index, 1);
+            const newCart = [...prevCart, tour];
+            saveCartToCookie(newCart);
             return newCart;
         });
     };
-    const newCart = (tour: Tour) => {
-        setCart([tour]);
+
+    const removeFromCart = (index: number) => {
+        if (!isAuthenticated) return;
+        
+        setCart(prevCart => {
+            const newCart = [...prevCart];
+            newCart.splice(index, 1);
+            saveCartToCookie(newCart);
+            return newCart;
+        });
     };
+
+    const newCart = (tour: Tour) => {
+        if (!isAuthenticated) return;
+        
+        const newCartData = [tour];
+        setCart(newCartData);
+        saveCartToCookie(newCartData);
+    };
+
     const resetCart = () => {
+        if (!isAuthenticated) return;
+        
         if (navigationSource !== 'make-a-purchase') {
             setCart([]);
+            clearCartCookie();
         }
     };
+
     const clearCart = () => {
         setCart([]);
+        clearCartCookie();
     };
 
     return (
@@ -80,7 +143,8 @@ export const CartProvider = ({children}) => {
             resetCart, 
             clearCart,
             navigationSource,
-            setNavigationSource
+            setNavigationSource,
+            isAuthenticated
         }}>
             {children}
         </CartContext.Provider>

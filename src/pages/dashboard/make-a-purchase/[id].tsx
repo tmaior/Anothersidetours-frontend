@@ -1454,6 +1454,7 @@ const PurchasePage = () => {
     };
 
     const handleCancel = () => {
+        clearCart();
         router.push('/dashboard/reservation');
     };
 

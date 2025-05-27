@@ -51,8 +51,8 @@ export default function MyProfileForm() {
     mfa: false
   })
 
-  const { currentUser, isLoadingAuth } = useAuth();
-  const userIdFromAuth = currentUser?.id;
+  const { currentUser, isLoadingAuth, getUserIdFromToken } = useAuth();
+  const userIdFromAuth = getUserIdFromToken();
 
   useEffect(() => {
     if (currentUser) {

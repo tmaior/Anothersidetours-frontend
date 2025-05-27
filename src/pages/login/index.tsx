@@ -49,7 +49,7 @@ export default function Login() {
                     }
                 );
                 if (res.data && res.data.employee) {
-                    localStorage.setItem("user", JSON.stringify(res.data.employee));
+                    // localStorage.setItem("user", JSON.stringify(res.data.employee));
 
                     try {
                         await axios.get(

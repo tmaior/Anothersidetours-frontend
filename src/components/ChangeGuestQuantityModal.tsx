@@ -40,6 +40,7 @@ import {format} from 'date-fns';
 import {CardElement, useElements, useStripe} from "@stripe/react-stripe-js";
 import {FiChevronDown} from "react-icons/fi";
 import { syncSingleReservation, syncReservationForGuides } from "../utils/calendarSync";
+import { useAuth } from "../contexts/AuthContext";
 
 const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
     const toast = useToast();
@@ -587,9 +588,13 @@ const CollectPaymentModal = ({isOpen, onClose, bookingChanges, booking}) => {
 
                 if (bookingResponse.data) {
                     try {
-                        const userId = localStorage.getItem('userId');
-                        if (userId) {
-                            await syncSingleReservation(booking.id, userId);
+                        const { currentUser } = useAuth();
+                        const userIdFromAuth = currentUser?.id;
+
+                        if (userIdFromAuth) {
+                            await syncSingleReservation(booking.id, userIdFromAuth);
+                        } else {
+                            console.warn("CollectPaymentModal: User ID not available from auth. Calendar sync skipped for user.");
                         }
                         await syncReservationForGuides(booking.id);
                     } catch (syncError) {
@@ -1241,9 +1246,13 @@ const CollectInvoiceModal = ({isOpen, onClose, bookingChanges, booking}) => {
 
             if (transactionResponse.data && bookingResponse.data) {
                 try {
-                    const userId = localStorage.getItem('userId');
-                    if (userId) {
-                        await syncSingleReservation(booking.id, userId);
+                    const { currentUser } = useAuth();
+                    const userIdFromAuth = currentUser?.id;
+
+                    if (userIdFromAuth) {
+                        await syncSingleReservation(booking.id, userIdFromAuth);
+                    } else {
+                         console.warn("CollectInvoiceModal: User ID not available from auth. Calendar sync skipped for user.");
                     }
                     await syncReservationForGuides(booking.id);
                 } catch (syncError) {
@@ -1994,9 +2003,13 @@ const ChangeGuestQuantityModal = ({isOpen, onClose, booking, guestCount, setGues
                     });
 
                 try {
-                    const userId = localStorage.getItem('userId');
-                    if (userId) {
-                        await syncSingleReservation(booking.id, userId);
+                    const { currentUser } = useAuth();
+                    const userIdFromAuth = currentUser?.id;
+
+                    if (userIdFromAuth) {
+                        await syncSingleReservation(booking.id, userIdFromAuth);
+                    } else {
+                        console.warn("ChangeGuestQuantityModal (handleChangeConfirm): User ID not available from auth. Calendar sync skipped for user.");
                     }
                     await syncReservationForGuides(booking.id);
                 } catch (syncError) {

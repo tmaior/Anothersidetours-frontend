@@ -13,6 +13,7 @@ import {
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface Tenant {
     imageUrl: string;
@@ -28,10 +29,11 @@ export default function SelectCity() {
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const { currentUser, isLoadingAuth } = useAuth();
 
     useEffect(() => {
-        const user = localStorage.getItem("user");
-        if (!user) {
+        if (isLoadingAuth) return;
+        if (!currentUser) {
             router.push("/login");
             return;
         }
@@ -57,7 +59,6 @@ export default function SelectCity() {
                 setError("Failed to load cities. Please try again.");
 
                 if (error.response && error.response.status === 401) {
-                    localStorage.removeItem("user");
                     router.push("/login");
                 }
             } finally {

@@ -18,6 +18,7 @@ import {validateEmail} from '../utils/utils'
 
 import { FaRegEye } from "react-icons/fa6";
 import { FaRegEyeSlash } from "react-icons/fa6";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function MyProfileForm() {
   const [formData, setFormData] = useState({
@@ -50,15 +51,26 @@ export default function MyProfileForm() {
     mfa: false
   })
 
-  const userData = localStorage.getItem('user');
-  const userDataToObject = userData ? JSON.parse(userData) : null;
+  const { currentUser, isLoadingAuth } = useAuth();
+  const userIdFromAuth = currentUser?.id;
 
-
+  useEffect(() => {
+    if (currentUser) {
+      setFormData(prev => ({
+        ...prev,
+        name: currentUser.name || '-',
+        email: currentUser.email || '-',
+        phone: currentUser.phone || '',
+      }));
+    }
+  }, [currentUser]);
 
   const innerFunction = useCallback(async () => {
+    if (isLoadingAuth || !userIdFromAuth) return;
+
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/employee/${userDataToObject.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/employee/${userIdFromAuth}`,
         {
           method: 'GET',
           credentials: 'include',
@@ -73,7 +85,8 @@ export default function MyProfileForm() {
         setFormData((prev) => ({
           ...prev,
           name: data.name,
-          email: data.email
+          email: data.email,
+          phone: data.phone || ''
         }));
       } else {
         console.error("Failed to fetch employee data");
@@ -81,12 +94,14 @@ export default function MyProfileForm() {
     } catch (error) {
       console.error("Error fetching employee data: ", error);
     }
-  }, [userDataToObject?.id]);
+  }, [userIdFromAuth]);
   
  
     useEffect(() => {
-        innerFunction();
-    }, [innerFunction]);
+        if (!isLoadingAuth && currentUser) {
+          innerFunction();
+        }
+    }, [innerFunction, isLoadingAuth, currentUser]);
 
   const toast = useToast()
 
@@ -135,7 +150,7 @@ export default function MyProfileForm() {
                   'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                  id: userDataToObject?.id,
+                  id: userIdFromAuth,
                   name: formData.name,
                   email: formData.email
                 })
@@ -216,7 +231,7 @@ export default function MyProfileForm() {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              id: userDataToObject?.id,
+              id: userIdFromAuth,
               currentPassword: formData.currentPassword,
               password: formData.newPassword
             })

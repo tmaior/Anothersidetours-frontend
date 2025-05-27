@@ -28,6 +28,7 @@ import {CiSquarePlus} from "react-icons/ci";
 import DatePicker from "./TimePickerArrival";
 import AddTimeSlotModal from "./AddTimeSlotModal";
 import { syncSingleReservation, syncReservationForGuides } from "../utils/calendarSync";
+import { useAuth } from "../contexts/AuthContext";
 
 const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
     const [selectedDate, setSelectedDate] = useState<string>();
@@ -304,9 +305,13 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
             );
             
             try {
-                const userId = localStorage.getItem('userId');
-                if (userId) {
-                    await syncSingleReservation(booking.id, userId);
+                const { currentUser } = useAuth();
+                const userIdFromAuth = currentUser?.id;
+
+                if (userIdFromAuth) {
+                    await syncSingleReservation(booking.id, userIdFromAuth);
+                } else {
+                     console.warn("ChangeArrivalModal: User ID not available from auth. Calendar sync skipped for user.");
                 }
                 const guidesResponse = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${booking.id}/guides`,

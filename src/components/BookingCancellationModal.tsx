@@ -26,6 +26,7 @@ import {FaCcAmex, FaCcDiscover, FaCcMastercard, FaCcVisa, FaRegCreditCard} from 
 import {BsCash, BsCheck2} from "react-icons/bs";
 import axios from "axios";
 import { syncSingleReservation } from "../utils/calendarSync";
+import { useAuth } from "../contexts/AuthContext";
 
 const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) => {
     const [refundAmount, setRefundAmount] = useState(booking?.total_price || 0);
@@ -848,9 +849,13 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         onClose();
 
                         try {
-                            const userId = localStorage.getItem('userId');
-                            if (userId) {
-                                await syncSingleReservation(booking.id, userId);
+                            const { currentUser } = useAuth();
+                            const userIdFromAuth = currentUser?.id;
+
+                            if (userIdFromAuth) {
+                                await syncSingleReservation(booking.id, userIdFromAuth);
+                            } else {
+                                console.warn("BookingCancellationModal: User ID not available from auth. Calendar sync skipped for user.");
                             }
                             const guidesResponse = await axios.get(
                                 `${process.env.NEXT_PUBLIC_API_URL}/guides/reservations/${booking.id}/guides`,

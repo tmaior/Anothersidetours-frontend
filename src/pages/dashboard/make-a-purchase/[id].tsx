@@ -31,7 +31,7 @@ import {
 } from '@chakra-ui/react'
 import DashboardLayout from "../../../components/DashboardLayout";
 import {useRouter} from "next/router";
-import {CardElement, useElements, useStripe} from '@stripe/react-stripe-js';
+import {CardElement, CardNumberElement, useElements, useStripe} from '@stripe/react-stripe-js';
 import {AddIcon, CalendarIcon, DeleteIcon, MinusIcon} from "@chakra-ui/icons";
 import {useGuest} from "../../../contexts/GuestContext";
 import PurchaseSummary from '../../../components/PurchaseSummary';
@@ -121,6 +121,7 @@ const PurchasePage = () => {
 
     const stripe = useStripe();
     const elements = useElements();
+    const isMobileView = useBreakpointValue({ base: true, md: false });
 
     const [, setTour] = useState<Tour>(null);
     const [addons, setAddons] = useState<AddOn[]>([]);
@@ -202,8 +203,6 @@ const PurchasePage = () => {
     const [newSelectedTime, setNewSelectedTime] = useState<string>('');
     const [tierPricing, setTierPricing] = useState<TierPricing[]>([]);
     const [selectedDemographic,] = useState<string>("");
-
-    const isMobile = useBreakpointValue({ base: true, md: false });
 
     const getPricesForDatePicker = () => {
         if (cart.length === 0 || selectedCartItemIndex >= cart.length) return Array(31).fill(0);
@@ -1298,9 +1297,18 @@ const PurchasePage = () => {
 
                     const {clientSecret} = await setupIntentRes.json();
 
-                    const cardElement = elements.getElement(CardElement);
-                    if (!cardElement) {
-                        throw new Error("CardElement is not available.");
+                    let cardElement;
+                    
+                    if (isMobileView) {
+                        cardElement = elements.getElement(CardNumberElement);
+                        if (!cardElement) {
+                            throw new Error("CardNumberElement is not available on mobile.");
+                        }
+                    } else {
+                        cardElement = elements.getElement(CardElement);
+                        if (!cardElement) {
+                            throw new Error("CardElement is not available.");
+                        }
                     }
 
                     const paymentMethodResponse = await stripe.confirmCardSetup(clientSecret, {
@@ -2118,21 +2126,21 @@ const PurchasePage = () => {
                             </>
                         )}
 
-                        <Modal isOpen={isLineItemModalOpen} onClose={() => setIsLineItemModalOpen(false)} size={isMobile ? "full" : "2xl"}>
+                        <Modal isOpen={isLineItemModalOpen} onClose={() => setIsLineItemModalOpen(false)} size={isMobileView ? "full" : "2xl"}>
                             <ModalOverlay/>
-                            <ModalContent h={isMobile ? "100%" : "500px"} maxH={isMobile ? "100vh" : "80vh"}>
+                            <ModalContent h={isMobileView ? "100%" : "500px"} maxH={isMobileView ? "100vh" : "80vh"}>
                                 <ModalHeader>Custom Line Items</ModalHeader>
                                 <ModalCloseButton/>
 
                                 <ModalBody>
-                                    <Flex direction={isMobile ? "column" : "row"} gap={4}>
+                                    <Flex direction={isMobileView ? "column" : "row"} gap={4}>
                                         <Box 
                                             flex="2" 
-                                            maxH={isMobile ? "none" : "300px"} 
-                                            overflowY={isMobile ? "visible" : "auto"} 
+                                            maxH={isMobileView ? "none" : "300px"} 
+                                            overflowY={isMobileView ? "visible" : "auto"} 
                                             pr={2} 
-                                            maxW={isMobile ? "100%" : "350px"}
-                                            mb={isMobile ? 4 : 0}
+                                            maxW={isMobileView ? "100%" : "350px"}
+                                            mb={isMobileView ? 4 : 0}
                                         >
                                             {items.map((item) => (
                                                 <Box key={item.id} borderBottom="1px solid" borderColor="gray.200"
@@ -2142,7 +2150,7 @@ const PurchasePage = () => {
                                                             placeholder="Item"
                                                             value={item.name}
                                                             onChange={(e) => updateItem(item.id, "name", e.target.value)}
-                                                            w={isMobile ? "85%" : "auto"}
+                                                            w={isMobileView ? "85%" : "auto"}
                                                         />
                                                         <IconButton
                                                             icon={<DeleteIcon/>}
@@ -2155,15 +2163,15 @@ const PurchasePage = () => {
                                                         mt={2} 
                                                         alignItems="center" 
                                                         justifyContent="space-between" 
-                                                        flexWrap={isMobile ? "wrap" : "nowrap"}
-                                                        direction={isMobile ? "column" : "row"}
+                                                        flexWrap={isMobileView ? "wrap" : "nowrap"}
+                                                        direction={isMobileView ? "column" : "row"}
                                                     >
                                                         <Select
                                                             value={item.type}
                                                             onChange={(e) => updateItem(item.id, "type", e.target.value)}
-                                                            width={isMobile ? "100%" : "110px"}
-                                                            mr={isMobile ? 0 : 2}
-                                                            mb={isMobile ? 2 : 0}
+                                                            width={isMobileView ? "100%" : "110px"}
+                                                            mr={isMobileView ? 0 : 2}
+                                                            mb={isMobileView ? 2 : 0}
                                                             size="md"
                                                         >
                                                             <option value="Charge">Charge</option>
@@ -2171,11 +2179,11 @@ const PurchasePage = () => {
                                                         </Select>
                                                         
                                                         <Flex 
-                                                            w={isMobile ? "100%" : "auto"} 
+                                                            w={isMobileView ? "100%" : "auto"} 
                                                             justify="space-between"
                                                             align="center"
                                                         >
-                                                            <InputGroup size="md" width={isMobile ? "48%" : "100px"} mr={2}>
+                                                            <InputGroup size="md" width={isMobileView ? "48%" : "100px"} mr={2}>
                                                                 <InputLeftElement pointerEvents="none">
                                                                     <Text color="gray.500">$</Text>
                                                                 </InputLeftElement>
@@ -2188,7 +2196,7 @@ const PurchasePage = () => {
                                                                 />
                                                             </InputGroup>
 
-                                                            <Flex alignItems="center" justifyContent="space-between" width={isMobile ? "48%" : "auto"}>
+                                                            <Flex alignItems="center" justifyContent="space-between" width={isMobileView ? "48%" : "auto"}>
                                                                 <IconButton
                                                                     icon={<MinusIcon/>}
                                                                     size="sm"
@@ -2216,8 +2224,8 @@ const PurchasePage = () => {
                                             bg="gray.100" 
                                             p={4} 
                                             borderRadius="md" 
-                                            h={isMobile ? "auto" : "300px"} 
-                                            minH={isMobile ? "200px" : "300px"}
+                                            h={isMobileView ? "auto" : "300px"} 
+                                            minH={isMobileView ? "200px" : "300px"}
                                             display="flex"
                                             flexDirection="column" 
                                             justifyContent="space-between"
@@ -2258,21 +2266,21 @@ const PurchasePage = () => {
                                     </Flex>
                                 </ModalBody>
 
-                                <ModalFooter flexDirection={isMobile ? "column" : "row"}>
+                                <ModalFooter flexDirection={isMobileView ? "column" : "row"}>
                                     <Button 
                                         variant="outline" 
                                         onClick={addItem} 
                                         leftIcon={<AddIcon/>}
-                                        w={isMobile ? "100%" : "auto"}
-                                        mb={isMobile ? 2 : 0}
+                                        w={isMobileView ? "100%" : "auto"}
+                                        mb={isMobileView ? 2 : 0}
                                     >
                                         Add Line Item
                                     </Button>
                                     <Button 
                                         colorScheme="blue" 
-                                        ml={isMobile ? 0 : 3} 
+                                        ml={isMobileView ? 0 : 3} 
                                         onClick={handleSaveLineItems}
-                                        w={isMobile ? "100%" : "auto"}
+                                        w={isMobileView ? "100%" : "auto"}
                                     >
                                         Save
                                     </Button>

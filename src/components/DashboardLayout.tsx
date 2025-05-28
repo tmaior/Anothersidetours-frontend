@@ -30,7 +30,10 @@ import {
     DrawerCloseButton,
     DrawerContent,
     DrawerOverlay,
-    useBreakpointValue
+    useBreakpointValue,
+    Select,
+    FormControl,
+    FormLabel
 } from "@chakra-ui/react";
 import {useRouter} from "next/router";
 import React, {useEffect, useRef, useState} from "react";
@@ -220,12 +223,45 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
             });
         }
     };
-    const [newTenant, setNewTenant] = useState({title: "", description: "", image: null});
+    const [newTenant, setNewTenant] = useState({
+        title: "", 
+        description: "", 
+        image: null,
+        timezone: "America/Los_Angeles"
+    });
+
+    const timezones = [
+        { value: "America/Los_Angeles", label: "Los Angeles, San Diego, Las Vegas (Pacific Time)" },
+        { value: "Pacific/Honolulu", label: "Honolulu, Maui (Hawaii Time)" },
+        { value: "America/Denver", label: "Denver (Mountain Time)" },
+        { value: "America/Chicago", label: "Chicago (Central Time)" },
+        { value: "America/New_York", label: "New York (Eastern Time)" },
+        { value: "America/Phoenix", label: "Phoenix (Arizona)" },
+        { value: "America/Anchorage", label: "Anchorage (Alaska)" },
+        { value: "America/Puerto_Rico", label: "San Juan (Puerto Rico)" },
+        { value: "America/Vancouver", label: "Vancouver (Canada)" },
+        { value: "America/Toronto", label: "Toronto (Canada)" },
+        { value: "America/Mexico_City", label: "Mexico City (Mexico)" },
+        { value: "America/Sao_Paulo", label: "São Paulo (Brazil)" },
+        { value: "Europe/London", label: "London (United Kingdom)" },
+        { value: "Europe/Paris", label: "Paris (France)" },
+        { value: "Europe/Berlin", label: "Berlin (Germany)" },
+        { value: "Europe/Madrid", label: "Madrid (Spain)" },
+        { value: "Europe/Rome", label: "Rome (Italy)" },
+        { value: "Africa/Johannesburg", label: "Johannesburg (South Africa)" },
+        { value: "Asia/Tokyo", label: "Tokyo (Japan)" },
+        { value: "Asia/Shanghai", label: "Shanghai (China)" },
+        { value: "Asia/Singapore", label: "Singapore" },
+        { value: "Asia/Dubai", label: "Dubai (UAE)" },
+        { value: "Australia/Sydney", label: "Sydney (Australia)" },
+        { value: "Pacific/Auckland", label: "Auckland (New Zealand)" }
+    ];
 
     const handleAddTenant = async () => {
         const formData = new FormData();
         formData.append('name', newTenant.title);
         formData.append('description', newTenant.description);
+        formData.append('timezone', newTenant.timezone);
         if (selectedImage) {
             formData.append('image', selectedImage);
         }
@@ -240,15 +276,42 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
             if (response.ok) {
                 const createdTenant = await response.json();
                 setTenants((prev) => [...prev, createdTenant]);
-                setNewTenant({title: "", description: "", image: null});
+                setNewTenant({
+                    title: "", 
+                    description: "", 
+                    image: null,
+                    timezone: "America/Los_Angeles"
+                });
                 setSelectedImage(null);
                 setPreviewUrl(null);
                 onClose();
+                
+                toast({
+                    title: "City created successfully",
+                    description: `${newTenant.title} was added with timezone ${newTenant.timezone}`,
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
+                });
             } else {
                 console.error("Failed to create tenant");
+                toast({
+                    title: "Error creating city",
+                    description: "There was an error creating the city. Please try again.",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
             }
         } catch (error) {
             console.error("Error creating tenant:", error);
+            toast({
+                title: "Error creating city",
+                description: "There was an error creating the city. Please try again.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
         }
     };
 
@@ -1412,64 +1475,92 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         <ModalCloseButton/>
                         <ModalBody>
                             <VStack spacing={4}>
-                                <Input
-                                    placeholder="Name"
-                                    value={newTenant.title}
-                                    onChange={(e) =>
-                                        setNewTenant((prev) => ({...prev, title: e.target.value}))
-                                    }
-                                />
-                                <Textarea
-                                    placeholder="Description"
-                                    value={newTenant.description}
-                                    onChange={(e) =>
-                                        setNewTenant((prev) => ({...prev, description: e.target.value}))
-                                    }
-                                />
-                                <VStack spacing={4} align="stretch">
-                                    <HStack spacing={4}>
-                                        <Button
-                                            as="label"
-                                            htmlFor="file-upload"
-                                            cursor="pointer"
-                                            colorScheme="blue"
-                                            h={"32px"}
-                                        >
-                                            Choose File
-                                        </Button>
-                                        <Input
-                                            id="file-upload"
-                                            type="file"
-                                            accept="image/*"
-                                            display="none"
-                                            onChange={handleFileChange}
-                                        />
-                                        {selectedImage && (
+                                <FormControl isRequired>
+                                    <FormLabel>City Name</FormLabel>
+                                    <Input
+                                        placeholder="e.g. Los Angeles, California"
+                                        value={newTenant.title}
+                                        onChange={(e) =>
+                                            setNewTenant((prev) => ({...prev, title: e.target.value}))
+                                        }
+                                    />
+                                </FormControl>
+                                
+                                <FormControl isRequired>
+                                    <FormLabel>Timezone</FormLabel>
+                                    <Select
+                                        placeholder="Select timezone"
+                                        value={newTenant.timezone}
+                                        onChange={(e) =>
+                                            setNewTenant((prev) => ({...prev, timezone: e.target.value}))
+                                        }
+                                    >
+                                        {timezones.map((tz) => (
+                                            <option key={tz.value} value={tz.value}>
+                                                {tz.label}
+                                            </option>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                
+                                <FormControl>
+                                    <FormLabel>Description</FormLabel>
+                                    <Textarea
+                                        placeholder="Description"
+                                        value={newTenant.description}
+                                        onChange={(e) =>
+                                            setNewTenant((prev) => ({...prev, description: e.target.value}))
+                                        }
+                                    />
+                                </FormControl>
+                                
+                                <FormControl>
+                                    <FormLabel>City Image</FormLabel>
+                                    <VStack spacing={4} align="stretch">
+                                        <HStack spacing={4}>
                                             <Button
-                                                colorScheme="red"
-                                                size="sm"
-                                                onClick={removeImage}
+                                                as="label"
+                                                htmlFor="file-upload"
+                                                cursor="pointer"
+                                                colorScheme="blue"
+                                                h={"32px"}
                                             >
-                                                Remove Image
+                                                Choose File
                                             </Button>
-                                        )}
-                                    </HStack>
-
-                                    {previewUrl && (
-                                        <Flex direction="column" align="center" mt={4}>
-                                            <Image
-                                                src={previewUrl}
-                                                alt="Preview"
-                                                boxSize="150px"
-                                                objectFit="cover"
-                                                borderRadius="md"
+                                            <Input
+                                                id="file-upload"
+                                                type="file"
+                                                accept="image/*"
+                                                display="none"
+                                                onChange={handleFileChange}
                                             />
-                                            <Text mt={2}>{selectedImage?.name}</Text>
-                                        </Flex>
-                                    )}
+                                            {selectedImage && (
+                                                <Button
+                                                    colorScheme="red"
+                                                    size="sm"
+                                                    onClick={removeImage}
+                                                >
+                                                    Remove Image
+                                                </Button>
+                                            )}
+                                        </HStack>
 
-                                    {!selectedImage && <Text>No file chosen</Text>}
-                                </VStack>
+                                        {previewUrl && (
+                                            <Flex direction="column" align="center" mt={4}>
+                                                <Image
+                                                    src={previewUrl}
+                                                    alt="Preview"
+                                                    boxSize="150px"
+                                                    objectFit="cover"
+                                                    borderRadius="md"
+                                                />
+                                                <Text mt={2}>{selectedImage?.name}</Text>
+                                            </Flex>
+                                        )}
+
+                                        {!selectedImage && <Text>No file chosen</Text>}
+                                    </VStack>
+                                </FormControl>
                             </VStack>
                         </ModalBody>
                         <ModalFooter>
@@ -1477,7 +1568,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                 colorScheme="blue"
                                 mr={3}
                                 onClick={handleAddTenant}
-                                isDisabled={!newTenant.title}
+                                isDisabled={!newTenant.title || !newTenant.timezone}
                             >
                                 Save
                             </Button>

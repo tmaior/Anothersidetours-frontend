@@ -54,6 +54,7 @@ import {useDemographics} from "../../../contexts/DemographicsContext";
 import axios from "axios";
 import TimeSlotPicker from "../../../components/TimeSlotPicker";
 import { ScheduleItem } from "../../../contexts/GuestContext";
+import GuestLimits from "../../../components/GuestLimits";
 
 function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEditing?: boolean }) {
     const [newIncludedItem, setNewIncludedItem] = useState("");
@@ -85,7 +86,22 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
         cancellationPolicy,
         setCancellationPolicy,
         considerations,
-        setConsiderations
+        setConsiderations,
+        minPerReservationLimit,
+        setMinPerReservationLimit,
+        maxPerReservationLimit,
+        setMaxPerReservationLimit,
+        minPerEventLimit,
+        setMinPerEventLimit,
+        maxPerEventLimit,
+        setMaxPerEventLimit,
+        notifyStaffValue,
+        setNotifyStaffValue,
+        notifyStaffUnit,
+        setNotifyStaffUnit,
+        tenantId,
+        setTourId,
+        tourId
     } = useGuest();
 
     const toast = useToast();
@@ -130,6 +146,13 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
             sopNotes,
             meetingLocation,
             mapEnabled,
+            minPerReservationLimit,
+            maxPerReservationLimit,
+            minPerEventLimit,
+            maxPerEventLimit,
+            notifyStaffValue,
+            notifyStaffUnit,
+            tenantId: tenantId
         };
         localStorage.setItem("descriptionContentData", JSON.stringify(data));
     }, [
@@ -147,7 +170,14 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
         mapEnabled,
         operationProcedures,
         cancellationPolicy,
-        considerations
+        considerations,
+        minPerReservationLimit,
+        maxPerReservationLimit,
+        minPerEventLimit,
+        maxPerEventLimit,
+        notifyStaffValue,
+        notifyStaffUnit,
+        tenantId
     ]);
 
     function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -373,6 +403,21 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
                                     0 characters | 0 words
                                 </Text>
                             </Box>
+
+                                <GuestLimits 
+                                    perReservationMinValue={minPerReservationLimit}
+                                    perReservationMaxValue={maxPerReservationLimit === 0 ? null : maxPerReservationLimit}
+                                    perEventMinValue={minPerEventLimit}
+                                    perEventMaxValue={maxPerEventLimit === 0 ? null : maxPerEventLimit}
+                                    notifyTimeValue={notifyStaffValue}
+                                    notifyUnitValue={notifyStaffUnit.toLowerCase()}
+                                    onPerReservationMinChange={(value) => setMinPerReservationLimit(value)}
+                                    onPerReservationMaxChange={(value) => setMaxPerReservationLimit(value === null ? 0 : value)}
+                                    onPerEventMinChange={(value) => setMinPerEventLimit(value)}
+                                    onPerEventMaxChange={(value) => setMaxPerEventLimit(value === null ? 0 : value)}
+                                    onNotifyTimeChange={(value) => setNotifyStaffValue(value)}
+                                    onNotifyUnitChange={(value) => setNotifyStaffUnit(value.toUpperCase())}
+                                />
 
                             <FormControl mb={4}>
                                 <FormLabel>Photos</FormLabel>
@@ -679,13 +724,18 @@ function SchedulesAvailabilityStep({
         cancellationPolicy,
         considerations,
         setCancellationPolicy,
-        setConsiderations
+        setConsiderations,
+        minPerReservationLimit,
+        maxPerReservationLimit,
+        minPerEventLimit,
+        setMinPerEventLimit,
+        maxPerEventLimit,
+        setMaxPerEventLimit,
+        notifyStaffValue,
+        notifyStaffUnit
     } = useGuest();
 
     const toast = useToast();
-
-    const [minPerEventLimit, setMinPerEventLimit] = useState(1);
-    const [maxPerEventLimit, setMaxPerEventLimit] = useState(0);
 
     const questionnaireRef = useRef<QuestionnaireRef>(null);
     const resetFields = useCallback(() => {
@@ -1241,8 +1291,12 @@ function SchedulesAvailabilityStep({
                     StandardOperation: operationProcedures,
                     Cancellation_Policy: cancellationPolicy,
                     Considerations: considerations,
-                    minPerEventLimit: minPerEventLimit,
-                    maxPerEventLimit: maxPerEventLimit,
+                    minPerEventLimit: Number(minPerEventLimit),
+                    maxPerEventLimit: Number(maxPerEventLimit),
+                    minPerReservationLimit: Number(minPerReservationLimit),
+                    maxPerReservationLimit: Number(maxPerReservationLimit),
+                    notifyStaffValue: Number(notifyStaffValue),
+                    notifyStaffUnit: notifyStaffUnit.toUpperCase(),
                     tenantId: tenantId
                 })
             });
@@ -1954,26 +2008,26 @@ function SchedulesAvailabilityStep({
                         </Box>
                         <Divider/>
                         <Box>
-                            <Text fontSize="lg" fontWeight="bold" mb={2}>
-                                Guest Limits
-                            </Text>
-                            <FormControl isRequired>
-                                <FormLabel>Min Per Event Limit</FormLabel>
-                                <Input
-                                    type="number"
-                                    value={minPerEventLimit}
-                                    onChange={(e) => setMinPerEventLimit(Number(e.target.value))}
-                                />
-                            </FormControl>
+                            {/*<Text fontSize="lg" fontWeight="bold" mb={2}>*/}
+                            {/*    Guest Limits*/}
+                            {/*</Text>*/}
+                            {/*<FormControl isRequired>*/}
+                            {/*    <FormLabel>Min Per Event Limit</FormLabel>*/}
+                            {/*    <Input*/}
+                            {/*        type="number"*/}
+                            {/*        value={minPerEventLimit}*/}
+                            {/*        onChange={(e) => setMinPerEventLimit(Number(e.target.value))}*/}
+                            {/*    />*/}
+                            {/*</FormControl>*/}
                             <Spacer marginTop={"20px"}/>
-                            <FormControl isRequired>
-                                <FormLabel>Max Per Event Limit</FormLabel>
-                                <Input
-                                    type="number"
-                                    value={maxPerEventLimit}
-                                    onChange={(e) => setMaxPerEventLimit(Number(e.target.value))}
-                                />
-                            </FormControl>
+                            {/*<FormControl isRequired>*/}
+                            {/*    <FormLabel>Max Per Event Limit</FormLabel>*/}
+                            {/*    <Input*/}
+                            {/*        type="number"*/}
+                            {/*        value={maxPerEventLimit}*/}
+                            {/*        onChange={(e) => setMaxPerEventLimit(Number(e.target.value))}*/}
+                            {/*    />*/}
+                            {/*</FormControl>*/}
                             <Box>
                                 <HStack justify={"space-between"} spacing={2} mt={2} mb={2}>
                                     <Text fontSize="lg" fontWeight="bold" mb={4}>

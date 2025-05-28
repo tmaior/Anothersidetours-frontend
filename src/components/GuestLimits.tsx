@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
     Box,
     Text,
@@ -10,19 +10,45 @@ import {
     useOutsideClick,
 } from "@chakra-ui/react";
 
-interface GuestLimitsProps {}
+interface GuestLimitsProps {
+    perReservationMinValue?: number;
+    perReservationMaxValue?: number | null;
+    perEventMinValue?: number;
+    perEventMaxValue?: number | null;
+    notifyTimeValue?: number;
+    notifyUnitValue?: string;
+    onPerReservationMinChange?: (value: number) => void;
+    onPerReservationMaxChange?: (value: number | null) => void;
+    onPerEventMinChange?: (value: number) => void;
+    onPerEventMaxChange?: (value: number | null) => void;
+    onNotifyTimeChange?: (value: number) => void;
+    onNotifyUnitChange?: (value: string) => void;
+}
 
 const timeUnits = ["minute", "hour", "day"];
 
-const GuestLimits: React.FC<GuestLimitsProps> = () => {
-    const [perReservationMin, setPerReservationMin] = useState<number | string>(1);
-    const [perReservationMax, setPerReservationMax] = useState<number | string>("no limit");
+const GuestLimits: React.FC<GuestLimitsProps> = ({
+    perReservationMinValue = 1,
+    perReservationMaxValue = null,
+    perEventMinValue = 1,
+    perEventMaxValue = null,
+    notifyTimeValue = 1,
+    notifyUnitValue = "hour",
+    onPerReservationMinChange,
+    onPerReservationMaxChange,
+    onPerEventMinChange,
+    onPerEventMaxChange,
+    onNotifyTimeChange,
+    onNotifyUnitChange,
+}) => {
+    const [perReservationMin, setPerReservationMin] = useState<number | string>(perReservationMinValue);
+    const [perReservationMax, setPerReservationMax] = useState<number | string>(perReservationMaxValue === null ? "no limit" : perReservationMaxValue);
 
-    const [perEventMin, setPerEventMin] = useState<number | string>(1);
-    const [perEventMax, setPerEventMax] = useState<number | string>("no limit");
+    const [perEventMin, setPerEventMin] = useState<number | string>(perEventMinValue);
+    const [perEventMax, setPerEventMax] = useState<number | string>(perEventMaxValue === null ? "no limit" : perEventMaxValue);
 
-    const [notifyTime, setNotifyTime] = useState<number>(1);
-    const [notifyUnit, setNotifyUnit] = useState<string>("hour");
+    const [notifyTime, setNotifyTime] = useState<number>(notifyTimeValue);
+    const [notifyUnit, setNotifyUnit] = useState<string>(notifyUnitValue);
 
     const [editingField, setEditingField] = useState<string | null>(null);
 
@@ -31,6 +57,65 @@ const GuestLimits: React.FC<GuestLimitsProps> = () => {
         ref: inputRef,
         handler: () => setEditingField(null),
     });
+
+    useEffect(() => {
+        setPerReservationMin(perReservationMinValue);
+        setPerReservationMax(perReservationMaxValue === null ? "no limit" : perReservationMaxValue);
+        setPerEventMin(perEventMinValue);
+        setPerEventMax(perEventMaxValue === null ? "no limit" : perEventMaxValue);
+        setNotifyTime(notifyTimeValue);
+        setNotifyUnit(notifyUnitValue);
+    }, [perReservationMinValue, perReservationMaxValue, perEventMinValue, perEventMaxValue, notifyTimeValue, notifyUnitValue]);
+
+    const handlePerReservationMinChange = (value: number | string) => {
+        setPerReservationMin(value);
+        if (onPerReservationMinChange && typeof value === 'number') {
+            onPerReservationMinChange(value);
+        }
+    };
+
+    const handlePerReservationMaxChange = (value: number | string) => {
+        setPerReservationMax(value);
+        if (onPerReservationMaxChange) {
+            if (value === "no limit") {
+                onPerReservationMaxChange(null);
+            } else if (typeof value === 'number') {
+                onPerReservationMaxChange(value);
+            }
+        }
+    };
+
+    const handlePerEventMinChange = (value: number | string) => {
+        setPerEventMin(value);
+        if (onPerEventMinChange && typeof value === 'number') {
+            onPerEventMinChange(value);
+        }
+    };
+
+    const handlePerEventMaxChange = (value: number | string) => {
+        setPerEventMax(value);
+        if (onPerEventMaxChange) {
+            if (value === "no limit") {
+                onPerEventMaxChange(null);
+            } else if (typeof value === 'number') {
+                onPerEventMaxChange(value);
+            }
+        }
+    };
+
+    const handleNotifyTimeChange = (value: number) => {
+        setNotifyTime(value);
+        if (onNotifyTimeChange) {
+            onNotifyTimeChange(value);
+        }
+    };
+
+    const handleNotifyUnitChange = (value: string) => {
+        setNotifyUnit(value);
+        if (onNotifyUnitChange) {
+            onNotifyUnitChange(value);
+        }
+    };
 
     const renderField = (
         label: string,
@@ -76,10 +161,10 @@ const GuestLimits: React.FC<GuestLimitsProps> = () => {
                     <Text fontWeight="semibold">Per Reservation Limit</Text>
                     <Flex align="center" gap={2} mt={2}>
                         <Text>Minimum of</Text>
-                        {renderField("Per Reservation Min", perReservationMin, setPerReservationMin, "perResMin")}
+                        {renderField("Per Reservation Min", perReservationMin, handlePerReservationMinChange, "perResMin")}
 
                         <Text>and maximum of</Text>
-                        {renderField("Per Reservation Max", perReservationMax, setPerReservationMax, "perResMax")}
+                        {renderField("Per Reservation Max", perReservationMax, handlePerReservationMaxChange, "perResMax")}
 
                         <Text>per reservation</Text>
                     </Flex>
@@ -89,10 +174,10 @@ const GuestLimits: React.FC<GuestLimitsProps> = () => {
                     <Text fontWeight="semibold">Per Event Limit</Text>
                     <Flex align="center" gap={2} mt={2}>
                         <Text>Minimum of</Text>
-                        {renderField("Per Event Min", perEventMin, setPerEventMin, "perEvtMin")}
+                        {renderField("Per Event Min", perEventMin, handlePerEventMinChange, "perEvtMin")}
 
                         <Text>and maximum of</Text>
-                        {renderField("Per Event Max", perEventMax, setPerEventMax, "perEvtMax")}
+                        {renderField("Per Event Max", perEventMax, handlePerEventMaxChange, "perEvtMax")}
 
                         <Text>per event</Text>
                     </Flex>
@@ -109,13 +194,13 @@ const GuestLimits: React.FC<GuestLimitsProps> = () => {
                                         type="number"
                                         min={1}
                                         value={notifyTime}
-                                        onChange={(e) => setNotifyTime(Math.max(1, Number(e.target.value)))}
+                                        onChange={(e) => handleNotifyTimeChange(Math.max(1, Number(e.target.value)))}
                                         autoFocus
                                     />
                                     <Select
                                         w="100px"
                                         value={notifyUnit}
-                                        onChange={(e) => setNotifyUnit(e.target.value)}
+                                        onChange={(e) => handleNotifyUnitChange(e.target.value)}
                                     >
                                         {timeUnits.map((unit) => (
                                             <option key={unit} value={unit}>

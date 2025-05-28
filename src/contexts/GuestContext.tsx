@@ -79,6 +79,18 @@ interface GuestContextType {
     setCancellationPolicy: (value: string) => void;
     considerations: string;
     setConsiderations: (value: string) => void;
+    minPerReservationLimit: number;
+    setMinPerReservationLimit: React.Dispatch<React.SetStateAction<number>>;
+    maxPerReservationLimit: number;
+    setMaxPerReservationLimit: React.Dispatch<React.SetStateAction<number>>;
+    minPerEventLimit: number;
+    setMinPerEventLimit: React.Dispatch<React.SetStateAction<number>>;
+    maxPerEventLimit: number;
+    setMaxPerEventLimit: React.Dispatch<React.SetStateAction<number>>;
+    notifyStaffValue: number;
+    setNotifyStaffValue: React.Dispatch<React.SetStateAction<number>>;
+    notifyStaffUnit: string;
+    setNotifyStaffUnit: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const GuestContext = createContext<GuestContextType | undefined>(undefined);
@@ -119,6 +131,12 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [cancellationPolicy, setCancellationPolicy] = useState<string>("");
     const [considerations, setConsiderations] = useState<string>("");
+    const [minPerReservationLimit, setMinPerReservationLimit] = useState<number>(1);
+    const [maxPerReservationLimit, setMaxPerReservationLimit] = useState<number>(0);
+    const [minPerEventLimit, setMinPerEventLimit] = useState<number>(1);
+    const [maxPerEventLimit, setMaxPerEventLimit] = useState<number>(0);
+    const [notifyStaffValue, setNotifyStaffValue] = useState<number>(1);
+    const [notifyStaffUnit, setNotifyStaffUnit] = useState<string>("HOUR");
 
     const resetGuestQuantity = () => {
         setGuestQuantity(0);
@@ -141,7 +159,13 @@ export function GuestProvider({children}: { children: ReactNode }) {
         setEarlyArrival(false);
         setImageFile(null);
         setImagePreview(null);
-        setPrice(0)
+        setPrice(0);
+        setMinPerReservationLimit(1);
+        setMaxPerReservationLimit(0);
+        setMinPerEventLimit(1);
+        setMaxPerEventLimit(0);
+        setNotifyStaffValue(1);
+        setNotifyStaffUnit("HOUR");
     };
 
     return (
@@ -201,7 +225,19 @@ export function GuestProvider({children}: { children: ReactNode }) {
                 cancellationPolicy,
                 setCancellationPolicy,
                 considerations,
-                setConsiderations
+                setConsiderations,
+                minPerReservationLimit,
+                setMinPerReservationLimit,
+                maxPerReservationLimit,
+                setMaxPerReservationLimit,
+                minPerEventLimit,
+                setMinPerEventLimit,
+                maxPerEventLimit,
+                setMaxPerEventLimit,
+                notifyStaffValue,
+                setNotifyStaffValue,
+                notifyStaffUnit,
+                setNotifyStaffUnit
             }}
         >
             {children}

@@ -13,10 +13,12 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
+import { useAuth } from "../../contexts/AuthContext";
 
 axios.defaults.withCredentials = true;
 export default function Login() {
     const router = useRouter();
+    const { refetchUserProfile } = useAuth();
 
     const [formData, setFormData] = useState({ email: "", password: "" });
     const [errors, setErrors] = useState({ email: false, password: false });
@@ -41,28 +43,22 @@ export default function Login() {
 
         if (!newErrors.email && !newErrors.password) {
             try {
-                const res = await axios.post(
+                const loginRes = await axios.post(
                     `${process.env.NEXT_PUBLIC_API_URL}/auth/login`, 
                     formData,
-                    { 
-                        withCredentials: true,
-                    }
+                    { withCredentials: true }
                 );
-                if (res.data && res.data.employee) {
-                    // localStorage.setItem("user", JSON.stringify(res.data.employee));
 
-                    try {
-                        await axios.get(
-                            `${process.env.NEXT_PUBLIC_API_URL}/auth/profile`,
-                            { withCredentials: true }
-                        );
-                    } catch (profileErr) {
-                        console.error("Error getting profile:", profileErr);
-                    }
+                if (!loginRes.data) {
+                    throw new Error("Invalid server response");
+                }
+
+                try {
+                    await refetchUserProfile();
                     router.push("/select-city");
-                } else {
-                    console.error("Invalid response:", res.data);
-                    setApiError("User data not found  response");
+                } catch (profileError) {
+                    console.error("Error updating user profile:", profileError);
+                    setApiError("Login successful but could not retrieve user profile. Please try again.");
                 }
             } catch (error) {
                 console.error("Login Error", error);

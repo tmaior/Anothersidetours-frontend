@@ -52,7 +52,7 @@ interface PurchaseSummaryProps {
     quantity: number;
     combinedAddons: Addon[];
     isCustomLineItemsEnabled: boolean;
-    customLineItems: {[tourId: string]: any[]};
+    customLineItems: {[key: string]: any[]};
     voucherDiscount: number;
     totalWithDiscount: number;
     items: { type: string; amount: number; quantity: number; name: string }[];
@@ -90,6 +90,8 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
     addonsMap,
     getPriceForQuantity,
 }) => {
+    const getItemKey = (item: { id: string }, index: number): string => `${item.id}_${index}`;
+    
     const formatDate = (dateString: string) => {
         if (!dateString) return '';
         const [year, month, day] = dateString.split('-').map(num => parseInt(num, 10));
@@ -102,9 +104,11 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
         };
         return date.toLocaleDateString('en-US', options);
     };
+    
     const calculateCartTotal = () => {
         return cart.reduce((total, tour, index) => {
-            const tourFormData = formDataMap[tour.id];
+            const itemKey = getItemKey(tour, index);
+            const tourFormData = formDataMap[itemKey];
             const itemQuantity = tourFormData ? tourFormData.quantity : quantity;
             
             const itemPrice = getPriceForQuantity 
@@ -113,7 +117,7 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                 
             const itemTotal = itemPrice * itemQuantity;
             let addonTotal = 0;
-            const tourSpecificAddons = addonsMap && addonsMap[tour.id] ? addonsMap[tour.id] : addons;
+            const tourSpecificAddons = addonsMap && addonsMap[itemKey] ? addonsMap[itemKey] : addons;
             if (tourFormData && tourFormData.selectedAddOns) {
                 addonTotal = tourFormData.selectedAddOns.reduce((sum, selectedAddon) => {
                     const addonInfo = tourSpecificAddons.find(a => a.id === selectedAddon.addOnId);
@@ -132,8 +136,8 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                     sum + (addon.price * (addon.quantity || 1)), 0);
             }
             let customItemsTotal = 0;
-            if (isCustomLineItemsEnabled && customLineItems[tour.id]) {
-                customItemsTotal = customLineItems[tour.id].reduce((sum, item) => {
+            if (isCustomLineItemsEnabled && customLineItems[itemKey]) {
+                customItemsTotal = customLineItems[itemKey].reduce((sum, item) => {
                     const itemAmount = item.amount * item.quantity;
                     return item.type === "Discount" ? sum - itemAmount : sum + itemAmount;
                 }, 0);
@@ -150,11 +154,12 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
         <>
             <VStack spacing={4} align="stretch" mb={4}>
                 {cart.map((tour, index) => {
-                    const tourFormData = formDataMap[tour.id];
+                    const itemKey = getItemKey(tour, index);
+                    const tourFormData = formDataMap[itemKey];
                     const itemQuantity = tourFormData ? tourFormData.quantity : quantity;
                     const itemDate = tourFormData ? tourFormData.date : date;
                     const itemTime = tourFormData ? tourFormData.time : time;
-                    const tourSpecificAddons = addonsMap && addonsMap[tour.id] ? addonsMap[tour.id] : addons;
+                    const tourSpecificAddons = addonsMap && addonsMap[itemKey] ? addonsMap[itemKey] : addons;
                     
                     const itemPrice = getPriceForQuantity 
                         ? getPriceForQuantity(itemQuantity, tour.id) 
@@ -163,7 +168,7 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                     const itemTotal = itemPrice * itemQuantity;
                     return (
                         <Box 
-                            key={`${tour.id}-${index}`} 
+                            key={`tour_${tour.id}_${index}`}
                             bg={selectedCartItemIndex === index ? "blue.100" : "blue.50"}
                             p={4} 
                             borderRadius="md" 
@@ -223,7 +228,7 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                                         const price = addonInfo.price;
                                         
                                         return (
-                                            <HStack key={`${selectedAddon.addOnId}-${index}`} justifyContent="space-between">
+                                            <HStack key={`${selectedAddon.addOnId}_${index}`} justifyContent="space-between">
                                                 <Text>
                                                     {addonInfo.label} (${price.toFixed(2)} {quantity > 1 ? `× ${quantity}` : ''})
                                                 </Text>
@@ -237,7 +242,7 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                                 <>
                                     {combinedAddons.length > 0 ? (
                                         combinedAddons.map((addon) => (
-                                            <HStack key={`${addon.id}-${index}`} justifyContent="space-between">
+                                            <HStack key={`${addon.id}_${index}`} justifyContent="space-between">
                                                 <Text>
                                                     {addon.label} (${addon.price.toFixed(2)} {(addon.quantity || 0) > 1 ? `× ${addon.quantity}` : ''})
                                                 </Text>
@@ -251,50 +256,71 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                                     )}
                                 </>
                             )}
-                            {isCustomLineItemsEnabled && customLineItems[tour.id] && customLineItems[tour.id].length > 0 && (
-                                <Box>
-                                    {customLineItems[tour.id].map((item, itemIndex) => (
-                                        <HStack key={`${itemIndex}-${index}`} justify="space-between">
+                            
+                            {isCustomLineItemsEnabled && customLineItems[itemKey] && customLineItems[itemKey].length > 0 && (
+                                customLineItems[itemKey].map(item => {
+                                    const itemAmount = item.amount * item.quantity;
+                                    return (
+                                        <HStack key={`${item.id}_${index}`} justify="space-between">
                                             <Text>
-                                                {item.name || "Unnamed"} ({item.type === "Discount" ? "-" : ""}${item.amount} × {item.quantity})
+                                                {item.name || 'Custom item'} ({item.type === 'Discount' ? '-' : ''}${item.amount.toFixed(2)} × {item.quantity})
                                             </Text>
-                                            <Text fontWeight="semibold">
-                                                {item.type === "Discount" ? "-" : ""}${(item.amount * item.quantity).toFixed(2)}
+                                            <Text>
+                                                {item.type === 'Discount' ? '-' : ''}${itemAmount.toFixed(2)}
                                             </Text>
                                         </HStack>
-                                    ))}
-                                </Box>
+                                    );
+                                })
                             )}
                         </Box>
                     );
                 })}
             </VStack>
             
+            <Divider mb={4} />
+            
+            <HStack justify="space-between" mb={2}>
+                <Text>Subtotal:</Text>
+                <Text fontWeight="medium">${cartTotal.toFixed(2)}</Text>
+            </HStack>
+            
             {voucherDiscount > 0 && (
-                <Box bg="green.50" p={4} borderRadius="md" mb={4}>
-                    <Text fontWeight="bold" color="green.600">
-                        Discount Applied
-                    </Text>
-                    <Text>- ${voucherDiscount.toFixed(2)}</Text>
-                </Box>
-            )}
-            <Divider mb={4}/>
-            <Text fontWeight="bold" mb={2}>Grand Total</Text>
-            <Text fontSize="xl" mb={4}>
-                US${finalTotal.toFixed(2)}
-            </Text>
-            <FormControl mb={4}>
-                <FormLabel>Code</FormLabel>
-                <HStack>
-                    <Input
-                        value={voucherCode}
-                        onChange={(e) => setVoucherCode(e.target.value)}
-                        placeholder="Enter code"
-                    />
-                    <Button onClick={handleValidateVoucher}>Apply Code</Button>
+                <HStack justify="space-between" mb={2}>
+                    <Text>Voucher Discount:</Text>
+                    <Text fontWeight="medium" color="green.500">-${voucherDiscount.toFixed(2)}</Text>
                 </HStack>
-                {voucherError && <Text color="red.500">{voucherError}</Text>}
-            </FormControl>
+            )}
+            
+            <HStack justify="space-between" mb={4}>
+                <Text fontWeight="bold">Total:</Text>
+                <Text fontWeight="bold" fontSize="lg">${finalTotal.toFixed(2)}</Text>
+            </HStack>
+            
+            <Divider mb={4} />
+            
+            <Box>
+                <FormControl mb={2}>
+                    <FormLabel fontSize="sm">Apply Voucher</FormLabel>
+                    <HStack>
+                        <Input 
+                            placeholder="Enter voucher code"
+                            value={voucherCode}
+                            onChange={(e) => setVoucherCode(e.target.value)}
+                        />
+                        <Button 
+                            onClick={handleValidateVoucher}
+                            isDisabled={!voucherCode}
+                        >
+                            Apply
+                        </Button>
+                    </HStack>
+                </FormControl>
+                {voucherError && (
+                    <Text color="red.500" fontSize="sm" mb={4}>
+                        {voucherError}
+                    </Text>
+                )}
+            </Box>
         </>
     );
 };

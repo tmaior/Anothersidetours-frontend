@@ -204,10 +204,12 @@ const PurchasePage = () => {
     const [tierPricing, setTierPricing] = useState<TierPricing[]>([]);
     const [selectedDemographic,] = useState<string>("");
 
+    const getItemKey = (item: { id: string }, index: number): string => `${item.id}_${index}`;
+
     const getPricesForDatePicker = () => {
         if (cart.length === 0 || selectedCartItemIndex >= cart.length) return Array(31).fill(0);
-        const currentTourId = cart[selectedCartItemIndex]?.id;
-        const pricePerGuest = getPriceForQuantity(quantity, currentTourId);
+        const currentItem = cart[selectedCartItemIndex];
+        const pricePerGuest = getPriceForQuantity(quantity, currentItem.id);
         return Array(31).fill(pricePerGuest);
     };
 
@@ -249,7 +251,7 @@ const PurchasePage = () => {
         }
     }, [paymentMethod, date]);
 
-    const fetchAddOnsForTour = useCallback(async (tourId: string) => {
+    const fetchAddOnsForTour = useCallback(async (tourId: string, itemKey?: string) => {
         try {
             if (!tourId) return;
 
@@ -258,13 +260,15 @@ const PurchasePage = () => {
                 credentials: 'include',
             });
             const data = await res.json();
+
+            const mapKey = itemKey || tourId;
             setAddonsMap(prev => ({
                 ...prev,
-                [tourId]: data
+                [mapKey]: data
             }));
             setAddons(data);
 
-            const existingFormData = formDataMap[tourId];
+            const existingFormData = formDataMap[mapKey];
             if (existingFormData && existingFormData.selectedAddOns && existingFormData.selectedAddOns.length > 0) {
                 setSelectedAddOns(existingFormData.selectedAddOns);
             } else {
@@ -292,11 +296,13 @@ const PurchasePage = () => {
         if (!cartItem) return;
 
         if (selectedCartItemIndex >= 0 && selectedCartItemIndex < cart.length) {
-            const currentTourId = cart[selectedCartItemIndex].id;
+            const currentItem = cart[selectedCartItemIndex];
+            const currentKey = getItemKey(currentItem, selectedCartItemIndex);
+            
             setFormDataMap(prev => ({
                 ...prev,
-                [currentTourId]: {
-                    ...prev[currentTourId],
+                [currentKey]: {
+                    ...prev[currentKey],
                     quantity,
                     date,
                     time,
@@ -313,12 +319,16 @@ const PurchasePage = () => {
                 }
             }));
         }
+        
         setSelectedCartItemIndex(index);
-        const formData = formDataMap[cartItem.id];
+
+        const itemKey = getItemKey(cartItem, index);
+        const formData = formDataMap[itemKey];
+        
         if (!formData) {
             const initialFormData: FormData = {
                 quantity: 1,
-                date: '2024-12-20',
+                date: new Date().toISOString().split('T')[0],
                 time: '08:00',
                 organizerName: "",
                 emailEnabled: true,
@@ -337,8 +347,9 @@ const PurchasePage = () => {
 
             setFormDataMap(prev => ({
                 ...prev,
-                [cartItem.id]: initialFormData
+                [itemKey]: initialFormData
             }));
+            
             setQuantity(initialFormData.quantity);
             setDate(initialFormData.date);
             setTime(initialFormData.time);
@@ -351,12 +362,15 @@ const PurchasePage = () => {
             setAttendees(initialFormData.attendees);
             setPurchaseTags(initialFormData.purchaseTags);
             setPurchaseNote(initialFormData.purchaseNote);
-            fetchAddOnsForTour(cartItem.id);
-            if (!schedulesMap[cartItem.id]) {
-                fetchSchedules(cartItem.id);
+            
+            fetchAddOnsForTour(cartItem.id, itemKey);
+            
+            if (!schedulesMap[itemKey]) {
+                fetchSchedules(cartItem.id, itemKey);
             }
             return;
         }
+        
         setQuantity(formData.quantity);
         setDate(formData.date);
         setTime(formData.time);
@@ -369,16 +383,22 @@ const PurchasePage = () => {
         setAttendees(formData.attendees);
         setPurchaseTags(formData.purchaseTags);
         setPurchaseNote(formData.purchaseNote);
-        fetchAddOnsForTour(cartItem.id);
-        if (!schedulesMap[cartItem.id]) {
-            fetchSchedules(cartItem.id);
+        
+        fetchAddOnsForTour(cartItem.id, itemKey);
+        
+        if (!schedulesMap[itemKey]) {
+            fetchSchedules(cartItem.id, itemKey);
         }
     };
+
     useEffect(() => {
         if (cart.length === 0) return;
+        
         let hasNewItems = false;
-        cart.forEach((item) => {
-            if (!formDataMap[item.id]) {
+        cart.forEach((item, index) => {
+            const itemKey = getItemKey(item, index);
+            
+            if (!formDataMap[itemKey]) {
                 hasNewItems = true;
                 const initialFormData: FormData = {
                     quantity: 1,
@@ -398,15 +418,18 @@ const PurchasePage = () => {
                     purchaseNote: "",
                     selectedAddOns: [],
                 };
+                
                 setFormDataMap(prev => ({
                     ...prev,
-                    [item.id]: initialFormData
+                    [itemKey]: initialFormData
                 }));
-                fetchAddOnsForTour(item.id);
+                
+                fetchAddOnsForTour(item.id, itemKey);
             }
         });
+        
         if (hasNewItems) {
-            const newItemIndex = cart.findIndex(item => !formDataMap[item.id]);
+            const newItemIndex = cart.findIndex((item, index) => !formDataMap[getItemKey(item, index)]);
             if (newItemIndex >= 0) {
                 setSelectedCartItemIndex(newItemIndex);
             }
@@ -414,14 +437,17 @@ const PurchasePage = () => {
             setSelectedCartItemIndex(0);
         }
     }, [cart, formDataMap, fetchAddOnsForTour]);
+
     useEffect(() => {
         if (cart.length > 0) {
             if (cart.length > 0 && selectedCartItemIndex < cart.length) {
-                const currentTourId = cart[selectedCartItemIndex].id;
+                const currentItem = cart[selectedCartItemIndex];
+                const itemKey = getItemKey(currentItem, selectedCartItemIndex);
+                
                 setFormDataMap(prev => ({
                     ...prev,
-                    [currentTourId]: {
-                        ...prev[currentTourId],
+                    [itemKey]: {
+                        ...prev[itemKey],
                         quantity,
                         date,
                         time,
@@ -460,10 +486,12 @@ const PurchasePage = () => {
 
     const handleSaveLineItems = () => {
         if (isCustomLineItemsEnabled && selectedCartItemIndex >= 0 && selectedCartItemIndex < cart.length) {
-            const currentTourId = cart[selectedCartItemIndex].id;
+            const currentItem = cart[selectedCartItemIndex];
+            const itemKey = getItemKey(currentItem, selectedCartItemIndex);
+            
             setCustomLineItems(prev => ({
                 ...prev,
-                [currentTourId]: [...items]
+                [itemKey]: [...items]
             }));
         }
         setIsLineItemModalOpen(false);
@@ -561,7 +589,7 @@ const PurchasePage = () => {
     };
 
     useEffect(() => {
-        const fetchSchedules = async (tourId: string) => {
+        const fetchSchedules = async (tourId: string, itemKey?: string) => {
             if (!tourId) return;
             try {
                 setLoadingSchedules(true);
@@ -593,18 +621,23 @@ const PurchasePage = () => {
                         }),
                     };
                 });
+                
                 const sortedSchedules = sortTimeSlots(formattedSchedules);
+                const mapKey = itemKey || tourId;
+                
                 setSchedulesMap(prev => ({
                     ...prev,
-                    [tourId]: sortedSchedules
+                    [mapKey]: sortedSchedules
                 }));
                 
                 setLoadingSchedules(false);
             } catch (error) {
                 console.error(`Failed to fetch schedules for tour ${tourId}:`, error);
+                const mapKey = itemKey || tourId;
+                
                 setSchedulesMap(prev => ({
                     ...prev,
-                    [tourId]: []
+                    [mapKey]: []
                 }));
                 setLoadingSchedules(false);
             }
@@ -626,7 +659,7 @@ const PurchasePage = () => {
         };
         fetchAllSchedules();
     }, [cart, schedulesMap]);
-    const fetchSchedules = async (tourId: string) => {
+    const fetchSchedules = async (tourId: string, itemKey?: string) => {
         if (!tourId) return;
         try {
             const res = await fetch(
@@ -656,18 +689,23 @@ const PurchasePage = () => {
                     }),
                 };
             });
+            
             const sortedSchedules = sortTimeSlots(formattedSchedules);
+            const mapKey = itemKey || tourId;
+            
             setSchedulesMap(prev => ({
                 ...prev,
-                [tourId]: sortedSchedules
+                [mapKey]: sortedSchedules
             }));
             
             return sortedSchedules;
         } catch (error) {
             console.error(`Failed to fetch schedules for tour ${tourId}:`, error);
+            const mapKey = itemKey || tourId;
+            
             setSchedulesMap(prev => ({
                 ...prev,
-                [tourId]: []
+                [mapKey]: []
             }));
             return [];
         }
@@ -950,9 +988,9 @@ const PurchasePage = () => {
                 });
             });
 
-            const cartPayload = cart.map((cartItem) => {
-                const formData = formDataMap[cartItem.id];
-                const itemTotalPrice = calculateItemTotalPrice(cartItem, formData);
+            const cartPayload = cart.map((cartItem, index) => {
+                const formData = formDataMap[getItemKey(cartItem, index)];
+                const itemTotalPrice = calculateItemTotalPrice(cartItem, formData, index);
                 return {
                     tourId: cartItem.id,
                     reservationData: {
@@ -984,7 +1022,7 @@ const PurchasePage = () => {
                     createdBy: "Back Office",
                     purchaseTags,
                     purchaseNote,
-                    customLineItems: customLineItems[cartItem.id] || []
+                    customLineItems: customLineItems[getItemKey(cartItem, index)] || []
                 };
             });
 
@@ -1820,9 +1858,11 @@ const PurchasePage = () => {
 
     const handleOpenLineItemModal = () => {
         if (selectedCartItemIndex >= 0 && selectedCartItemIndex < cart.length) {
-            const currentTourId = cart[selectedCartItemIndex].id;
-            if (customLineItems[currentTourId]) {
-                setItems(customLineItems[currentTourId]);
+            const currentItem = cart[selectedCartItemIndex];
+            const itemKey = getItemKey(currentItem, selectedCartItemIndex);
+            
+            if (customLineItems[itemKey]) {
+                setItems(customLineItems[itemKey]);
             } else {
                 setItems([{id: 1, type: "Charge", amount: 0, quantity: 1, name: ""}]);
             }
@@ -1830,10 +1870,12 @@ const PurchasePage = () => {
         setIsLineItemModalOpen(true);
     };
 
-    const calculateCustomLineItemsTotal = (tourId: string) => {
-        if (!isCustomLineItemsEnabled || !customLineItems[tourId]) return 0;
+    const calculateCustomLineItemsTotal = (tourId: string, index: number) => {
+        const itemKey = getItemKey({id: tourId}, index);
         
-        return customLineItems[tourId].reduce((acc, item) => {
+        if (!isCustomLineItemsEnabled || !customLineItems[itemKey]) return 0;
+        
+        return customLineItems[itemKey].reduce((acc, item) => {
             const totalItem = item.amount * item.quantity;
             return item.type === "Discount" ? acc - totalItem : acc + totalItem;
         }, 0);
@@ -1842,8 +1884,9 @@ const PurchasePage = () => {
     const calculateTotalCartValue = () => {
         if (cart.length === 0) return 0;
         
-        return cart.reduce((total, item,) => {
-            const itemFormData = formDataMap[item.id] || {
+        return cart.reduce((total, item, index) => {
+            const itemKey = getItemKey(item, index);
+            const itemFormData = formDataMap[itemKey] || {
                 quantity: 1,
                 selectedAddOns: []
             };
@@ -1854,7 +1897,7 @@ const PurchasePage = () => {
             const itemAddonTotal = (itemFormData.selectedAddOns as SelectedAddOn[]).reduce<number>(
                 (addonSum, addon) => {
                     const addonInfo =
-                        addonsMap[item.id]?.find(a => a.id === addon.addOnId) ||
+                        addonsMap[itemKey]?.find(a => a.id === addon.addOnId) ||
                         addons.find(a => a.id === addon.addOnId);
 
                     if (!addonInfo) return addonSum;
@@ -1868,20 +1911,22 @@ const PurchasePage = () => {
                 },
                 0
             );
-            const customLineItemsTotal = calculateCustomLineItemsTotal(item.id);
+            
+            const customLineItemsTotal = calculateCustomLineItemsTotal(item.id, index);
             return total + baseTotal + itemAddonTotal + customLineItemsTotal;
         }, 0);
     };
     const finalCartTotal = Math.max(calculateTotalCartValue() - voucherDiscount, 0);
 
-    const calculateItemTotalPrice = (cartItem, formData) => {
+    const calculateItemTotalPrice = (cartItem, formData, index) => {
         if (!cartItem || !formData) return 0;
 
         const itemPrice = getPriceForQuantity(formData.quantity, cartItem.id);
         const baseTotal = itemPrice * formData.quantity;
+        const itemKey = getItemKey(cartItem, index);
 
         const itemAddonsTotal = formData.selectedAddOns.reduce((sum, addon) => {
-            const addonInfo = addonsMap[cartItem.id]?.find(a => a.id === addon.addOnId);
+            const addonInfo = addonsMap[itemKey]?.find(a => a.id === addon.addOnId);
             if (!addonInfo) return sum;
             
             if (addonInfo.type === 'CHECKBOX' && addon.checked) {
@@ -1892,8 +1937,8 @@ const PurchasePage = () => {
             return sum;
         }, 0);
 
-        const customItemsTotal = isCustomLineItemsEnabled && customLineItems[cartItem.id] 
-            ? customLineItems[cartItem.id].reduce((sum, item) => {
+        const customItemsTotal = isCustomLineItemsEnabled && customLineItems[itemKey] 
+            ? customLineItems[itemKey].reduce((sum, item) => {
                 const itemAmount = item.amount * item.quantity;
                 return item.type === "Discount" ? sum - itemAmount : sum + itemAmount;
             }, 0)

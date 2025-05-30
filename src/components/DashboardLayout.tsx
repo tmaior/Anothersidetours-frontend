@@ -33,7 +33,7 @@ import {
     useBreakpointValue,
     Select,
     FormControl,
-    FormLabel
+    FormLabel, PlacementWithLogical
 } from "@chakra-ui/react";
 import {useRouter} from "next/router";
 import React, {useEffect, useRef, useState} from "react";
@@ -91,14 +91,14 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
         sm: "xs",
         md: "xs"
     });
-    
+
     const menuPlacement = useBreakpointValue({
         base: "bottom-start",
         sm: "bottom-start",
         md: "bottom-start",
         lg: "right-start",
-        xl: "right-start"
-    });
+        xl: "right-start",
+    }) as PlacementWithLogical | undefined;
 
     useEffect(() => {
         const handleRouteChange = (url) => {

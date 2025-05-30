@@ -177,7 +177,7 @@ export default function BookingDetailsPage({reservationData}) {
                 <BookingDetails
                     tourId={tourIdAsString}
                     title={tourData.name}
-                    minGuests={tourData.minPerEventLimit}
+                    minGuests={tourData.minPerReservationLimit}
                     description={tourData.description}
                     originalPrice={finalPrice.toString()}
                     addons={tourData.addons}

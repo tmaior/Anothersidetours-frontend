@@ -52,6 +52,7 @@ import {useGuest} from "../contexts/GuestContext";
 import {CartProvider} from "../contexts/CartContext";
 import LogoutButton from "./LogoutButton";
 import axios from "axios";
+import { parseCookies, setCookie, destroyCookie } from "nookies";
 
 export default function DashboardLayout({children}: { children: React.ReactNode }) {
     const router = useRouter();
@@ -102,8 +103,10 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     }, [router]);
 
     useEffect(() => {
-        const storedTenantId = localStorage.getItem("tenantId");
-        const storedTenant = localStorage.getItem("selectedTenant");
+        const cookies = parseCookies();
+        const storedTenantId = cookies.tenantId;
+        const storedTenant = cookies.selectedTenant;
+        
         if (storedTenantId && !tenantId) {
             setTenantId(storedTenantId);
         }
@@ -154,8 +157,14 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         setSelectedTenant(defaultTenant);
                         setTenantId(defaultTenant.id);
 
-                        localStorage.setItem("tenantId", defaultTenant.id);
-                        localStorage.setItem("selectedTenant", JSON.stringify(defaultTenant));
+                        setCookie(null, "tenantId", defaultTenant.id, {
+                            maxAge: 30 * 24 * 60 * 60,
+                            path: '/',
+                        });
+                        setCookie(null, "selectedTenant", JSON.stringify(defaultTenant), {
+                            maxAge: 30 * 24 * 60 * 60,
+                            path: '/',
+                        });
                     } else if (currentTenantId) {
                         const existingTenant = data.find((tenant) => tenant.id === currentTenantId);
                         if (existingTenant) {
@@ -318,8 +327,15 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
     const handleSelectTenant = (tenant) => {
         setSelectedTenant(tenant);
         setTenantId(tenant.id);
-        localStorage.setItem("selectedTenant", JSON.stringify(tenant));
-        localStorage.setItem("tenantId", tenant.id);
+        
+        setCookie(null, "selectedTenant", JSON.stringify(tenant), {
+            maxAge: 30 * 24 * 60 * 60,
+            path: '/',
+        });
+        setCookie(null, "tenantId", tenant.id, {
+            maxAge: 30 * 24 * 60 * 60,
+            path: '/',
+        });
     };
 
     const [selectedImage, setSelectedImage] = useState<File | null>(null);

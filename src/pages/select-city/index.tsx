@@ -14,6 +14,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
+import { setCookie } from "nookies";
 
 interface Tenant {
     imageUrl: string;
@@ -78,8 +79,14 @@ export default function SelectCity() {
     }, [isLoadingAuth, currentUser, router, fetchTenants]);
 
     const handleCitySelect = (tenant: Tenant) => {
-        localStorage.setItem("selectedTenant", JSON.stringify(tenant));
-        localStorage.setItem("tenantId", tenant.id);
+        setCookie(null, "selectedTenant", JSON.stringify(tenant), {
+            maxAge: 30 * 24 * 60 * 60,
+            path: '/',
+        });
+        setCookie(null, "tenantId", tenant.id, {
+            maxAge: 30 * 24 * 60 * 60,
+            path: '/',
+        });
         router.push("/dashboard/reservation");
     };
 

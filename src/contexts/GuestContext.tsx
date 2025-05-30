@@ -1,4 +1,5 @@
-import React, {createContext, ReactNode, useContext, useState} from "react";
+import React, {createContext, ReactNode, useContext, useState, useEffect} from "react";
+import { parseCookies, setCookie } from "nookies";
 
 export interface ScheduleItem {
     name: string;
@@ -111,7 +112,7 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [phone, setPhone] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
-    const [tenantId, setTenantId] = useState<string | null>(null);
+    const [tenantId, setTenantIdState] = useState<string | null>(null);
     const [tourId, setTourId] = useState("");
     const [userId, setUserId] = useState("");
     const [detailedAddons, setDetailedAddons] = useState([]);
@@ -138,12 +139,27 @@ export function GuestProvider({children}: { children: ReactNode }) {
     const [notifyStaffValue, setNotifyStaffValue] = useState<number>(1);
     const [notifyStaffUnit, setNotifyStaffUnit] = useState<string>("HOUR");
 
+    useEffect(() => {
+        const cookies = parseCookies();
+        if (cookies.tenantId && !tenantId) {
+            setTenantIdState(cookies.tenantId);
+        }
+    }, [tenantId]);
+
+    const setTenantId = (id: string) => {
+        setTenantIdState(id);
+        setCookie(null, "tenantId", id, {
+            maxAge: 30 * 24 * 60 * 60,
+            path: '/',
+        });
+    };
+
     const resetGuestQuantity = () => {
         setGuestQuantity(0);
         setName("");
         setEmail("");
         setTitle("");
-        setTenantId("");
+        setTenantIdState("");
         // setTourId("");
         setUserId("");
         setPhone("");

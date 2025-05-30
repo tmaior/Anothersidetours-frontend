@@ -91,6 +91,14 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
         sm: "xs",
         md: "xs"
     });
+    
+    const menuPlacement = useBreakpointValue({
+        base: "bottom-start",
+        sm: "bottom-start",
+        md: "bottom-start",
+        lg: "right-start",
+        xl: "right-start"
+    });
 
     useEffect(() => {
         const handleRouteChange = (url) => {
@@ -818,7 +826,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                         <Box mt="10vh" p={4} marginLeft={"-6"} w={"238px"} marginTop={"-60px"} position="relative"
                              zIndex={100}>
                             <Menu
-                                placement="right-start"
+                                placement={menuPlacement}
                                 offset={[0, 0]}
                                 closeOnSelect={false}
                                 isLazy
@@ -1395,7 +1403,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                 <Box mt="10vh" p={4} marginLeft={"-6"} w={"238px"} marginTop={"-60px"} position="relative"
                                      zIndex={100}>
                                     <Menu
-                                        placement="right-start"
+                                        placement={menuPlacement}
                                         offset={[0, 0]}
                                         closeOnSelect={false}
                                         isLazy
@@ -1454,6 +1462,61 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                                 position="relative"
                                                 boxShadow="0px 0px 15px rgba(0, 0, 0, 0.5)"
                                             >
+                                                {tenants.map((tenant) => (
+                                                    <MenuItem
+                                                        key={tenant.id}
+                                                        bg="#222324"
+                                                        color="white"
+                                                        _hover={{
+                                                            background: "rgba(255, 255, 255, 0.1)",
+                                                            transition: "background 0.2s ease-in-out",
+                                                        }}
+                                                        onClick={() => handleSelectTenant(tenant)}
+                                                    >
+                                                        <HStack spacing={3}>
+                                                            <Avatar size="sm" src={tenant.imageUrl}/>
+                                                            <Box>
+                                                                <Text fontSize="sm" fontWeight="bold">
+                                                                    {tenant.name}
+                                                                </Text>
+                                                                <Text fontSize="xs" color="gray.400">
+                                                                    {tenant.location}
+                                                                </Text>
+                                                            </Box>
+                                                        </HStack>
+                                                    </MenuItem>
+                                                ))}
+                                                <MenuDivider borderColor="#333" bg="#222324"/>
+                                                <MenuItem bg="#222324" color={"white"} _hover={{
+                                                    background: "rgba(255, 255, 255, 0.1)",
+                                                    transition: "background 0.2s ease-in-out",
+                                                }}>Privacy Policy</MenuItem>
+                                                <MenuItem bg="#222324" color={"white"} _hover={{
+                                                    background: "rgba(255, 255, 255, 0.1)",
+                                                    transition: "background 0.2s ease-in-out",
+                                                }}>Support</MenuItem>
+                                                <MenuItem bg="#222324" color={"white"} _hover={{
+                                                    background: "rgba(255, 255, 255, 0.1)",
+                                                    transition: "background 0.2s ease-in-out",
+                                                }}>Help Center</MenuItem>
+                                                <MenuDivider borderColor="#333"/>
+                                                <LogoutButton
+                                                    as={MenuItem}
+                                                    bg="#222324"
+                                                    color="white"
+                                                    w="100%"
+                                                    justifyContent="flex-start"
+                                                    _hover={{background: "rgba(255,255,255,0.1)"}}
+                                                >
+                                                    Logout
+                                                </LogoutButton>
+                                                <MenuDivider borderColor="#333"/>
+                                                <MenuItem bg="#222324" color={"white"} icon={<AiOutlinePlus/>} _hover={{
+                                                    background: "rgba(255, 255, 255, 0.1)",
+                                                    transition: "background 0.2s ease-in-out",
+                                                }} onClick={onOpen}>
+                                                    Add New City
+                                                </MenuItem>
                                             </MenuList>
                                         </Portal>
                                     </Menu>

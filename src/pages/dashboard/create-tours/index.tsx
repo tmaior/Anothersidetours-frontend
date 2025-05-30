@@ -1331,39 +1331,80 @@ function SchedulesAvailabilityStep({
                 ? `${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`
                 : `${process.env.NEXT_PUBLIC_API_URL}/tours`;
 
+            const minPerEventLimitValue = Number(minPerEventLimit);
+            const maxPerEventLimitValue = Number(maxPerEventLimit);
+            const minPerReservationLimitValue = Number(minPerReservationLimit);
+            const maxPerReservationLimitValue = Number(maxPerReservationLimit);
+            const notifyStaffValueNumber = Number(notifyStaffValue);
+
+            const requestBody = {
+                name: title,
+                description,
+                duration: Number(eventDuration),
+                imageUrl: imageUrlToSave,
+                price: Number(price),
+                guestLimit: Number(guestLimit),
+                StandardOperation: operationProcedures,
+                Cancellation_Policy: cancellationPolicy,
+                Considerations: considerations,
+                tenantId: tenantId
+            };
+
+            if (!isEditing) {
+                Object.assign(requestBody, {
+                    minPerEventLimit: minPerEventLimitValue,
+                    maxPerEventLimit: maxPerEventLimitValue,
+                    minPerReservationLimit: minPerReservationLimitValue,
+                    maxPerReservationLimit: maxPerReservationLimitValue,
+                    notifyStaffValue: notifyStaffValueNumber,
+                    notifyStaffUnit: notifyStaffUnit.toUpperCase()
+                });
+            }
             const tourResponse = await fetch(url, {
                 method,
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
-                    name: title,
-                    description,
-                    duration: Number(eventDuration),
-                    imageUrl: imageUrlToSave,
-                    price: Number(price),
-                    guestLimit: Number(guestLimit),
-                    StandardOperation: operationProcedures,
-                    Cancellation_Policy: cancellationPolicy,
-                    Considerations: considerations,
-                    minPerEventLimit: Number(minPerEventLimit),
-                    maxPerEventLimit: Number(maxPerEventLimit),
-                    minPerReservationLimit: Number(minPerReservationLimit),
-                    maxPerReservationLimit: Number(maxPerReservationLimit),
-                    notifyStaffValue: Number(notifyStaffValue),
-                    notifyStaffUnit: notifyStaffUnit.toUpperCase(),
-                    tenantId: tenantId
-                })
+                body: JSON.stringify(requestBody)
             });
 
             if (!tourResponse.ok) {
-                throw new Error("Failed to create tour");
+                const errorText = await tourResponse.text();
+                console.error("Failed to save tour:", errorText);
+                throw new Error(`Failed to create tour: ${errorText}`);
             }
 
             const savedTour = await tourResponse.json();
             const tourId = savedTour.id;
             setTourId(tourId);
+            if (isEditing) {
+                try {
+                    const updateLimitsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/update-limits/${tourId}`, {
+                        method: "PUT",
+                        credentials: "include",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            minPerEventLimit: minPerEventLimitValue,
+                            maxPerEventLimit: maxPerEventLimitValue,
+                            minPerReservationLimit: minPerReservationLimitValue,
+                            maxPerReservationLimit: maxPerReservationLimitValue,
+                            notifyStaffValue: notifyStaffValueNumber,
+                            notifyStaffUnit: notifyStaffUnit.toUpperCase()
+                        })
+                    });
+
+                    if (!updateLimitsResponse.ok) {
+                        console.warn("Unable to update guest limits");
+                    } else {
+                        console.log("Guest limits updated successfully");
+                    }
+                } catch (error) {
+                    console.error("Error updating guest limits:", error);
+                }
+            }
 
             if (isEditing) {
                 const currentDemographicsResponse = await fetch(

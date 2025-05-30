@@ -51,8 +51,41 @@ export default function ListReservations() {
                     credentials: "include",
                 });
                 const data = await response.json();
-                setReservations(Array.isArray(data) ? data : []);
-                setFilteredReservations(Array.isArray(data) ? data : []);
+
+                const groupedReservations = [];
+                const reservationGroups = {};
+                
+                if (Array.isArray(data)) {
+                    data.forEach(reservation => {
+                        const dateTime = new Date(reservation.reservation_date);
+                        const dateKey = dateTime.toISOString().split('T')[0];
+                        const timeKey = dateTime.toISOString().split('T')[1].substring(0, 5);
+                        const groupKey = `${reservation.tourId}_${dateKey}_${timeKey}`;
+                        
+                        if (!reservationGroups[groupKey]) {
+                            reservationGroups[groupKey] = {
+                                ...reservation,
+                                isGrouped: true,
+                                groupedReservations: [reservation],
+                                totalGuests: reservation.guestQuantity,
+                                reservationIds: [reservation.id]
+                            };
+                        } else {
+                            reservationGroups[groupKey].totalGuests += reservation.guestQuantity;
+                            reservationGroups[groupKey].groupedReservations.push(reservation);
+                            reservationGroups[groupKey].reservationIds.push(reservation.id);
+                        }
+                    });
+                    Object.values(reservationGroups).forEach(group => {
+                        groupedReservations.push(group);
+                    });
+                    
+                    setReservations(groupedReservations);
+                    setFilteredReservations(groupedReservations);
+                } else {
+                    setReservations([]);
+                    setFilteredReservations([]);
+                }
             } catch (error) {
                 console.error("Error fetching reservations:", error);
                 toast({
@@ -628,7 +661,7 @@ export default function ListReservations() {
                 <VStack spacing={6} align="stretch">
                     {filteredReservations.map((reservation) => (
                         <Flex
-                            key={reservation.id}
+                            key={reservation.isGrouped ? reservation.reservationIds.join('_') : reservation.id}
                             p={4}
                             bg="gray.700"
                             borderRadius="md"
@@ -638,8 +671,8 @@ export default function ListReservations() {
                         >
                             <HStack w="100%" align="center">
                                 <Checkbox
-                                    isChecked={selectedReservation === reservation.id}
-                                    onChange={() => handleSelectReservation(reservation.id)}
+                                    isChecked={selectedReservation === (reservation.isGrouped ? reservation.reservationIds[0] : reservation.id)}
+                                    onChange={() => handleSelectReservation(reservation.isGrouped ? reservation.reservationIds[0] : reservation.id)}
                                     colorScheme="teal"
                                     mr={4}
                                 />
@@ -666,28 +699,55 @@ export default function ListReservations() {
                                             timeZone: "UTC",
                                         })}
                                     </Text>
-                                    <Text color="gray.300">Guests: {reservation.guestQuantity}</Text>
+                                    <Text color="gray.300">
+                                        Guests: {reservation.isGrouped ? reservation.totalGuests : reservation.guestQuantity} 
+                                        {reservation.isGrouped && reservation.tour.minPerEventLimit > 0 && (
+                                            <span> {reservation.totalGuests >= reservation.tour.minPerEventLimit 
+                                                ? "(Minimum reached)" 
+                                                : `(Need ${reservation.tour.minPerEventLimit - reservation.totalGuests} more)`}
+                                            </span>
+                                        )}
+                                    </Text>
                                     <Text color="gray.300">Total Price: ${reservation.total_price.toFixed(2)}</Text>
                                     <Text color="gray.300">Status: {reservation.status}</Text>
+                                    {reservation.isGrouped && reservation.groupedReservations.length > 1 && (
+                                        <Text color="blue.300">
+                                            {reservation.groupedReservations.length} reservations grouped
+                                        </Text>
+                                    )}
                                 </Box>
                                 <Button
                                     size="sm"
                                     colorScheme="teal"
-                                    onClick={() => toggleExpandReservation(reservation.id)}
+                                    onClick={() => toggleExpandReservation(reservation.isGrouped ? reservation.reservationIds[0] : reservation.id)}
                                 >
-                                    {expandedReservation === reservation.id ? "Hide Details" : "View Details"}
+                                    {expandedReservation === (reservation.isGrouped ? reservation.reservationIds[0] : reservation.id) ? "Hide Details" : "View Details"}
                                 </Button>
                                 <Button size="sm" colorScheme="blue" onClick={openAddonModal}>
                                     Add Add-ons
                                 </Button>
                             </HStack>
-                            {expandedReservation === reservation.id && (
+                            {expandedReservation === (reservation.isGrouped ? reservation.reservationIds[0] : reservation.id) && (
                                 <Box mt={4} bg="gray.600" p={4} borderRadius="md" w="100%">
+                                    {reservation.isGrouped && reservation.groupedReservations.length > 1 && (
+                                        <Box mb={4} p={2} bg="gray.700" borderRadius="md">
+                                            <Text color="white" fontWeight="bold">Grouped Reservations:</Text>
+                                            {reservation.groupedReservations.map((subReservation, index) => (
+                                                <Box key={subReservation.id} p={2} mt={2} bg="gray.800" borderRadius="md">
+                                                    <Text color="white">Reservation #{index + 1}</Text>
+                                                    <Text color="gray.300">Guest: {subReservation.user?.name || 'N/A'}</Text>
+                                                    <Text color="gray.300">Quantity: {subReservation.guestQuantity}</Text>
+                                                    <Text color="gray.300">Status: {subReservation.status}</Text>
+                                                </Box>
+                                            ))}
+                                        </Box>
+                                    )}
+                                    
                                     <Text color="gray.300" fontWeight="bold">
                                         Add-ons:
                                     </Text>
-                                    {reservationAddons[reservation.id]?.length > 0 ? (
-                                        reservationAddons[reservation.id].map((addon) => (
+                                    {reservationAddons[reservation.isGrouped ? reservation.reservationIds[0] : reservation.id]?.length > 0 ? (
+                                        reservationAddons[reservation.isGrouped ? reservation.reservationIds[0] : reservation.id].map((addon) => (
                                             <Text key={addon.id} color="gray.300">
                                                 - {addon.label} (Quantity: {addon.value})
                                             </Text>
@@ -698,8 +758,8 @@ export default function ListReservations() {
                                     <Text fontWeight="bold" mt={4} color="white">
                                         Additional Information
                                     </Text>
-                                    {additionalInformation[reservation.id]?.length > 0 ? (
-                                        additionalInformation[reservation.id].map((info, index) => (
+                                    {additionalInformation[reservation.isGrouped ? reservation.reservationIds[0] : reservation.id]?.length > 0 ? (
+                                        additionalInformation[reservation.isGrouped ? reservation.reservationIds[0] : reservation.id].map((info, index) => (
                                             <Text key={index} color="gray.300">
                                                 {info.title}: {info.value}
                                             </Text>
@@ -712,25 +772,25 @@ export default function ListReservations() {
                                         Customer Information
                                     </Text>
                                     <Text
-                                        color="gray.300">Name: {reservationUsers[reservation.id]?.name || "N/A"}</Text>
+                                        color="gray.300">Name: {reservationUsers[reservation.isGrouped ? reservation.reservationIds[0] : reservation.id]?.name || "N/A"}</Text>
                                     <Text
-                                        color="gray.300">Email: {reservationUsers[reservation.id]?.email || "N/A"}</Text>
+                                        color="gray.300">Email: {reservationUsers[reservation.isGrouped ? reservation.reservationIds[0] : reservation.id]?.email || "N/A"}</Text>
                                     <Text color="gray.300">
-                                        Phone: {reservationUsers[reservation.id]?.phone || "None"}
+                                        Phone: {reservationUsers[reservation.isGrouped ? reservation.reservationIds[0] : reservation.id]?.phone || "None"}
                                     </Text>
-                                    <Text color="gray.300">Guests: {reservation.guestQuantity}</Text>
+                                    <Text color="gray.300">Guests: {reservation.isGrouped ? reservation.totalGuests : reservation.guestQuantity}</Text>
 
                                     <Text fontWeight="bold" mt={4} color="white">
                                         Notes
                                     </Text>
-                                    {notes[reservation.id]?.length > 0 ? (
-                                        notes[reservation.id].map((note) => (
+                                    {notes[reservation.isGrouped ? reservation.reservationIds[0] : reservation.id]?.length > 0 ? (
+                                        notes[reservation.isGrouped ? reservation.reservationIds[0] : reservation.id].map((note) => (
                                             <HStack key={note.id} mt={2} justify="space-between">
                                                 <Text color="gray.300">{note.description}</Text>
                                                 <Button
                                                     size="xs"
                                                     colorScheme="red"
-                                                    onClick={() => handleRemoveNote(reservation.id, note.id)}
+                                                    onClick={() => handleRemoveNote(reservation.isGrouped ? reservation.reservationIds[0] : reservation.id, note.id)}
                                                 >
                                                     Remove
                                                 </Button>
@@ -749,7 +809,7 @@ export default function ListReservations() {
                                         <Button
                                             size="sm"
                                             colorScheme="blue"
-                                            onClick={() => handleAddNote(reservation.id)}
+                                            onClick={() => handleAddNote(reservation.isGrouped ? reservation.reservationIds[0] : reservation.id)}
                                             isDisabled={!newNote.trim()}
                                         >
                                             Add Note

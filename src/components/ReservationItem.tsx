@@ -27,6 +27,14 @@ interface ReservationItemData {
         email: string;
         phone: string;
     };
+    isGrouped?: boolean;
+    groupedReservations?: ReservationItemData[];
+    totalGuests?: number;
+    reservationIds?: string[];
+    tour?: {
+        minPerEventLimit?: number;
+        maxPerEventLimit?: number;
+    };
     [key: string]: unknown;
 }
 
@@ -245,6 +253,24 @@ const ReservationItem = ({
                                     <Text>{item.available}</Text>
                                     <Text>{item.reservedDetails}</Text>
                                 </HStack>
+                                
+                                {item.isGrouped && item.tour?.minPerEventLimit > 0 && (
+                                    <Text 
+                                        fontSize="xs" 
+                                        color={item.totalGuests >= item.tour.minPerEventLimit ? "green.500" : "orange.500"}
+                                        fontWeight="medium"
+                                    >
+                                        {item.totalGuests >= item.tour.minPerEventLimit 
+                                            ? "Min. guests reached" 
+                                            : `Need ${item.tour.minPerEventLimit - item.totalGuests} more`}
+                                    </Text>
+                                )}
+                                
+                                {item.isGrouped && item.groupedReservations?.length > 1 && (
+                                    <Text fontSize="xs" color="blue.500">
+                                        {item.groupedReservations.length} bookings
+                                    </Text>
+                                )}
                             </Box>
                         )}
                     </HStack>
@@ -348,6 +374,34 @@ const ReservationItem = ({
                                     <DashBoardMenu reservation={item} isMobile={true} />
                                 </HStack>
                             </Flex>
+                            
+                            {item.isGrouped && (
+                                <Flex 
+                                    p={2}
+                                    bg="gray.50"
+                                    borderRadius="md"
+                                    direction="column"
+                                    mb={2}
+                                >
+                                    {item.tour?.minPerEventLimit > 0 && (
+                                        <Text 
+                                            fontSize="xs" 
+                                            color={item.totalGuests >= item.tour.minPerEventLimit ? "green.500" : "orange.500"}
+                                            fontWeight="medium"
+                                        >
+                                            {item.totalGuests >= item.tour.minPerEventLimit 
+                                                ? "Minimum guests reached" 
+                                                : `Need ${item.tour.minPerEventLimit - item.totalGuests} more guests`}
+                                        </Text>
+                                    )}
+                                    
+                                    {item.groupedReservations?.length > 1 && (
+                                        <Text fontSize="xs" color="blue.500">
+                                            {item.groupedReservations.length} bookings grouped
+                                        </Text>
+                                    )}
+                                </Flex>
+                            )}
                             
                             <Flex 
                                 p={2}

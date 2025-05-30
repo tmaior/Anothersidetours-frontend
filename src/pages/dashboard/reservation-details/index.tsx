@@ -518,6 +518,71 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                                 {reservation.time}
                             </Text>
                         </HStack>
+                        
+                        {reservation.isGrouped && (
+                            <Box mt={2} p={3} bg="gray.100" borderRadius="md">
+                                <Text fontWeight="semibold" fontSize="sm">Group Information:</Text>
+                                
+                                {reservation.tour?.minPerEventLimit > 0 && (
+                                    <HStack mt={1}>
+                                        <Text fontSize="sm" color="gray.600">Minimum guests needed:</Text>
+                                        <Text 
+                                            fontSize="sm" 
+                                            fontWeight="medium"
+                                            color={
+                                                reservation.totalGuests >= reservation.tour.minPerEventLimit 
+                                                    ? "green.500" 
+                                                    : "orange.500"
+                                            }
+                                        >
+                                            {reservation.tour.minPerEventLimit}
+                                            {reservation.totalGuests < reservation.tour.minPerEventLimit && 
+                                                ` (Need ${reservation.tour.minPerEventLimit - reservation.totalGuests} more)`}
+                                        </Text>
+                                    </HStack>
+                                )}
+                                
+                                {reservation.tour?.maxPerEventLimit > 0 && (
+                                    <HStack mt={1}>
+                                        <Text fontSize="sm" color="gray.600">Maximum guests allowed:</Text>
+                                        <Text fontSize="sm" fontWeight="medium">
+                                            {reservation.tour.maxPerEventLimit}
+                                        </Text>
+                                    </HStack>
+                                )}
+                                
+                                <HStack mt={1}>
+                                    <Text fontSize="sm" color="gray.600">Current total guests:</Text>
+                                    <Text 
+                                        fontSize="sm" 
+                                        fontWeight="medium"
+                                        color={
+                                            reservation.tour?.minPerEventLimit > 0 && 
+                                            reservation.totalGuests >= reservation.tour.minPerEventLimit 
+                                                ? "green.500" 
+                                                : "blue.500"
+                                        }
+                                    >
+                                        {reservation.totalGuests || reservation.guestQuantity}
+                                    </Text>
+                                </HStack>
+                                
+                                {reservation.groupedReservations && reservation.groupedReservations.length > 1 && (
+                                    <>
+                                        <Text fontWeight="semibold" fontSize="sm" mt={2}>
+                                            Grouped Reservations ({reservation.groupedReservations.length}):
+                                        </Text>
+                                        {reservation.groupedReservations.map((subReservation, index) => (
+                                            <HStack key={subReservation.id} mt={1} spacing={3}>
+                                                <Text fontSize="sm" color="gray.600">#{index + 1}:</Text>
+                                                <Text fontSize="sm">{subReservation.user?.name || 'N/A'}</Text>
+                                                <Text fontSize="sm" color="gray.600">Guests: {subReservation.guestQuantity}</Text>
+                                            </HStack>
+                                        ))}
+                                    </>
+                                )}
+                            </Box>
+                        )}
                     </Box>
                 </HStack>
             </HStack>

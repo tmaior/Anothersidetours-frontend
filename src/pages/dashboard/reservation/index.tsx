@@ -163,6 +163,78 @@ function Dashboard() {
                     data = filteredData;
                 }
 
+                if (Array.isArray(data)) {
+                    const tourIds = [...new Set(data.map(reservation => reservation.tourId))];
+                    const tourLimits = {};
+                    
+                    await Promise.all(tourIds.map(async (tourId) => {
+                        try {
+                            const tourResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${tourId}`, {
+                                credentials: "include",
+                            });
+                            const tourData = await tourResponse.json();
+                            tourLimits[tourId] = {
+                                minPerEventLimit: tourData.minPerEventLimit || 0,
+                                maxPerEventLimit: tourData.maxPerEventLimit || 0
+                            };
+                        } catch (error) {
+                            console.error(`Error fetching tour data for ${tourId}:`, error);
+                            tourLimits[tourId] = { minPerEventLimit: 0, maxPerEventLimit: 0 };
+                        }
+                    }));
+
+                    const reservationGroups = {};
+                    
+                    data.forEach(reservation => {
+                        const dateTime = new Date(reservation.reservation_date);
+                        const dateKey = dateTime.toISOString().split('T')[0];
+                        const timeKey = dateTime.toTimeString().split(' ')[0].substring(0, 5);
+                        const groupKey = `${reservation.tourId}_${dateKey}_${timeKey}`;
+                        
+                        if (!reservationGroups[groupKey]) {
+                            reservationGroups[groupKey] = {
+                                reservations: [reservation],
+                                tourId: reservation.tourId,
+                                date: dateKey,
+                                time: timeKey,
+                                totalGuests: reservation.guestQuantity
+                            };
+                        } else {
+                            reservationGroups[groupKey].reservations.push(reservation);
+                            reservationGroups[groupKey].totalGuests += reservation.guestQuantity;
+                        }
+                    });
+
+                    const processedReservations = [];
+                    
+                    for (const groupKey in reservationGroups) {
+                        const group = reservationGroups[groupKey];
+                        const tourLimit = tourLimits[group.tourId] || { minPerEventLimit: 0, maxPerEventLimit: 0 };
+                        
+                        if (group.reservations.length > 1) {
+                            const baseReservation = { ...group.reservations[0] };
+                            baseReservation.isGrouped = true;
+                            baseReservation.groupedReservations = group.reservations;
+                            baseReservation.totalGuests = group.totalGuests;
+                            baseReservation.tour = {
+                                ...baseReservation.tour,
+                                minPerEventLimit: tourLimit.minPerEventLimit,
+                                maxPerEventLimit: tourLimit.maxPerEventLimit
+                            };
+                            processedReservations.push(baseReservation);
+                        } else {
+                            const singleReservation = { ...group.reservations[0] };
+                            singleReservation.tour = {
+                                ...singleReservation.tour,
+                                minPerEventLimit: tourLimit.minPerEventLimit,
+                                maxPerEventLimit: tourLimit.maxPerEventLimit
+                            };
+                            processedReservations.push(singleReservation);
+                        }
+                    }
+                    data = processedReservations;
+                }
+
                 const reservationsWithUserDetails = await Promise.all(
                     data.map(async (reservation) => {
                         if (reservation.user_id) {
@@ -218,6 +290,19 @@ function Dashboard() {
                     imageUrl: string;
                     paymentIntentId: string;
                     duration: number;
+                    totalGuests?: number;
+                    isGrouped?: boolean;
+                    groupedReservations?: any[];
+                    tour?: {
+                        minPerEventLimit?: number;
+                        maxPerEventLimit?: number;
+                        id: string;
+                        name: string;
+                        StandardOperation?: string;
+                        imageUrl?: string;
+                        price?: number;
+                        duration?: number;
+                    };
                     user?: {
                         name: string;
                         phone: string;
@@ -245,13 +330,18 @@ function Dashboard() {
                                 date: date,
                                 day: dayName,
                                 availableSummary: "∞ Available",
-                                reservedSummary: `${reservation.guestQuantity} Reserved`,
+                                reservedSummary: reservation.isGrouped 
+                                    ? `${reservation.totalGuests} Reserved` 
+                                    : `${reservation.guestQuantity} Reserved`,
                                 reservations: [],
                             };
                         }
 
                         acc[date].reservations.push({
                             guestQuantity: reservation.guestQuantity,
+                            totalGuests: reservation.totalGuests,
+                            isGrouped: reservation.isGrouped,
+                            groupedReservations: reservation.groupedReservations,
                             time: new Date(reservation.reservation_date).toLocaleTimeString("en-US", {
                                 hour: "2-digit",
                                 minute: "2-digit",

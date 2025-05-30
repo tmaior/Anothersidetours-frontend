@@ -131,7 +131,7 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
         setCancellationPolicy(cancellationPolicy || "");
         setConsiderations(considerations || "");
         setMapEnabled(false);
-    }, [cancellationPolicy, considerations, description, meetingLocation, operationProcedures, price, setCancellationPolicy,setConsiderations, title]);
+    }, [cancellationPolicy, considerations, description, meetingLocation, operationProcedures, price, setCancellationPolicy, setConsiderations, title, isEditing, minPerReservationLimit, maxPerReservationLimit, minPerEventLimit, maxPerEventLimit, notifyStaffValue, notifyStaffUnit]);
 
     useEffect(() => {
         const data = {
@@ -290,6 +290,50 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
         if (field === "description") setDescription(value as string);
     }
 
+    useEffect(() => {
+        if (isEditing) {
+            const { id } = router.query;
+            if (id) {
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`, {
+                    credentials: "include",
+                })
+                .then(response => response.json())
+                .then(tourData => {
+                    if (tourData) {
+                        setTitle(tourData.name || "");
+                        setDescription(tourData.description || "");
+                        setPrice(tourData.price || 0);
+                        setOperationProcedures(tourData.StandardOperation || "");
+                        setCancellationPolicy(tourData.Cancellation_Policy || "");
+                        setConsiderations(tourData.Considerations || "");
+                        setMinPerReservationLimit(tourData.minPerReservationLimit || 1);
+                        setMaxPerReservationLimit(tourData.maxPerReservationLimit || 0);
+                        setMinPerEventLimit(tourData.minPerEventLimit || 1);
+                        setMaxPerEventLimit(tourData.maxPerEventLimit || 0);
+                        setNotifyStaffValue(tourData.notifyStaffValue || 1);
+                        setNotifyStaffUnit(tourData.notifyStaffUnit || "HOUR");
+                        
+                        if (tourData.imageUrl) {
+                            setImagePreview(tourData.imageUrl);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching tour data:", error);
+                    toast({
+                        title: "Error",
+                        description: "Failed to load tour data.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                });
+            }
+        }
+    }, [isEditing, router.query, setTitle, setDescription, setPrice, setOperationProcedures, setCancellationPolicy, 
+        setConsiderations, setMinPerReservationLimit, setMaxPerReservationLimit, setMinPerEventLimit, 
+        setMaxPerEventLimit, setNotifyStaffValue, setNotifyStaffUnit, setImagePreview, toast]);
+
     return (
         <Box
             width="100vw"
@@ -411,12 +455,24 @@ function DescriptionContentStep({onNext, isEditing}: { onNext: () => void, isEdi
                                     perEventMaxValue={maxPerEventLimit === 0 ? null : maxPerEventLimit}
                                     notifyTimeValue={notifyStaffValue}
                                     notifyUnitValue={notifyStaffUnit.toLowerCase()}
-                                    onPerReservationMinChange={(value) => setMinPerReservationLimit(value)}
-                                    onPerReservationMaxChange={(value) => setMaxPerReservationLimit(value === null ? 0 : value)}
-                                    onPerEventMinChange={(value) => setMinPerEventLimit(value)}
-                                    onPerEventMaxChange={(value) => setMaxPerEventLimit(value === null ? 0 : value)}
-                                    onNotifyTimeChange={(value) => setNotifyStaffValue(value)}
-                                    onNotifyUnitChange={(value) => setNotifyStaffUnit(value.toUpperCase())}
+                                    onPerReservationMinChange={(value) => {
+                                        setMinPerReservationLimit(value);
+                                    }}
+                                    onPerReservationMaxChange={(value) => {
+                                        setMaxPerReservationLimit(value === null ? 0 : value);
+                                    }}
+                                    onPerEventMinChange={(value) => {
+                                        setMinPerEventLimit(value);
+                                    }}
+                                    onPerEventMaxChange={(value) => {
+                                        setMaxPerEventLimit(value === null ? 0 : value);
+                                    }}
+                                    onNotifyTimeChange={(value) => {
+                                        setNotifyStaffValue(value);
+                                    }}
+                                    onNotifyUnitChange={(value) => {
+                                        setNotifyStaffUnit(value.toUpperCase());
+                                    }}
                                 />
 
                             <FormControl mb={4}>

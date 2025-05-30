@@ -59,13 +59,36 @@ const GuestLimits: React.FC<GuestLimitsProps> = ({
     });
 
     useEffect(() => {
-        setPerReservationMin(perReservationMinValue);
-        setPerReservationMax(perReservationMaxValue === null ? "no limit" : perReservationMaxValue);
-        setPerEventMin(perEventMinValue);
-        setPerEventMax(perEventMaxValue === null ? "no limit" : perEventMaxValue);
-        setNotifyTime(notifyTimeValue);
-        setNotifyUnit(notifyUnitValue);
-    }, [perReservationMinValue, perReservationMaxValue, perEventMinValue, perEventMaxValue, notifyTimeValue, notifyUnitValue]);
+        if (perReservationMinValue !== undefined) {
+            setPerReservationMin(perReservationMinValue);
+        }
+    }, [perReservationMinValue]);
+
+    useEffect(() => {
+        setPerReservationMax(perReservationMaxValue === null || perReservationMaxValue === 0 ? "no limit" : perReservationMaxValue);
+    }, [perReservationMaxValue]);
+
+    useEffect(() => {
+        if (perEventMinValue !== undefined) {
+            setPerEventMin(perEventMinValue);
+        }
+    }, [perEventMinValue]);
+
+    useEffect(() => {
+        setPerEventMax(perEventMaxValue === null || perEventMaxValue === 0 ? "no limit" : perEventMaxValue);
+    }, [perEventMaxValue]);
+
+    useEffect(() => {
+        if (notifyTimeValue !== undefined) {
+            setNotifyTime(notifyTimeValue);
+        }
+    }, [notifyTimeValue]);
+
+    useEffect(() => {
+        if (notifyUnitValue) {
+            setNotifyUnit(notifyUnitValue);
+        }
+    }, [notifyUnitValue]);
 
     const handlePerReservationMinChange = (value: number | string) => {
         setPerReservationMin(value);
@@ -131,7 +154,7 @@ const GuestLimits: React.FC<GuestLimitsProps> = ({
                     value={value === "no limit" ? 0 : value}
                     onChange={(e) => {
                         const val = Number(e.target.value);
-                        onChange(val < 1 ? "no limit" : val);
+                        onChange(val <= 0 ? "no limit" : val);
                     }}
                     onBlur={() => setEditingField(null)}
                     autoFocus
@@ -142,7 +165,7 @@ const GuestLimits: React.FC<GuestLimitsProps> = ({
                 variant="link"
                 onClick={() => setEditingField(fieldKey)}
             >
-                <u>{value} guest</u>
+                <u>{value === "no limit" ? "no limit" : `${value} guest${Number(value) !== 1 ? 's' : ''}`}</u>
             </Button>
         );
     };

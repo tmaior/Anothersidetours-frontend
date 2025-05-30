@@ -23,6 +23,7 @@ interface Tenant {
     subTitle?: string;
     logoUrl?: string;
     city?: string;
+    description?: string;
 }
 
 export default function SelectCity() {
@@ -171,7 +172,7 @@ export default function SelectCity() {
                                             {tenant.name}
                                         </Text>
                                         <Text fontSize="xs" color="gray.600">
-                                            {tenant.subTitle || `Another Side Of ${tenant.city || ""} Tours`}
+                                            {tenant.description || tenant.subTitle || `Another Side Of ${tenant.city || ""} Tours`}
                                         </Text>
                                     </Box>
                                 </Button>

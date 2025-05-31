@@ -21,6 +21,7 @@ import {
     useDisclosure,
     useToast,
     useBreakpointValue,
+    Center,
 } from "@chakra-ui/react";
 import {FiCalendar, FiWatch} from "react-icons/fi";
 import {ArrowBackIcon} from "@chakra-ui/icons";
@@ -53,6 +54,8 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
     const [currentStatus, setCurrentStatus] = useState(reservation?.status);
     const [isChangeArrivalonOpen, setChangeArrivalOpen] = useState(false);
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
+    const [groupedUserDetails, setGroupedUserDetails] = useState({});
+    const [loadingGroupedUsers, setLoadingGroupedUsers] = useState(false);
 
     const {reservationGuides, setReservationGuides} = useGuidesStore();
     const guides = reservationGuides[reservation?.id] || [];
@@ -78,8 +81,54 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
 
     useEffect(() => {
         setCurrentStatus(reservation?.status);
-        setLocalGuides(reservationGuides[reservation.id]);
+        setLocalGuides(reservationGuides[reservation?.id] || []);
     }, [reservation, reservationGuides]);
+
+    useEffect(() => {
+        if (reservation?.isGrouped && reservation?.groupedReservations?.length > 1) {
+            setLoadingGroupedUsers(true);
+            
+            const fetchUserDetails = async () => {
+                try {
+                    const userDetailsMap = {};
+                    await Promise.all(
+                        reservation.groupedReservations.map(async (subReservation) => {
+                            if (subReservation.user_id && !userDetailsMap[subReservation.user_id]) {
+                                try {
+                                    const response = await fetch(
+                                        `${process.env.NEXT_PUBLIC_API_URL}/users/${subReservation.user_id}`,
+                                        {
+                                            credentials: 'include',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'Accept': 'application/json',
+                                            }
+                                        }
+                                    );
+                                    
+                                    if (response.ok) {
+                                        const userData = await response.json();
+                                        userDetailsMap[subReservation.user_id] = userData;
+                                        subReservation.user = userData;
+                                    }
+                                } catch (error) {
+                                    console.error(`Error fetching user data for ${subReservation.user_id}:`, error);
+                                }
+                            }
+                        })
+                    );
+                    
+                    setGroupedUserDetails(userDetailsMap);
+                } catch (error) {
+                    console.error("Error fetching grouped user details:", error);
+                } finally {
+                    setLoadingGroupedUsers(false);
+                }
+            };
+            
+            fetchUserDetails();
+        }
+    }, [reservation]);
 
     const displayGuideText = () => {
         if (loading) return "Loading guides...";
@@ -519,70 +568,7 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                             </Text>
                         </HStack>
                         
-                        {reservation.isGrouped && (
-                            <Box mt={2} p={3} bg="gray.100" borderRadius="md">
-                                <Text fontWeight="semibold" fontSize="sm">Group Information:</Text>
-                                
-                                {reservation.tour?.minPerEventLimit > 0 && (
-                                    <HStack mt={1}>
-                                        <Text fontSize="sm" color="gray.600">Minimum guests needed:</Text>
-                                        <Text 
-                                            fontSize="sm" 
-                                            fontWeight="medium"
-                                            color={
-                                                reservation.totalGuests >= reservation.tour.minPerEventLimit 
-                                                    ? "green.500" 
-                                                    : "orange.500"
-                                            }
-                                        >
-                                            {reservation.tour.minPerEventLimit}
-                                            {reservation.totalGuests < reservation.tour.minPerEventLimit && 
-                                                ` (Need ${reservation.tour.minPerEventLimit - reservation.totalGuests} more)`}
-                                        </Text>
-                                    </HStack>
-                                )}
-                                
-                                {reservation.tour?.maxPerEventLimit > 0 && (
-                                    <HStack mt={1}>
-                                        <Text fontSize="sm" color="gray.600">Maximum guests allowed:</Text>
-                                        <Text fontSize="sm" fontWeight="medium">
-                                            {reservation.tour.maxPerEventLimit}
-                                        </Text>
-                                    </HStack>
-                                )}
-                                
-                                <HStack mt={1}>
-                                    <Text fontSize="sm" color="gray.600">Current total guests:</Text>
-                                    <Text 
-                                        fontSize="sm" 
-                                        fontWeight="medium"
-                                        color={
-                                            reservation.tour?.minPerEventLimit > 0 && 
-                                            reservation.totalGuests >= reservation.tour.minPerEventLimit 
-                                                ? "green.500" 
-                                                : "blue.500"
-                                        }
-                                    >
-                                        {reservation.totalGuests || reservation.guestQuantity}
-                                    </Text>
-                                </HStack>
-                                
-                                {reservation.groupedReservations && reservation.groupedReservations.length > 1 && (
-                                    <>
-                                        <Text fontWeight="semibold" fontSize="sm" mt={2}>
-                                            Grouped Reservations ({reservation.groupedReservations.length}):
-                                        </Text>
-                                        {reservation.groupedReservations.map((subReservation, index) => (
-                                            <HStack key={subReservation.id} mt={1} spacing={3}>
-                                                <Text fontSize="sm" color="gray.600">#{index + 1}:</Text>
-                                                <Text fontSize="sm">{subReservation.user?.name || 'N/A'}</Text>
-                                                <Text fontSize="sm" color="gray.600">Guests: {subReservation.guestQuantity}</Text>
-                                            </HStack>
-                                        ))}
-                                    </>
-                                )}
-                            </Box>
-                        )}
+                        {/* Remover o card de Group Information */}
                     </Box>
                 </HStack>
             </HStack>
@@ -777,8 +763,60 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                                 {currentStatus}
                             </Td>
                         </Tr>
+
+                        {reservation.isGrouped && reservation.groupedReservations && 
+                         reservation.groupedReservations.length > 1 && 
+                         reservation.groupedReservations.slice(1).map((subReservation, index) => {
+                            const userDetail = subReservation.user_id ? 
+                                               groupedUserDetails[subReservation.user_id] || 
+                                               subReservation.user : 
+                                               null;
+                            
+                            return (
+                                <Tr key={subReservation.id || index}>
+                                    <Td>
+                                        <Accordion allowToggle>
+                                            <AccordionItem border="none">
+                                                <AccordionButton p={0}>
+                                                    <AccordionIcon/>
+                                                </AccordionButton>
+                                                <AccordionPanel>
+                                                    Additional information...
+                                                </AccordionPanel>
+                                            </AccordionItem>
+                                        </Accordion>
+                                    </Td>
+                                    <Td>{userDetail?.name || 'N/A'}</Td>
+                                    <Td>{subReservation.guestQuantity}</Td>
+                                    <Td>0</Td>
+                                    <Td>
+                                        0 Purchase Notes<br/>
+                                        0 Customer Notes
+                                    </Td>
+                                    <Td>
+                                        <Text color="green.500">0 Signed</Text>
+                                        <Text color="red.500">0 Unsigned</Text>
+                                    </Td>
+                                    <Td> - </Td>
+                                    <Td> - </Td>
+                                    <Td>{userDetail?.phone || 'N/A'}</Td>
+                                    <Td>{userDetail?.email || 'N/A'}</Td>
+                                    <Td color={subReservation.status === "ACCEPTED" ? "green.500" : 
+                                             subReservation.status === "PENDING" ? "black" : "red.500"}
+                                    >
+                                        {subReservation.status}
+                                    </Td>
+                                </Tr>
+                            );
+                         })}
                     </Tbody>
                 </Table>
+
+                {loadingGroupedUsers && (
+                    <Center mt={4}>
+                        <Text>Carregando detalhes dos convidados...</Text>
+                    </Center>
+                )}
 
                 {/*<HStack justifyContent="space-between" mt={4}>*/}
                 {/*    <Text fontSize="sm" color="gray.500">Status: Checkout</Text>*/}

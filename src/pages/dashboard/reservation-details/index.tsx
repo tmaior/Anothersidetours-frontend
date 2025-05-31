@@ -56,6 +56,7 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
     const [isSendMessageModalOpen, setSendMessageModalOpen] = useState(false);
     const [groupedUserDetails, setGroupedUserDetails] = useState({});
     const [loadingGroupedUsers, setLoadingGroupedUsers] = useState(false);
+    const [processingReservationId, setProcessingReservationId] = useState(null);
 
     const {reservationGuides, setReservationGuides} = useGuidesStore();
     const guides = reservationGuides[reservation?.id] || [];
@@ -513,6 +514,165 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
         }
     };
 
+    const handleAcceptIndividualReservation = async (subReservation) => {
+        if (!subReservation || !subReservation.id) return;
+        
+        setProcessingReservationId(subReservation.id);
+        
+        try {
+            const transactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${subReservation.id}`, {
+                credentials: "include",
+            });
+
+            if (!transactionResponse.ok) {
+                throw new Error(`Failed to get payment transaction data: ${transactionResponse.status}`);
+            }
+
+            const transactionData = await transactionResponse.json();
+            if (!transactionData || transactionData.length === 0) {
+                throw new Error("No payment transaction found for this reservation");
+            }
+
+            const transaction = transactionData[0];
+
+            let tenantId = subReservation.tenantId || reservation.tenantId;
+            if (!tenantId && subReservation.tourId) {
+                const tourResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${subReservation.tourId}`, {
+                    credentials: "include",
+                });
+                
+                if (tourResponse.ok) {
+                    const tourData = await tourResponse.json();
+                    tenantId = tourData.tenantId;
+                }
+            }
+            
+            if (!tenantId) {
+                throw new Error("Could not determine tenant for this reservation");
+            }
+
+            const tenantResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants/${tenantId}`, {
+                credentials: "include",
+            });
+            
+            if (!tenantResponse.ok) {
+                throw new Error(`Failed to get tenant data: ${tenantResponse.status}`);
+            }
+            
+            const tenantData = await tenantResponse.json();
+            const stripeAccountId = tenantData.stripeAccountId;
+            
+            const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/process-transaction-payment`, {
+                method: "POST",
+                credentials: "include",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    transactionId: transaction.id,
+                    stripeAccountId: stripeAccountId
+                }),
+            });
+
+            if (!paymentResponse.ok) {
+                throw new Error("Failed to process payment");
+            }
+
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${subReservation.id}`, {
+                method: "PUT",
+                credentials: "include",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({status: "ACCEPTED"}),
+            });
+
+            if (reservation.isGrouped && reservation.groupedReservations) {
+                const updatedGroupedReservations = reservation.groupedReservations.map(res => 
+                    res.id === subReservation.id ? {...res, status: "ACCEPTED"} : res
+                );
+                reservation.groupedReservations = updatedGroupedReservations;
+            }
+            
+            toast({
+                title: "Reservation Accepted",
+                description: `The reservation for ${subReservation.user?.name || 'Guest'} has been accepted`,
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+            
+        } catch (error) {
+            console.error("Error accepting individual reservation:", error);
+            toast({
+                title: "Error",
+                description: error.message || "Failed to accept reservation",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        } finally {
+            setProcessingReservationId(null);
+        }
+    };
+
+    const handleRejectIndividualReservation = async (subReservation) => {
+        if (!subReservation || !subReservation.id) return;
+        
+        setProcessingReservationId(subReservation.id);
+        
+        try {
+            const transactionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions/by-reservation/${subReservation.id}`, {
+                credentials: "include",
+            });
+
+            if (transactionResponse.ok) {
+                const transactionData = await transactionResponse.json();
+                if (transactionData && transactionData.length > 0) {
+                    const transaction = transactionData[0];
+                    if (transaction.paymentMethodId) {
+                        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/invalidate-payment-method`, {
+                            method: "POST",
+                            credentials: 'include',
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({paymentMethodId: transaction.paymentMethodId}),
+                        });
+                    }
+                }
+            }
+
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reservations/${subReservation.id}`, {
+                method: "PUT",
+                credentials: "include",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({status: "REJECTED"}),
+            });
+
+            if (reservation.isGrouped && reservation.groupedReservations) {
+                const updatedGroupedReservations = reservation.groupedReservations.map(res => 
+                    res.id === subReservation.id ? {...res, status: "REJECTED"} : res
+                );
+                reservation.groupedReservations = updatedGroupedReservations;
+            }
+            
+            toast({
+                title: "Reservation Rejected",
+                description: `The reservation for ${subReservation.user?.name || 'Guest'} has been rejected`,
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+            
+        } catch (error) {
+            console.error("Error rejecting individual reservation:", error);
+            toast({
+                title: "Error",
+                description: error.message || "Failed to reject reservation",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            });
+        } finally {
+            setProcessingReservationId(null);
+        }
+    };
+
     return (
         <Box p={{base: 4, md: 2, lg: 4}} overflowX="hidden">
             <Divider marginTop={"-15px"} maxW={"100%"}/>
@@ -584,7 +744,8 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                             size="sm"
                             colorScheme="green"
                             onClick={handleAccept}
-                            isDisabled={currentStatus !== "PENDING"}
+                            isDisabled={currentStatus !== "PENDING" || reservation.isGrouped}
+                            title={reservation.isGrouped ? "Use individual controls for grouped reservations" : ""}
                         >
                             Accept
                         </Button>
@@ -592,12 +753,14 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                             size="sm"
                             colorScheme="red"
                             onClick={confirmReject}
-                            isDisabled={currentStatus !== "PENDING"}
+                            isDisabled={currentStatus !== "PENDING" || reservation.isGrouped}
+                            title={reservation.isGrouped ? "Use individual controls for grouped reservations" : ""}
                         >
                             Reject
                         </Button>
                     </>
                 )}
+                
                 <Button size="sm" variant="outline"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -710,7 +873,9 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
             />
 
             <Box mt={6} maxW="100%" overflowX="auto">
-                <Text fontSize="lg" fontWeight="bold" mb={4}>Guests</Text>
+                <Text fontSize="lg" fontWeight="bold" mb={4}>
+                    Guests {reservation.isGrouped && `(${reservation.groupedReservations?.length || 0} total)`}
+                </Text>
                 <Table size="sm" variant="simple">
                     <Thead>
                         <Tr>
@@ -725,93 +890,144 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                             <Th>Phone</Th>
                             <Th>Email</Th>
                             <Th>Status</Th>
+                            {hasManageReservationPermission && <Th>Controls</Th>}
                         </Tr>
                     </Thead>
                     <Tbody>
-                        <Tr>
-                            <Td>
-                                <Accordion allowToggle>
-                                    <AccordionItem border="none">
-                                        <AccordionButton p={0}>
-                                            <AccordionIcon/>
-                                        </AccordionButton>
-                                        <AccordionPanel>
-                                            Additional information...
-                                        </AccordionPanel>
-                                    </AccordionItem>
-                                </Accordion>
-                            </Td>
-                            <Td>{user?.name || 'N/A'}</Td>
-                            <Td>{reservation.guestQuantity}</Td>
-                            <Td>0</Td>
-                            <Td>
-                                0 Purchase Notes<br/>
-                                0 Customer Notes
-                            </Td>
-                            <Td>
-                                <Text color="green.500">0 Signed</Text>
-                                <Text color="red.500">0 Unsigned</Text>
-                            </Td>
-                            <Td> - </Td>
-                            <Td> - </Td>
-                            <Td>{user?.phone || 'N/A'}</Td>
-                            <Td>{user?.email || 'N/A'}</Td>
-                            <Td color={currentStatus === "ACCEPTED" ? "green.500" : currentStatus === "PENDING" ? "black"
-                                : "red.500"
-                            }
-                            >
-                                {currentStatus}
-                            </Td>
-                        </Tr>
-
-                        {reservation.isGrouped && reservation.groupedReservations && 
-                         reservation.groupedReservations.length > 1 && 
-                         reservation.groupedReservations.slice(1).map((subReservation, index) => {
-                            const userDetail = subReservation.user_id ? 
-                                               groupedUserDetails[subReservation.user_id] || 
-                                               subReservation.user : 
-                                               null;
-                            
-                            return (
-                                <Tr key={subReservation.id || index}>
+                        {!reservation.isGrouped ? (
+                            <Tr>
+                                <Td>
+                                    <Accordion allowToggle>
+                                        <AccordionItem border="none">
+                                            <AccordionButton p={0}>
+                                                <AccordionIcon/>
+                                            </AccordionButton>
+                                            <AccordionPanel>
+                                                Additional information...
+                                            </AccordionPanel>
+                                        </AccordionItem>
+                                    </Accordion>
+                                </Td>
+                                <Td>{user?.name || 'N/A'}</Td>
+                                <Td>{reservation.guestQuantity}</Td>
+                                <Td>0</Td>
+                                <Td>
+                                    0 Purchase Notes<br/>
+                                    0 Customer Notes
+                                </Td>
+                                <Td>
+                                    <Text color="green.500">0 Signed</Text>
+                                    <Text color="red.500">0 Unsigned</Text>
+                                </Td>
+                                <Td> - </Td>
+                                <Td> - </Td>
+                                <Td>{user?.phone || 'N/A'}</Td>
+                                <Td>{user?.email || 'N/A'}</Td>
+                                <Td color={currentStatus === "ACCEPTED" ? "green.500" : currentStatus === "PENDING" ? "black"
+                                    : "red.500"
+                                }
+                                >
+                                    {currentStatus}
+                                </Td>
+                                {hasManageReservationPermission && (
                                     <Td>
-                                        <Accordion allowToggle>
-                                            <AccordionItem border="none">
-                                                <AccordionButton p={0}>
-                                                    <AccordionIcon/>
-                                                </AccordionButton>
-                                                <AccordionPanel>
-                                                    Additional information...
-                                                </AccordionPanel>
-                                            </AccordionItem>
-                                        </Accordion>
                                     </Td>
-                                    <Td>{userDetail?.name || 'N/A'}</Td>
-                                    <Td>{subReservation.guestQuantity}</Td>
-                                    <Td>0</Td>
-                                    <Td>
-                                        0 Purchase Notes<br/>
-                                        0 Customer Notes
-                                    </Td>
-                                    <Td>
-                                        <Text color="green.500">0 Signed</Text>
-                                        <Text color="red.500">0 Unsigned</Text>
-                                    </Td>
-                                    <Td> - </Td>
-                                    <Td> - </Td>
-                                    <Td>{userDetail?.phone || 'N/A'}</Td>
-                                    <Td>{userDetail?.email || 'N/A'}</Td>
-                                    <Td color={subReservation.status === "ACCEPTED" ? "green.500" : 
-                                             subReservation.status === "PENDING" ? "black" : "red.500"}
-                                    >
-                                        {subReservation.status}
-                                    </Td>
-                                </Tr>
-                            );
-                         })}
+                                )}
+                            </Tr>
+                        ) : (
+                            reservation.groupedReservations && 
+                            reservation.groupedReservations.map((subReservation, index) => {
+                                const userDetail = subReservation.user_id ? 
+                                                   groupedUserDetails[subReservation.user_id] || 
+                                                   subReservation.user : 
+                                                   null;
+                                
+                                return (
+                                    <Tr key={subReservation.id || index}>
+                                        <Td>
+                                            <Accordion allowToggle>
+                                                <AccordionItem border="none">
+                                                    <AccordionButton p={0}>
+                                                        <AccordionIcon/>
+                                                    </AccordionButton>
+                                                    <AccordionPanel>
+                                                        Additional information...
+                                                    </AccordionPanel>
+                                                </AccordionItem>
+                                            </Accordion>
+                                        </Td>
+                                        <Td>{userDetail?.name || 'N/A'}</Td>
+                                        <Td>{subReservation.guestQuantity}</Td>
+                                        <Td>0</Td>
+                                        <Td>
+                                            0 Purchase Notes<br/>
+                                            0 Customer Notes
+                                        </Td>
+                                        <Td>
+                                            <Text color="green.500">0 Signed</Text>
+                                            <Text color="red.500">0 Unsigned</Text>
+                                        </Td>
+                                        <Td> - </Td>
+                                        <Td> - </Td>
+                                        <Td>{userDetail?.phone || 'N/A'}</Td>
+                                        <Td>{userDetail?.email || 'N/A'}</Td>
+                                        <Td color={subReservation.status === "ACCEPTED" ? "green.500" : 
+                                                 subReservation.status === "PENDING" ? "black" : "red.500"}
+                                        >
+                                            {subReservation.status}
+                                        </Td>
+                                        {hasManageReservationPermission && (
+                                            <Td>
+                                                <HStack spacing={1}>
+                                                    {subReservation.status === "PENDING" && (
+                                                        <>
+                                                            <Button 
+                                                                size="xs" 
+                                                                colorScheme="green"
+                                                                isLoading={processingReservationId === subReservation.id}
+                                                                onClick={() => handleAcceptIndividualReservation(subReservation)}
+                                                            >
+                                                                Accept
+                                                            </Button>
+                                                            <Button 
+                                                                size="xs" 
+                                                                colorScheme="red"
+                                                                isLoading={processingReservationId === subReservation.id}
+                                                                onClick={() => handleRejectIndividualReservation(subReservation)}
+                                                            >
+                                                                Reject
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                    {subReservation.status === "ACCEPTED" && (
+                                                        <Button 
+                                                            size="xs" 
+                                                            colorScheme="red"
+                                                            variant="outline"
+                                                            isLoading={processingReservationId === subReservation.id}
+                                                            onClick={() => {
+                                                                toast({
+                                                                    title: "Info",
+                                                                    description: "Use the Cancel Reservation button for canceling accepted reservations",
+                                                                    status: "info",
+                                                                    duration: 3000,
+                                                                    isClosable: true,
+                                                                });
+                                                            }}
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                    )}
+                                                </HStack>
+                                            </Td>
+                                        )}
+                                    </Tr>
+                                );
+                            })
+                        )}
                     </Tbody>
                 </Table>
-
+                
                 {loadingGroupedUsers && (
                     <Center mt={4}>
                         <Text>Carregando detalhes dos convidados...</Text>

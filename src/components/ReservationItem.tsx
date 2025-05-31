@@ -32,6 +32,7 @@ interface ReservationItemData {
     totalGuests?: number;
     reservationIds?: string[];
     tourId?: string;
+    createdAt?: string | number | Date;
     tour?: {
         minPerEventLimit?: number;
         maxPerEventLimit?: number;
@@ -123,59 +124,108 @@ const ReservationItem = ({
                     }
                 }));
             }
-            const groups: Record<string, ReservationItemData[]> = {};
+            
+            const preGroupedReservations: Record<string, ReservationItemData[]> = {};
             
             reservations.forEach(reservation => {
                 const tourId = reservation.tourId || 
                               (reservation.tour && 'id' in reservation.tour ? reservation.tour.id : '');
                 const key = `${tourId}_${reservation.time}`;
                 
-                if (!groups[key]) {
-                    groups[key] = [reservation];
+                if (!preGroupedReservations[key]) {
+                    preGroupedReservations[key] = [reservation];
                 } else {
-                    groups[key].push(reservation);
+                    preGroupedReservations[key].push(reservation);
                 }
             });
             
             const newGrouped: ReservationItemData[] = [];
-
-            Object.entries(groups).forEach(([key, group]) => {
+            
+            Object.entries(preGroupedReservations).forEach(([key, reservationsInGroup]) => {
                 const tourId = key.split('_')[0];
                 const tourLimit = tourId ? tourLimits[tourId] : undefined;
                 
-                if (group.length > 1 && (tourLimit?.minPerEventLimit || group[0].tour?.minPerEventLimit)) {
-                    const totalGuests = group.reduce((sum, res) => sum + (res.guestQuantity || 0), 0);
-                    const baseReservation = { ...group[0] };
-                    if (tourLimit && (!baseReservation.tour || !baseReservation.tour.minPerEventLimit)) {
-                        baseReservation.tour = {
-                            ...(baseReservation.tour || {}),
-                            minPerEventLimit: tourLimit.minPerEventLimit,
-                            maxPerEventLimit: tourLimit.maxPerEventLimit
-                        };
-                    }
-                    
-                    baseReservation.isGrouped = true;
-                    baseReservation.groupedReservations = group;
-                    baseReservation.totalGuests = totalGuests;
-                    baseReservation.reservationIds = group.map(res => res.id);
-                    
-                    newGrouped.push(baseReservation);
+                const maxLimit = tourLimit?.maxPerEventLimit || 0;
+                
+                if (maxLimit === 0 || reservationsInGroup.length === 1) {
+                    processReservationsGroup(reservationsInGroup, tourLimit, newGrouped);
                 } else {
-                    const singleReservation = { ...group[0] };
+                    const sortedReservations = [...reservationsInGroup].sort((a, b) => {
+                        const dateA = a.createdAt 
+                            ? new Date(a.createdAt as string | number | Date).getTime() 
+                            : 0;
+                        const dateB = b.createdAt 
+                            ? new Date(b.createdAt as string | number | Date).getTime() 
+                            : 0;
+                        return dateA - dateB;
+                    });
                     
-                    if (tourLimit && (!singleReservation.tour || !singleReservation.tour.minPerEventLimit)) {
-                        singleReservation.tour = {
-                            ...(singleReservation.tour || {}),
-                            minPerEventLimit: tourLimit.minPerEventLimit,
-                            maxPerEventLimit: tourLimit.maxPerEventLimit
-                        };
+                    const subgroups: ReservationItemData[][] = [];
+                    let currentSubgroup: ReservationItemData[] = [];
+                    let currentTotal = 0;
+                    
+                    sortedReservations.forEach(reservation => {
+                        const guestCount = reservation.guestQuantity || 0;
+                        
+                        if (maxLimit > 0 && currentTotal + guestCount > maxLimit && currentSubgroup.length > 0) {
+                            subgroups.push(currentSubgroup);
+                            currentSubgroup = [reservation];
+                            currentTotal = guestCount;
+                        } else {
+                            currentSubgroup.push(reservation);
+                            currentTotal += guestCount;
+                        }
+                    });
+                    
+                    if (currentSubgroup.length > 0) {
+                        subgroups.push(currentSubgroup);
                     }
                     
-                    newGrouped.push(singleReservation);
+                    subgroups.forEach(subgroup => {
+                        processReservationsGroup(subgroup, tourLimit, newGrouped);
+                    });
                 }
             });
             
             setGroupedReservations(newGrouped);
+        };
+        
+        const processReservationsGroup = (
+            group: ReservationItemData[], 
+            tourLimit: { minPerEventLimit: number, maxPerEventLimit: number } | undefined,
+            outputArray: ReservationItemData[]
+        ) => {
+            if (group.length > 1 && (tourLimit?.minPerEventLimit || group[0].tour?.minPerEventLimit)) {
+                const totalGuests = group.reduce((sum, res) => sum + (res.guestQuantity || 0), 0);
+                const baseReservation = { ...group[0] };
+                
+                if (tourLimit && (!baseReservation.tour || !baseReservation.tour.minPerEventLimit)) {
+                    baseReservation.tour = {
+                        ...(baseReservation.tour || {}),
+                        minPerEventLimit: tourLimit.minPerEventLimit,
+                        maxPerEventLimit: tourLimit.maxPerEventLimit
+                    };
+                }
+                
+                baseReservation.isGrouped = true;
+                baseReservation.groupedReservations = group;
+                baseReservation.totalGuests = totalGuests;
+                baseReservation.reservationIds = group.map(res => res.id);
+                
+                outputArray.push(baseReservation);
+            } else {
+                const singleReservation = { ...group[0] };
+                
+                if (tourLimit && (!singleReservation.tour || !singleReservation.tour.minPerEventLimit)) {
+                    singleReservation.tour = {
+                        ...(singleReservation.tour || {}),
+                        minPerEventLimit: tourLimit.minPerEventLimit,
+                        maxPerEventLimit: tourLimit.maxPerEventLimit
+                    };
+                }
+                
+                outputArray.push(singleReservation);
+            }
         };
         
         processTours();

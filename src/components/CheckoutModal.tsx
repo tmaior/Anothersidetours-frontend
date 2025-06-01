@@ -378,6 +378,7 @@ export default function CheckoutModal({
                             description: isInvoicePayment
                                 ? "Your invoice payment has been received"
                                 : "Your reservation is pending",
+                            reservationId: reservation?.id || propReservationId,
                             totals: [
                                 {label: "total", amount: `$${totalAmount.toFixed(2)}`},
                                 {label: "paid", amount: `$${totalAmount.toFixed(2)}`}

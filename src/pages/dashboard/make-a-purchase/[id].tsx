@@ -1153,7 +1153,11 @@ const PurchasePage = () => {
                             },
                             body: JSON.stringify({
                                 toEmail: organizerEmail,
-                                emailData: emailData
+                                emailData: {
+                                    ...emailData,
+                                    reservationId: reservationId,
+                                    status: 'pending'
+                                }
                             }),
                         });
                         

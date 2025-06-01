@@ -346,6 +346,7 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                         quantity: reservation.guestQuantity,
                         tourTitle: reservation.title,
                         description: "your reservation has been approved",
+                        reservationId: reservation.id,
                         totals: [
                             {label: "total", amount: `$${reservation.total_price.toFixed(2)}`},
                             {label: "paid", amount: `$${reservation.total_price.toFixed(2)}`}
@@ -468,6 +469,7 @@ function ReservationDetail({reservation, onCloseDetail, setReservations, hasMana
                         quantity: reservation.guestQuantity,
                         tourTitle: reservation.title,
                         description: "your reservation has been declined",
+                        reservationId: reservation.id,
                         totals: [
                             {label: "total", amount: `$${reservation.total_price.toFixed(2)}`},
                             {label: "paid", amount: `$${reservation.total_price.toFixed(2)}`}

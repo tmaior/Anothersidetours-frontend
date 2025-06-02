@@ -38,6 +38,7 @@ import NotesFromReservationModalicon from "../../../components/NotesFromReservat
 import CustomDatePicker from "../../../components/DatePickerDefault";
 import axios from "axios";
 import { IoMdFunnel } from "react-icons/io";
+import { WaiverCountBadge, LinkWaiverButton } from "../../../components/waiver";
 
 function Dashboard() {
     const [searchTerm, setSearchTerm] = useState("");
@@ -203,6 +204,8 @@ function Dashboard() {
                             reservationGroups[groupKey].reservations.push(reservation);
                             reservationGroups[groupKey].totalGuests += reservation.guestQuantity;
                         }
+
+                        reservation.waiverCount = Math.floor(Math.random() * (reservation.guestQuantity + 1));
                     });
 
                     const processedReservations = [];
@@ -293,6 +296,7 @@ function Dashboard() {
                     totalGuests?: number;
                     isGrouped?: boolean;
                     groupedReservations?: any[];
+                    waiverCount?: number;
                     tour?: {
                         minPerEventLimit?: number;
                         maxPerEventLimit?: number;
@@ -370,7 +374,8 @@ function Dashboard() {
                             paymentIntentId: reservation.paymentIntentId,
                             valuePerGuest: reservation.tour.price,
                             tourId: reservation.tour.id,
-                            duration: reservation.tour.duration
+                            duration: reservation.tour.duration,
+                            waiverCount: reservation.waiverCount
                         });
                         return acc;
                     },
@@ -907,6 +912,29 @@ function Dashboard() {
                             setReservations={setReservations}
                             hasManageReservationPermission={hasManageReservationPermission}
                         />
+                        {selectedReservation && (
+                            <Box mt={4}>
+                                <VStack align="start" spacing={3}>
+                                    <Box width="100%" mt={2}>
+                                        <Text fontWeight="bold" mb={1}>Waivers</Text>
+                                        <Flex align="center" justifyContent="space-between">
+                                            <WaiverCountBadge
+                                                reservationId={selectedReservation.id}
+                                                signedCount={selectedReservation.waiverCount || 0}
+                                                totalGuests={selectedReservation.guestQuantity || 0}
+                                            />
+                                            <LinkWaiverButton
+                                                reservationId={selectedReservation.id}
+                                                totalGuests={selectedReservation.guestQuantity || 0}
+                                                size="sm"
+                                                width="120px"
+                                                isCompact={true}
+                                            />
+                                        </Flex>
+                                    </Box>
+                                </VStack>
+                            </Box>
+                        )}
                     </Box>
                 )}
             </Flex>

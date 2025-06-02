@@ -41,6 +41,7 @@ interface ReservationItemData {
         StandardOperation?: string;
         imageUrl?: string;
     };
+    waiverCount?: number;
     [key: string]: unknown;
 }
 

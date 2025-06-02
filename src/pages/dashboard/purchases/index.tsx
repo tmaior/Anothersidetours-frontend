@@ -63,6 +63,7 @@ import {BiCheck} from 'react-icons/bi';
 import withPermission from "../../../utils/withPermission";
 import {TbClipboardText} from 'react-icons/tb';
 import ManageQuestionnairesModal from '../../../components/ManageQuestionnairesModal';
+import { WaiverCountBadge, LinkWaiverButton } from "../../../components/waiver";
 
 type GuestItemProps = {
     name: string;
@@ -1072,6 +1073,24 @@ const PurchaseDetails = ({reservation, onBack}) => {
                                         <Text>{reservation.user.phone}</Text>
                                     </HStack>
                                 </VStack>
+                            </Box>
+
+                            <Box mt={4}>
+                                <Text fontWeight="bold">Waivers</Text>
+                                <HStack mt={2}>
+                                    <WaiverCountBadge
+                                        reservationId={reservation.id}
+                                        signedCount={reservation.waiverCount || 0}
+                                        totalGuests={reservation.guestQuantity || 0}
+                                    />
+                                    <LinkWaiverButton
+                                        reservationId={reservation.id}
+                                        totalGuests={reservation.guestQuantity || 0}
+                                        size="sm"
+                                        width="120px"
+                                        isCompact={true}
+                                    />
+                                </HStack>
                             </Box>
 
                             <HStack spacing={8} mt={4} justifyContent="flex-start">

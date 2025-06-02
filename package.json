@@ -42,6 +42,7 @@
     "react-number-format": "^5.4.2",
     "react-quill": "^2.0.0",
     "react-router-dom": "^7.0.2",
+    "react-signature-canvas": "^1.1.0-alpha.2",
     "react-time-picker": "^7.0.0",
     "yup": "^1.6.0",
     "zustand": "^5.0.3"

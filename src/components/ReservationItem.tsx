@@ -99,7 +99,7 @@ const ReservationItem = ({
         }
         
         const processTours = async () => {
-            const tourIds = [...new Set(
+            const tourIds = Array.from(new Set(
                 reservations
                     .map(reservation => {
                         const tourId = reservation.tourId || 
@@ -107,8 +107,8 @@ const ReservationItem = ({
                         return tourId || '';
                     })
                     .filter(id => id !== '')
-            )];
-            
+            ));
+
             const tourLimits: Record<string, {
                 minPerEventLimit: number;
                 maxPerEventLimit: number;

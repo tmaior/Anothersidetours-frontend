@@ -915,23 +915,26 @@ function Dashboard() {
                         {selectedReservation && (
                             <Box mt={4}>
                                 <VStack align="start" spacing={3}>
-                                    <Box width="100%" mt={2}>
-                                        <Text fontWeight="bold" mb={1}>Waivers</Text>
-                                        <Flex align="center" justifyContent="space-between">
-                                            <WaiverCountBadge
-                                                reservationId={selectedReservation.id}
-                                                signedCount={selectedReservation.waiverCount || 0}
-                                                totalGuests={selectedReservation.guestQuantity || 0}
-                                            />
-                                            <LinkWaiverButton
-                                                reservationId={selectedReservation.id}
-                                                totalGuests={selectedReservation.guestQuantity || 0}
-                                                size="sm"
-                                                width="120px"
-                                                isCompact={true}
-                                            />
-                                        </Flex>
-                                    </Box>
+                                    {/*
+                                    //TODO  uncomment to finalize waivers
+                                    */}
+                                    {/*<Box width="100%" mt={2}>*/}
+                                    {/*    <Text fontWeight="bold" mb={1}>Waivers</Text>*/}
+                                    {/*    <Flex align="center" justifyContent="space-between">*/}
+                                    {/*        <WaiverCountBadge*/}
+                                    {/*            reservationId={selectedReservation.id}*/}
+                                    {/*            signedCount={selectedReservation.waiverCount || 0}*/}
+                                    {/*            totalGuests={selectedReservation.guestQuantity || 0}*/}
+                                    {/*        />*/}
+                                    {/*        <LinkWaiverButton*/}
+                                    {/*            reservationId={selectedReservation.id}*/}
+                                    {/*            totalGuests={selectedReservation.guestQuantity || 0}*/}
+                                    {/*            size="sm"*/}
+                                    {/*            width="120px"*/}
+                                    {/*            isCompact={true}*/}
+                                    {/*        />*/}
+                                    {/*    </Flex>*/}
+                                    {/*</Box>*/}
                                 </VStack>
                             </Box>
                         )}

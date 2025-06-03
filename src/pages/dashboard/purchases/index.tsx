@@ -1074,24 +1074,26 @@ const PurchaseDetails = ({reservation, onBack}) => {
                                     </HStack>
                                 </VStack>
                             </Box>
-
-                            <Box mt={4}>
-                                <Text fontWeight="bold">Waivers</Text>
-                                <HStack mt={2}>
-                                    <WaiverCountBadge
-                                        reservationId={reservation.id}
-                                        signedCount={reservation.waiverCount || 0}
-                                        totalGuests={reservation.guestQuantity || 0}
-                                    />
-                                    <LinkWaiverButton
-                                        reservationId={reservation.id}
-                                        totalGuests={reservation.guestQuantity || 0}
-                                        size="sm"
-                                        width="120px"
-                                        isCompact={true}
-                                    />
-                                </HStack>
-                            </Box>
+                            {/*
+                            //TODO uncomment to finalize waivers
+                            */}
+                            {/*<Box mt={4}>*/}
+                            {/*    <Text fontWeight="bold">Waivers</Text>*/}
+                            {/*    <HStack mt={2}>*/}
+                            {/*        <WaiverCountBadge*/}
+                            {/*            reservationId={reservation.id}*/}
+                            {/*            signedCount={reservation.waiverCount || 0}*/}
+                            {/*            totalGuests={reservation.guestQuantity || 0}*/}
+                            {/*        />*/}
+                            {/*        <LinkWaiverButton*/}
+                            {/*            reservationId={reservation.id}*/}
+                            {/*            totalGuests={reservation.guestQuantity || 0}*/}
+                            {/*            size="sm"*/}
+                            {/*            width="120px"*/}
+                            {/*            isCompact={true}*/}
+                            {/*        />*/}
+                            {/*    </HStack>*/}
+                            {/*</Box>*/}
 
                             <HStack spacing={8} mt={4} justifyContent="flex-start">
                                 <Box mt={6}>

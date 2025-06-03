@@ -165,7 +165,7 @@ function Dashboard() {
                 }
 
                 if (Array.isArray(data)) {
-                    const tourIds = [...new Set(data.map(reservation => reservation.tourId))];
+                    const tourIds = Array.from(new Set(data.map(reservation => reservation.tourId)));
                     const tourLimits = {};
                     
                     await Promise.all(tourIds.map(async (tourId) => {

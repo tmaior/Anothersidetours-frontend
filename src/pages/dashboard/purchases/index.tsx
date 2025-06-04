@@ -142,6 +142,9 @@ const GuestItem: React.FC<GuestItemProps> = ({
             justifyContent="space-between"
             width="100%"
             onClick={handleClick}
+            boxShadow="0 1px 2px rgba(0,0,0,0.05)"
+            my={1}
+            border="none"
         >
             <HStack>
                 <Image
@@ -202,9 +205,10 @@ const GroupCard: React.FC<GroupCardProps> = ({
             borderRadius="md"
             mb={2}
             overflow="hidden"
-            boxShadow="sm"
             bg="white"
             w={"100%"}
+            border="none"
+            boxShadow="0 1px 2px rgba(0,0,0,0.05)"
         >
             <HStack
                 p={3}
@@ -453,6 +457,28 @@ const PurchaseList = ({
             p={{ base: "4px 0px 4px 4px", md: 4 }}
             onScroll={handleScroll}
             overflowY="auto"
+            position="relative"
+            bg="white"
+            _before={{
+                content: '""',
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: "4px",
+                bg: "white",
+                zIndex: 2
+            }}
+            _after={{
+                content: '""',
+                position: "absolute",
+                top: "1px",
+                left: 0,
+                right: 0,
+                height: "4px",
+                bg: "white",
+                zIndex: 2
+            }}
             css={{
                 '&::-webkit-scrollbar': {
                     width: '6px',

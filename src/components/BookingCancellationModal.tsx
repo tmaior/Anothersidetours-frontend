@@ -217,6 +217,13 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
             
             const transactions = response.data;
 
+            if (transactions.length > 0 && !booking.tenantId) {
+                const firstTransaction = transactions.find(t => t.tenant_id);
+                if (firstTransaction && firstTransaction.tenant_id) {
+                    booking.tenantId = firstTransaction.tenant_id;
+                }
+            }
+
             const chargeTransactions = transactions.filter(
                 (t) => t.transaction_direction === 'charge' &&
                     (t.payment_status === 'completed' || t.payment_status === 'paid')
@@ -790,16 +797,17 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                             }
                         }
                     );
-                    const tenantId = booking.tenantId || transaction.tenant_id;
+                    const cardTenantId = booking.tenantId || transaction.tenant_id || 
+                                    (paymentTransactions.length > 0 ? paymentTransactions[0].tenant_id : null);
 
-                    if (!tenantId) {
+                    if (!cardTenantId) {
                         throw new Error('Tenant ID is missing. Cannot create refund transaction.');
                     }
 
                     const cardInfoToUse = selectedCard || cardInfo;
 
                     await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
-                            tenant_id: tenantId,
+                            tenant_id: cardTenantId,
                             reservation_id: booking.id,
                             amount: finalRefundAmount,
                             payment_status: 'completed',
@@ -893,9 +901,10 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                     return;
                 }
             } else if (paymentMethod === 'Cash') {
-                const tenantId = booking.tenantId || originalTransaction?.tenant_id;
+                const cashTenantId = booking.tenantId || originalTransaction?.tenant_id || 
+                                (paymentTransactions.length > 0 ? paymentTransactions[0].tenant_id : null);
 
-                if (!tenantId) {
+                if (!cashTenantId) {
                     toast.close(MISSING_TENANT_TOAST_ID);
                     toast({
                         id: MISSING_TENANT_TOAST_ID,
@@ -910,7 +919,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 }
 
                 const transactionResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
-                    tenant_id: tenantId,
+                    tenant_id: cashTenantId,
                     reservation_id: booking.id,
                     amount: finalRefundAmount,
                     payment_status: 'completed',
@@ -960,9 +969,9 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 }
             } else if (paymentMethod === "store") {
                 try {
-                    const tenantId = booking.tenantId || originalTransaction?.tenant_id;
+                    const storeTenantId = booking.tenantId || originalTransaction?.tenant_id;
 
-                    if (!tenantId) {
+                    if (!storeTenantId) {
                         toast.close(MISSING_TENANT_TOAST_ID);
                         toast({
                             id: MISSING_TENANT_TOAST_ID,
@@ -981,7 +990,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         {
                             amount: finalRefundAmount,
                             originReservationId: booking.id,
-                            tenantId: tenantId
+                            tenantId: storeTenantId
                         },
                         {
                             withCredentials: true
@@ -996,7 +1005,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         });
 
                         await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
-                            tenant_id: tenantId,
+                            tenant_id: storeTenantId,
                             reservation_id: booking.id,
                             amount: finalRefundAmount,
                             payment_status: 'completed',
@@ -1050,9 +1059,11 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 }
             } else if (paymentMethod === "other") {
                 try {
-                    const tenantId = booking.tenantId || originalTransaction?.tenant_id;
+                    const otherTenantId = booking.tenantId || 
+                                     originalTransaction?.tenant_id || 
+                                     (paymentTransactions.length > 0 ? paymentTransactions[0].tenant_id : null);
 
-                    if (!tenantId) {
+                    if (!otherTenantId) {
                         toast({
                             title: "Error",
                             description: "Tenant ID is missing. Cannot process refund.",
@@ -1064,7 +1075,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                         return;
                     }
                     await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/payment-transactions`, {
-                        tenant_id: tenantId,
+                        tenant_id: otherTenantId,
                         reservation_id: booking.id,
                         amount: finalRefundAmount,
                         payment_status: 'completed',

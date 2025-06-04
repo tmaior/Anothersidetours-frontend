@@ -320,6 +320,7 @@ const PurchaseList = ({
                 
                 setReservations(sortedData);
                 setDisplayedReservations(sortedData.slice(0, PAGE_LIMIT));
+                setHasMore(sortedData.length > PAGE_LIMIT);
             } catch (error) {
                 console.error("Error fetching reservations:", error);
             } finally {
@@ -349,37 +350,36 @@ const PurchaseList = ({
         if (!hasMore || isLoading) return;
 
         setIsLoading(true);
+        
+        const currentLength = displayedReservations.length;
+        const nextReservations = reservations.slice(
+            currentLength,
+            currentLength + PAGE_LIMIT
+        );
+
+        if (nextReservations.length === 0) {
+            setHasMore(false);
+        } else {
+            setDisplayedReservations((prev) => [
+                ...prev,
+                ...nextReservations.filter(
+                    (newItem) => !prev.some((existingItem) => existingItem.id === newItem.id)
+                ),
+            ]);
+        }
 
         setTimeout(() => {
-            const currentLength = displayedReservations.length;
-            const nextReservations = reservations.slice(
-                currentLength,
-                currentLength + PAGE_LIMIT
-            );
-
-            if (nextReservations.length === 0) {
-                setHasMore(false);
-            } else {
-                setDisplayedReservations((prev) => [
-                    ...prev,
-                    ...nextReservations.filter(
-                        (newItem) => !prev.some((existingItem) => existingItem.id === newItem.id)
-                    ),
-                ]);
-            }
-
             setIsLoading(false);
-        }, 500);
-    }, [hasMore, isLoading, displayedReservations, reservations, PAGE_LIMIT]);
+        }, 300);
+    }, [hasMore, isLoading, displayedReservations, reservations]);
 
     const handleScroll = useCallback(() => {
         const container = containerRef.current;
 
         if (container) {
-            const isAtBottom =
-                container.scrollHeight - container.scrollTop === container.clientHeight;
-
-            if (isAtBottom && !isLoading && hasMore) {
+            const scrollPosition = container.scrollTop + container.clientHeight;
+            const scrollThreshold = container.scrollHeight - 50;
+            if (scrollPosition >= scrollThreshold && !isLoading && hasMore) {
                 loadMoreReservations();
             }
         }
@@ -403,15 +403,6 @@ const PurchaseList = ({
         return new Intl.DateTimeFormat('en-US', {month: 'short', day: '2-digit'}).format(date);
     };
 
-    useEffect(() => {
-        const container = containerRef.current;
-        if (container) {
-            container.addEventListener("scroll", handleScroll);
-        }
-        return () => {
-            container?.removeEventListener("scroll", handleScroll);
-        };
-    }, [displayedReservations, hasMore, isLoading, handleScroll]);
     const groupReservations = (reservations: ReservationItem[]) => {
         const grouped: { [groupId: string]: ReservationItem[] } = {};
         const ungrouped: ReservationItem[] = [];
@@ -512,16 +503,31 @@ const PurchaseList = ({
                 />
             ))}
             {isLoading && (
-                <CircularProgress
-                    isIndeterminate
-                    size="50px"
-                    thickness="6px"
-                    color="blue.500"
-                />
+                <Box py={4} textAlign="center" w="100%">
+                    <Spinner size="md" color="blue.500" />
+                </Box>
             )}
-            {!hasMore && (
-                <Text fontSize="sm" color="gray.500">
+            {hasMore && !isLoading && filteredDisplayedReservations.length > 0 && (
+                <Button 
+                    onClick={loadMoreReservations}
+                    variant="outline"
+                    colorScheme="blue"
+                    size="sm"
+                    w="90%"
+                    my={4}
+                    mx="auto"
+                >
+                    Load More
+                </Button>
+            )}
+            {!hasMore && filteredDisplayedReservations.length > 0 && (
+                <Text fontSize="sm" color="gray.500" textAlign="center" py={2}>
                     No more items to load
+                </Text>
+            )}
+            {filteredDisplayedReservations.length === 0 && !isLoading && (
+                <Text fontSize="sm" color="gray.500" textAlign="center" py={4}>
+                    No results found
                 </Text>
             )}
         </VStack>

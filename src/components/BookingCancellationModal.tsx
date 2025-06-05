@@ -30,7 +30,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) => {
     const [refundAmount, setRefundAmount] = useState(booking?.total_price || 0);
-    const [paymentMethod, setPaymentMethod] = useState("Credit Card");
+    const [paymentMethod, setPaymentMethod] = useState("");
     const [notifyCustomer, setNotifyCustomer] = useState(true);
     const [comment, setComment] = useState("");
     const [originalTransaction, setOriginalTransaction] = useState(null);
@@ -687,6 +687,18 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                 return;
             }
             
+            if (!paymentMethod) {
+                toast.close(NO_ACTION_TOAST_ID);
+                toast({
+                    id: NO_ACTION_TOAST_ID,
+                    title: "Payment Method Required",
+                    description: "Please select a payment method to continue.",
+                    status: "warning",
+                    duration: 4000,
+                    isClosable: true,
+                });
+                return;
+            }
             setIsSubmitting(true);
 
             try {
@@ -1667,7 +1679,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                     colorScheme="blue"
                                     onClick={handleSaveChanges}
                                     isLoading={isSubmitting}
-                                    isDisabled={isLoadingTierPricing || isLoadingAddons || isLoadingCustomItems}
+                                    isDisabled={isLoadingTierPricing || isLoadingAddons || isLoadingCustomItems || !paymentMethod}
                                     width={{ base: "full", sm: "auto" }}
                                 >
                                     Process Cancellation

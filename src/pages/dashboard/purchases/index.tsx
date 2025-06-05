@@ -316,15 +316,20 @@ const PurchaseList = ({
                 );
                 const data = await response.json();
 
-                const sortedData = [...data].sort((a, b) => {
-                    const dateA = new Date(a.createdAt || a.created_at || '').getTime();
-                    const dateB = new Date(b.createdAt || b.created_at || '').getTime();
+                const sortedReservations = [...data].sort((a, b) => {
+                    const dateA = new Date(String(a.created_at || a.createdAt || '')).getTime();
+                    const dateB = new Date(String(b.created_at || b.createdAt || '')).getTime();
+
+                    if (dateA === dateB) {
+                        return String(a.id).localeCompare(String(b.id));
+                    }
+
                     return dateB - dateA;
                 });
                 
-                setReservations(sortedData);
-                setDisplayedReservations(sortedData.slice(0, PAGE_LIMIT));
-                setHasMore(sortedData.length > PAGE_LIMIT);
+                setReservations(sortedReservations);
+                setDisplayedReservations(sortedReservations.slice(0, PAGE_LIMIT));
+                setHasMore(sortedReservations.length > PAGE_LIMIT);
             } catch (error) {
                 console.error("Error fetching reservations:", error);
             } finally {
@@ -412,8 +417,11 @@ const PurchaseList = ({
         const ungrouped: ReservationItem[] = [];
 
         const sortedReservations = [...reservations].sort((a, b) => {
-            const dateA = new Date(String(a.createdAt || a.created_at || '')).getTime();
-            const dateB = new Date(String(b.createdAt || b.created_at || '')).getTime();
+            const dateA = new Date(String(a.created_at || a.createdAt || '')).getTime();
+            const dateB = new Date(String(b.created_at || b.createdAt || '')).getTime();
+            if (dateA === dateB) {
+                return String(a.id).localeCompare(String(b.id));
+            }
             return dateB - dateA;
         });
 
@@ -430,8 +438,11 @@ const PurchaseList = ({
 
         Object.keys(grouped).forEach(groupId => {
             grouped[groupId].sort((a, b) => {
-                const dateA = new Date(String(a.createdAt || a.created_at || '')).getTime();
-                const dateB = new Date(String(b.createdAt || b.created_at || '')).getTime();
+                const dateA = new Date(String(a.created_at || a.createdAt || '')).getTime();
+                const dateB = new Date(String(b.created_at || b.createdAt || '')).getTime();
+                if (dateA === dateB) {
+                    return String(a.id).localeCompare(String(b.id));
+                }
                 return dateB - dateA;
             });
         });
@@ -1488,9 +1499,14 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                         };
                     });
 
-                    const sortedAdjustments = processedAdjustments.sort((a, b) =>
-                        a.createdAt.getTime() - b.createdAt.getTime()
-                    );
+                    const sortedAdjustments = processedAdjustments.sort((a, b) => {
+                        const dateA = a.createdAt.getTime();
+                        const dateB = b.createdAt.getTime();
+                        if (dateA === dateB) {
+                            return String(a.id).localeCompare(String(b.id));
+                        }
+                        return dateA - dateB;
+                    });
                     setGuestAdjustments(sortedAdjustments);
                     const vouchers = response.data.filter(transaction => {
                         let metadata = transaction.metadata;
@@ -1527,9 +1543,14 @@ const PaymentSummary = ({reservation, isPurchasePage = true}) => {
                             createdAt: new Date(transaction.created_at || new Date())
                         };
                     });
-                    const sortedVouchers = processedVouchers.sort((a, b) =>
-                        a.createdAt.getTime() - b.createdAt.getTime()
-                    );
+                    const sortedVouchers = processedVouchers.sort((a, b) => {
+                        const dateA = a.createdAt.getTime();
+                        const dateB = b.createdAt.getTime();
+                        if (dateA === dateB) {
+                            return String(a.id).localeCompare(String(b.id));
+                        }
+                        return dateA - dateB;
+                    });
                     
                     setVoucherTransactions(sortedVouchers);
                 }

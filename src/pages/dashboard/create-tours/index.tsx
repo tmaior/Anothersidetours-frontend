@@ -1710,17 +1710,15 @@ function SchedulesAvailabilityStep({
                         if (checkRes.ok) {
                             const existingPricing = await checkRes.json();
                             for (const existing of existingPricing) {
-                                if (existing.pricingType !== pricingStructure) {
-                                    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/${existing.id}`, {
-                                        method: "DELETE",
-                                        credentials: "include",
-                                        headers: {"Content-Type": "application/json"}
-                                    });
-                                }
+                                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tier-pricing/${existing.id}`, {
+                                    method: "DELETE",
+                                    credentials: "include",
+                                    headers: {"Content-Type": "application/json"}
+                                });
                             }
                         }
                     } catch (error) {
-                        console.warn("Error checking existing pricing:", error);
+                        console.warn("Error removing existing pricing:", error);
                     }
                 }
                 await Promise.all(

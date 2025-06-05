@@ -168,7 +168,7 @@ function ToursPage() {
                                         {tour.name}
                                     </Heading>
                                     <Text color="gray.600">
-                                        {`$${getTourPrice(tour)} / hour`}
+                                        {`$${getTourPrice(tour)}`}
                                     </Text>
                                 </Box>
                             </Flex>

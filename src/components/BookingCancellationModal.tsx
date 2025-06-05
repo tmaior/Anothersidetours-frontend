@@ -978,6 +978,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                             onStatusChange("CANCELED");
                         }
                         onClose();
+                        window.location.reload();
                     }
                 }
             } else if (paymentMethod === "store") {
@@ -1133,6 +1134,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                             onStatusChange("CANCELED");
                         }
                         onClose();
+                        window.location.reload();
                     }
                 } catch (error) {
                     console.error("Failed to process cancellation:", error);
@@ -1662,7 +1664,10 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                 </VStack>
                             </Box>
                             <Flex justify="flex-end">
-                                <Button colorScheme="blue" onClick={onClose}>
+                                <Button colorScheme="blue" onClick={() => {
+                                    onClose();
+                                    window.location.reload();
+                                }}>
                                     Close
                                 </Button>
                             </Flex>

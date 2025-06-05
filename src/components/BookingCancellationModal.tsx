@@ -99,6 +99,7 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
             setReservationAddons([]);
             setAllAddons([]);
             setCustomItems([]);
+            setPaymentMethod("");
             
             fetchAllPaymentTransactions();
             fetchReservationDetails()

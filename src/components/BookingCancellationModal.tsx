@@ -1302,6 +1302,12 @@ const BookingCancellationModal = ({booking, isOpen, onClose, onStatusChange}) =>
                                         </Button>
                                     </Flex>
 
+                                    {!paymentMethod && (
+                                        <Text color="red.500" fontSize="sm" mt={1}>
+                                            Please select a payment method to proceed.
+                                        </Text>
+                                    )}
+
                                     {paymentMethod === 'store' && (
                                         <Box mt={2} p={3} bg="green.50" borderRadius="md" borderColor="green.200"
                                              borderWidth="1px">

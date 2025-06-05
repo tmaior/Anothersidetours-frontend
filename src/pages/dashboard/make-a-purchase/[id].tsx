@@ -1578,7 +1578,7 @@ const PurchasePage = () => {
             if (!currentTourId) return;
 
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${currentTourId}`,
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/tour/${currentTourId}`,
                     {
                         credentials: 'include',
                     });

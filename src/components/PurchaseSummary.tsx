@@ -217,45 +217,40 @@ const PurchaseSummary: React.FC<PurchaseSummaryProps> = ({
                                     ${itemTotal.toFixed(2)}
                                 </Text>
                             </HStack>
-                            {tourFormData && tourFormData.selectedAddOns && tourFormData.selectedAddOns.length > 0 ? (
-                                tourFormData.selectedAddOns
-                                    .filter(addon => addon.checked || addon.quantity > 0)
-                                    .map((selectedAddon) => {
-                                        const addonInfo = tourSpecificAddons.find(a => a.id === selectedAddon.addOnId);
-                                        if (!addonInfo) return null;
-                                        
-                                        const quantity = addonInfo.type === 'CHECKBOX' ? 1 : selectedAddon.quantity;
-                                        const price = addonInfo.price;
-                                        
-                                        return (
-                                            <HStack key={`${selectedAddon.addOnId}_${index}`} justifyContent="space-between">
-                                                <Text>
-                                                    {addonInfo.label} (${price.toFixed(2)} {quantity > 1 ? `× ${quantity}` : ''})
-                                                </Text>
-                                                <Text>
-                                                    ${(price * quantity).toFixed(2)}
-                                                </Text>
-                                            </HStack>
-                                        );
-                                    })
-                            ) : (
-                                <>
-                                    {combinedAddons.length > 0 ? (
-                                        combinedAddons.map((addon) => (
-                                            <HStack key={`${addon.id}_${index}`} justifyContent="space-between">
-                                                <Text>
-                                                    {addon.label} (${addon.price.toFixed(2)} {(addon.quantity || 0) > 1 ? `× ${addon.quantity}` : ''})
-                                                </Text>
-                                                <Text>
-                                                    ${(addon.price * (addon.quantity || 1)).toFixed(2)}
-                                                </Text>
-                                            </HStack>
-                                        ))
-                                    ) : (
-                                        <Text fontSize="sm" color="gray.500">No add-ons selected</Text>
-                                    )}
-                                </>
-                            )}
+                            {selectedCartItemIndex === index 
+                              ? (combinedAddons.length > 0 && combinedAddons.map((addon) => (
+                                  <HStack key={`${addon.id}_${index}`} justifyContent="space-between">
+                                      <Text>
+                                          {addon.label} (${addon.price.toFixed(2)} {(addon.quantity || 0) > 1 ? `× ${addon.quantity}` : ''})
+                                      </Text>
+                                      <Text>
+                                          ${(addon.price * (addon.quantity || 1)).toFixed(2)}
+                                      </Text>
+                                  </HStack>
+                                )))
+                              : (tourFormData && tourFormData.selectedAddOns && 
+                                  tourFormData.selectedAddOns
+                                      .filter(addon => addon.checked || addon.quantity > 0)
+                                      .map((selectedAddon) => {
+                                          const addonInfo = tourSpecificAddons.find(a => a.id === selectedAddon.addOnId);
+                                          if (!addonInfo) return null;
+                                          
+                                          const quantity = addonInfo.type === 'CHECKBOX' ? 1 : selectedAddon.quantity;
+                                          const price = addonInfo.price;
+                                          
+                                          return (
+                                              <HStack key={`${selectedAddon.addOnId}_${index}`} justifyContent="space-between">
+                                                  <Text>
+                                                      {addonInfo.label} (${price.toFixed(2)} {quantity > 1 ? `× ${quantity}` : ''})
+                                                  </Text>
+                                                  <Text>
+                                                      ${(price * quantity).toFixed(2)}
+                                                  </Text>
+                                              </HStack>
+                                          );
+                                      })
+                                )
+                            }
                             
                             {isCustomLineItemsEnabled && customLineItems[itemKey] && customLineItems[itemKey].length > 0 && (
                                 customLineItems[itemKey].map(item => {

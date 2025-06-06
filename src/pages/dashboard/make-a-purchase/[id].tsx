@@ -1065,8 +1065,10 @@ const PurchasePage = () => {
                     }
                 }
 
-                if (isCustomLineItemsEnabled && customLineItems[reservation.tourId] && customLineItems[reservation.tourId].length > 0) {
-                    const customItemsPayload = customLineItems[reservation.tourId].map(item => ({
+                const customLineItemsKey = Object.keys(customLineItems).find(key => key.startsWith(reservation.tourId + '_'));
+                
+                if (isCustomLineItemsEnabled && customLineItemsKey && customLineItems[customLineItemsKey] && customLineItems[customLineItemsKey].length > 0) {
+                    const customItemsPayload = customLineItems[customLineItemsKey].map(item => ({
                         tenantId: tenantId,
                         tourId: reservation.tourId,
                         label: item.name,
@@ -1105,16 +1107,19 @@ const PurchasePage = () => {
                             });
                         }
 
-                        if (isCustomLineItemsEnabled &&
-                            customLineItems[cart[selectedCartItemIndex].id] &&
-                            customLineItems[cart[selectedCartItemIndex].id].length > 0) {
-                            customLineItems[cart[selectedCartItemIndex].id].forEach(item => {
-                                const itemTotal = item.amount * item.quantity;
-                                emailTotals.push({
-                                    label: `${item.name || 'Custom item'} (${item.quantity}x)`,
-                                    amount: `${item.type === 'Discount' ? '-' : ''}$${itemTotal.toFixed(2)}`
+                        if (isCustomLineItemsEnabled) {
+                            const currentItem = cart[selectedCartItemIndex];
+                            const itemKey = getItemKey(currentItem, selectedCartItemIndex);
+                            
+                            if (customLineItems[itemKey] && customLineItems[itemKey].length > 0) {
+                                customLineItems[itemKey].forEach(item => {
+                                    const itemTotal = item.amount * item.quantity;
+                                    emailTotals.push({
+                                        label: `${item.name || 'Custom item'} (${item.quantity}x)`,
+                                        amount: `${item.type === 'Discount' ? '-' : ''}$${itemTotal.toFixed(2)}`
+                                    });
                                 });
-                            });
+                            }
                         }
                         
                         if (voucherDiscount > 0) {

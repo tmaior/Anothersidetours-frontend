@@ -4,8 +4,9 @@ import {AddIcon, DeleteIcon} from "@chakra-ui/icons";
 import {FaUser} from "react-icons/fa";
 
 export interface QuestionnaireRef {
-    getQuestions: () => Array<{id: number, label: string, required: boolean}>;
+    getQuestions: () => Array<{id: string, label: string, required: boolean}>;
     resetQuestions: () => void;
+    getDeletedQuestions: () => Array<string>;
 }
 
 interface CustomerQuestionnaireProps {
@@ -15,7 +16,8 @@ interface CustomerQuestionnaireProps {
 
 const CustomerQuestionnaire = forwardRef((props: CustomerQuestionnaireProps, ref: ForwardedRef<QuestionnaireRef>) => {
     const { isEditing = false, tourId } = props;
-    const [questions, setQuestions] = useState<Array<{id: number, label: string, required: boolean}>>([]);
+    const [questions, setQuestions] = useState<Array<{id: string, label: string, required: boolean}>>([]);
+    const [deletedQuestions, setDeletedQuestions] = useState<Array<string>>([]);
 
     useEffect(() => {
         if (isEditing && tourId) {
@@ -41,14 +43,18 @@ const CustomerQuestionnaire = forwardRef((props: CustomerQuestionnaireProps, ref
 
     useImperativeHandle(ref, () => ({
         getQuestions: () => questions,
-        resetQuestions: () => setQuestions([])
+        resetQuestions: () => {
+            setQuestions([]);
+            setDeletedQuestions([]);
+        },
+        getDeletedQuestions: () => deletedQuestions
     }));
 
     const handleAddQuestion = () => {
         setQuestions((prev) => [
             ...prev,
             {
-                id: Date.now(),
+                id: `temp-${Date.now()}`,
                 label: "",
                 required: false
             }
@@ -57,6 +63,9 @@ const CustomerQuestionnaire = forwardRef((props: CustomerQuestionnaireProps, ref
 
     const handleRemoveQuestion = (id) => {
         setQuestions((prev) => prev.filter((q) => q.id !== id));
+        if (isEditing && !id.startsWith('temp-')) {
+            setDeletedQuestions(prev => [...prev, id]);
+        }
     };
 
     const handleLabelChange = (id, newLabel) => {

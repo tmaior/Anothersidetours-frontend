@@ -504,13 +504,13 @@ const DatePicker: React.FC<DatePickerProps> = ({
                             if (isNaN(combinedDateTime.getTime())) {
                                 throw new Error(`Invalid time value: ${time}`);
                             }
-                            formattedTime = format(combinedDateTime, "hh:mm a");
+                            formattedTime = format(combinedDateTime, "hh:mm a").replace(/^0/, '');
                         } else {
                             const date = new Date(time);
                             if (isNaN(date.getTime())) {
                                 throw new Error(`Invalid ISO time value: ${time}`);
                             }
-                            formattedTime = format(date, "hh:mm a");
+                            formattedTime = format(date, "hh:mm a").replace(/^0/, '');
                         }
                     } catch (error) {
                         console.error(error.message);

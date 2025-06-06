@@ -261,7 +261,9 @@ const PurchasePage = () => {
             });
             const data = await res.json();
 
-            const mapKey = itemKey || tourId;
+            const mapKey = itemKey || (cart.length > 0 && selectedCartItemIndex < cart.length ? 
+                getItemKey(cart[selectedCartItemIndex], selectedCartItemIndex) : 
+                tourId);
             setAddonsMap(prev => ({
                 ...prev,
                 [mapKey]: data
@@ -278,6 +280,29 @@ const PurchasePage = () => {
                     checked: false
                 }));
                 setSelectedAddOns(initSelected);
+
+                if (cart.length > 0 && selectedCartItemIndex < cart.length) {
+                    setFormDataMap(prev => ({
+                        ...prev,
+                        [mapKey]: {
+                            ...prev[mapKey] || {
+                                quantity,
+                                date,
+                                time,
+                                organizerName,
+                                emailEnabled,
+                                organizerEmail,
+                                phoneEnabled,
+                                organizerPhone,
+                                organizerAttending,
+                                attendees,
+                                purchaseTags,
+                                purchaseNote,
+                            },
+                            selectedAddOns: initSelected
+                        }
+                    }));
+                }
             }
 
             setLoadingAddons(false);
@@ -288,7 +313,7 @@ const PurchasePage = () => {
         } finally {
             setLoadingAddons(false);
         }
-    }, [formDataMap]);
+    }, [formDataMap, cart, selectedCartItemIndex, quantity, date, time, organizerName, emailEnabled, organizerEmail, phoneEnabled, organizerPhone, organizerAttending, attendees, purchaseTags, purchaseNote]);
 
     const loadFormData = (index: number) => {
         if (cart.length === 0) return;
@@ -900,11 +925,12 @@ const PurchasePage = () => {
 
     const handleCreateReservationAndPay = async () => {
         if (selectedCartItemIndex >= 0 && selectedCartItemIndex < cart.length) {
-            const currentTourId = cart[selectedCartItemIndex].id;
+            const currentItem = cart[selectedCartItemIndex];
+            const itemKey = getItemKey(currentItem, selectedCartItemIndex);
             setFormDataMap(prev => ({
                 ...prev,
-                [currentTourId]: {
-                    ...prev[currentTourId],
+                [itemKey]: {
+                    ...prev[itemKey],
                     quantity,
                     date,
                     time,
@@ -922,6 +948,7 @@ const PurchasePage = () => {
                 }
             }));
         }
+        await new Promise(resolve => setTimeout(resolve, 100));
         if (isPurchaseNoteRequired() && (!purchaseNote || purchaseNote.trim() === "")) {
             toast({
                 title: "Purchase Note Required",
@@ -977,9 +1004,9 @@ const PurchasePage = () => {
             }
 
             cart.forEach((cartItem,) => {
-                const tourFormData = formDataMap[cartItem.id];
+                const tourFormData = formDataMap[getItemKey(cartItem, selectedCartItemIndex)];
                 if (!tourFormData) return;
-                const tourAttendees = tourFormData.attendees.filter(a => a.name && a.name.trim() !== '');
+                const tourAttendees = tourFormData.attendees?.filter(a => a.name && a.name.trim() !== '') || [];
                 tourAttendees.forEach(attendee => {
                     formattedAttendees.push({
                         name: attendee.name,
@@ -987,9 +1014,64 @@ const PurchasePage = () => {
                     });
                 });
             });
-
+            const hasAddOns = Object.entries(formDataMap).some(([key, data]) => {
+                return data?.selectedAddOns && data.selectedAddOns.some(addon => 
+                    addon.checked || addon.quantity > 0
+                );
+            });
             const cartPayload = cart.map((cartItem, index) => {
-                const formData = formDataMap[getItemKey(cartItem, index)];
+                const itemKey = getItemKey(cartItem, index);
+                let formData = formDataMap[itemKey];
+                if (!formData) {
+                    formData = formDataMap[cartItem.id];
+                }
+
+                if (!formData) {
+                    const alternativeKey = Object.keys(formDataMap).find(key => key.startsWith(cartItem.id));
+                    if (alternativeKey) {
+                        formData = formDataMap[alternativeKey];
+                    }
+                }
+                if (!formData) {
+                    return {
+                        tourId: cartItem.id,
+                        reservationData: {
+                            status: "ACCEPTED",
+                            reservation_date: combineDateAndTime(date, time),
+                            guestQuantity: quantity,
+                            purchaseTags: purchaseTags || "",
+                            purchaseNote: purchaseNote || "",
+                            total_price: parseFloat((cartItem.price * quantity).toFixed(2)),
+                        },
+                        addons: [],
+                        total_price: parseFloat((cartItem.price * quantity).toFixed(2)),
+                        guestQuantity: quantity,
+                        createdBy: "Back Office",
+                        purchaseTags: purchaseTags || "",
+                        purchaseNote: purchaseNote || "",
+                        customLineItems: []
+                    };
+                }
+                const mappedAddons = [];
+                
+                if (formData.selectedAddOns && formData.selectedAddOns.length > 0) {
+                    formData.selectedAddOns.forEach(addonItem => {
+                        
+                        if (addonItem.checked) {
+                            mappedAddons.push({
+                                addonId: addonItem.addOnId,
+                                value: "1",
+                                quantity: 1
+                            });
+                        } else if (addonItem.quantity && addonItem.quantity > 0) {
+                            mappedAddons.push({
+                                addonId: addonItem.addOnId,
+                                value: addonItem.quantity.toString(),
+                                quantity: addonItem.quantity
+                            });
+                        }
+                    });
+                }
                 const itemTotalPrice = calculateItemTotalPrice(cartItem, formData, index);
                 return {
                     tourId: cartItem.id,
@@ -1001,22 +1083,7 @@ const PurchasePage = () => {
                         purchaseNote: formData.purchaseNote,
                         total_price: parseFloat(itemTotalPrice.toFixed(2)),
                     },
-                    addons: formData.selectedAddOns.map(addonItem => {
-                        if (addonItem.checked) {
-                            return {
-                                addonId: addonItem.addOnId,
-                                value: "1",
-                                quantity: 1
-                            };
-                        } else if (addonItem.quantity > 0) {
-                            return {
-                                addonId: addonItem.addOnId,
-                                value: addonItem.quantity.toString(),
-                                quantity: addonItem.quantity
-                            };
-                        }
-                        return null;
-                    }).filter(Boolean),
+                    addons: mappedAddons,
                     total_price: parseFloat(itemTotalPrice.toFixed(2)),
                     guestQuantity: quantity,
                     createdBy: "Back Office",
@@ -1783,11 +1850,12 @@ const PurchasePage = () => {
                 }];
             }
             if (cart.length > 0 && selectedCartItemIndex < cart.length) {
-                const currentTourId = cart[selectedCartItemIndex].id;
+                const currentItem = cart[selectedCartItemIndex];
+                const itemKey = getItemKey(currentItem, selectedCartItemIndex);
                 setFormDataMap(prevMap => ({
                     ...prevMap,
-                    [currentTourId]: {
-                        ...prevMap[currentTourId],
+                    [itemKey]: {
+                        ...prevMap[itemKey],
                         selectedAddOns: updatedAddons
                     }
                 }));
@@ -1813,11 +1881,12 @@ const PurchasePage = () => {
                     };
                 }
                 if (cart.length > 0 && selectedCartItemIndex < cart.length) {
-                    const currentTourId = cart[selectedCartItemIndex].id;
+                    const currentItem = cart[selectedCartItemIndex];
+                    const itemKey = getItemKey(currentItem, selectedCartItemIndex);
                     setFormDataMap(prevMap => ({
                         ...prevMap,
-                        [currentTourId]: {
-                            ...prevMap[currentTourId],
+                        [itemKey]: {
+                            ...prevMap[itemKey],
                             selectedAddOns: updatedAddons
                         }
                     }));
@@ -1852,11 +1921,12 @@ const PurchasePage = () => {
                 }];
             }
             if (cart.length > 0 && selectedCartItemIndex < cart.length) {
-                const currentTourId = cart[selectedCartItemIndex].id;
+                const currentItem = cart[selectedCartItemIndex];
+                const itemKey = getItemKey(currentItem, selectedCartItemIndex);
                 setFormDataMap(prevMap => ({
                     ...prevMap,
-                    [currentTourId]: {
-                        ...prevMap[currentTourId],
+                    [itemKey]: {
+                        ...prevMap[itemKey],
                         selectedAddOns: updatedAddons
                     }
                 }));
@@ -1903,23 +1973,19 @@ const PurchasePage = () => {
             const itemPrice = getPriceForQuantity(itemQuantity, item.id);
             const baseTotal = itemPrice * itemQuantity;
 
-            const itemAddonTotal = (itemFormData.selectedAddOns as SelectedAddOn[]).reduce<number>(
-                (addonSum, addon) => {
-                    const addonInfo =
-                        addonsMap[itemKey]?.find(a => a.id === addon.addOnId) ||
-                        addons.find(a => a.id === addon.addOnId);
-
-                    if (!addonInfo) return addonSum;
-
+            let itemAddonTotal = 0;
+            if (itemFormData.selectedAddOns) {
+                for (const addon of itemFormData.selectedAddOns) {
+                    const addonInfo = addonsMap[itemKey]?.find(a => a.id === addon.addOnId);
+                    if (!addonInfo) continue;
+                    
                     if (addonInfo.type === 'CHECKBOX' && addon.checked) {
-                        return addonSum + addonInfo.price;
+                        itemAddonTotal += addonInfo.price;
                     } else if (addonInfo.type === 'SELECT' && addon.quantity > 0) {
-                        return addonSum + addonInfo.price * addon.quantity;
+                        itemAddonTotal += addonInfo.price * addon.quantity;
                     }
-                    return addonSum;
-                },
-                0
-            );
+                }
+            }
             
             const customLineItemsTotal = calculateCustomLineItemsTotal(item.id, index);
             return total + baseTotal + itemAddonTotal + customLineItemsTotal;
@@ -1934,17 +2000,19 @@ const PurchasePage = () => {
         const baseTotal = itemPrice * formData.quantity;
         const itemKey = getItemKey(cartItem, index);
 
-        const itemAddonsTotal = formData.selectedAddOns.reduce((sum, addon) => {
-            const addonInfo = addonsMap[itemKey]?.find(a => a.id === addon.addOnId);
-            if (!addonInfo) return sum;
-            
-            if (addonInfo.type === 'CHECKBOX' && addon.checked) {
-                return sum + addonInfo.price;
-            } else if (addonInfo.type === 'SELECT' && addon.quantity > 0) {
-                return sum + (addonInfo.price * addon.quantity);
+        let itemAddonsTotal = 0;
+        if (formData.selectedAddOns) {
+            for (const addon of formData.selectedAddOns) {
+                const addonInfo = addonsMap[itemKey]?.find(a => a.id === addon.addOnId);
+                if (!addonInfo) continue;
+                
+                if (addonInfo.type === 'CHECKBOX' && addon.checked) {
+                    itemAddonsTotal += addonInfo.price;
+                } else if (addonInfo.type === 'SELECT' && addon.quantity > 0) {
+                    itemAddonsTotal += addonInfo.price * addon.quantity;
+                }
             }
-            return sum;
-        }, 0);
+        }
 
         const customItemsTotal = isCustomLineItemsEnabled && customLineItems[itemKey] 
             ? customLineItems[itemKey].reduce((sum, item) => {

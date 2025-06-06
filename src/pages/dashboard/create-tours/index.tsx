@@ -1683,20 +1683,51 @@ function SchedulesAvailabilityStep({
 
             if (questionnaireRef.current) {
                 const questions = questionnaireRef.current.getQuestions();
-                
+                const deletedQuestions = questionnaireRef.current.getDeletedQuestions();
+
+                if (isEditing && deletedQuestions.length > 0) {
+                    for (const questionId of deletedQuestions) {
+                        try {
+                            const deleteResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${questionId}`, {
+                                method: "DELETE",
+                                credentials: "include"
+                            });
+                            
+                            if (!deleteResponse.ok) {
+                                console.error(`Failed to delete question ${questionId}:`, await deleteResponse.text());
+                            } else {
+                                console.log(`Successfully deleted question ${questionId}`);
+                            }
+                        } catch (error) {
+                            console.error(`Error deleting question ${questionId}:`, error);
+                        }
+                    }
+                }
+
                 if (questions.length > 0) {
                     await Promise.all(
-                        questions.map(question =>
-                            fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information`, {
-                                method: "POST",
-                                credentials: "include",
-                                headers: {"Content-Type": "application/json"},
-                                body: JSON.stringify({
-                                    tourId,
-                                    title: question.label
-                                })
-                            })
-                        )
+                        questions.map(question => {
+                            if (isEditing && !question.id.startsWith('temp-')) {
+                                return fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information/${question.id}`, {
+                                    method: "PUT",
+                                    credentials: "include",
+                                    headers: {"Content-Type": "application/json"},
+                                    body: JSON.stringify({
+                                        title: question.label
+                                    })
+                                });
+                            } else {
+                                return fetch(`${process.env.NEXT_PUBLIC_API_URL}/additional-information`, {
+                                    method: "POST",
+                                    credentials: "include",
+                                    headers: {"Content-Type": "application/json"},
+                                    body: JSON.stringify({
+                                        tourId,
+                                        title: question.label
+                                    })
+                                });
+                            }
+                        })
                     );
                 }
             }

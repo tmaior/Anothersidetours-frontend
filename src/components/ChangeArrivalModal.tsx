@@ -202,7 +202,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                         hour: "2-digit",
                         minute: "2-digit",
                         hour12: true,
-                    }),
+                    }).replace(/^0/, ''),
                 };
             });
 
@@ -226,7 +226,7 @@ const ChangeArrivalModal = ({isOpen, onClose, booking,}) => {
                 hour: "2-digit",
                 minute: "2-digit",
                 hour12: true,
-            }),
+            }).replace(/^0/, ''),
         };
         setAvailableTimes((prev) => [...prev, formattedTimeslot]);
     };

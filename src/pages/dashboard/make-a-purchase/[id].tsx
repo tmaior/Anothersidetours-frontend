@@ -2565,9 +2565,6 @@ const PurchasePage = () => {
                                     <HStack justify="space-between">
                                         <FormLabel>
                                             Purchase Note
-                                            {isPurchaseNoteRequired() && (
-                                                <Text as="span" color="red.500" ml={1}>*</Text>
-                                            )}
                                         </FormLabel>
                                         {isPurchaseNoteRequired() && purchaseNote.trim() === "" && (
                                             <Text color="red.500" fontSize="sm" fontWeight="bold">Required

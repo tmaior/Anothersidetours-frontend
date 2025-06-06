@@ -344,6 +344,7 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
             maxAge: 30 * 24 * 60 * 60,
             path: '/',
         });
+        window.location.reload();
     };
 
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -896,14 +897,25 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                                 }}
                                                 onClick={() => handleSelectTenant(tenant)}
                                             >
-                                                <HStack spacing={3}>
+                                                <HStack spacing={3} width="100%">
                                                     <Avatar size="sm" src={tenant.imageUrl}/>
-                                                    <Box>
-                                                        <Text fontSize="sm" fontWeight="bold">
-                                                            {tenant.name}
-                                                        </Text>
+                                                    <Box flex="1">
+                                                        <HStack justifyContent="space-between" width="100%">
+                                                            <Text fontSize="sm" fontWeight="bold">
+                                                                {tenant.name}
+                                                            </Text>
+                                                            {selectedTenant?.id === tenant.id && (
+                                                                <Box 
+                                                                    color="green.400" 
+                                                                    fontWeight="bold"
+                                                                    fontSize="md"
+                                                                >
+                                                                    ✓
+                                                                </Box>
+                                                            )}
+                                                        </HStack>
                                                         <Text fontSize="xs" color="gray.400">
-                                                            {tenant.location}
+                                                            {tenant.description || tenant.location || ""}
                                                         </Text>
                                                     </Box>
                                                 </HStack>
@@ -1473,14 +1485,26 @@ export default function DashboardLayout({children}: { children: React.ReactNode 
                                                         }}
                                                         onClick={() => handleSelectTenant(tenant)}
                                                     >
-                                                        <HStack spacing={3}>
+                                                        <HStack spacing={3} width="100%">
                                                             <Avatar size="sm" src={tenant.imageUrl}/>
-                                                            <Box>
-                                                                <Text fontSize="sm" fontWeight="bold">
-                                                                    {tenant.name}
-                                                                </Text>
+                                                            <Box flex="1">
+                                                                <HStack justifyContent="space-between" width="100%">
+                                                                    <Text fontSize="sm" fontWeight="bold">
+                                                                        {tenant.name}
+                                                                    </Text>
+                                                                    {selectedTenant?.id === tenant.id && (
+                                                                        <Box 
+                                                                            color="green.400" 
+                                                                            fontWeight="bold"
+                                                                            fontSize="md"
+                                                                            pr={2}
+                                                                        >
+                                                                            ✓
+                                                                        </Box>
+                                                                    )}
+                                                                </HStack>
                                                                 <Text fontSize="xs" color="gray.400">
-                                                                    {tenant.location}
+                                                                    {tenant.description || tenant.location || "No description"}
                                                                 </Text>
                                                             </Box>
                                                         </HStack>

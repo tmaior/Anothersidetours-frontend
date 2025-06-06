@@ -618,7 +618,7 @@ const PurchasePage = () => {
                             hour: '2-digit',
                             minute: '2-digit',
                             hour12: true,
-                        }),
+                        }).replace(/^0/, ''),
                     };
                 });
                 
@@ -686,7 +686,7 @@ const PurchasePage = () => {
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: true,
-                    }),
+                    }).replace(/^0/, ''),
                 };
             });
             
